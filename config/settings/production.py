@@ -10,10 +10,19 @@ ALLOWED_HOSTS = [
 ]
 
 # Princípio VI da Constitution: proteções de sessão/transporte DEVEM
-# permanecer ativas. SECURE_PROXY_SSL_HEADER e HSTS de longo prazo dependem
-# de detalhes de deploy (proxy reverso, domínio) ainda não definidos e
-# ficam para quando o deploy for configurado.
+# permanecer ativas. SECURE_PROXY_SSL_HEADER depende de detalhes de deploy
+# (proxy reverso) ainda não definidos e fica para quando o deploy for
+# configurado.
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 3600
+
+# Desvio consciente (Constitution: "desvio DEVE ser documentado"): HSTS em
+# subdomínios e submissão à preload list exigem confirmar antes que TODOS os
+# subdomínios do domínio real sirvam exclusivamente HTTPS — decisão que
+# depende do domínio de produção, ainda não definido. Ficam desligados e
+# silenciados no `check --deploy` até essa decisão de deploy ser tomada;
+# revisitar então (ligar SECURE_HSTS_INCLUDE_SUBDOMAINS/SECURE_HSTS_PRELOAD e
+# remover daqui).
+SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]

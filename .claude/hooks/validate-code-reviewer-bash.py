@@ -77,15 +77,15 @@ PYRIGHT_FORBIDDEN_FLAGS = ("--createstub",)
 # config from the process environment and `uv run` does not load `.env`
 # on its own.
 #
-# `uv run` performs a project lock+sync before running the wrapped command,
-# which can rewrite the tracked `uv.lock` if it is out of date relative to
-# `pyproject.toml`. Since this agent must stay read-only, at least one of
-# --frozen/--locked (which make `uv run` refuse to touch `uv.lock`) is
-# mandatory. --no-sync is accepted too but does not by itself satisfy that
-# requirement.
+# `uv run` performs a project lock+sync before running the wrapped command:
+# it can rewrite the tracked `uv.lock` if it is out of date relative to
+# `pyproject.toml`, AND it can install/upgrade packages into the local
+# `.venv`. This agent must stay read-only, so both are mandatory:
+# --frozen or --locked (refuse to touch `uv.lock`) AND --no-sync (refuse to
+# touch the `.venv`).
 UV_RUN_VALUE_FLAGS = {"--env-file"}
 UV_RUN_LOCK_SAFE_FLAGS = {"--frozen", "--locked"}
-UV_RUN_EXTRA_BOOL_FLAGS = {"--no-sync"}
+UV_RUN_NO_SYNC_FLAGS = {"--no-sync"}
 
 
 def block(reason: str) -> None:
@@ -220,12 +220,14 @@ def strip_uv_run_options(tokens: list) -> list:
     front of `tokens`, enforcing the allowlist in UV_RUN_*.
 
     Blocks (fail closed) on any option it does not recognize, and requires
-    --frozen or --locked to be present so `uv run` cannot rewrite the
-    tracked `uv.lock` file. Returns the remaining tokens: the wrapped
-    command and its own arguments.
+    both --frozen/--locked (so `uv run` cannot rewrite the tracked
+    `uv.lock` file) and --no-sync (so it cannot install/upgrade packages
+    into the local `.venv`) to be present. Returns the remaining tokens:
+    the wrapped command and its own arguments.
     """
     i = 0
     saw_lock_safe_flag = False
+    saw_no_sync_flag = False
     while i < len(tokens):
         tok = tokens[i]
         if not tok.startswith("-"):
@@ -250,7 +252,8 @@ def strip_uv_run_options(tokens: list) -> list:
             i += 1
             continue
 
-        if tok in UV_RUN_EXTRA_BOOL_FLAGS:
+        if tok in UV_RUN_NO_SYNC_FLAGS:
+            saw_no_sync_flag = True
             i += 1
             continue
 
@@ -260,6 +263,9 @@ def strip_uv_run_options(tokens: list) -> list:
     if not saw_lock_safe_flag:
         block("'uv run' must include --frozen or --locked so it cannot rewrite "
               "the tracked uv.lock file")
+    if not saw_no_sync_flag:
+        block("'uv run' must include --no-sync so it cannot install or modify "
+              "the local .venv (code-reviewer must stay read-only)")
 
     return tokens[i:]
 
@@ -309,7 +315,8 @@ def classify(command: str) -> None:
               f"merge-base/ls-files, pytest, python[3] -m pytest/ruff check, "
               f"manage.py test/check/makemigrations --check --dry-run, "
               f"ruff check, black --check, mypy, pyright; any of these may be prefixed "
-              f"with 'uv run' plus --frozen/--locked (required) and --env-file/--no-sync)")
+              f"with 'uv run' plus --frozen/--locked and --no-sync (both required) and "
+              f"--env-file (optional))")
 
 
 def main() -> None:
