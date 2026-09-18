@@ -20,7 +20,9 @@ papéis na mesma pessoa (ver Product Principles).
   aprovação do chefe do setor a que o requisitante pertence.
 - **Auxiliar de setor** (em qualquer setor do SAEP, incluindo o almoxarifado): cria requisição em
   nome de outros funcionários do próprio setor e acompanha o que criou. Não supervisiona o setor,
-  não aprova requisições e não tem acesso a outros setores nem ao estoque do almoxarifado.
+  não aprova requisições e não opera estoque do almoxarifado nem acessa outros setores — o único
+  acesso relacionado a estoque é ver, no histórico de movimentações, apenas o que resultou das
+  requisições que ele mesmo criou (rastreabilidade do que iniciou, não visibilidade operacional).
 - **Chefe de setor** (qualquer setor do SAEP, incluindo o próprio almoxarifado): aprova as
   requisições criadas por funcionários do seu setor. Fora do almoxarifado, não tem acesso
   operacional ao estoque nem às atribuições exclusivas do chefe do almoxarifado.
@@ -75,6 +77,10 @@ fluxo próprio de requisição e autorização hierárquica por setor que o SCPI
 
 - Atende um único almoxarifado físico do SAEP; não há necessidade confirmada de segmentar
   estoque por múltiplos locais.
+- Cada funcionário do SAEP pertence a um único setor. Todo setor ativo tem exatamente um chefe
+  ativo, que pertence a esse mesmo setor; um chefe responde por um único setor. Essas invariantes
+  são a base de todo escopo "próprio setor" usado em `docs/domain/permissions-matrix.md` — sem
+  elas, esse escopo fica indefinido.
 - O catálogo de materiais é importado periodicamente do SCPI via arquivo CSV exportado
   manualmente pelo chefe do almoxarifado (feature `001-importacao-catalogo-materiais`, em
   especificação); não existe integração automática nem API com o SCPI.

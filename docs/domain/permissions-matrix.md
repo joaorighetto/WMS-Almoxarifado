@@ -84,7 +84,7 @@ Versão: 1.0
 | `PERM-REQ-VIEW-SECTOR` | Ver requisições do setor | `ROLE-SECTOR-HEAD` | Próprio setor | — |
 | `PERM-REQ-VIEW-ALL-SECTORS` | Ver requisições de todos os setores | `ROLE-WAREHOUSE-STAFF` | Todos os setores | — |
 | `PERM-REQ-AUTH-QUEUE-VIEW` | Ver fila de autorização | `ROLE-SECTOR-HEAD` | Próprio setor | — |
-| `PERM-REQ-AUTHORIZE` | Autorizar requisição | `ROLE-SECTOR-HEAD` | Próprio setor | Autorização é integral — todos os itens solicitados. |
+| `PERM-REQ-AUTHORIZE` | Autorizar requisição | `ROLE-SECTOR-HEAD` | Próprio setor | — (se autorização parcial deve existir é uma decisão ainda `PENDENTE`; não promovida aqui). |
 | `PERM-REQ-FULFILLMENT-QUEUE-VIEW` | Ver fila de atendimento | `ROLE-WAREHOUSE-STAFF` | Todos os setores | Requisições autorizadas. |
 | `PERM-REQUEST-FULFILL` | Atender requisição autorizada | `ROLE-WAREHOUSE-STAFF` | — | Requisição precisa estar autorizada. |
 
