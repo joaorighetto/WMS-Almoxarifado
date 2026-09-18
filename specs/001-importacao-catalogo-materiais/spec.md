@@ -45,6 +45,16 @@ duplicado); ausência de vazios em `DISC1`, `UNID1`, `QUAN3` e nos campos de cla
 descrições repetidas em 14 registros; 33 variantes de unidade de medida; e a validade da heurística
 de recomposição, que produz exatamente 22 campos em todos os 1588 registros.
 
+### Sessão 2026-09-18 — reconciliação de permissões (prévia da importação)
+
+- **Execução da importação em duas etapas**: a entrega do arquivo (sessão de clarificação acima)
+  deixa de persistir o resultado em um único passo. O sistema agora apresenta uma prévia — totais
+  esperados, exceções e divergências — sem gravar nada, e só persiste após confirmação explícita do
+  responsável autorizado (FR-044, FR-044a). Decisão do dono do produto, registrada em
+  `docs/domain-legacy/reconciliation/permissions-reconciliation.md`, §7.9; não altera nenhum outro
+  comportamento desta feature — proibição de criação manual, regras de saldo/divergência, histórico
+  de execuções e não normalização de unidade de medida permanecem exatamente como especificados.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Realizar a carga inicial do catálogo (Priority: P1)
@@ -345,7 +355,16 @@ sobrescrito e que a divergência aparece listada.
 
 - **FR-044**: O sistema DEVE permitir que o responsável autorizado envie o arquivo de carga pela
   interface da aplicação e DEVE apresentar o resultado da execução na própria interface, incluindo
-  totais, exceções e divergências.
+  totais, exceções e divergências. A execução ocorre em duas etapas — prévia e confirmação —,
+  detalhadas em FR-044a.
+- **FR-044a**: O sistema DEVE apresentar, antes de persistir qualquer alteração no catálogo, uma
+  prévia da importação com os totais esperados de inseridos, atualizados, rejeitados e
+  divergências, sem efetivar nenhuma inserção, atualização ou registro de divergência nessa etapa.
+  O sistema só DEVE persistir o resultado da importação — de forma atômica, conforme FR-038 — após
+  confirmação explícita do responsável autorizado sobre essa prévia. *Emenda de 2026-09-18:
+  acrescenta a etapa de prévia sem persistência a uma versão anterior deste requisito, que descrevia
+  envio e persistência como um único passo; decisão do dono do produto registrada em
+  `docs/domain-legacy/reconciliation/permissions-reconciliation.md`, §7.9.*
 - **FR-045**: O sistema DEVE exigir autenticação para consultar o catálogo e autorização específica
   para executar a importação, ambas verificadas no servidor.
 - **FR-046**: O sistema NÃO DEVE realizar integração automática de movimentações com o SCPI; o

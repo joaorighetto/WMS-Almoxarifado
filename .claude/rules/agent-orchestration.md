@@ -277,6 +277,11 @@ de dados devem normalmente passar por:
 Quando código existente ou dependências não estiverem claros, adicione
 `wms-explorer` antes.
 
+Quando uma feature envolver autorização, papéis, escopo por setor, visibilidade de objetos,
+administração de usuários ou qualquer operação protegida, o Claude principal DEVE consultar
+`docs/domain/permissions-matrix.md` antes de especificar comportamento definitivo, solicitar test
+design, implementar ou revisar. Não é necessário invocar um agente só para ler a matriz.
+
 ## Trabalho frontend
 
 Enquanto não existir um `frontend-implementer` especializado:
