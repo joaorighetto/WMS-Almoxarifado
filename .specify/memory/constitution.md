@@ -1,24 +1,3 @@
-<!--
-Sync Impact Report
-Version change: 1.0.0 → 1.1.0 (MINOR — expansão material de princípio existente, sem remoção ou
-  redefinição incompatível de regra).
-Modified principles:
-  - VIII. Interface Operacional Consistente e Eficiente → VIII. Design System e Interface
-    Operacional Consistente (renomeado e materialmente expandido: design system explícito e
-    versionado; DESIGN.md; uso de Impeccable; uso obrigatório da skill frontend-design para
-    implementação significativa de frontend com Claude Code; ordem de precedência de decisões de
-    frontend; restrição a novos componentes/padrões; proibição de decoração sem função, animação
-    excessiva e espaçamento excessivo quando prejudicarem a eficiência; exigência de revisão visual
-    para mudanças significativas de frontend. Regra de exclusão de acessibilidade preservada sem
-    alteração de conteúdo.)
-Added sections: nenhuma (conteúdo adicionado dentro do Princípio VIII existente).
-Removed sections: nenhuma.
-Other changes:
-  - Restrições Tecnológicas → item "Estilo" atualizado para exigir CSS organizado sobre o design
-    system e uso de tokens/variáveis (antes: apenas "CSS próprio").
-Deferred / TODO: nenhum.
--->
-
 # WMS Almoxarifado Constitution
 
 Sistema web operacional e administrativo de uso diário para gestão de materiais, locais de
