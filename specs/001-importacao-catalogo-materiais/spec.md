@@ -24,6 +24,27 @@
 - **Entrega do arquivo**: o responsável autorizado envia o arquivo pela interface do sistema e o
   resultado da execução é apresentado na tela (FR-044).
 
+### Sessão 2026-09-18 — análise do arquivo real
+
+Análise de `relacao-de-todos-produtos-importados-do-SCPI.csv` (1588 materiais, 1605 linhas físicas,
+21 colunas mais a vazia final). Resultados que alteraram a spec:
+
+- **Quebras de linha também ocorrem em `DISC1`**, não apenas em `DISCR1` — o material
+  `004.001.002` tem duas. FR-009 foi corrigido: a recomposição acontece antes da separação dos
+  campos e não presume o campo de destino.
+- **Aspas duplas são literais de polegada** (434 ocorrências, nenhum campo delimitado por aspas).
+  FR-007a foi acrescentado, porque um parser CSV com quoting habilitado desalinha as colunas.
+- **`QUAN3` traz ruído de ponto flutuante** (`53,4000000000001`). Definida escala de três casas
+  decimais com arredondamento (FR-012, SC-004).
+- **Colunas extras do export permanecem fora de escopo**: `CODREDUZ`, `CODBARRA`, `QUANMIN`,
+  `VAUN1` e `PRECOMEDIO` ficam para features futuras. `QUANMAX`, `NOCULTAR` e `LOCALFISICO` são
+  inúteis no arquivo real — valor único ou integralmente vazio nos 1588 registros.
+
+Confirmações que não exigiram mudança: formato e unicidade de `CADPRO` (1588 válidos, nenhum
+duplicado); ausência de vazios em `DISC1`, `UNID1`, `QUAN3` e nos campos de classificação;
+descrições repetidas em 14 registros; 33 variantes de unidade de medida; e a validade da heurística
+de recomposição, que produz exatamente 22 campos em todos os 1588 registros.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Realizar a carga inicial do catálogo (Priority: P1)
@@ -67,6 +88,14 @@ dados oficial.
 9. **Given** um arquivo cujos campos de classificação vêm preenchidos, **When** a importação é
    executada, **Then** grupo, subgrupo e seus nomes são gravados exatamente como recebidos, sem
    validação e sem influenciar a aceitação do registro.
+10. **Given** o registro `004.001.002`, cuja descrição principal está partida em três linhas
+    físicas, **When** a importação é executada, **Then** a descrição é recomposta por inteiro e
+    nenhum valor das demais colunas é deslocado.
+11. **Given** uma descrição contendo aspas duplas como símbolo de polegada, como
+    `COTOVELO GALVANIZADO ¾" X 90º`, **When** a importação é executada, **Then** o texto é gravado
+    com as aspas preservadas e as colunas seguintes permanecem alinhadas.
+12. **Given** o registro `000.029.742`, cuja quantidade no arquivo é `53,4000000000001`, **When** a
+    importação é executada, **Then** o saldo gravado é `53,400`.
 
 ---
 
@@ -158,9 +187,13 @@ sobrescrito e que a divergência aparece listada.
 
 ### Edge Cases
 
-- **Quebra física de linha dentro do detalhamento técnico**: uma linha física do arquivo que não
-  inicia um novo registro identificável precisa ser reconhecida como continuação do detalhamento do
-  registro anterior, nunca como um novo registro nem como valores deslocados entre colunas.
+- **Quebra física de linha dentro de um campo de texto**: uma linha física que não inicia um novo
+  registro identificável precisa ser reconhecida como continuação do registro anterior, nunca como
+  novo registro nem como valores deslocados entre colunas. Ocorre em `DISCR1` e também em `DISC1`.
+- **Aspas duplas literais**: descrições usam `"` como símbolo de polegada, sem função de
+  delimitação; interpretá-las como campo citado corrompe o alinhamento de colunas.
+- **Ruído decimal vindo do SCPI**: quantidade como `53,4000000000001` representa um valor inteiro
+  contaminado por aritmética de ponto flutuante na origem.
 - **Continuação não associável**: se uma linha física não puder ser associada com segurança nem a
   um novo registro nem a uma continuação, o registro envolvido é recusado e reportado.
 - **Continuação no fim do arquivo**: arquivo terminado no meio de um detalhamento multilinha.
@@ -210,11 +243,17 @@ sobrescrito e que a divergência aparece listada.
 - **FR-007**: O sistema DEVE ler arquivo CSV em UTF-8 com BOM, com `;` como separador e com
   delimitador ao final da linha, sem que a marca BOM ou a coluna vazia final contaminem qualquer
   valor.
+- **FR-007a**: O sistema DEVE tratar aspas duplas como caractere literal do conteúdo e NÃO DEVE
+  interpretá-las como delimitação de campo. O arquivo usa `"` para indicar polegadas — como em
+  `Adaptador PVC RS 3"` — sem nunca delimitar campos com aspas; interpretá-las como delimitador
+  desalinha os campos a partir da primeira ocorrência.
 - **FR-008**: O sistema DEVE identificar as colunas `CADPRO`, `DISC1`, `UNID1`, `QUAN3`, `DISCR1`,
   `GRUPO`, `SUBGRUPO`, `NOMEGRUPO` e `NOMESUBGRUPO` pelo cabeçalho do arquivo e DEVE recusar o
   arquivo inteiro, sem importar nada, se alguma dessas colunas estiver ausente.
-- **FR-009**: O sistema DEVE recompor quebras físicas de linha não delimitadas que ocorram dentro
-  do detalhamento técnico, anexando a continuação ao `DISCR1` do registro anterior.
+- **FR-009**: O sistema DEVE recompor as linhas físicas em registro lógico antes de separar os
+  campos, de modo que uma quebra de linha não delimitada permaneça dentro do campo a que pertence,
+  qualquer que seja esse campo. Quebras ocorrem tanto em `DISCR1` quanto em `DISC1`, e a
+  recomposição NÃO DEVE presumir que a continuação pertence ao detalhamento técnico.
 - **FR-010**: Quando uma linha física não puder ser classificada com segurança como novo registro
   ou como continuação, o sistema DEVE recusar o registro envolvido e registrá-lo como exceção.
 - **FR-011**: O sistema NUNCA DEVE importar um registro cujo valor tenha origem em coluna diferente
@@ -223,7 +262,10 @@ sobrescrito e que a divergência aparece listada.
 #### Quantidade e saldo
 
 - **FR-012**: O sistema DEVE interpretar `QUAN3` na convenção numérica brasileira, com vírgula
-  decimal, preservando todas as casas decimais recebidas, sem arredondar nem truncar.
+  decimal, e DEVE registrar o saldo com três casas decimais, arredondando o valor recebido para
+  essa escala. O arredondamento serve exclusivamente para absorver ruído de ponto flutuante
+  originado no SCPI — como `53,4000000000001` — e NÃO DEVE descartar precisão legítima, já que
+  nenhum material do arquivo real usa mais de três casas de forma significativa.
 - **FR-013**: O sistema DEVE aceitar quantidade zero como saldo válido.
 - **FR-014**: O sistema DEVE recusar registro cuja quantidade esteja ausente ou vazia e NUNCA DEVE
   interpretar ausência de quantidade como zero.
@@ -337,8 +379,8 @@ sobrescrito e que a divergência aparece listada.
   arquivo contendo descrições com quebras físicas de linha.
 - **SC-003**: Toda linha não importada aparece no resultado da execução com um motivo, sem
   exceções silenciosas: rejeitados reportados é igual a recebidos menos inseridos e atualizados.
-- **SC-004**: 100% das quantidades importadas conservam as casas decimais do arquivo de origem, sem
-  arredondamento.
+- **SC-004**: 100% das quantidades importadas conferem com o arquivo de origem na escala de três
+  casas decimais, sem perda de precisão legítima.
 - **SC-005**: Nenhum caminho da aplicação permite criar, alterar ou excluir um material fora do
   processo de importação.
 - **SC-006**: O operador localiza um material pelo código oficial em uma única interação, sem
@@ -369,8 +411,14 @@ sobrescrito e que a divergência aparece listada.
   os inválidos recusados, conforme implicado pela exigência de totais separados. O conjunto aceito
   é efetivado de uma só vez (FR-038).
 - Uma linha física é considerada início de novo registro quando seu primeiro campo corresponde ao
-  formato `XXX.YYY.ZZZ`; caso contrário é tratada como continuação do detalhamento anterior. Este é
-  o critério assumido para "continuação identificável".
+  formato `XXX.YYY.ZZZ`; caso contrário é tratada como continuação do registro anterior. Este é o
+  critério para "continuação identificável", e foi verificado contra o arquivo real: recompõe os
+  1588 registros com exatamente 22 campos cada, sem uma única exceção.
+- O `CADPRO` codifica grupo e subgrupo nos dois primeiros trios em 100% dos registros do arquivo
+  real. Essa correspondência é observação, não regra: decompor o código para inferir classificação
+  continua proibido (FR-002, FR-024), e os campos de classificação vêm sempre do arquivo.
+- `LOCALFISICO` vem vazio nos 1588 registros do arquivo real; a gestão de locais de armazenamento
+  do WMS não pode partir do SCPI e terá de ser construída em funcionalidade própria.
 - Quantidade negativa é inválida, por não haver situação legítima de saldo negativo na carga.
 - Descrição principal e unidade de medida ausentes foram tratadas como recusa, por serem dados
   essenciais à operação do almoxarifado; detalhamento técnico e campos de classificação são os

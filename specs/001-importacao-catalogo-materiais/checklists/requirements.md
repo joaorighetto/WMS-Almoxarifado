@@ -51,3 +51,20 @@ reconciliação com o SCPI, com preservação obrigatória do saldo do WMS e reg
 Terminologia de campo (`CADPRO`, `DISC1`, `UNID1`, `QUAN3`, `DISCR1`, `GRUPO`, `SUBGRUPO`,
 `NOMEGRUPO`, `NOMESUBGRUPO`) e formato CSV foram mantidos por serem o contrato de dados do SCPI,
 não escolha de implementação.
+
+### Iteração 3 — 2026-09-18 (validação contra o arquivo real)
+
+A spec foi confrontada com o export real do SCPI (1588 materiais). Dois requisitos estavam
+factualmente errados e foram corrigidos; um terceiro foi acrescentado:
+
+- **FR-009** presumia que toda continuação de linha pertencia a `DISCR1`. Falso: o material
+  `004.001.002` tem a descrição principal partida em três linhas. A regra passou a recompor o
+  registro lógico antes de separar os campos.
+- **FR-012** proibia arredondamento, o que gravaria `53,4000000000001` como saldo. Definida escala
+  de três casas decimais.
+- **FR-007a** foi criado para as 434 aspas duplas literais (polegadas). Nenhum campo do arquivo é
+  delimitado por aspas, então um parser com quoting habilitado desalinharia as colunas — falha que
+  não apareceria em testes com dados sintéticos.
+
+Acrescentados os cenários de aceitação 10 a 12 da User Story 1, ancorados em registros reais
+(`004.001.002`, `000.029.742`), e três edge cases correspondentes. Todos os itens seguem passando.
