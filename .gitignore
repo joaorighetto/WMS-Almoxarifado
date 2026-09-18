@@ -42,3 +42,6 @@ htmlcov/
 
 # macOS
 .DS_Store
+
+# Dados de trabalho e exports do SCPI (contém credenciais e arquivos grandes)
+domain/
