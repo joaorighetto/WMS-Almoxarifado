@@ -144,7 +144,7 @@ invariantes — nunca aqui:
 
 - usuário inativo não acessa nem opera (invariante de autenticação);
 - material não pode ser criado manualmente, por nenhum papel (spec 001, FR-006);
-- ninguém autoriza requisição parcialmente nem de setor alheio ao seu (regra negativa);
+- ninguém autoriza requisição de setor alheio ao seu (regra negativa confirmada);
 - liberação de reserva não entregue é efeito automático de outras transições, não uma ação
   solicitada por um papel;
 - atomicidade de gravação, rastreabilidade e demais invariantes de integridade (Constitution,
