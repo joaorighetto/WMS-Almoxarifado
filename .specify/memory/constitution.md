@@ -1,3 +1,24 @@
+<!--
+Sync Impact Report
+Version change: 1.0.0 → 1.1.0 (MINOR — expansão material de princípio existente, sem remoção ou
+  redefinição incompatível de regra).
+Modified principles:
+  - VIII. Interface Operacional Consistente e Eficiente → VIII. Design System e Interface
+    Operacional Consistente (renomeado e materialmente expandido: design system explícito e
+    versionado; DESIGN.md; uso de Impeccable; uso obrigatório da skill frontend-design para
+    implementação significativa de frontend com Claude Code; ordem de precedência de decisões de
+    frontend; restrição a novos componentes/padrões; proibição de decoração sem função, animação
+    excessiva e espaçamento excessivo quando prejudicarem a eficiência; exigência de revisão visual
+    para mudanças significativas de frontend. Regra de exclusão de acessibilidade preservada sem
+    alteração de conteúdo.)
+Added sections: nenhuma (conteúdo adicionado dentro do Princípio VIII existente).
+Removed sections: nenhuma.
+Other changes:
+  - Restrições Tecnológicas → item "Estilo" atualizado para exigir CSS organizado sobre o design
+    system e uso de tokens/variáveis (antes: apenas "CSS próprio").
+Deferred / TODO: nenhum.
+-->
+
 # WMS Almoxarifado Constitution
 
 Sistema web operacional e administrativo de uso diário para gestão de materiais, locais de
@@ -107,22 +128,46 @@ DEVERIA incluir um teste que reproduza o defeito e falhe antes da correção.
 **Racional**: as regras mais valiosas deste sistema são invisíveis na interface — saldo correto sob
 concorrência, permissão negada corretamente — e só um teste demonstra que continuam valendo.
 
-### VIII. Interface Operacional Consistente e Eficiente
+### VIII. Design System e Interface Operacional Consistente
 
-A interface DEVE priorizar velocidade de operação, clareza, previsibilidade e redução de erro do
-usuário. Componentes reutilizáveis DEVEM ser preferidos a markup duplicado. Tabelas, formulários,
-modais, paginação, filtros, busca, autocomplete e ações compartilhadas DEVEM ter comportamento e
-aparência consistentes em todo o sistema. A interface DEVE apresentar de forma explícita os estados
-relevantes: carregamento, sucesso, erro, ausência de resultados, indisponibilidade e confirmação
-de ações destrutivas ou irreversíveis. Fluxos de uso frequente DEVEM exigir o mínimo razoável de
-etapas e interações.
+O projeto DEVE possuir um design system explícito e versionado, definido antes da implementação
+significativa de interfaces. As decisões consolidadas de design — cores, tipografia, espaçamento,
+estados, padrões de interação e demais tokens visuais — DEVEM ser registradas em `DESIGN.md` e
+refletidas em tokens CSS e componentes compartilhados. Impeccable DEVE ser usado para estabelecer,
+documentar, avaliar e evoluir esse design system, e PODE ser usado como ferramenta de apoio para
+auditoria e refinamento visual.
+
+Para implementação significativa de frontend com Claude Code, a skill `frontend-design` DEVE ser
+utilizada. Essa skill DEVE respeitar o design system existente e NÃO DEVE reinventar padrões
+visuais já definidos. Novos componentes ou padrões visuais só DEVEM ser introduzidos quando os
+existentes não resolverem adequadamente o problema.
+
+A precedência para decisões de frontend, da mais para a menos autoritativa, é: requisitos da
+feature → esta constituição → `DESIGN.md` → tokens e componentes existentes → skill
+`frontend-design` → decisão específica da interface. Uma camada só PODE ser sobreposta pela
+seguinte quando a anterior não cobrir o caso em questão.
+
+O WMS é uma ferramenta operacional de uso diário. A interface DEVE priorizar clareza, velocidade de
+operação, previsibilidade, baixa carga cognitiva, boa densidade de informação, redução de erros e
+consistência. Componentes reutilizáveis DEVEM ser preferidos a markup duplicado. Tabelas,
+formulários, modais, paginação, filtros, busca, autocomplete e ações compartilhadas DEVEM ter
+comportamento e aparência consistentes em todo o sistema. A interface DEVE apresentar de forma
+explícita os estados relevantes: carregamento, sucesso, erro, ausência de resultados,
+indisponibilidade e confirmação de ações destrutivas ou irreversíveis. Fluxos de uso frequente
+DEVEM exigir o mínimo razoável de etapas e interações. Decoração sem função, animações excessivas e
+layouts excessivamente espaçados NÃO DEVEM ser usados quando prejudicarem a eficiência operacional.
+
+Mudanças significativas de frontend DEVEM passar por revisão visual quanto à aderência ao
+`DESIGN.md`, reutilização de componentes, consistência visual e eficiência operacional.
 
 Requisitos específicos de acessibilidade — WCAG, ARIA, leitores de tela, navegação por teclado —
 NÃO DEVEM ser adicionados por padrão, exceto quando necessários ao funcionamento correto de um
 componente ou quando explicitamente exigidos por uma feature.
 
-**Racional**: o sistema é operado diariamente e em volume; inconsistência de comportamento entre
-telas transfere carga cognitiva ao operador e produz erro de lançamento.
+**Racional**: o sistema é operado diariamente e em volume; inconsistência visual e decisões de
+design ad-hoc transferem carga cognitiva ao operador e produzem erro de lançamento. Um design
+system explícito e uma ordem de precedência clara evitam que cada tela reinvente padrões e tornam a
+implementação de frontend previsível mesmo quando conduzida por agentes automatizados.
 
 ### IX. Progressive Enhancement
 
@@ -199,7 +244,8 @@ A stack a seguir é normativa. Alterações exigem emenda a esta constituição.
   PostgreSQL PODEM ser usados quando expressarem melhor uma invariante ou consulta.
 - **Renderização**: Django Templates.
 - **Interatividade**: HTMX, conforme Princípios II e IX.
-- **Estilo**: CSS próprio.
+- **Estilo**: CSS próprio, organizado sobre o design system definido em `DESIGN.md`, utilizando
+  tokens/variáveis para valores recorrentes (cores, espaçamento, tipografia e afins).
 - **JavaScript**: pontual, pequeno e modular, apenas onde HTML, CSS e HTMX não bastem.
 
 Configuração sensível DEVE vir do ambiente e NÃO DEVE ser versionada (Princípio VI). Novas
@@ -245,4 +291,4 @@ provisório, com registro do que precisa ser corrigido. Complexidade adicional D
 `CLAUDE.md` na raiz do repositório, quando existir — NÃO DEVEM contradizer esta constituição. Em
 caso de divergência, esta constituição prevalece e o arquivo de orientação DEVE ser corrigido.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-18 | **Last Amended**: 2026-09-18
+**Version**: 1.1.0 | **Ratified**: 2026-09-18 | **Last Amended**: 2026-09-18
