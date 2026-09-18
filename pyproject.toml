@@ -1,0 +1,36 @@
+[project]
+name = "wms-almoxarifado"
+version = "0.1.0"
+description = "WMS Almoxarifado — gestão de materiais, estoque e movimentações do SAEP."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "django>=5.2",
+    "psycopg[binary]>=3.2",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.8",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+# .specify: scripts vendorizados do Spec Kit (fora do código de autoria do
+# projeto). Código próprio, incluindo .claude/hooks/, permanece lintado.
+extend-exclude = ["*/migrations/*", ".specify"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_test.py"]
+testpaths = ["tests"]
+addopts = "-ra"

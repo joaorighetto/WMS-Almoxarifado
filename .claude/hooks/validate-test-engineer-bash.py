@@ -53,6 +53,26 @@ PYTEST_FORBIDDEN_FLAGS = (
 )
 
 
+# `uv run` options this validator understands. Anything else appearing
+# before the wrapped command is blocked (fail closed) rather than passed
+# through blindly.
+#
+# --env-file <path> is required to run the project's official commands
+# (`uv run --env-file .env pytest`, etc.) — Django settings read DB/secret
+# config from the process environment and `uv run` does not load `.env`
+# on its own.
+#
+# `uv run` performs a project lock+sync before running the wrapped command,
+# which can rewrite the tracked `uv.lock` if it is out of date relative to
+# `pyproject.toml`. This agent must not mutate the repository outside test
+# files, so at least one of --frozen/--locked (which make `uv run` refuse to
+# touch `uv.lock`) is mandatory. --no-sync is accepted too but does not by
+# itself satisfy that requirement.
+UV_RUN_VALUE_FLAGS = {"--env-file"}
+UV_RUN_LOCK_SAFE_FLAGS = {"--frozen", "--locked"}
+UV_RUN_EXTRA_BOOL_FLAGS = {"--no-sync"}
+
+
 def block(reason: str) -> None:
     sys.stderr.write(REASON_PREFIX + reason + "\n")
     sys.exit(2)
@@ -95,7 +115,8 @@ def classify_git(rest: list) -> None:
         allow()
 
     block(f"'git {sub}' is not in the read-only allowlist "
-          f"(allowed: status, diff, show, log, branch --show-current, rev-parse, merge-base, ls-files)")
+          f"(allowed: status, diff, show, log, branch --show-current, "
+          f"rev-parse, merge-base, ls-files)")
 
 
 def classify_pytest(args: list) -> None:
@@ -173,6 +194,55 @@ def classify_python(rest: list) -> None:
     block("only 'python[3] -m pytest/coverage' and 'python[3] manage.py test/check' are allowed")
 
 
+def strip_uv_run_options(tokens: list) -> list:
+    """Consume `uv run`'s own options (not the wrapped command's) from the
+    front of `tokens`, enforcing the allowlist in UV_RUN_*.
+
+    Blocks (fail closed) on any option it does not recognize, and requires
+    --frozen or --locked to be present so `uv run` cannot rewrite the
+    tracked `uv.lock` file. Returns the remaining tokens: the wrapped
+    command and its own arguments.
+    """
+    i = 0
+    saw_lock_safe_flag = False
+    while i < len(tokens):
+        tok = tokens[i]
+        if not tok.startswith("-"):
+            break
+
+        if "=" in tok:
+            flag = tok.split("=", 1)[0]
+            if flag in UV_RUN_VALUE_FLAGS:
+                i += 1
+                continue
+            block(f"'uv run {flag}=...' is not an allowed uv run option "
+                  f"(allowed: --env-file <path>, --frozen, --locked, --no-sync)")
+
+        if tok in UV_RUN_VALUE_FLAGS:
+            if i + 1 >= len(tokens):
+                block(f"'uv run {tok}' requires a value")
+            i += 2
+            continue
+
+        if tok in UV_RUN_LOCK_SAFE_FLAGS:
+            saw_lock_safe_flag = True
+            i += 1
+            continue
+
+        if tok in UV_RUN_EXTRA_BOOL_FLAGS:
+            i += 1
+            continue
+
+        block(f"'uv run {tok}' is not an allowed uv run option "
+              f"(allowed: --env-file <path>, --frozen, --locked, --no-sync)")
+
+    if not saw_lock_safe_flag:
+        block("'uv run' must include --frozen or --locked so it cannot rewrite "
+              "the tracked uv.lock file")
+
+    return tokens[i:]
+
+
 def classify(command: str) -> None:
     for token in FORBIDDEN_SUBSTRINGS:
         if token in command:
@@ -186,6 +256,14 @@ def classify(command: str) -> None:
 
     if not tokens:
         block("empty command")
+
+    if tokens[0] == "uv":
+        if len(tokens) < 2 or tokens[1] != "run":
+            block("only 'uv run ...' is allowed, not other 'uv' subcommands "
+                  "(e.g. uv add, uv sync, uv lock, uv pip)")
+        tokens = strip_uv_run_options(tokens[2:])
+        if not tokens:
+            block("'uv run' with no command is not classifiable as test/inspection")
 
     prog = tokens[0]
     rest = tokens[1:]
@@ -204,7 +282,9 @@ def classify(command: str) -> None:
         block(f"'{prog}' is not in the test/inspection allowlist "
               f"(allowed: pytest, python[3] -m pytest, manage.py test/check, "
               f"git status/diff/show/log/branch --show-current/rev-parse/merge-base/ls-files, "
-              f"coverage run -m pytest / coverage report, ruff check)")
+              f"coverage run -m pytest / coverage report, ruff check; any of these may be "
+              f"prefixed with 'uv run' plus --frozen/--locked (required) and "
+              f"--env-file/--no-sync)")
 
 
 def main() -> None:

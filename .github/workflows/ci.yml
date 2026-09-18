@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: wms_almoxarifado_ci
+          POSTGRES_USER: wms_almoxarifado_ci
+          POSTGRES_PASSWORD: wms_almoxarifado_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+      DJANGO_DEBUG: "False"
+      DATABASE_NAME: wms_almoxarifado_ci
+      DATABASE_USER: wms_almoxarifado_ci
+      DATABASE_PASSWORD: wms_almoxarifado_ci
+      DATABASE_HOST: localhost
+      DATABASE_PORT: "5432"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Sync dependencies (lockfile must not change)
+        run: uv sync --locked
+
+      # scripts/verify.sh usa `uv run --env-file .env` para funcionar igual em
+      # dev e CI; aqui materializamos um .env a partir das env vars do job.
+      - name: Write .env from job environment
+        run: |
+          cat > .env <<EOF
+          DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+          DJANGO_DEBUG=${DJANGO_DEBUG}
+          DJANGO_ALLOWED_HOSTS=
+          DATABASE_NAME=${DATABASE_NAME}
+          DATABASE_USER=${DATABASE_USER}
+          DATABASE_PASSWORD=${DATABASE_PASSWORD}
+          DATABASE_HOST=${DATABASE_HOST}
+          DATABASE_PORT=${DATABASE_PORT}
+          EOF
+
+      - name: Run verification suite
+        run: ./scripts/verify.sh

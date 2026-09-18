@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-wms_almoxarifado}
+      POSTGRES_USER: ${DATABASE_USER:-wms_almoxarifado}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-wms_almoxarifado}
+    ports:
+      - "127.0.0.1:${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - wms_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-wms_almoxarifado} -d ${DATABASE_NAME:-wms_almoxarifado}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  wms_postgres_data:
