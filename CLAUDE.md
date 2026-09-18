@@ -7,13 +7,42 @@ Este repositório utiliza Claude Code com Spec Kit, Serena MCP e subagents espec
 Ao trabalhar neste projeto, respeite a seguinte ordem de contexto:
 
 1. `.specify/memory/constitution.md` — princípios obrigatórios de engenharia;
-2. `spec.md` — requisitos e comportamento esperado da feature;
-3. `plan.md` — solução técnica planejada;
-4. `tasks.md` — unidades de implementação;
-5. `DESIGN.md` — design system, quando existir;
-6. código existente — realidade atual da implementação.
+2. `PRODUCT.md` e a documentação canônica transversal de domínio (`docs/domain/permissions-matrix.md`
+   e, quando validada, `docs/domain/invariants-matrix.md`) — verdade de produto e de
+   autorização/invariantes válida em todo o repositório, não só na feature em andamento;
+3. `spec.md` — requisitos e comportamento esperado da feature;
+4. `plan.md` — solução técnica planejada;
+5. `tasks.md` — unidades de implementação;
+6. `DESIGN.md` — design system, quando existir;
+7. código existente — realidade atual da implementação.
+
+Essa ordem não é uma regra simples de "arquivo de cima sempre sobrescreve arquivo de baixo". Uma
+feature deve respeitar os artefatos canônicos transversais. Se uma nova decisão de produto precisar
+alterar uma permissão ou invariante já canônica, o artefato transversal correspondente deve ser
+atualizado explicitamente — nunca contornado silenciosamente por uma spec.
 
 Se houver conflito material entre essas fontes, não escolha silenciosamente uma interpretação. Identifique o conflito antes de prosseguir.
+
+## Documentação canônica transversal
+
+Além dos artefatos de feature (`spec.md`/`plan.md`/`tasks.md`), o projeto mantém documentação de
+domínio válida em todo o repositório, independente de qual feature está sendo trabalhada:
+
+- `docs/domain/permissions-matrix.md` — fonte canônica de capabilities, papéis, escopos e
+  condições de autorização. **Validada.**
+- `docs/domain/invariants-matrix.md` — fonte canônica de invariantes de domínio, quando este
+  documento existir e estiver validado. Até lá, não tem autoridade nenhuma e não deve ser tratado
+  como fonte normativa.
+
+`docs/domain-legacy/reconciliation/permissions-reconciliation.md` é histórico/não normativo — serve
+para entender por que uma decisão de permissão existe, nunca para reviver algo lá descartado,
+pendente ou substituído.
+
+Specifications relacionadas a operações protegidas devem referenciar as capabilities aplicáveis por
+ID, numa seção `## Autorizações aplicáveis` (por exemplo, `PERM-REQ-CREATE-SELF`) — só quando houver
+autorização relevante, nunca como seção obrigatória em toda spec. Uma spec nova não redefine
+silenciosamente o significado de uma capability existente; para alterar uma, primeiro registre a
+decisão e atualize `permissions-matrix.md`, só depois use o novo comportamento na spec.
 
 ## Arquitetura base
 

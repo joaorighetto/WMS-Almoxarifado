@@ -8,36 +8,50 @@ web
 
 ## Users
 
-O almoxarifado tem hoje uma equipe pequena: um chefe (dono do produto) e dois funcionários.
+O almoxarifado tem hoje uma equipe pequena: um chefe (dono do produto) e dois funcionários. Um
+mesmo funcionário público pode ocupar mais de um papel de produto ao mesmo tempo quando isso
+reflete sua função real — mas não há herança implícita entre papéis. Cada papel concede só as
+capacidades listadas para ele; possuir um papel não concede automaticamente as capacidades de
+outro, e um papel administrativo nunca concede capacidade operacional só por coexistir com outros
+papéis na mesma pessoa (ver Product Principles).
 
-- **Funcionário do almoxarifado**: registra movimentações de estoque e completa o atendimento de
-  requisições já aprovadas. Uma requisição aprovada pode ser atendida e concluída por qualquer
-  funcionário do almoxarifado, sem atribuição individual a uma pessoa específica. Qualquer
-  funcionário do almoxarifado — não só o chefe — também replica manualmente no SCPI os
-  lançamentos feitos no WMS depois; por isso precisa de acesso ao histórico de requisições
-  concluídas (e, de modo geral, ao histórico de movimentações), não só à fila do que ainda está
-  pendente.
-- **Chefe do almoxarifado**: acumula tudo que um funcionário do almoxarifado faz, mais atribuições
-  exclusivas dele:
-  - importa o catálogo de materiais do SCPI (feature `001-importacao-catalogo-materiais`, em
-    especificação) e autoriza essa operação;
-  - aprova as requisições criadas por funcionários do próprio almoxarifado (o almoxarifado também
-    é, ele mesmo, um setor requisitante quando precisa de material);
-  - opera estorno, devolução e saída excepcional de estoque (deterioração, vencimento,
-    obsolescência, doação, empréstimo, entre outras) — operações que os demais funcionários do
-    almoxarifado não podem executar.
-- **Chefe de setor** (qualquer outro setor do SAEP): aprova as requisições criadas pelos
-  requisitantes do seu próprio setor. Não tem acesso operacional ao estoque do almoxarifado nem às
-  operações exclusivas do chefe do almoxarifado (estorno, devolução, saída excepcional).
 - **Requisitante**: qualquer funcionário de qualquer setor do SAEP — incluindo os próprios
   funcionários do almoxarifado — que cria uma solicitação de material. A requisição segue para
   aprovação do chefe do setor a que o requisitante pertence.
-- **Gestor/auditor**: acompanha relatórios, divergências e histórico com visão gerencial, sem
-  operar estoque diretamente.
-- **Administrador de sistema**: configura usuários, permissões e parâmetros do WMS.
+- **Auxiliar de setor** (em qualquer setor do SAEP, incluindo o almoxarifado): cria requisição em
+  nome de outros funcionários do próprio setor e acompanha o que criou. Não supervisiona o setor,
+  não aprova requisições e não opera estoque do almoxarifado nem acessa outros setores — o único
+  acesso relacionado a estoque é ver, no histórico de movimentações, apenas o que resultou das
+  requisições que ele mesmo criou (rastreabilidade do que iniciou, não visibilidade operacional).
+- **Chefe de setor** (qualquer setor do SAEP, incluindo o próprio almoxarifado): aprova as
+  requisições criadas por funcionários do seu setor. Fora do almoxarifado, não tem acesso
+  operacional ao estoque nem às atribuições exclusivas do chefe do almoxarifado.
+- **Funcionário do almoxarifado**: registra movimentações de estoque e completa o atendimento de
+  requisições já aprovadas. Uma requisição aprovada pode ser atendida e concluída por qualquer
+  funcionário do almoxarifado, sem atribuição individual a uma pessoa específica. Também replica
+  manualmente no SCPI os lançamentos feitos no WMS depois; por isso precisa de acesso ao histórico
+  de requisições concluídas (e, de modo geral, ao histórico de movimentações), não só à fila do
+  que ainda está pendente.
+- **Chefe do almoxarifado**: a pessoa que chefia o almoxarifado ocupa, ao mesmo tempo, o papel de
+  Funcionário do almoxarifado (as capacidades acima) e um conjunto de atribuições exclusivas,
+  concedidas só a ela — nunca por "acumular" outro papel, mas por ocupar os dois papéis
+  explicitamente:
+  - importa o catálogo de materiais do SCPI (feature `001-importacao-catalogo-materiais`, em
+    especificação) e autoriza essa operação;
+  - aprova, como chefe de setor do próprio almoxarifado, as requisições criadas por funcionários
+    do almoxarifado (o almoxarifado também é, ele mesmo, um setor requisitante quando precisa de
+    material);
+  - opera estorno, devolução e saída excepcional de estoque (deterioração, vencimento,
+    obsolescência, doação, empréstimo, entre outras) — operações que nenhum outro papel, incluindo
+    o Funcionário do almoxarifado, executa.
+- **Gestor/auditor**: acompanha relatórios/consumo consolidado de todos os setores e o histórico
+  completo de movimentações de estoque, com visão gerencial, sem operar estoque diretamente.
+- **Administrador de sistema**: configura usuários, permissões e parâmetros do WMS. Administrar o
+  sistema não concede nenhuma capacidade operacional sobre estoque ou requisições — quem precisar
+  delas precisa também ocupar, explicitamente, o papel de produto correspondente.
 
 O fluxo de requisição-aprovação-atendimento descrito acima (requisitante → chefe de setor →
-qualquer funcionário do almoxarifado atende) e as operações exclusivas do chefe do almoxarifado
+qualquer funcionário do almoxarifado atende) e as atribuições exclusivas do chefe do almoxarifado
 (estorno, devolução, saída excepcional) ainda não têm feature especificada no Spec Kit; são
 capacidades confirmadas em produto, mas não implementadas.
 
@@ -63,6 +77,10 @@ fluxo próprio de requisição e autorização hierárquica por setor que o SCPI
 
 - Atende um único almoxarifado físico do SAEP; não há necessidade confirmada de segmentar
   estoque por múltiplos locais.
+- Cada funcionário do SAEP pertence a um único setor. Todo setor ativo tem exatamente um chefe
+  ativo, que pertence a esse mesmo setor; um chefe responde por um único setor. Essas invariantes
+  são a base de todo escopo "próprio setor" usado em `docs/domain/permissions-matrix.md` — sem
+  elas, esse escopo fica indefinido.
 - O catálogo de materiais é importado periodicamente do SCPI via arquivo CSV exportado
   manualmente pelo chefe do almoxarifado (feature `001-importacao-catalogo-materiais`, em
   especificação); não existe integração automática nem API com o SCPI.
@@ -129,3 +147,9 @@ fluxo próprio de requisição e autorização hierárquica por setor que o SCPI
    deve ser garantida no servidor, nunca apenas ocultada na interface.
 5. O sistema atende um único almoxarifado físico por ora; não presumir necessidade de
    segmentação multi-local antes que seja solicitada.
+6. Papéis de produto não herdam capacidades implicitamente uns dos outros. Uma pessoa pode ocupar
+   mais de um papel ao mesmo tempo quando isso refletir sua função real (como o chefe do
+   almoxarifado, que ocupa Funcionário do almoxarifado e as atribuições exclusivas de chefe), mas
+   cada capacidade autorizada precisa estar explicitamente associada ao papel que a exerce.
+   Administração do sistema, em particular, nunca concede por si só capacidade operacional sobre
+   estoque ou requisições.
