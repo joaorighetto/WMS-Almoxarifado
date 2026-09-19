@@ -18,7 +18,7 @@ Protegido aqui:
 import pytest
 
 from contas.admin import ContaAlteracaoForm, ContaCriacaoForm
-from contas.models import PapelUsuario, Setor, User
+from contas.models import Setor, User
 
 SENHA = "uma-senha-de-admin-bastante-forte-123"
 
@@ -48,7 +48,7 @@ def test_criacao_via_admin_grava_senha_com_hash_nunca_crua():
 
 
 @pytest.mark.django_db
-def test_criacao_via_admin_nao_concede_nenhum_papel_de_negocio():
+def test_criacao_via_admin_concede_apenas_o_papel_minimo():
     setor = Setor.objects.create(nome="Almoxarifado")
 
     form = ContaCriacaoForm(
@@ -66,9 +66,13 @@ def test_criacao_via_admin_nao_concede_nenhum_papel_de_negocio():
 
     usuario = form.save()
 
-    assert PapelUsuario.objects.filter(usuario=usuario).count() == 0
+    # `FR-016a`: a criação administrativa é o segundo caminho suportado de
+    # criação de identidade de negócio, e também concede o papel mínimo —
+    # explicitamente, como linha persistida.
+    assert list(usuario.papeis.values_list("papel", flat=True)) == ["ROLE-REQUESTER"]
     assert usuario.tem_papel("ROLE-SYSTEM-ADMIN") is False, (
-        "superusuário técnico não é ROLE-SYSTEM-ADMIN (permissions-matrix, regras 7-8)"
+        "marcar is_superuser no Admin não concede ROLE-SYSTEM-ADMIN "
+        "(permissions-matrix, regras 7-8)"
     )
 
 

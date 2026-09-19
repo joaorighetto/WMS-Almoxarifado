@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.db import transaction
 
-from .models import PapelUsuario, Setor, User
+from .models import Papel, PapelUsuario, Setor, User
 
 
 class ContaCriacaoForm(UserCreationForm):
@@ -14,6 +15,22 @@ class ContaCriacaoForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("matricula", "setor", "is_active", "is_staff", "is_superuser")
+
+    def save(self, commit=True):
+        """Concede `ROLE-REQUESTER` junto com a conta (`FR-016a`).
+
+        O Admin é o segundo caminho suportado de criação de identidade de
+        negócio (o outro é `User.objects.create_user`), e a matriz canônica
+        exige que a concessão seja explícita e persistida — nunca inferida.
+        Conta e papel mínimo nascem juntos ou não nascem (`FR-023`).
+        """
+        if not commit:
+            return super().save(commit=False)
+
+        with transaction.atomic():
+            usuario = super().save(commit=True)
+            PapelUsuario.objects.get_or_create(usuario=usuario, papel=Papel.REQUISITANTE)
+        return usuario
 
 
 class ContaAlteracaoForm(UserChangeForm):

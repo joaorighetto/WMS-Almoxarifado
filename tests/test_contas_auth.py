@@ -184,7 +184,9 @@ def _usuario_da_sessao_autenticada(client, matricula, senha):
 def test_usuario_com_papel_unico_tem_exatamente_esse_papel_sem_heranca(
     client, usuario_ativo, senha_valida
 ):
-    PapelUsuario.objects.create(usuario=usuario_ativo, papel=Papel.REQUISITANTE)
+    # `ROLE-REQUESTER` já foi concedido na criação da identidade de negócio
+    # (`FR-016a`) — recriá-lo aqui violaria a UniqueConstraint.
+    assert usuario_ativo.tem_papel(Papel.REQUISITANTE) is True
 
     usuario_sessao = _usuario_da_sessao_autenticada(
         client, usuario_ativo.matricula, senha_valida
@@ -204,13 +206,16 @@ def test_usuario_com_multiplos_papeis_simultaneos_expoe_todos_sem_conceder_outro
 ):
     # Cenário real: chefe do almoxarifado acumula três papéis explícitos
     # simultaneamente (spec.md, User Story 3, Acceptance Scenario 2).
-    papeis_atribuidos = {
+    papeis_extras = {
         Papel.FUNCIONARIO_ALMOXARIFADO,
         Papel.CHEFE_SETOR,
         Papel.CHEFE_ALMOXARIFADO,
     }
-    for papel in papeis_atribuidos:
+    for papel in papeis_extras:
         PapelUsuario.objects.create(usuario=usuario_ativo, papel=papel)
+
+    # A identidade de negócio já nasceu com a concessão mínima (`FR-016a`).
+    papeis_atribuidos = papeis_extras | {Papel.REQUISITANTE}
 
     usuario_sessao = _usuario_da_sessao_autenticada(
         client, usuario_ativo.matricula, senha_valida
@@ -226,7 +231,7 @@ def test_usuario_com_multiplos_papeis_simultaneos_expoe_todos_sem_conceder_outro
     # concedidos ao mesmo usuário — nenhum concede implicitamente a
     # capacidade de outro (FR-015).
     assert usuario_sessao.tem_papel(Papel.ADMINISTRADOR_SISTEMA) is False
-    assert usuario_sessao.tem_papel(Papel.REQUISITANTE) is False
+    assert usuario_sessao.tem_papel(Papel.AUXILIAR_SETOR) is False
     assert usuario_sessao.tem_papel(Papel.AUDITOR) is False
 
 
