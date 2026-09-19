@@ -41,21 +41,21 @@ aninhado). Testes em `tests/` (diretório único já existente, convenção do p
 **Purpose**: infraestrutura de projeto que precisa existir antes de qualquer modelo/view desta
 feature — sem nenhuma funcionalidade de user story aqui.
 
-- [ ] T001 Criar o app Django `contas` na raiz do repositório (`contas/__init__.py`,
+- [X] T001 Criar o app Django `contas` na raiz do repositório (`contas/__init__.py`,
   `contas/apps.py` com `ContasConfig`) — sem models/views ainda.
-- [ ] T002 Registrar `"contas"` em `INSTALLED_APPS` em `config/settings/base.py`.
-- [ ] T003 Configurar `AUTH_USER_MODEL = "contas.User"` em `config/settings/base.py` — precisa
+- [X] T002 Registrar `"contas"` em `INSTALLED_APPS` em `config/settings/base.py`.
+- [X] T003 Configurar `AUTH_USER_MODEL = "contas.User"` em `config/settings/base.py` — precisa
   estar em vigor antes da primeira migration (T013), mas pode ser escrito agora mesmo antes de
   `contas.models.User` existir (Django resolve a referência de forma tardia).
-- [ ] T004 Configurar `LOGIN_URL = "login"`, `LOGIN_REDIRECT_URL = "home"`,
+- [X] T004 Configurar `LOGIN_URL = "login"`, `LOGIN_REDIRECT_URL = "home"`,
   `LOGOUT_REDIRECT_URL = "login"` em `config/settings/base.py`.
-- [ ] T005 Adicionar `STATICFILES_DIRS = [BASE_DIR / "static"]` em `config/settings/base.py`
+- [X] T005 Adicionar `STATICFILES_DIRS = [BASE_DIR / "static"]` em `config/settings/base.py`
   (ausente hoje; necessário para os tokens CSS de projeto em `static/css/`).
-- [ ] T006 [P] Criar `static/css/tokens.css` com os tokens de `DESIGN.md` → Colors/Typography
+- [X] T006 [P] Criar `static/css/tokens.css` com os tokens de `DESIGN.md` → Colors/Typography
   (ex.: `--color-primary: #2F5D8A`, `--color-background: #F7F8FA`, `--color-surface: #FFFFFF`,
   `--color-border: #D7DBE0`, `--color-danger: #B3261E`, `--color-focus`, escala tipográfica e de
   espaçamento base 4px) — valores marcados em `DESIGN.md` como *initial design value*.
-- [ ] T007 [P] Criar `static/css/base.css` com reset mínimo e estilos globais compartilhados
+- [X] T007 [P] Criar `static/css/base.css` com reset mínimo e estilos globais compartilhados
   (fonte de sistema conforme `DESIGN.md` → Typography, `box-sizing`, anel de foco visível em todo
   controle interativo — nunca removido).
 
@@ -70,18 +70,18 @@ todas as histórias seguintes.
 
 **⚠️ CRÍTICO**: nenhuma user story pode começar antes desta fase estar completa.
 
-- [ ] T008 Criar `Setor` em `contas/models.py`: `nome = models.CharField(blank=False)` — **sem
+- [X] T008 Criar `Setor` em `contas/models.py`: `nome = models.CharField(blank=False)` — **sem
   `max_length`** (nenhuma fonte normativa define limite de tamanho para nome de setor; o backend é
   exclusivamente PostgreSQL, que suporta `CharField` sem `max_length` — `supports_unlimited_charfield`
   — então nenhum limite arbitrário é inventado só para satisfazer o campo) e **obrigatório, sem
   `unique=True`** (nenhuma fonte normativa exige nome de setor único — `research.md`, R4/correção);
   `ativo = models.BooleanField(default=True)`. Sem campo `chefe` (chefia é derivada de
   `PapelUsuario`, não uma coluna própria). Sem código/identificador de setor inventado.
-- [ ] T009 Criar `UserManager(BaseUserManager)` em `contas/models.py` com `create_user(matricula,
+- [X] T009 Criar `UserManager(BaseUserManager)` em `contas/models.py` com `create_user(matricula,
   password=None, setor=None, **extra_fields)` e `create_superuser(matricula, password=None,
   setor=None, **extra_fields)` (forçando `is_staff=True`, `is_superuser=True`), seguindo o padrão
   documentado do Django para modelo de usuário customizado. Depende de T008 (referencia `Setor`).
-- [ ] T010 Criar `User(AbstractBaseUser, PermissionsMixin)` em `contas/models.py`:
+- [X] T010 Criar `User(AbstractBaseUser, PermissionsMixin)` em `contas/models.py`:
   `matricula = models.CharField(max_length=32, unique=True, verbose_name="matrícula")` como
   `USERNAME_FIELD` (texto opaco — nunca numérico, sem máscara/regex, `max_length=32` é limite
   técnico de sanidade, não regra de formato); `is_active = models.BooleanField(default=True)`;
@@ -90,22 +90,22 @@ todas as histórias seguintes.
   (`INV-ORG-001`); `REQUIRED_FIELDS = ["setor"]`; `objects = UserManager()`; método
   `tem_papel(self, *codigos: str) -> bool` retornando
   `self.papeis.filter(papel__in=codigos).exists()`. Depende de T009 (mesmo arquivo — sequencial).
-- [ ] T011 Criar `Papel(models.TextChoices)` em `contas/models.py` com os 7 membros e `value`
+- [X] T011 Criar `Papel(models.TextChoices)` em `contas/models.py` com os 7 membros e `value`
   idêntico ao ID canônico de `docs/domain/permissions-matrix.md`: `REQUISITANTE = "ROLE-REQUESTER"`,
   `AUXILIAR_SETOR = "ROLE-SECTOR-ASSISTANT"`, `CHEFE_SETOR = "ROLE-SECTOR-HEAD"`,
   `FUNCIONARIO_ALMOXARIFADO = "ROLE-WAREHOUSE-STAFF"`,
   `CHEFE_ALMOXARIFADO = "ROLE-WAREHOUSE-HEAD"`, `AUDITOR = "ROLE-AUDITOR"`,
   `ADMINISTRADOR_SISTEMA = "ROLE-SYSTEM-ADMIN"` — catálogo fechado, não redefinido, não é tabela.
   Depende de T010 (mesmo arquivo — sequencial).
-- [ ] T012 Criar `PapelUsuario` em `contas/models.py`:
+- [X] T012 Criar `PapelUsuario` em `contas/models.py`:
   `usuario = models.ForeignKey("contas.User", related_name="papeis", on_delete=models.CASCADE)`;
   `papel = models.CharField(max_length=32, choices=Papel.choices)`; `Meta.constraints =
   [models.UniqueConstraint(fields=["usuario", "papel"], name="papelusuario_unico_usuario_papel")]`
   (forma moderna — **não** `unique_together`). Depende de T011 (mesmo arquivo — sequencial).
-- [ ] T013 Gerar a migration inicial: `python manage.py makemigrations contas`, produzindo
+- [X] T013 Gerar a migration inicial: `python manage.py makemigrations contas`, produzindo
   `contas/migrations/0001_initial.py` (User, Setor, PapelUsuario numa única migration — momento
   mais seguro do projeto, zero migrations preexistentes). Depende de T003, T008–T012.
-- [ ] T014 Configurar `contas/admin.py` para o Admin nativo do Django operar sobre `contas.User`
+- [X] T014 Configurar `contas/admin.py` para o Admin nativo do Django operar sobre `contas.User`
   (que deriva de `AbstractBaseUser + PermissionsMixin`, com `matricula` como `USERNAME_FIELD` —
   **não** é o `User` padrão do Django, então `UserCreationForm`/`UserChangeForm` de
   `django.contrib.auth.forms` **não podem ser usados diretamente**, pois pressupõem os campos do
@@ -127,7 +127,7 @@ todas as histórias seguintes.
   Ferramenta técnica de bootstrap/manutenção — não é tela de administração de produto nem uma nova
   specification implícita; `is_staff`/`is_superuser` continuam técnicos e distintos de
   `ROLE-SYSTEM-ADMIN`. Depende de T010–T012.
-- [ ] T015 [P] Criar `tests/test_contas_models.py` cobrindo: matrícula preservada exatamente como
+- [X] T015 [P] Criar `tests/test_contas_models.py` cobrindo: matrícula preservada exatamente como
   fornecida, incluindo zeros à esquerda, nunca convertida para número; matrícula duplicada rejeitada
   no banco (`IntegrityError`, `unique=True`); usuário sem `setor` não pode ser criado; usuário pode
   ter múltiplos `PapelUsuario` distintos simultaneamente; atribuição duplicada do mesmo papel ao
@@ -157,13 +157,13 @@ matrícula inexistente, conta inativa) recebem a mesma mensagem genérica.
 
 ### Testes (User Story 1)
 
-- [ ] T016 [P] [US1] Criar `tests/test_contas_auth.py` cobrindo: matrícula + senha válidas
+- [X] T016 [P] [US1] Criar `tests/test_contas_auth.py` cobrindo: matrícula + senha válidas
   autentica; senha inválida recusa com mensagem genérica; matrícula inexistente recusa com a mesma
   mensagem; usuário inativo recusa com a mesma mensagem; as três recusas produzem exatamente a
   mesma string de erro (comparação direta); sessão persiste entre requisições subsequentes; usuário
   já autenticado que acessa `GET /login/` é redirecionado para a Home. Depende de T010 (modelo);
   espera-se que falhe até a Implementação desta fase existir.
-- [ ] T017 [P] [US1] Criar `tests/test_contas_home.py` cobrindo: visitante anônimo que acessa `/`
+- [X] T017 [P] [US1] Criar `tests/test_contas_home.py` cobrindo: visitante anônimo que acessa `/`
   é redirecionado ao login (não recebe o conteúdo); renderização básica da Home para usuário
   autenticado (200, template correto); renderização básica do login (200, campos de matrícula e
   senha presentes); mensagem de erro genérica aparece no HTML de uma tentativa de login inválida.
@@ -171,15 +171,15 @@ matrícula inexistente, conta inativa) recebem a mesma mensagem genérica.
 
 ### Implementação (User Story 1)
 
-- [ ] T018 [US1] Criar `HomeView(LoginRequiredMixin, TemplateView)` em `contas/views.py`,
+- [X] T018 [US1] Criar `HomeView(LoginRequiredMixin, TemplateView)` em `contas/views.py`,
   `template_name="contas/home.html"` — usa `LoginRequiredMixin` nativo, sem wrapper próprio
   (`contas/auth.py` não existe).
-- [ ] T019 [US1] Criar `contas/urls.py` com as rotas `login`
+- [X] T019 [US1] Criar `contas/urls.py` com as rotas `login`
   (`django.contrib.auth.views.LoginView.as_view(template_name="contas/login.html",
   redirect_authenticated_user=True)`, nome `"login"`) e `home` (`HomeView.as_view()`, nome
   `"home"`); incluir via `path("", include("contas.urls"))` em `config/urls.py`. **Sem
   `handler403`**. Depende de T018.
-- [ ] T020 [P] [US1] Criar `contas/templates/contas/base.html` (estrutura HTML mínima; `<link>`
+- [X] T020 [P] [US1] Criar `contas/templates/contas/base.html` (estrutura HTML mínima; `<link>`
   para os CSS globais `static/css/tokens.css` e `static/css/base.css`; um bloco
   `{% block extra_css %}{% endblock %}` logo após esses `<link>`s, para que cada página carregue
   seu próprio CSS específico sem duplicar os links globais; bloco de conteúdo) e
@@ -188,16 +188,16 @@ matrícula inexistente, conta inativa) recebem a mesma mensagem genérica.
   em T022; formulário `POST` com `{% csrf_token %}`; campos do `AuthenticationForm` nativo —
   matrícula e senha, sem `contas/forms.py`; mensagem de erro genérica quando `form.errors`; ação
   primária "Entrar"; layout mobile-first, coluna única, conforme `DESIGN.md` → Inputs/Buttons).
-- [ ] T021 [P] [US1] Criar `contas/templates/contas/home.html` (estende `base.html`; preenche
+- [X] T021 [P] [US1] Criar `contas/templates/contas/home.html` (estende `base.html`; preenche
   `{% block extra_css %}` com `<link rel="stylesheet" href="{% static 'contas/css/home.css' %}">`
   para carregar o CSS criado em T023, usando o mesmo mecanismo de `base.html` — sem duplicar os
   links globais; confirmação mínima de sessão ativa — ex.: matrícula autenticada; sem sidebar
   completa, sem menu de features futuras, sem KPI, sem catálogo/importação SCPI; espaço reservado
   para a ação de logout, ligada em T033/Phase 6).
-- [ ] T022 [P] [US1] Criar `contas/static/contas/css/login.css` (layout centralizado, coluna
+- [X] T022 [P] [US1] Criar `contas/static/contas/css/login.css` (layout centralizado, coluna
   única, campos ocupando a largura do container em telas estreitas, foco sempre visível, nenhuma
   ação dependente de hover, usando os tokens de `static/css/tokens.css`).
-- [ ] T023 [P] [US1] Criar `contas/static/contas/css/home.css` (superfície mínima e neutra, mesma
+- [X] T023 [P] [US1] Criar `contas/static/contas/css/home.css` (superfície mínima e neutra, mesma
   fundação de tokens que `login.css`).
 
 **Checkpoint**: User Story 1 funcional e testável isoladamente — **Foundation + US1 = MVP**.
@@ -217,11 +217,11 @@ comum fora desse fluxo permanece um 403 comum.
 
 ### Testes (User Story 2)
 
-- [ ] T024 [P] [US2] Criar urlconf de teste dedicado (ex.: `tests/urls_test_permission_denied.py`)
+- [X] T024 [P] [US2] Criar urlconf de teste dedicado (ex.: `tests/urls_test_permission_denied.py`)
   com uma view fictícia protegida por `login_required` que sempre levanta
   `django.core.exceptions.PermissionDenied` — usado via `@pytest.mark.urls(...)` pelos testes de
   T025. Não é código de produção; vive só em `tests/`.
-- [ ] T025 [US2] Criar `tests/test_contas_protected_access.py` cobrindo: visitante não autenticado
+- [X] T025 [US2] Criar `tests/test_contas_protected_access.py` cobrindo: visitante não autenticado
   é enviado ao login com `next` apontando para o destino original; destino interno, existente e
   autorizado retorna corretamente após login, a URL final não contém nenhum parâmetro técnico de
   retorno, e a chave de sessão do destino pendente deixa de existir após a primeira requisição
@@ -240,7 +240,7 @@ comum fora desse fluxo permanece um 403 comum.
 
 ### Implementação (User Story 2)
 
-- [ ] T026 [US2] Criar `WMSLoginView(LoginView)` em `contas/views.py`: `get_redirect_url()`
+- [X] T026 [US2] Criar `WMSLoginView(LoginView)` em `contas/views.py`: `get_redirect_url()`
   sobrescrito para, após a checagem nativa de host/esquema, extrair `caminho =
   urlsplit(url).path` e chamar `resolve(caminho)` (**nunca** `resolve()` com a URL completa —
   quebraria com query string), retornando `""` (cai no padrão) se levantar `Resolver404`, ou a
@@ -248,10 +248,10 @@ comum fora desse fluxo permanece um 403 comum.
   `self.request.session["_retorno_pos_login_destino"] = url` quando há um destino não-padrão
   válido, e retornar `self.get_default_redirect_url()` caso contrário. Nenhum
   `contas/forms.py`; usa `AuthenticationForm` nativo.
-- [ ] T027 [US2] Atualizar `contas/urls.py`: a rota `login` passa a usar
+- [X] T027 [US2] Atualizar `contas/urls.py`: a rota `login` passa a usar
   `WMSLoginView.as_view(template_name="contas/login.html", redirect_authenticated_user=True)` em
   vez do `LoginView` nativo (mesmo template/kwargs de T019). Depende de T026.
-- [ ] T028 [US2] Criar `contas/middleware.py` com `RetornoPosLoginMiddleware`: `process_view(self,
+- [X] T028 [US2] Criar `contas/middleware.py` com `RetornoPosLoginMiddleware`: `process_view(self,
   request, view_func, view_args, view_kwargs)` lê `request.session.get("_retorno_pos_login_destino")`
   e, se existir e for **exatamente igual** a `request.get_full_path()`, remove a chave da sessão
   (`del`) e define `request._retorno_pos_login = True`; caso não bata, não faz nada (marcador
@@ -259,7 +259,7 @@ comum fora desse fluxo permanece um 403 comum.
   `redirect("home")` somente se `isinstance(exception, PermissionDenied)` **e**
   `getattr(request, "_retorno_pos_login", False)`; caso contrário retorna `None`. Sem nonce, sem
   model/tabela, sem cache/Redis, sem TTL próprio, sem parâmetro de URL.
-- [ ] T029 [US2] Registrar `"contas.middleware.RetornoPosLoginMiddleware"` em `MIDDLEWARE`
+- [X] T029 [US2] Registrar `"contas.middleware.RetornoPosLoginMiddleware"` em `MIDDLEWARE`
   (`config/settings/base.py`), após `"django.contrib.auth.middleware.AuthenticationMiddleware"`.
   Depende de T028.
 
@@ -284,7 +284,7 @@ exatamente com o que foi atribuído — nada a mais, nada a menos.
 
 ### Testes (User Story 3)
 
-- [ ] T030 [US3] Estender `tests/test_contas_auth.py` (criado em T016) com os cenários de
+- [X] T030 [US3] Estender `tests/test_contas_auth.py` (criado em T016) com os cenários de
   identificação da User Story 3: usuário autenticado com um único papel atribuído — `tem_papel()`
   reflete exatamente esse papel, sem herança de nenhum outro; usuário autenticado com múltiplos
   papéis simultâneos (ex.: `ROLE-WAREHOUSE-STAFF` + `ROLE-SECTOR-HEAD` + `ROLE-WAREHOUSE-HEAD`,
@@ -311,7 +311,7 @@ sem sessão válida também redireciona para `/login/`, sem erro.
 
 ### Testes (User Story 4)
 
-- [ ] T031 [P] [US4] Criar `tests/test_contas_logout.py` cobrindo: logout com sessão válida
+- [X] T031 [P] [US4] Criar `tests/test_contas_logout.py` cobrindo: logout com sessão válida
   encerra a sessão e redireciona para `/login/`; nova tentativa de acessar superfície protegida com
   a mesma sessão exige autenticação novamente; logout **sem** sessão válida também redireciona para
   `/login/`, como no-op seguro, sem erro, sem exceção, sem revelar se havia ou não sessão. Depende
@@ -319,11 +319,11 @@ sem sessão válida também redireciona para `/login/`, sem erro.
 
 ### Implementação (User Story 4)
 
-- [ ] T032 [US4] Adicionar a rota `logout` a `contas/urls.py`:
+- [X] T032 [US4] Adicionar a rota `logout` a `contas/urls.py`:
   `path("logout/", django.contrib.auth.views.LogoutView.as_view(), name="logout")` — `LogoutView`
   **nativo, sem subclasse** (nenhum override necessário; `LOGOUT_REDIRECT_URL="login"` de T004 já
   entrega `FR-017a`).
-- [ ] T033 [P] [US4] Editar `contas/templates/contas/home.html` (de T021) para incluir o
+- [X] T033 [P] [US4] Editar `contas/templates/contas/home.html` (de T021) para incluir o
   formulário de logout: `<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button
   type="submit">Sair</button></form>` — `POST` obrigatório, nunca um link `GET`.
 
@@ -338,7 +338,7 @@ fechado e testável.
 distribuídos nas fases correspondentes (T006, T007, T020–T023, T033); nada de visual fica
 pendente até aqui.
 
-- [ ] T034 [P] Revisar em conjunto `contas/templates/contas/{login,home}.html` e
+- [X] T034 [P] Revisar em conjunto `contas/templates/contas/{login,home}.html` e
   `contas/static/contas/css/{login,home}.css` quanto à coerência com `DESIGN.md`: tokens
   consistentes entre as duas páginas, nenhuma ação dependente de hover, comportamento responsivo
   aceitável em celular/tablet/desktop (mobile-first, conforme `DESIGN.md` → Layout). Ajustar CSS
@@ -353,21 +353,21 @@ pendente até aqui.
 **Purpose**: confirmar que o todo funciona e que nenhuma decisão do plano foi violada — sem
 corrigir aqui nada que devesse ter sido parte de uma story anterior.
 
-- [ ] T035 Rodar `uv run pytest tests/` e confirmar 100% dos testes passando, incluindo os cinco
+- [X] T035 Rodar `uv run pytest tests/` e confirmar 100% dos testes passando, incluindo os cinco
   arquivos desta feature (`test_contas_models.py`, `test_contas_auth.py`,
   `test_contas_protected_access.py`, `test_contas_logout.py`, `test_contas_home.py`) e os testes
   pré-existentes (`test_infrastructure.py`, `test_settings.py`) sem regressão.
-- [ ] T036 [P] Rodar `python manage.py makemigrations --check --dry-run` e confirmar que não há
+- [X] T036 [P] Rodar `python manage.py makemigrations --check --dry-run` e confirmar que não há
   migrations pendentes além de `contas/migrations/0001_initial.py`.
-- [ ] T037 [P] Rodar `python manage.py check` (system checks do Django) e confirmar ausência de
+- [X] T037 [P] Rodar `python manage.py check` (system checks do Django) e confirmar ausência de
   erros/avisos relevantes.
-- [ ] T038 Executar manualmente o roteiro completo de `quickstart.md`: `migrate` → criar o primeiro
+- [X] T038 Executar manualmente o roteiro completo de `quickstart.md`: `migrate` → criar o primeiro
   `Setor` via shell → `createsuperuser` informando esse `Setor` → usar o Django Admin para demais
   setores/usuários/papéis → validar login, proteção, retorno seguro (com e sem query string),
   desativação em sessão e logout.
-- [ ] T039 [P] Confirmar ausência de nova dependência: `git diff -- pyproject.toml uv.lock` não
+- [X] T039 [P] Confirmar ausência de nova dependência: `git diff -- pyproject.toml uv.lock` não
   deve apresentar nenhuma alteração introduzida por esta feature.
-- [ ] T040 Revisão cruzada final contra `spec.md`, `docs/domain/invariants-matrix.md` e
+- [X] T040 Revisão cruzada final contra `spec.md`, `docs/domain/invariants-matrix.md` e
   `docs/domain/permissions-matrix.md`: confirmar que todo FR/SC da spec tem cobertura de teste ou
   comportamento nativo documentado (usar a tabela de rastreamento de `data-model.md`), que
   `INV-AUTH-001`/`INV-ORG-001` permanecem preservadas, que o catálogo de papéis não foi redefinido,

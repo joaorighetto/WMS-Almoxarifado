@@ -1,0 +1,59 @@
+/*
+ * Login — WMS-Almoxarifado
+ *
+ * Consome exclusivamente os tokens de static/css/tokens.css — nenhum valor literal de
+ * cor, tipografia, spacing ou raio é redefinido aqui.
+ *
+ * Primitivos compartilhados (`.btn`/`.btn-primary`, `.alert`/`.alert-danger`,
+ * `.field`/`.field-error`) vivem em static/css/components.css (nível de projeto) — este
+ * arquivo contém apenas composição/layout específicos da tela de login.
+ *
+ * Layout mobile-first: coluna única, campo ocupando a largura do container em telas
+ * estreitas (DESIGN.md → Layout → Superfícies de Solicitante/Chefe de setor são
+ * mobile-first; Inputs/Fields). Nenhuma ação depende de hover. O anel de foco visível é
+ * herdado do :focus-visible global definido em static/css/base.css — não é removido nem
+ * sobrescrito aqui.
+ */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-4);
+}
+
+.login-card-title {
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--space-1);
+}
+
+.login-card-subtitle {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-6);
+}
+
+/* Ação primária do contexto (The One Accent Rule): ocupa a largura do card, coerente
+   com o formulário em coluna única mobile-first. */
+.login-submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 480px) {
+  .login-card {
+    padding: var(--space-8) var(--space-6);
+  }
+}
