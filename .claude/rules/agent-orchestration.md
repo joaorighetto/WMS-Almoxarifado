@@ -388,19 +388,75 @@ Um fluxo frontend significativo pode ser:
 ```text
 wms-explorer, quando necessário
 → frontend-implementer
-→ code-reviewer
-→ correções pelo frontend-implementer
-→ nova revisão quando material
+→ code-reviewer (revisão funcional)
+→ revisão visual (gate obrigatório — ver abaixo)
+→ correções pelo frontend-implementer, quando necessárias
+→ nova revisão (funcional e/ou visual) quando material
 ```
 
 Não imponha esse pipeline para alterações triviais — essas continuam com
 `task-implementer` (ver seção "Tarefas triviais").
+
+### Gate de revisão visual
+
+A Constitution exige que mudanças significativas de frontend passem por
+revisão visual quanto à aderência ao `DESIGN.md`, reutilização de
+componentes, consistência visual e eficiência operacional. O
+`code-reviewer` não cobre esse gate: ele faz revisão funcional e declara
+explicitamente que não realiza auditoria estética completa (ver seu
+próprio prompt, seção "Frontend"). O Claude principal não deve considerar
+uma mudança frontend significativa concluída apenas porque o
+`code-reviewer` aprovou.
+
+Após a revisão funcional, coordene uma revisão visual proporcional ao
+trabalho:
+
+- use `impeccable critique <target>` como gate visual obrigatório para a
+  mudança implementada — é uma crítica de design, não uma checagem técnica;
+- `impeccable audit` é complementar, não substitui a crítica: cobre
+  acessibilidade, performance, responsividade e integridade técnica;
+- quando existir um build Impeccable completo com contrato de direção e
+  capturas, use `impeccable-finish-reviewer` em vez de `critique`;
+- `impeccable polish` não é parte do gate — ele modifica a implementação
+  diretamente. Use-o apenas como alternativa explícita de correção quando
+  o Claude principal optar por corrigir dessa forma em vez de encaminhar
+  os findings ao `frontend-implementer`.
+
+Quando o `critique` reportar 3 ou mais Priority Issues, seu próprio
+contrato para na entrega do relatório e exige perguntas direcionadas ao
+usuário antes de qualquer correção. Nesse caso, o Claude principal aguarda
+a seleção do usuário e encaminha ao `frontend-implementer` somente os
+findings aprovados — não repasse o relatório inteiro automaticamente. Com
+menos de 3 Priority Issues, quando o próprio `critique` permitir seguir
+sem perguntas, os findings podem ser encaminhados diretamente ao
+`frontend-implementer`.
 
 Se, durante um fluxo frontend, ficar evidente que a fundação do design
 system precisa ser criada, revista ou passar por auditoria estrutural (não
 apenas uma tela específica), direcione esse trabalho ao workflow `impeccable`
 em vez de pedir ao `frontend-implementer` para assumi-lo — ele não tem esse
 papel.
+
+### Promoção do DESIGN.md seed
+
+`DESIGN.md` nasce como seed (fundação acordada com o usuário, sem código,
+comp ou geração de imagem) e declara explicitamente que deve ser
+re-executado em modo scan assim que existirem templates, CSS e componentes
+reais implementados, para extrair tokens e o sidecar
+`.impeccable/design.json` a partir do código de fato construído. Essa
+transição não deve depender de alguém perceber a necessidade
+estruturalmente — trate-a como obrigatória:
+
+- após a primeira implementação visual real de uma feature (quando
+  templates, CSS e componentes deixam de ser hipotéticos), execute
+  `impeccable document` em modo scan — não `impeccable-documenter`, que
+  pressupõe um build Impeccable completo (contrato de direção e artefatos
+  próprios desse workflow) que uma implementação comum do
+  `frontend-implementer` não produz; reserve `impeccable-documenter` para
+  quando esse contrato existir;
+- em implementações frontend posteriores, documente apenas mudanças
+  duráveis do sistema (novo token, novo padrão reutilizável), não cada
+  tela individualmente.
 
 Se o `frontend-implementer` reportar necessidade de mudança backend
 substancial (regra de negócio, autorização, estoque, migration) que exceda
