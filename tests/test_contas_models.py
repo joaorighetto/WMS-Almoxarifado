@@ -111,6 +111,7 @@ def test_usuario_pode_ter_multiplos_papeis_distintos_simultaneamente(setor):
     codigos = set(chefe.papeis.values_list("papel", flat=True))
 
     assert codigos == {
+        Papel.REQUISITANTE,  # concessão mínima da criação (FR-016a)
         Papel.FUNCIONARIO_ALMOXARIFADO,
         Papel.CHEFE_SETOR,
         Papel.CHEFE_ALMOXARIFADO,
@@ -158,11 +159,32 @@ def test_tem_papel_nao_infere_nenhum_outro_papel(setor):
 
 
 @pytest.mark.django_db
-def test_usuario_sem_nenhum_papel_atribuido_nao_tem_papel_algum(setor):
+def test_identidade_de_negocio_nasce_com_role_requester_e_mais_nada(setor):
+    """`FR-016a`: a concessão mínima é explícita, persistida e atômica.
+
+    Não é inferida de `is_active` em tempo de consulta — existe como linha em
+    `PapelUsuario` (`permissions-matrix.md`, Notas de composição).
+    """
     usuario = User.objects.create_user(matricula="000123", password="senha-valida", setor=setor)
 
-    assert usuario.tem_papel(Papel.REQUISITANTE) is False
-    assert usuario.tem_papel(*[codigo.value for codigo in Papel]) is False
+    assert usuario.tem_papel(Papel.REQUISITANTE) is True
+    assert list(usuario.papeis.values_list("papel", flat=True)) == [Papel.REQUISITANTE], (
+        "a concessão é uma linha real, não um papel derivado em tempo de consulta"
+    )
+
+    outros = [c.value for c in Papel if c != Papel.REQUISITANTE]
+    assert usuario.tem_papel(*outros) is False, "nenhum outro papel é concedido junto"
+
+
+@pytest.mark.django_db
+def test_papel_minimo_sobrevive_a_desativacao_da_conta(setor):
+    """Desativar não remove papel: o bloqueio é transversal (`INV-AUTH-001`)."""
+    usuario = User.objects.create_user(matricula="000124", password="senha-valida", setor=setor)
+
+    usuario.is_active = False
+    usuario.save()
+
+    assert usuario.tem_papel(Papel.REQUISITANTE) is True
 
 
 # ---------------------------------------------------------------------------
@@ -282,3 +304,47 @@ def test_comando_createsuperuser_funciona_com_setor(capsys):
         "superusuário técnico nunca recebe papel de negócio "
         "(permissions-matrix.md, regras 7-8)"
     )
+
+
+@pytest.mark.django_db
+def test_entrada_do_login_sofre_strip_e_nfkc_do_django_mas_o_cadastro_nao(setor):
+    """Documenta a ressalva de `FR-001b` (revisão 3) para travar o texto.
+
+    O `UsernameField` do `AuthenticationForm` nativo aplica `strip` e
+    `unicodedata.normalize("NFKC", ...)` à **entrada submetida**. O valor já
+    **cadastrado** não é reformulado: o manager grava exatamente o que recebe.
+    Este teste existe para que documento e código não divirjam de novo — se o
+    Django mudar esse comportamento, ele quebra e a ressalva é revisitada.
+    """
+    import unicodedata
+
+    from contas.forms import WMSAuthenticationForm
+
+    campo = WMSAuthenticationForm().fields["username"]
+
+    # Canonicalização técnica da ENTRADA, comportamento do framework.
+    assert campo.to_python("  000123  ") == "000123", "strip nas pontas"
+    assert campo.to_python("００７") == unicodedata.normalize(
+        "NFKC", "００７"
+    ) == "007", "dígitos fullwidth são canonicalizados para NFKC"
+
+    # O CADASTRO preserva a representação recebida, sem reformular.
+    usuario = User.objects.create_user(matricula="000123", password="x", setor=setor)
+    assert User.objects.get(pk=usuario.pk).matricula == "000123"
+
+
+@pytest.mark.django_db
+def test_mensagem_de_recusa_concorda_em_genero_e_permanece_generica(setor):
+    """`FR-003`/`SC-003` preservados, com o português correto (research.md R3).
+
+    A string é única para as três causas de recusa; o que mudou é só o texto.
+    """
+    from contas.forms import WMSAuthenticationForm
+
+    mensagem = WMSAuthenticationForm().error_messages["invalid_login"]
+
+    assert mensagem == "Matrícula ou senha inválidas."
+    assert "um matrícula" not in mensagem, "desacordo de gênero da tradução nativa"
+    # Nada no texto revela qual das três condições ocorreu.
+    for vazamento in ("inativ", "não existe", "inexistente", "senha incorreta"):
+        assert vazamento not in mensagem.lower()

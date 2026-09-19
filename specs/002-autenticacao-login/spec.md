@@ -205,10 +205,14 @@ subsequente de acessar superfície protegida exige nova autenticação.
   identificador de login, informada junto da senha. Esta decisão não impede uma futura migração para
   outro mecanismo (SSO, e-mail institucional, Active Directory, entre outros).
 - **FR-001b**: A matrícula funcional usada para autenticação DEVE identificar de forma inequívoca
-  uma única conta do WMS e DEVE ser tratada como identificador — preservando exatamente a
-  representação cadastrada, incluindo zeros à esquerda e demais caracteres que façam parte dela —
-  nunca convertida para valor numérico nem normalizada. Formato, tamanho e máscara da matrícula não
-  são definidos por esta spec.
+  uma única conta do WMS e DEVE ser armazenada como texto, preservando a representação cadastrada,
+  incluindo zeros à esquerda e demais caracteres que façam parte dela. O sistema NÃO DEVE
+  convertê-la para valor numérico, aplicar máscara, completar, decompor ou reformular seus
+  caracteres. O campo de entrada do login segue a canonicalização técnica do `AuthenticationForm`
+  nativo do Django (remoção de espaços nas pontas e normalização Unicode NFKC) — comportamento de
+  framework, aplicado à entrada submetida, que não altera a representação já cadastrada e é
+  irrelevante para matrículas ASCII. Formato, tamanho e máscara da matrícula não são definidos por
+  esta spec.
 - **FR-002**: O sistema DEVE autenticar o visitante quando as credenciais informadas corresponderem
   a um usuário cadastrado em condição ativa.
 - **FR-003**: O sistema DEVE recusar a autenticação, com a mesma mensagem de erro genérica em todos
@@ -266,6 +270,34 @@ subsequente de acessar superfície protegida exige nova autenticação.
 - **FR-016**: O sistema DEVE tornar consultável exatamente um setor por usuário autenticado,
   consistente com `INV-ORG-001`, como pré-condição para o escopo "próprio setor" usado por
   funcionalidades futuras de autorização.
+- **FR-016a**: O sistema DEVE conceder `ROLE-REQUESTER` a toda identidade de negócio no momento de
+  sua criação, como atribuição explícita e persistida, atômica com a criação da conta
+  (`docs/domain/permissions-matrix.md`, Notas de composição). Essa concessão NÃO DEVE ser inferida
+  em tempo de consulta a partir de `is_active` nem de qualquer outro atributo — permanece coerente
+  com FR-015. A conta técnica de superusuário do Django NÃO é identidade de negócio e NÃO DEVE
+  receber `ROLE-REQUESTER` nem nenhum outro papel (`permissions-matrix.md`, regras 7–8). Desativar
+  uma conta NÃO DEVE remover seus papéis.
+
+#### Organização: ativação de setor
+
+> Estes requisitos existem porque o próprio bootstrap desta feature cria setores e concede
+> `ROLE-SECTOR-HEAD` (ver Fora de Escopo). Sem eles, a feature produziria estados que violam
+> `INV-ORG-002`, invariante CRÍTICA. Esta feature não oferece administração de setores como
+> funcionalidade de produto — apenas impede que seu próprio caminho de provisionamento quebre a
+> invariante.
+
+- **FR-019**: Um setor recém-criado DEVE nascer inativo, de modo que sua criação nunca produza, por
+  si só, um setor ativo sem chefe ativo.
+- **FR-020**: O sistema DEVE permitir a ativação de um setor somente quando existir exatamente um
+  chefe ativo (`ROLE-SECTOR-HEAD`) pertencente ao próprio setor, consistente com `INV-ORG-002` e
+  `INV-ORG-003`.
+- **FR-021**: O sistema DEVE impedir qualquer operação sobre usuário ou papel que deixe um setor
+  ativo sem exatamente um chefe ativo — incluindo desativar o chefe, transferi-lo para outro setor
+  e remover-lhe o papel de chefe.
+- **FR-022**: O sistema DEVE impedir a atribuição de um segundo chefe a um setor que já possua um
+  chefe ativo.
+- **FR-023**: As operações de FR-019 a FR-022 DEVEM ser atômicas: uma operação recusada não pode
+  deixar estado parcialmente alterado.
 
 #### Logout
 
@@ -310,6 +342,13 @@ subsequente de acessar superfície protegida exige nova autenticação.
   o mecanismo de autenticação (FR-002 a FR-004, FR-006).
 - `INV-ORG-001` — usuário pertence a um único setor; esta feature consome essa invariante como
   pré-condição para o escopo "próprio setor" usado por autorização futura (FR-016).
+- `INV-ORG-002` — todo setor ativo possui exatamente um chefe ativo do próprio setor, e nenhuma
+  operação sobre usuário ou setor pode deixar um setor ativo sem chefe ativo. Como o bootstrap
+  desta feature escreve em setor, usuário e papel, a invariante é **preservada aqui**, não adiada
+  (FR-019 a FR-023).
+- `INV-ORG-003` — um chefe responde por um único setor; preservada estruturalmente, já que a
+  chefia deriva de `ROLE-SECTOR-HEAD` combinado ao setor único do próprio usuário (`INV-ORG-001`),
+  nunca de um vínculo separado.
 
 ## Success Criteria *(mandatory)*
 
@@ -337,9 +376,16 @@ subsequente de acessar superfície protegida exige nova autenticação.
 
 ## Fora de Escopo
 
-- Criação, edição, inativação ou administração de usuários, papéis e setores (fica para
-  funcionalidade própria de administração, sob `PERM-USER-MANAGE`/`PERM-SECTOR-MANAGE`, já
-  registradas na matriz de permissões mas ainda não implementadas).
+- Administração de usuários, papéis e setores como **funcionalidade de produto** — telas de
+  gestão, fluxos de manutenção e as capabilities `PERM-USER-MANAGE`/`PERM-SECTOR-MANAGE`, já
+  registradas na matriz de permissões mas ainda não implementadas.
+
+  **Ressalva necessária**: esta feature precisa provisionar as primeiras contas e o primeiro setor
+  para que o login exista (ver Assumptions e `quickstart.md`), e faz isso pelo Django Admin, que é
+  ferramenta técnica de bootstrap. Como esse caminho **escreve** em setor, usuário e papel, ele
+  está sujeito a `INV-ORG-002`/`INV-ORG-003` como qualquer outro caminho de escrita. Por isso
+  FR-019 a FR-023 fazem parte do escopo: não para oferecer administração de setores, mas para
+  impedir que o próprio bootstrap produza um estado que viole uma invariante CRÍTICA.
 - Recuperação de senha, autoatendimento de conta, primeiro acesso ou provisionamento de credencial.
 - Escolha do mecanismo de autenticação (matrícula, e-mail, SSO) além do necessário para descrever o
   comportamento observável de login desta feature.

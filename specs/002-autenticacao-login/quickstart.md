@@ -11,31 +11,53 @@ comprovar que o comportamento da spec funciona.
 
 ## 1. Provisionar dados mínimos de desenvolvimento
 
-**Ordem obrigatória** — `createsuperuser` exige um `Setor` já existente (`setor` está em
-`REQUIRED_FIELDS`, é FK obrigatória), mas ainda não existe nenhuma conta capaz de acessar o Django
-Admin nesse momento. O Django Admin **não pode** ser usado para criar o primeiro `Setor` — só existe
-depois que o primeiro superusuário já existir. Por isso o primeiro `Setor` é criado por shell:
+**Ordem obrigatória.** Duas restrições se combinam aqui:
+
+1. `createsuperuser` exige um `Setor` já existente (`setor` está em `REQUIRED_FIELDS`, é FK
+   obrigatória), mas o Django Admin só fica acessível **depois** que o primeiro superusuário
+   existe — por isso o primeiro `Setor` nasce por shell.
+2. Um setor nasce **inativo** (`FR-019`) e só pode ser ativado quando tiver exatamente um chefe
+   ativo do próprio setor (`FR-020`, `INV-ORG-002`). Provisionar é, portanto: criar o setor
+   inativo → criar o chefe → conceder `ROLE-SECTOR-HEAD` → ativar o setor.
 
 ### 1.1 Criar o primeiro `Setor` (via shell, antes de qualquer conta)
 
 ```bash
-python manage.py shell -c "from contas.models import Setor; Setor.objects.create(nome='Almoxarifado')"
+python manage.py shell -c "from contas.models import Setor; print(Setor.objects.create(nome='Almoxarifado').pk)"
 ```
+
+O setor é criado **inativo**. Anote a PK impressa.
 
 ### 1.2 Criar o primeiro superusuário técnico
 
 ```bash
 python manage.py createsuperuser
-# Django solicitará: matrícula, setor (informe o Setor criado em 1.1), senha.
-# Cria uma conta técnica (is_staff=True, is_superuser=True) — sem papel de negócio.
+# Django solicitará: Matrícula, Setor (informe a PK de 1.1), senha.
 ```
 
-### 1.3 Demais dados (setores adicionais, usuários de negócio, papéis)
+Cria uma conta **técnica** (`is_staff=True`, `is_superuser=True`). Ela **não** recebe
+`ROLE-REQUESTER` nem nenhum outro papel de negócio (`permissions-matrix.md`, regras 7–8): serve
+para acessar o Admin, não para operar o domínio.
 
-A partir daqui, com o superusuário já existente, o Django Admin
-(`/admin/contas/user/`, `/admin/contas/setor/`, `/admin/contas/papelusuario/`) pode ser usado
-normalmente: criar setores adicionais, criar um `User` de negócio com `matricula`/senha/setor, e
-adicionar uma ou mais linhas de `PapelUsuario` para ele.
+### 1.3 Criar o chefe do setor e ativar o setor
+
+A partir daqui o Admin (`/admin/contas/user/`, `/admin/contas/setor/`,
+`/admin/contas/papelusuario/`) já pode ser usado.
+
+1. Crie um `User` de negócio com matrícula/senha/setor. Ele nasce com `ROLE-REQUESTER`
+   automaticamente, como concessão explícita e persistida (`FR-016a`).
+2. Adicione a esse usuário uma linha de `PapelUsuario` com `ROLE-SECTOR-HEAD`.
+3. Só então marque o `Setor` como `ativo`. Tentar ativar antes é recusado com uma mensagem
+   explicando a invariante.
+
+Enquanto o setor estiver inativo, nada impede criar usuários nele — a invariante só vincula
+setores **ativos**.
+
+### 1.4 Demais dados
+
+Setores adicionais seguem a mesma ordem (criar inativo → chefe → ativar). Papéis extras
+(`ROLE-WAREHOUSE-STAFF`, `ROLE-WAREHOUSE-HEAD`, etc.) são linhas adicionais de `PapelUsuario`,
+sempre explícitas.
 
 ## 2. Validar login (User Story 1)
 
