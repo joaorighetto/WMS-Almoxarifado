@@ -94,7 +94,7 @@ físico e saldo reservado — esse segundo conceito continua fora desta matriz (
 
 | ID | Domínio | Invariante | Severidade | Verificação recomendada |
 |---|---|---|---|---|
-| `INV-MOV-001` | Movimentação | Um registro de movimentação de estoque, uma vez criado, não é alterado nem removido. Toda correção ou estorno preserva o fato original e é representado por um novo fato compensatório rastreável, nunca por sobrescrita. | CRÍTICA | domínio; banco/constraint |
+| `INV-MOV-001` | Movimentação | Os fatos de uma movimentação de estoque relevantes para saldo, origem da operação e auditoria (quantidade, efeito no saldo, operação de origem, ator e momento) não são alterados nem removidos depois de registrados. Toda correção desses fatos ocorre por um novo registro compensatório e rastreável, nunca por sobrescrita do registro original. | CRÍTICA | domínio; banco/constraint |
 | `INV-MOV-002` | Movimentação | Toda alteração de saldo posterior ao estabelecimento inicial do material deve possuir um registro de movimentação correspondente, criado na mesma operação, com informação suficiente para identificar a origem da operação, o ator, a quantidade e o momento. O estabelecimento inicial do saldo pela importação que cria o material segue a rastreabilidade específica da importação SCPI. | CRÍTICA | transacional; domínio |
 
 **Evidência**: Constitution, Princípio IV — "Exclusão física de registros NÃO DEVE ser usada quando
@@ -109,6 +109,12 @@ devolução ou requisição). Não existe `INV-RETURN-001` separado — ver
 `docs/domain/reconciliation/invariants-reconciliation.md`, seção de deduplicação. A reconciliação
 matemática entre o somatório de movimentações e o saldo corrente (antiga `LED-02` do legado) é
 tratada como propriedade verificável de `INV-MOV-002`, não como invariante própria.
+
+`INV-MOV-001` canoniza somente os fatos historicamente relevantes para saldo, origem e auditoria —
+não a imutabilidade absoluta de todo e qualquer campo de um eventual registro de movimentação
+(nome de model, schema de colunas, metadados não relevantes para saldo/auditoria). O schema
+completo do ledger ainda não foi desenhado; qual conjunto de campos além desses é imutável fica
+como decisão da futura feature de movimentações.
 
 ### Saída excepcional
 

@@ -388,7 +388,9 @@ sobrescrito e que a divergência aparece listada.
   no WMS, com ambos os valores, a diferença e a execução que a detectou. É informativa e não altera
   saldo.
 
-## Autorizações aplicáveis
+## Regras canônicas aplicáveis
+
+### Permissões
 
 Capabilities de `docs/domain/permissions-matrix.md` relevantes para esta feature:
 
@@ -396,6 +398,23 @@ Capabilities de `docs/domain/permissions-matrix.md` relevantes para esta feature
 - `PERM-SCPI-IMPORT-EXECUTE` — envio do arquivo, prévia e confirmação da importação (FR-044,
   FR-044a).
 - `PERM-SCPI-IMPORT-HISTORY-VIEW` — consulta do histórico de execuções (FR-037).
+
+### Invariantes
+
+Invariantes de `docs/domain/invariants-matrix.md` que esta feature preserva:
+
+- `INV-CATALOG-001` — opacidade do `CADPRO` (FR-001, FR-002).
+- `INV-CATALOG-002` — unicidade do `CADPRO` no catálogo (FR-003, FR-005).
+- `INV-CATALOG-003` — material só entra pela importação do SCPI (FR-006).
+- `INV-CATALOG-004` — autoridade cadastral do SCPI sobre os dados do material (FR-017, FR-022,
+  FR-026).
+- `INV-CATALOG-005` — unidade de medida preservada como recebida (FR-019, FR-020).
+- `INV-STOCK-001` — saldo físico nunca negativo (FR-015).
+- `INV-STOCK-002` — saldo estabelecido pela importação que cria o material; reimportação nunca
+  sobrescreve saldo existente (FR-016, FR-025 a FR-028).
+- `INV-STOCK-003` — divergência de saldo é informativa (FR-029, FR-030).
+- `INV-STOCK-004` — atomicidade da gravação da importação (FR-038).
+- `INV-SCPI-001` — ausência de integração automática com o SCPI (FR-046).
 
 ## Success Criteria *(mandatory)*
 

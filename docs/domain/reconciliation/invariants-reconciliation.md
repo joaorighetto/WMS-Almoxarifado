@@ -78,13 +78,15 @@ cada item foi confrontado com as fontes vigentes do novo produto.
 - Um conflito direto e já resolvido foi reencontrado: `processos-almoxarifado.md` §1.4 propõe
   mapear sinônimos de unidade de medida (`UND`/`PC` → `un`) para material novo; a spec 001 (FR-019)
   proíbe qualquer normalização. A spec vigente prevalece; documentado aqui para não ser reaberto.
-- Uma tensão foi encontrada e **corrigida na canonização de invariantes (2026-09-18)**: a
-  `docs/domain/permissions-matrix.md` usava o termo "saldo reservado" na condição de
-  `PERM-MATERIAL-DEACTIVATE` ("Exige saldo físico e reservado zerados"), mas nenhuma fonte vigente
-  do novo produto define o que é "saldo reservado" — o mecanismo de reserva é uma das duas
-  pendências deliberadas da reconciliação de permissões. A condição canônica foi ajustada para
-  "Exige saldo físico zerado", com nota de reavaliação futura; a exigência de reserva zerada
-  permanece registrada como pendente. Ver seção "Conflitos".
+- Uma tensão foi identificada — e uma correção equivocada dela foi **revertida por review
+  (2026-09-18)**: `docs/domain/permissions-matrix.md` usa o termo "saldo reservado" na condição de
+  `PERM-MATERIAL-DEACTIVATE` ("Exige saldo físico e saldo reservado zerados"), mas nenhuma fonte
+  vigente do novo produto define "saldo reservado" como propriedade transversal de domínio — o
+  mecanismo de reserva é uma das duas pendências deliberadas da reconciliação de permissões. Uma
+  revisão anterior havia enfraquecido essa condição para "Exige saldo físico zerado", tratando a
+  ausência de definição formal como se revogasse a decisão de produto já confirmada; isso foi
+  identificado como incorreto e revertido — a condição permanece exigindo saldo reservado zerado,
+  com nota de reavaliação quando o mecanismo de reserva for especificado. Ver seção "Conflitos".
 - Boa parte da matriz legada de permissões (`PER-*`) não é invariante — é autorização, já coberta
   (ou superada) por `docs/domain/permissions-matrix.md`. Isso inclui a rejeição explícita do
   `superuser` como papel de override total (seção 6 da reconciliação de permissões), que também
@@ -160,29 +162,37 @@ qualquer um agora violaria a instrução da seção 12 desta tarefa.
 | EST-10 | — | Material inativo não entra em nova requisição. | Catálogo/Requisição | **PENDENTE** | ALTA (se confirmado) | A metade "requisição" depende da máquina de estados adiada. A metade "material inativo não é elegível para nova operação" é plausível e mais geral que só requisição, mas nenhuma fonte vigente confirma o comportamento fora da precondição de inativação (ver EST-11/INV-CATALOG-007) — mantido pendente para não presumir política ainda não decidida (ex.: material inativo pode ainda receber entrada de estoque de devolução?). | domínio |
 | EST-11 | ~~INV-CATALOG-007~~ (não promovido) | Material só pode ser inativado com saldo físico zerado e saldo reservado zerado. | Catálogo | **NÃO PROMOVIDO NESTA CANONIZAÇÃO** — dividido em duas partes | — | Ver nota abaixo. | — |
 
-**Nota sobre EST-11 (revisão pós-canonização, 2026-09-18):** esta linha havia sido classificada
-`MANTER` na primeira reconciliação, apoiada na condição de `PERM-MATERIAL-DEACTIVATE` então vigente
-em `docs/domain/permissions-matrix.md` ("Exige saldo físico e reservado zerados"). Ao criar a
-matriz canônica de invariantes, ficou explícito que essa condição antecipava um conceito
-(`saldo_reservado`) que o novo produto ainda não define — o mecanismo de reserva de estoque é uma
-pendência deliberada (ver Pendências, item 1), não uma decisão tomada. A condição canônica de
-`PERM-MATERIAL-DEACTIVATE` foi corrigida para expressar somente o confirmado: **"Exige saldo físico
-zerado"**, com a nota "Caso uma futura feature introduza reserva de estoque, esta condição deverá
-ser reavaliada junto das invariantes correspondentes." Como resultado:
+**Nota sobre EST-11 (revisão pós-canonização, 2026-09-18; corrigida em revisão de PR no mesmo dia):**
+esta linha foi classificada `MANTER` na primeira reconciliação, apoiada na condição de
+`PERM-MATERIAL-DEACTIVATE` então vigente em `docs/domain/permissions-matrix.md` ("Exige saldo
+físico e reservado zerados"). Ao criar a matriz canônica de invariantes, uma primeira revisão havia
+enfraquecido essa condição para "Exige saldo físico zerado", por essa condição citar um conceito
+(`saldo_reservado`) que o novo produto ainda não define formalmente como invariante de domínio — o
+mecanismo de reserva de estoque é uma pendência deliberada (ver Pendências, item 1).
 
-- A metade confirmada da regra ("saldo físico zerado") já está integralmente expressa como condição
-  de capability em `docs/domain/permissions-matrix.md`; não foi duplicada como invariante própria,
-  por não acrescentar nenhuma propriedade de domínio além da própria condição de autorização (regra
-  de interpretação 8/9 da matriz canônica de invariantes).
-- A metade dependente ("saldo reservado zerado") permanece **PENDENTE**, junto das demais
-  invariantes de reserva de estoque (ver Pendências, item 1).
+**Essa correção foi revertida por review**: a ausência de uma definição *formal, transversal* de
+"saldo reservado" na matriz de invariantes não revoga uma decisão de produto já confirmada e
+registrada em `docs/domain-legacy/reconciliation/permissions-reconciliation.md` — a exigência de
+reserva zerada para inativar material. Enfraquecer a condição sem nova validação explícita do dono
+do produto seria alterar comportamento por inferência editorial, não por decisão de domínio. A
+condição canônica de `PERM-MATERIAL-DEACTIVATE` foi restaurada para **"Exige saldo físico e saldo
+reservado zerados"**, com nota de que o mecanismo técnico de reserva ainda não está especificado e
+que "reservado inexistente" se comporta, na prática, como "reservado zero" até lá. Como resultado:
+
+- A condição de autorização (`PERM-MATERIAL-DEACTIVATE`) já está restaurada em
+  `docs/domain/permissions-matrix.md` e reflete a decisão de produto integralmente — inclusive a
+  metade sobre saldo reservado.
+- Isso não promove `INV-CATALOG-007` à matriz canônica de invariantes: uma condição de autorização já
+  decidida (regra 8/9 da matriz canônica: `permissions-matrix.md` responde quem/sob quais condições)
+  é diferente de uma invariante transversal, que exigiria "saldo reservado" ser um conceito de
+  domínio definido e verificável por si só — isso continua **PENDENTE** (ver Pendências, item 1).
+  Não há contradição entre os dois documentos: a permissão pode decidir hoje uma condição que cita
+  um conceito ainda não modelado formalmente, registrando explicitamente que será reavaliada quando
+  esse conceito existir; a matriz de invariantes apenas não promove esse conceito como propriedade
+  transversal própria antes disso.
 - **Preservação histórica**: o legado (`matriz-invariantes.md`, EST-11) também exigia saldo
-  reservado zerado para inativar material — essa exigência não foi descartada por ser considerada
-  incorreta, apenas fica pendente até o conceito de reserva ser definido em fonte vigente. Quando a
-  spec de requisições/reservas existir, esta linha deve ser revisitada junto da condição de
-  `PERM-MATERIAL-DEACTIVATE`.
-- `INV-CATALOG-007`, citado como candidato na primeira versão deste relatório, não foi promovido à
-  matriz canônica nesta forma.
+  reservado zerado para inativar material — essa exigência nunca foi considerada incorreta; a
+  correção equivocada de uma revisão anterior deste relatório foi revertida.
 
 ### Ledger de movimentações (`LED-*`)
 
@@ -193,6 +203,18 @@ ser reavaliada junto das invariantes correspondentes." Como resultado:
 | LED-03 | — | Movimentação tem exatamente uma origem (`requisicao` XOR `saida_excepcional`). | Movimentação | **PENDENTE** | — | A premissa de que só existem duas origens já está desatualizada: a reconciliação de permissões já confirmou uma terceira origem nova (`PERM-STOCK-ENTRY-CREATE`, entrada de estoque) e antecipa outras (ajuste de inventário, devolução, estorno). O conjunto completo de origens de movimentação não está definido para o novo WMS; não decidir a forma da regra antes de existir. | domínio; banco/constraint |
 | LED-04 | — | Movimentação não pode ter ambos os deltas (físico e reservado) zero. | Movimentação | **PENDENTE** | — | Presume um schema de "dois deltas assinados por linha" que não foi adotado nem descartado para o novo produto. Fica para quando o ledger for desenhado. | banco/constraint |
 | LED-05 | INV-MOV-001 | Um registro de movimentação de estoque, uma vez criado, não é alterado nem removido; qualquer correção ocorre por novo registro compensatório (estorno), preservando o original. | Movimentação | **REFORMULAR** | CRÍTICA | Constitution, Princípio IV: "Exclusão física de registros NÃO DEVE ser usada quando prejudicar rastreabilidade... DEVE ser adotada inativação, cancelamento ou estorno, preservando o registro original". Reformulado para remover a referência a `save`/`delete` override, que é técnica. | domínio; banco/constraint |
+
+**Nota sobre o escopo de `INV-MOV-001` (revisão pós-canonização, 2026-09-18):** a primeira redação
+canonizada declarava imutabilidade de "um registro de movimentação de estoque" sem qualificação,
+o que poderia ser lido como imutabilidade absoluta de todo e qualquer campo de um schema de ledger
+que ainda não foi desenhado — antecipando uma decisão de modelagem antes da hora, na mesma linha do
+que já havia sido evitado para `LED-03`/`LED-04`. A redação canônica foi restringida para cobrir
+apenas os fatos historicamente relevantes para saldo, origem da operação e auditoria (quantidade,
+efeito no saldo, operação de origem, ator, momento) — exatamente o que a Constitution, Princípio IV,
+exige preservar. Qualquer campo adicional de um futuro registro de movimentação que não seja um
+desses fatos (ex.: metadado não relevante para saldo/auditoria) não está coberto por esta invariante
+e sua imutabilidade, se fizer sentido, é decisão da futura feature de movimentações — não foi
+descartada, apenas não antecipada.
 | LED-06 | — | Entregue líquida de um item é calculada a partir do histórico de movimentações (consumo, devolução, estorno), sem armazenamento próprio. | Requisição/Devolução | **PENDENTE** | — | Depende da spec de devolução/estorno de requisição, que ainda não existe, embora as capabilities (`PERM-RETURN-CREATE`, `PERM-REQ-REVERSE`) já sejam canônicas. A fórmula de cálculo é mecânica de implementação sujeita à spec futura. | domínio |
 | LED-07 | — | Devolvida líquida de um item limita a quantidade estornável de uma devolução. | Devolução | **PENDENTE** | — | Mesma dependência de LED-06. | domínio |
 
@@ -313,18 +335,21 @@ Constitution), não por boa prática genérica.
    prevalece por ser artefato ratificado mais recente; o mapeamento de sinônimos do legado é
    `DESCARTAR`. Registrado aqui apenas para reforçar `INV-CATALOG-005` e evitar reabertura
    inadvertida numa feature futura de importação.
-2. **"Saldo reservado" citado como condição canônica sem definição vigente — RESOLVIDO em
-   2026-09-18, na canonização de invariantes.** `docs/domain/permissions-matrix.md` usava a
-   condição "Exige saldo físico e reservado zerados" para `PERM-MATERIAL-DEACTIVATE`, mas nenhuma
-   fonte vigente do novo produto define o que é "saldo reservado" — o mecanismo de reserva de
-   estoque por requisição é uma pendência deliberada, não uma decisão tomada. Não era um erro
-   editorial: a condição estaria correta *se e quando* o mecanismo de reserva existisse. Ainda
-   assim, para não antecipar essa decisão, a condição canônica foi corrigida para **"Exige saldo
-   físico zerado"**, com nota explícita de que ela deverá ser reavaliada junto das invariantes
-   correspondentes quando uma futura feature introduzir reserva de estoque. A exigência de saldo
-   reservado zerado do legado (EST-11) não foi descartada por estar errada — fica registrada como
-   pendente (ver Pendências, item 1, e a nota sobre EST-11 na tabela de Estoque, acima) até que o
-   conceito exista em fonte vigente.
+2. **"Saldo reservado" citado como condição canônica sem definição transversal vigente — tensão
+   documentada, não um erro, e não resolvida enfraquecendo a decisão de produto.**
+   `docs/domain/permissions-matrix.md` usa a condição "Exige saldo físico e saldo reservado
+   zerados" para `PERM-MATERIAL-DEACTIVATE`. Nenhuma fonte vigente do novo produto define "saldo
+   reservado" como propriedade transversal de domínio — o mecanismo de reserva de estoque por
+   requisição é uma pendência deliberada (ver Pendências, item 1), não uma decisão revogada. Uma
+   revisão anterior deste processo de canonização havia enfraquecido a condição para "Exige saldo
+   físico zerado", tratando a ausência de definição formal como se invalidasse a decisão de produto
+   já confirmada em `permissions-reconciliation.md`; isso foi identificado em review e revertido —
+   ver a nota sobre EST-11 na tabela de Estoque, acima. A condição permanece exigindo saldo
+   reservado zerado, com nota explícita de que será reavaliada junto das invariantes
+   correspondentes quando o mecanismo de reserva for especificado. A ausência de uma
+   `INV-CATALOG-007` na matriz canônica de invariantes não contradiz isso: ela reflete apenas que
+   "saldo reservado" ainda não é um conceito verificável o bastante para virar invariante
+   transversal própria, não que a condição de autorização esteja errada ou pendente de decisão.
 3. **Nenhum conflito material foi encontrado entre a Constitution, `PRODUCT.md` e a spec 001** para
    os itens classificados `MANTER`, `REFORMULAR` ou `NOVA LACUNA` nesta reconciliação. Onde a
    matriz legada e as fontes vigentes discordam (unidade de medida, superusuário, "divergência
@@ -334,8 +359,9 @@ Constitution), não por boa prática genérica.
 
 ## O que este documento não decide
 
-- Não cria `docs/domain/invariants-matrix.md`. Essa canonização é etapa posterior, a critério do
-  dono do produto.
+- Não altera `docs/domain/invariants-matrix.md` diretamente. Esse documento já existe e é a fonte
+  canônica de invariantes; qualquer mudança nele exige decisão explícita de domínio e atualização
+  própria do arquivo, não apenas deste relatório histórico.
 - Não resolve nenhuma das pendências listadas acima — elas exigem decisão de produto, não análise
   adicional de documentação.
 - Não determina arquitetura de implementação (constraints de banco vs. validação de aplicação vs.
