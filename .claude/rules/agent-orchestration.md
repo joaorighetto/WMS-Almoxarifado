@@ -18,10 +18,20 @@ diretamente no contexto principal.
 Os agentes disponíveis são:
 
 - `wms-explorer`: exploração semântica read-only e análise de impacto;
-- `task-implementer`: implementação de tarefas claramente definidas;
+- `task-implementer`: implementação de tarefas claramente definidas
+  (backend e frontend pequeno ou inseparável da tarefa);
+- `frontend-implementer`: implementação de trabalho frontend significativo,
+  usando obrigatoriamente a skill `frontend-design` dentro da fundação
+  visual já estabelecida em `DESIGN.md`;
 - `code-reviewer`: revisão independente read-only;
 - `debugger`: diagnóstico e correção de bugs;
 - `test-engineer`: projeto, criação e revisão de testes.
+
+O projeto também possui os agentes auxiliares do workflow Impeccable
+(`impeccable-asset-producer`, `impeccable-documenter`,
+`impeccable-finish-reviewer`, `impeccable-manual-edit-applier`), responsáveis
+por estabelecer, documentar e auditar a fundação do design system — não por
+implementar telas do dia a dia. Ver seção "Trabalho frontend".
 
 Não invoque agentes apenas para seguir um ritual. Mudanças triviais,
 consultas simples e tarefas sem benefício claro de especialização não
@@ -70,6 +80,9 @@ Isso se reflete no trabalho de cada subagent, sem alterar seus prompts individua
   introduz comportamento incompatível com os artefatos canônicos.
 - `debugger`: quando o bug representar quebra de invariante ou autorização, referencia o ID
   correspondente na análise quando isso melhorar a rastreabilidade.
+- `frontend-implementer`: quando a superfície implementada expuser dado ou ação sensível a
+  papel/setor, consulta `permissions-matrix.md` para garantir que a interface reflita a mesma
+  autorização já garantida no backend — nunca usa visibilidade de elemento como autorização.
 
 Alterar uma permissão ou invariante canônica segue sempre o mesmo fluxo, nunca o caminho inverso
 (mudar comportamento e só depois atualizar a documentação):
@@ -146,16 +159,27 @@ omitida.
 A implementação de código de produção deve ser atribuída ao
 `task-implementer` quando houver uma tarefa concreta e bem definida.
 
-Forneça ao implementador:
+Quando a tarefa envolver trabalho frontend significativo (tela nova,
+componente novo, redesenho aprovado de superfície existente, revisão visual
+relevante), atribua essa parte ao `frontend-implementer` em vez do
+`task-implementer`. Se a tarefa combinar backend e frontend significativo,
+separe o trabalho entre os dois agentes; não peça ao `task-implementer` para
+absorver frontend significativo só por conveniência, nem peça ao
+`frontend-implementer` para implementar regra de negócio, autorização ou
+mudança de estoque substancial.
+
+Forneça ao implementador (`task-implementer` ou `frontend-implementer`):
 
 - objetivo;
 - task correspondente;
-- artefatos Spec Kit relevantes;
+- artefatos Spec Kit relevantes (e `DESIGN.md` quando o trabalho for
+  frontend);
 - resultado da exploração, se houver;
 - cenários críticos identificados pelo `test-engineer`, se houver;
 - limites explícitos de escopo.
 
-Não peça ao `task-implementer` para redefinir requisitos ou arquitetura.
+Não peça ao `task-implementer` nem ao `frontend-implementer` para redefinir
+requisitos ou arquitetura.
 
 ### Review
 
@@ -205,7 +229,9 @@ Encaminhe:
 
 - bug/correção localizada → `debugger`, quando a natureza for diagnóstico de
   comportamento incorreto;
-- problema de implementação da tarefa → `task-implementer`.
+- problema de implementação da tarefa → `task-implementer`, ou
+  `frontend-implementer` quando o finding for especificamente sobre a parte
+  frontend significativa implementada por ele.
 
 Depois da correção, execute novamente `code-reviewer` sobre o novo estado.
 
@@ -335,16 +361,51 @@ design, implementar ou revisar. Não é necessário invocar um agente só para l
 
 ## Trabalho frontend
 
-Enquanto não existir um `frontend-implementer` especializado:
+Divisão de responsabilidade:
 
-- pequenas mudanças frontend podem ser atribuídas ao `task-implementer`;
-- mudanças frontend significativas devem ser tratadas com cautela e
-  respeitar `DESIGN.md` quando ele existir.
+- `task-implementer`: produção backend e mudanças frontend pequenas ou
+  inseparáveis da tarefa (ver seção "Frontend" do seu próprio prompt).
+- `frontend-implementer`: implementação frontend significativa — tela nova,
+  componente novo, redesenho aprovado de superfície existente, revisão
+  visual relevante — usando obrigatoriamente a skill `frontend-design`
+  dentro da fundação já estabelecida em `DESIGN.md`.
+- `wms-explorer`: exploração prévia quando o fluxo, impacto ou os
+  componentes/consumidores existentes não estiverem claros.
+- `test-engineer`: estratégia ou implementação de testes especializados
+  (template, HTMX, comportamento) quando o risco justificar.
+- `code-reviewer`: revisão funcional independente após mudança frontend
+  significativa. Este agente não faz auditoria visual completa nem
+  substitui o workflow Impeccable (ver seu próprio prompt, seção
+  "Frontend").
+- agentes `impeccable-*`: auxiliares do workflow Impeccable — estabelecem,
+  documentam e auditam a fundação do design system (`DESIGN.md` e seu
+  sidecar), produzem assets e revisam builds dirigidos por comp. Não são
+  substitutos do implementador de produção, e o `frontend-implementer` não
+  os invoca (não tem acesso à ferramenta `Agent`).
 
-Não crie ou invoque um agente frontend inexistente.
+Um fluxo frontend significativo pode ser:
 
-Essa política será atualizada quando o workflow Impeccable + frontend-design
-estiver configurado.
+```text
+wms-explorer, quando necessário
+→ frontend-implementer
+→ code-reviewer
+→ correções pelo frontend-implementer
+→ nova revisão quando material
+```
+
+Não imponha esse pipeline para alterações triviais — essas continuam com
+`task-implementer` (ver seção "Tarefas triviais").
+
+Se, durante um fluxo frontend, ficar evidente que a fundação do design
+system precisa ser criada, revista ou passar por auditoria estrutural (não
+apenas uma tela específica), direcione esse trabalho ao workflow `impeccable`
+em vez de pedir ao `frontend-implementer` para assumi-lo — ele não tem esse
+papel.
+
+Se o `frontend-implementer` reportar necessidade de mudança backend
+substancial (regra de negócio, autorização, estoque, migration) que exceda
+um ajuste local, encaminhe-a ao `task-implementer` como uma tarefa própria,
+em vez de pedir ao `frontend-implementer` para implementá-la.
 
 ## Tarefas triviais
 

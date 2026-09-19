@@ -91,10 +91,21 @@ Não force Serena para documentação, configuração, CSS, templates ou pequena
 Este projeto possui os seguintes subagents:
 
 - `wms-explorer` — exploração semântica e análise de impacto read-only;
-- `task-implementer` — implementação de tarefas definidas;
+- `task-implementer` — implementação de tarefas definidas (backend e frontend
+  pequeno ou inseparável da tarefa);
+- `frontend-implementer` — implementação de trabalho frontend significativo
+  (Django Templates, HTMX, CSS, JavaScript pontual), usando obrigatoriamente
+  a skill `frontend-design` dentro do design system existente;
 - `code-reviewer` — revisão independente read-only;
 - `debugger` — diagnóstico e correção de bugs;
 - `test-engineer` — estratégia, criação e revisão de testes.
+
+O projeto também possui os agentes auxiliares `impeccable-asset-producer`,
+`impeccable-documenter`, `impeccable-finish-reviewer` e
+`impeccable-manual-edit-applier`, usados pelo workflow da skill `impeccable`
+para estabelecer, documentar e auditar a fundação do design system
+(`DESIGN.md`). O `frontend-implementer` implementa dentro dessa fundação já
+estabelecida; não a substitui.
 
 O Claude da sessão principal é responsável por coordenar esses agentes.
 
