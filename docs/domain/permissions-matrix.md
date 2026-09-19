@@ -94,7 +94,7 @@ Versão: 1.0
 |---|---|---|---|---|
 | `PERM-MATERIAL-VIEW` | Consultar materiais do catálogo | `ROLE-REQUESTER` | — | Requer autenticação ativa. |
 | `PERM-MATERIAL-EDIT-NOTE` | Editar observação interna do material | `ROLE-WAREHOUSE-STAFF` | — | Campo próprio do WMS; não deriva nem é enviado ao SCPI. |
-| `PERM-MATERIAL-DEACTIVATE` | Inativar material | `ROLE-WAREHOUSE-HEAD` | — | Exige saldo físico e reservado zerados. |
+| `PERM-MATERIAL-DEACTIVATE` | Inativar material | `ROLE-WAREHOUSE-HEAD` | — | Exige saldo físico zerado. Caso uma futura feature introduza reserva de estoque, esta condição deverá ser reavaliada junto das invariantes correspondentes. |
 
 ### Estoque
 
