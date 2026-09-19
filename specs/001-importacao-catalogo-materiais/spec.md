@@ -403,6 +403,7 @@ Capabilities de `docs/domain/permissions-matrix.md` relevantes para esta feature
 
 Invariantes de `docs/domain/invariants-matrix.md` que esta feature preserva:
 
+- `INV-AUTH-001` — usuário inativo não acessa nem executa operações (FR-045).
 - `INV-CATALOG-001` — opacidade do `CADPRO` (FR-001, FR-002).
 - `INV-CATALOG-002` — unicidade do `CADPRO` no catálogo (FR-003, FR-005).
 - `INV-CATALOG-003` — material só entra pela importação do SCPI (FR-006).
@@ -414,6 +415,8 @@ Invariantes de `docs/domain/invariants-matrix.md` que esta feature preserva:
   sobrescreve saldo existente (FR-016, FR-025 a FR-028).
 - `INV-STOCK-003` — divergência de saldo é informativa (FR-029, FR-030).
 - `INV-STOCK-004` — atomicidade da gravação da importação (FR-038).
+- `INV-MOV-002` — saldo inicial identificável como carga do SCPI, distinguível de movimentações
+  posteriores do WMS (FR-016).
 - `INV-SCPI-001` — ausência de integração automática com o SCPI (FR-046).
 
 ## Success Criteria *(mandatory)*
