@@ -1,0 +1,130 @@
+/*
+ * Componentes compartilhados — WMS-Almoxarifado
+ *
+ * Primitivos de UI já acordados em DESIGN.md → Components (Buttons, Alert,
+ * Inputs/Fields), usados por mais de uma página (contas/templates/contas/login.html e
+ * home.html, no mínimo). Vivem em static/css/ (nível de projeto), ao lado de
+ * tokens.css/base.css, para que nenhuma página duplique estes primitivos —
+ * Constitution, Princípio VIII: "componentes reutilizáveis DEVEM ser preferidos a
+ * markup duplicado".
+ *
+ * Consome exclusivamente os tokens de tokens.css — nenhum valor literal de cor,
+ * tipografia, spacing ou raio é redefinido aqui.
+ *
+ * Carregar sempre depois de tokens.css e base.css.
+ */
+
+/* ---------------------------------------------------------------------
+ * Button (DESIGN.md → Components → Buttons)
+ * ------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+/* Primário: fundo `primary`, reservado à ação visualmente dominante de cada contexto
+   de interação — no máximo uma por tela/dialog/região independente (The One Accent
+   Rule). */
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.btn-primary:disabled {
+  background-color: var(--color-disabled);
+  border-color: var(--color-disabled);
+  color: var(--color-surface);
+  cursor: not-allowed;
+}
+
+/* Secundário/Ghost (DESIGN.md → Components → Buttons → Secundário/Ghost): borda ou
+   texto em text/border, sem preenchimento de `primary` — nunca compete com a ação
+   primária do mesmo contexto. */
+.btn-secondary {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  /* Realce leve de hover, não uma ação que dependa dele — `surface-subtle` é o tom
+     documentado para hover funcional (DESIGN.md → Colors → Neutral). */
+  background-color: var(--color-surface-subtle);
+}
+
+.btn-secondary:disabled {
+  border-color: var(--color-disabled);
+  color: var(--color-disabled);
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------
+ * Alert (DESIGN.md → Components → Alert): texto explícito de erro, nunca só cor
+ * (The No Color-Only State Rule) — o conteúdo do próprio erro já é a pista textual.
+ * ------------------------------------------------------------------- */
+.alert {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-body);
+}
+
+.alert p {
+  margin: 0;
+}
+
+.alert p + p {
+  margin-top: var(--space-1);
+}
+
+.alert-danger {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------------
+ * Inputs / Fields (DESIGN.md → Components → Inputs/Fields): label acima do campo,
+ * erro abaixo em `danger` com texto (nunca só borda vermelha). Foco sempre visível —
+ * herdado do :focus-visible global definido em static/css/base.css, não redefinido
+ * aqui.
+ * ------------------------------------------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.field label {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+/* Campos de formulário nativos do Django (ex.: AuthenticationForm), sem widget/classe
+   própria — selecionados pelo tipo de input dentro do wrapper `.field`. */
+.field input[type="text"],
+.field input[type="password"] {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: var(--font-size-meta);
+  margin: 0;
+}

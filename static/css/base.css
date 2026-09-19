@@ -1,0 +1,69 @@
+/*
+ * Reset mínimo e estilos globais compartilhados — WMS-Almoxarifado
+ *
+ * Consome exclusivamente os tokens de tokens.css (custom properties) — nenhum valor
+ * literal de cor, tipografia ou spacing é redefinido aqui. Este arquivo não define
+ * componente algum (botão, input, tabela, app-shell); apenas a base compartilhada por
+ * toda a aplicação, mobile-first, conforme DESIGN.md.
+ *
+ * Carregar sempre depois de tokens.css.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+h1, h2, h3, h4, h5, h6,
+p,
+ul, ol, dl, dd,
+figure,
+blockquote,
+fieldset {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text);
+  background-color: var(--color-background);
+}
+
+/* Controles de formulário herdam a mesma família/tamanho do restante da UI — não há um
+   segundo par tipográfico para inputs/botões (DESIGN.md → Typography → Character). */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Anel de foco visível em todo controle interativo — nunca removido, mesmo em uso por
+   teclado (DESIGN.md → Colors → Estados semânticos → Foco; Buttons/Inputs → Foco). */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

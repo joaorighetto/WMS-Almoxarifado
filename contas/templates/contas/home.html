@@ -1,0 +1,26 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% block title %}Início — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'contas/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="home-page">
+  <div class="home-card">
+    <h1 class="home-title">WMS-Almoxarifado</h1>
+    <p class="home-status">Sessão autenticada como <strong>{{ user.matricula }}</strong>.</p>
+
+    {% comment %}
+    "Sair" é ação secundária desta tela (The One Accent Rule) — sem preenchimento de
+    `primary`, para não competir com nenhuma ação principal do contexto.
+    {% endcomment %}
+    <form method="post" action="{% url 'logout' %}" class="home-logout-form">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary">Sair</button>
+    </form>
+  </div>
+</main>
+{% endblock %}
