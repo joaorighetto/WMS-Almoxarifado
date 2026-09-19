@@ -7,9 +7,9 @@ Este repositório utiliza Claude Code com Spec Kit, Serena MCP e subagents espec
 Ao trabalhar neste projeto, respeite a seguinte ordem de contexto:
 
 1. `.specify/memory/constitution.md` — princípios obrigatórios de engenharia;
-2. `PRODUCT.md` e a documentação canônica transversal de domínio (`docs/domain/permissions-matrix.md`
-   e, quando validada, `docs/domain/invariants-matrix.md`) — verdade de produto e de
-   autorização/invariantes válida em todo o repositório, não só na feature em andamento;
+2. `PRODUCT.md` e a documentação canônica de domínio (`docs/domain/permissions-matrix.md` e
+   `docs/domain/invariants-matrix.md`) — verdade de produto, de autorização e de invariantes válida
+   em todo o repositório, não só na feature em andamento;
 3. `spec.md` — requisitos e comportamento esperado da feature;
 4. `plan.md` — solução técnica planejada;
 5. `tasks.md` — unidades de implementação;
@@ -23,26 +23,38 @@ atualizado explicitamente — nunca contornado silenciosamente por uma spec.
 
 Se houver conflito material entre essas fontes, não escolha silenciosamente uma interpretação. Identifique o conflito antes de prosseguir.
 
-## Documentação canônica transversal
+## Documentação canônica de domínio
 
 Além dos artefatos de feature (`spec.md`/`plan.md`/`tasks.md`), o projeto mantém documentação de
 domínio válida em todo o repositório, independente de qual feature está sendo trabalhada:
 
-- `docs/domain/permissions-matrix.md` — fonte canônica de capabilities, papéis, escopos e
-  condições de autorização. **Validada.**
-- `docs/domain/invariants-matrix.md` — fonte canônica de invariantes de domínio, quando este
-  documento existir e estiver validado. Até lá, não tem autoridade nenhuma e não deve ser tratado
-  como fonte normativa.
+- `docs/domain/permissions-matrix.md`
+  Fonte canônica de papéis, capabilities, escopos e condições de autorização. **Validada.**
+- `docs/domain/invariants-matrix.md`
+  Fonte canônica das propriedades transversais que devem permanecer verdadeiras no domínio.
+  **Validada.**
 
-`docs/domain-legacy/reconciliation/permissions-reconciliation.md` é histórico/não normativo — serve
-para entender por que uma decisão de permissão existe, nunca para reviver algo lá descartado,
-pendente ou substituído.
+Resumindo a diferença: `permissions-matrix.md` responde **quem** pode executar determinada
+capacidade, dentro de qual escopo e condições; `invariants-matrix.md` responde **o que** deve
+permanecer verdadeiro no domínio, independentemente de quem executa a operação.
 
-Specifications relacionadas a operações protegidas devem referenciar as capabilities aplicáveis por
-ID, numa seção `## Autorizações aplicáveis` (por exemplo, `PERM-REQ-CREATE-SELF`) — só quando houver
-autorização relevante, nunca como seção obrigatória em toda spec. Uma spec nova não redefine
-silenciosamente o significado de uma capability existente; para alterar uma, primeiro registre a
-decisão e atualize `permissions-matrix.md`, só depois use o novo comportamento na spec.
+Relatórios em `docs/domain/reconciliation/` e em `docs/domain-legacy/reconciliation/` são
+históricos e não normativos — explicam origem, alternativas consideradas, decisões descartadas e
+pendências, mas nunca substituem as matrizes canônicas acima. Quando houver divergência, as
+matrizes canônicas representam o estado vigente; não use um relatório de reconciliação para reviver
+algo lá descartado, pendente ou substituído.
+
+Specifications relacionadas a operações ou regras transversais devem referenciar as capabilities e
+invariantes aplicáveis por ID, numa seção `## Regras canônicas aplicáveis` (com subseções
+`### Permissões` e `### Invariantes`, por exemplo `PERM-REQ-CREATE-SELF` e `INV-STOCK-004`) — só
+quando houver regra transversal relevante, nunca como seção obrigatória em toda spec, e nunca
+copiando o texto completo das matrizes. Uma spec nova não redefine silenciosamente o significado de
+uma capability ou invariante existente; para alterar uma, primeiro registre a decisão e atualize a
+matriz canônica correspondente, só depois use o novo comportamento na spec.
+
+Pela mesma lógica, tasks de domínio crítico podem referenciar os IDs que aplicam e preservam (ex.:
+`Aplica: PERM-STOCK-ENTRY-CREATE` / `Preserva: INV-STOCK-001, INV-STOCK-004, INV-MOV-002`) — não é
+obrigatório para tasks triviais.
 
 ## Arquitetura base
 

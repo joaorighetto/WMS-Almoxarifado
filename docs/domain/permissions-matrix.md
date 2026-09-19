@@ -94,7 +94,7 @@ Versão: 1.0
 |---|---|---|---|---|
 | `PERM-MATERIAL-VIEW` | Consultar materiais do catálogo | `ROLE-REQUESTER` | — | Requer autenticação ativa. |
 | `PERM-MATERIAL-EDIT-NOTE` | Editar observação interna do material | `ROLE-WAREHOUSE-STAFF` | — | Campo próprio do WMS; não deriva nem é enviado ao SCPI. |
-| `PERM-MATERIAL-DEACTIVATE` | Inativar material | `ROLE-WAREHOUSE-HEAD` | — | Exige saldo físico e reservado zerados. |
+| `PERM-MATERIAL-DEACTIVATE` | Inativar material | `ROLE-WAREHOUSE-HEAD` | — | Exige saldo físico e saldo reservado zerados. Decisão de produto confirmada em `docs/domain-legacy/reconciliation/permissions-reconciliation.md`; o mecanismo técnico de reserva ainda não está especificado, mas a exigência permanece válida enquanto ele não existir (reservado inexistente se comporta como reservado zero) e até nova decisão explícita do dono do produto. |
 
 ### Estoque
 
@@ -139,16 +139,16 @@ Versão: 1.0
 ## 4. Fora desta matriz (por design, não por esquecimento)
 
 Regras que permanecem verdadeiras sobre o domínio, mas não são capacidades concedíveis a um
-papel, vivem em suas fontes apropriadas — Constitution, spec vigente ou a futura matriz de
-invariantes — nunca aqui:
+papel, vivem em suas fontes apropriadas — Constitution, spec vigente ou
+`docs/domain/invariants-matrix.md` — nunca aqui:
 
-- usuário inativo não acessa nem opera (invariante de autenticação);
-- material não pode ser criado manualmente, por nenhum papel (spec 001, FR-006);
+- usuário inativo não acessa nem opera (`INV-AUTH-001`);
+- material não pode ser criado manualmente, por nenhum papel (`INV-CATALOG-003`; spec 001, FR-006);
 - ninguém autoriza requisição de setor alheio ao seu (regra negativa confirmada);
 - liberação de reserva não entregue é efeito automático de outras transições, não uma ação
   solicitada por um papel;
-- atomicidade de gravação, rastreabilidade e demais invariantes de integridade (Constitution,
-  Princípios III e IV).
+- atomicidade de gravação, rastreabilidade e demais invariantes de integridade (`INV-STOCK-004`,
+  `INV-MOV-001`, `INV-MOV-002`; Constitution, Princípios III e IV).
 
 Capacidades cuja existência depende de uma máquina de estados de requisição ainda não
 especificada (rascunho, envio, retorno, cancelamento por estado, atendimento parcial, separação

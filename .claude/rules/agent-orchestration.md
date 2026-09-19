@@ -42,6 +42,43 @@ O Claude principal deve:
 O Claude principal é responsável pela orquestração. Não conceda essa
 responsabilidade implicitamente aos subagents.
 
+## Documentação canônica de domínio
+
+`docs/domain/permissions-matrix.md` e `docs/domain/invariants-matrix.md` são fontes canônicas
+válidas em todo o repositório — a primeira responde quem pode agir, a segunda o que deve permanecer
+verdadeiro. Não é necessário invocar um agente só para lê-las.
+
+Quando uma feature envolver autorização, papéis, escopo, visibilidade de objetos ou administração de
+usuários, consulte `docs/domain/permissions-matrix.md` antes de especificar, desenhar testes,
+implementar ou revisar.
+
+Quando uma feature alterar estado de domínio, estoque, catálogo, movimentações, relações
+organizacionais, ou introduzir operações críticas, consulte `docs/domain/invariants-matrix.md` pelo
+mesmo motivo. Features críticas de estoque que também envolvam autorização devem consultar ambas.
+
+Relatórios em `docs/domain/reconciliation/` e `docs/domain-legacy/reconciliation/` são
+histórico/não normativo — nunca os trate como as matrizes canônicas.
+
+Isso se reflete no trabalho de cada subagent, sem alterar seus prompts individuais:
+
+- `wms-explorer`: ao analisar impacto relevante, identifica as capabilities (`PERM-*`) e
+  invariantes (`INV-*`) aplicáveis.
+- `test-engineer`: usa as invariantes aplicáveis como fonte de cenários de teste, priorizando as de
+  severidade CRÍTICA.
+- `task-implementer`: preserva explicitamente as invariantes e permissões aplicáveis à task.
+- `code-reviewer`: verifica se o diff quebra alguma `INV-*`, amplia uma `PERM-*`, ignora escopo, ou
+  introduz comportamento incompatível com os artefatos canônicos.
+- `debugger`: quando o bug representar quebra de invariante ou autorização, referencia o ID
+  correspondente na análise quando isso melhorar a rastreabilidade.
+
+Alterar uma permissão ou invariante canônica segue sempre o mesmo fluxo, nunca o caminho inverso
+(mudar comportamento e só depois atualizar a documentação):
+
+```text
+necessidade nova → decisão explícita de domínio → atualizar a matriz canônica correspondente
+→ atualizar specs afetadas → plan/tasks → implementação/review
+```
+
 ## Feature nova
 
 Quando existir uma feature definida através do Spec Kit, use normalmente o
@@ -57,6 +94,16 @@ specify → clarify → plan → checklist → tasks → analyze
 
 `checklist` pode ser omitido quando não agregar valor à feature. Não execute
 `converge` antes da implementação.
+
+Durante `clarify`, se uma resposta proposta contradisser uma `INV-*`, exigir uma capability ainda
+inexistente, ampliar o escopo de uma `PERM-*` ou enfraquecer uma regra canônica, explicite o
+conflito em vez de deixar `clarify` sobrescrever a matriz silenciosamente. Se o dono do produto
+decidir pela mudança, siga o fluxo de alteração descrito acima antes de codificar a decisão na spec.
+
+Em `analyze`, verifique também que a spec não contradiz `permissions-matrix.md`/`invariants-matrix.md`
+e que `plan.md`/`tasks.md` oferecem meios adequados para preservar as invariantes e permissões
+aplicáveis. Em `converge`, verifique que implementação, testes e specs continuam consistentes com as
+matrizes canônicas e que nenhuma decisão de domínio nova ficou registrada só no código.
 
 Depois que `spec.md`, `plan.md` e `tasks.md` estiverem suficientemente
 definidos:
@@ -267,6 +314,10 @@ Dê atenção especial a:
 Não considere uma alteração crítica de estoque concluída apenas porque o
 happy path passa.
 
+Consulte `docs/domain/invariants-matrix.md` antes de especificar, desenhar testes, implementar ou
+revisar qualquer uma dessas alterações; consulte também `docs/domain/permissions-matrix.md` quando
+a alteração envolver autorização (ver seção seguinte).
+
 ## Segurança e permissões
 
 Mudanças significativas envolvendo autorização, autenticação ou isolamento
@@ -338,12 +389,18 @@ quando um resumo focado for suficiente.
 Respeite a seguinte separação:
 
 - Constitution → princípios obrigatórios;
+- `PRODUCT.md` → verdade de produto;
+- `docs/domain/permissions-matrix.md` e `docs/domain/invariants-matrix.md` → regras transversais
+  canônicas (quem pode agir; o que deve permanecer verdadeiro), válidas em todo o repositório;
 - `spec.md` → comportamento/requisitos da feature;
-- `plan.md` → solução técnica planejada;
+- `plan.md` → solução técnica planejada — decide **como** preservar uma invariante ou capability
+  (ex.: `INV-STOCK-004` pode levar a transação, lock ou constraint quando tecnicamente apropriado),
+  nunca o contrário;
 - `tasks.md` → unidades de implementação;
 - `DESIGN.md` → design system, quando existir;
 - código existente → realidade atual da implementação;
-- relatórios dos subagents → evidência e análise, não novas fontes
+- relatórios dos subagents e relatórios em `docs/domain/reconciliation/` /
+  `docs/domain-legacy/reconciliation/` → evidência, análise e histórico, não novas fontes
   normativas.
 
 Se houver conflito material entre essas fontes, não escolha arbitrariamente.
@@ -353,6 +410,8 @@ Relatórios, findings, hipóteses e recomendações produzidos pelos subagents
 são evidências e análises. Eles não alteram automaticamente:
 
 - Constitution;
+- `docs/domain/permissions-matrix.md`;
+- `docs/domain/invariants-matrix.md`;
 - `spec.md`;
 - `plan.md`;
 - `tasks.md`;
