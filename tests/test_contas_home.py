@@ -14,6 +14,7 @@ import unicodedata
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
+from django.templatetags.static import static
 from django.urls import reverse
 
 
@@ -67,6 +68,12 @@ def test_login_renderiza_200_com_campos_de_matricula_e_senha(client):
     # com `USERNAME_FIELD = "matricula"` — só o rótulo exibido muda.
     assert 'name="username"' in conteudo
     assert 'name="password"' in conteudo
+    assert "Entrar no sistema" in conteudo
+    assert "Almoxarifado SAEP" in conteudo
+    assert "gestão de materiais" in conteudo
+    assert "data-login-form" in conteudo
+    assert "data-login-submit" in conteudo
+    assert static("contas/js/login.js") in conteudo
 
     conteudo_sem_acento = _sem_acentos(conteudo).lower()
     assert "atricula" in conteudo_sem_acento
@@ -83,3 +90,20 @@ def test_mensagem_de_erro_generica_aparece_no_html_de_login_invalido(client, usu
     mensagem_esperada = str(response.context["form"].non_field_errors()[0])
 
     assert mensagem_esperada in response.content.decode()
+    assert "Confira os dados e tente novamente." in mensagem_esperada
+    assert "Se o problema continuar, procure o responsável pelo sistema." in (
+        response.content.decode()
+    )
+
+
+@pytest.mark.django_db
+def test_erros_de_campo_usam_os_ids_referenciados_pelo_django(client):
+    response = client.post(reverse("login"), {"username": "", "password": ""})
+
+    assert response.status_code == 200
+    conteudo = response.content.decode()
+
+    assert 'aria-describedby="id_username_error"' in conteudo
+    assert 'id="id_username_error"' in conteudo
+    assert 'aria-describedby="id_password_error"' in conteudo
+    assert 'id="id_password_error"' in conteudo

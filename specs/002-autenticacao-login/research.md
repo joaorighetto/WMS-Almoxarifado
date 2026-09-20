@@ -117,7 +117,10 @@ suposição de versão nem contra documentação genérica.
   - não toca rótulo, `max_length` nem campo algum;
   - mantém **uma única** string genérica para as três causas de recusa — senha incorreta,
     matrícula inexistente e conta inativa —, preservando `FR-003`/`SC-003` (não-enumeração de
-    usuário). O teste de igualdade direta entre as três mensagens continua valendo.
+    usuário). O texto final, após a crítica de interface, é *"Matrícula ou senha inválidas.
+    Confira os dados e tente novamente."*; a orientação genérica *"Se o problema continuar,
+    procure o responsável pelo sistema."* fica no template e não revela canal ou contato
+    inexistente. O teste de igualdade direta entre as três mensagens continua valendo.
 
   A decisão de segurança permanece intacta; o que muda é só o texto exibido.
 - **Alternatives considered**:

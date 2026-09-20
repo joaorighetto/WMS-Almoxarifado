@@ -343,7 +343,7 @@ def test_mensagem_de_recusa_concorda_em_genero_e_permanece_generica(setor):
 
     mensagem = WMSAuthenticationForm().error_messages["invalid_login"]
 
-    assert mensagem == "Matrícula ou senha inválidas."
+    assert mensagem == "Matrícula ou senha inválidas. Confira os dados e tente novamente."
     assert "um matrícula" not in mensagem, "desacordo de gênero da tradução nativa"
     # Nada no texto revela qual das três condições ocorreu.
     for vazamento in ("inativ", "não existe", "inexistente", "senha incorreta"):

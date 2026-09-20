@@ -9,11 +9,10 @@ template de login (T020) existirem — é esperado que TODOS falhem agora, por
 `django.urls.exceptions.NoReverseMatch` ao resolver as rotas nomeadas
 `login`/`home`, não por erro de escrita do teste.
 
-Usa exclusivamente o `AuthenticationForm` nativo: o campo HTML do
-identificador de login continua se chamando `username` mesmo com
-`USERNAME_FIELD = "matricula"` — apenas o rótulo exibido muda, via
-`verbose_name` de `User.matricula` (ver `tests/test_contas_home.py` para a
-verificação do rótulo).
+Usa `WMSAuthenticationForm`, subclasse mínima do `AuthenticationForm` nativo:
+o campo HTML do identificador continua se chamando `username` mesmo com
+`USERNAME_FIELD = "matricula"`; só a mensagem genérica foi reescrita para
+português correto e acionável (ver `research.md`, R3).
 """
 
 import pytest
@@ -123,6 +122,9 @@ def test_recusas_por_senha_errada_matricula_inexistente_e_conta_inativa_sao_iden
     mensagem_inativo = _erro_do_formulario(resposta_inativo)
 
     assert mensagem_senha_errada == mensagem_matricula_inexistente == mensagem_inativo
+    assert mensagem_senha_errada == (
+        "Matrícula ou senha inválidas. Confira os dados e tente novamente."
+    )
 
 
 @pytest.mark.django_db

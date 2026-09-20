@@ -27,7 +27,7 @@ dois lugares).
 
 | Campo | Tipo | Regras | Requisito/Invariante |
 |---|---|---|---|
-| `matricula` | `CharField(max_length=32, unique=True)` | `USERNAME_FIELD`. Texto opaco — sem normalização, sem conversão numérica. | `FR-001a`, `FR-001b` |
+| `matricula` | `CharField(max_length=32, unique=True)` | `USERNAME_FIELD`. Texto opaco, sem conversão numérica; a entrada do login recebe apenas o `strip` + NFKC técnicos do `UsernameField` nativo, enquanto o valor cadastrado é preservado (ver `research.md`, R2). | `FR-001a`, `FR-001b` |
 | `password` | herdado de `AbstractBaseUser` | Hash via `set_password()`/hashers nativos do Django (PBKDF2 por padrão) | Constitution, Princípio VI |
 | `last_login` | herdado de `AbstractBaseUser` | — | — |
 | `is_active` | `BooleanField`, default `True` | `False` = condição "equivalente a inativa" da spec | `FR-004`, `FR-006`, `INV-AUTH-001` |
