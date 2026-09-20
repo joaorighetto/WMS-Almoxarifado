@@ -9,7 +9,9 @@ para uso próprio e para consumo por `001-importacao-catalogo-materiais` e futur
 > o fallback de "não autorizado → Home" deixou de usar `handler403` global. O mecanismo de
 > "proteção de superfícies" passou a ser o uso direto de `login_required`/`LoginRequiredMixin`
 > nativos, porque o framework já rejeita conta desativada em qualquer requisição subsequente (ver
-> `research.md`, R9). Eliminados `WMSLogoutView` e `contas/forms.py` (sem responsabilidade real).
+> `research.md`, R9). Eliminados `WMSLogoutView` e a antiga proposta de form customizado para
+> rótulo/tamanho (sem responsabilidade real). `contas/forms.py` foi depois reintroduzido somente
+> para corrigir a mensagem pt-BR de recusa, sem alterar campos nem autenticação (R3, revisão 3).
 >
 > **Revisão 2** (esta versão): o marcador de retorno pós-login deixou de viver na query string
 > (`?_retorno_pos_login=1`) — controlável pelo cliente, sem expiração real — e passou a viver em

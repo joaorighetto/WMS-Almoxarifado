@@ -21,6 +21,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-height: calc(var(--space-8) + var(--space-3));
   padding: var(--space-2) var(--space-4);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -115,12 +116,22 @@
 .field input[type="text"],
 .field input[type="password"] {
   width: 100%;
+  min-height: calc(var(--space-8) + var(--space-3));
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background-color: var(--color-surface);
   color: var(--color-text);
   font-size: var(--font-size-body);
+}
+
+/* Evita o zoom automático do Safari ao focar campos em dispositivos touch, sem
+   aumentar a densidade dos formulários operados com mouse/teclado no desktop. */
+@media (pointer: coarse) {
+  .field input[type="text"],
+  .field input[type="password"] {
+    font-size: var(--font-size-section-title);
+  }
 }
 
 .field-error {

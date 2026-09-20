@@ -110,7 +110,7 @@ todas as histórias seguintes.
   **não** é o `User` padrão do Django, então `UserCreationForm`/`UserChangeForm` de
   `django.contrib.auth.forms` **não podem ser usados diretamente**, pois pressupõem os campos do
   `User` padrão). Definir, junto da própria configuração administrativa em `contas/admin.py` (sem
-  criar `contas/forms.py` nem qualquer camada de forms de produto — isto é forms exclusivos do
+  criar camada de forms de produto — isto é, manter os forms de bootstrap exclusivos do
   Admin, para bootstrap/manutenção técnica):
   - um form de criação e um form de alteração compatíveis com `contas.User` (por exemplo,
     subclasses mínimas de `UserCreationForm`/`UserChangeForm` com `Meta.model = get_user_model()`
@@ -182,11 +182,12 @@ matrícula inexistente, conta inativa) recebem a mesma mensagem genérica.
 - [X] T020 [P] [US1] Criar `contas/templates/contas/base.html` (estrutura HTML mínima; `<link>`
   para os CSS globais `static/css/tokens.css` e `static/css/base.css`; um bloco
   `{% block extra_css %}{% endblock %}` logo após esses `<link>`s, para que cada página carregue
-  seu próprio CSS específico sem duplicar os links globais; bloco de conteúdo) e
+  seu próprio CSS específico sem duplicar os links globais; blocos de conteúdo e `extra_js`) e
   `contas/templates/contas/login.html` (estende `base.html`; preenche `{% block extra_css %}` com
   `<link rel="stylesheet" href="{% static 'contas/css/login.css' %}">` para carregar o CSS criado
-  em T022; formulário `POST` com `{% csrf_token %}`; campos do `AuthenticationForm` nativo —
-  matrícula e senha, sem `contas/forms.py`; mensagem de erro genérica quando `form.errors`; ação
+  em T022; formulário `POST` com `{% csrf_token %}`; campos do `WMSAuthenticationForm`, subclasse
+  mínima do `AuthenticationForm` nativo apenas para corrigir a mensagem de recusa — matrícula e
+  senha; mensagem de erro genérica quando `form.errors`; ação
   primária "Entrar"; layout mobile-first, coluna única, conforme `DESIGN.md` → Inputs/Buttons).
 - [X] T021 [P] [US1] Criar `contas/templates/contas/home.html` (estende `base.html`; preenche
   `{% block extra_css %}` com `<link rel="stylesheet" href="{% static 'contas/css/home.css' %}">`
@@ -247,7 +248,8 @@ comum fora desse fluxo permanece um 403 comum.
   URL completa (path + query preservados) se existir; `get_success_url()` sobrescrito para gravar
   `self.request.session["_retorno_pos_login_destino"] = url` quando há um destino não-padrão
   válido, e retornar `self.get_default_redirect_url()` caso contrário. Nenhum
-  `contas/forms.py`; usa `AuthenticationForm` nativo.
+  autenticação própria; usa `WMSAuthenticationForm`, que preserva os campos e o fluxo do
+  `AuthenticationForm` nativo e altera apenas a mensagem genérica.
 - [X] T027 [US2] Atualizar `contas/urls.py`: a rota `login` passa a usar
   `WMSLoginView.as_view(template_name="contas/login.html", redirect_authenticated_user=True)` em
   vez do `LoginView` nativo (mesmo template/kwargs de T019). Depende de T026.
@@ -353,12 +355,13 @@ pendente até aqui.
 **Purpose**: confirmar que o todo funciona e que nenhuma decisão do plano foi violada — sem
 corrigir aqui nada que devesse ter sido parte de uma story anterior.
 
-- [X] T035 Rodar `uv run pytest tests/` e confirmar 100% dos testes passando, incluindo os cinco
-  arquivos desta feature (`test_contas_models.py`, `test_contas_auth.py`,
+- [X] T035 Rodar `uv run pytest tests/` e confirmar 100% dos testes passando, incluindo os arquivos
+  desta feature (`test_contas_models.py`, `test_contas_auth.py`, `test_contas_admin.py`,
+  `test_contas_organizacao.py`,
   `test_contas_protected_access.py`, `test_contas_logout.py`, `test_contas_home.py`) e os testes
   pré-existentes (`test_infrastructure.py`, `test_settings.py`) sem regressão.
 - [X] T036 [P] Rodar `python manage.py makemigrations --check --dry-run` e confirmar que não há
-  migrations pendentes além de `contas/migrations/0001_initial.py`.
+  migrations pendentes além das migrations versionadas em `contas/migrations/`.
 - [X] T037 [P] Rodar `python manage.py check` (system checks do Django) e confirmar ausência de
   erros/avisos relevantes.
 - [X] T038 Executar manualmente o roteiro completo de `quickstart.md`: `migrate` → criar o primeiro
@@ -373,6 +376,24 @@ corrigir aqui nada que devesse ter sido parte de uma story anterior.
   `INV-AUTH-001`/`INV-ORG-001` permanecem preservadas, que o catálogo de papéis não foi redefinido,
   e que o contrato de `contracts/protecao-e-redirecionamento.md` está pronto para
   `001-importacao-catalogo-materiais` consumir — sem implementar nada dessa feature aqui.
+
+---
+
+## Phase 9: Critique de interface — login
+
+**Purpose**: resolver em sequência os cinco achados priorizados do critique visual, preservando o
+fluxo server-driven e limitando acessibilidade à associação semântica já identificada.
+
+- [X] T041 [US1] **Clarify**: tornar o título, o contexto do produto e a recusa acionáveis, com
+  orientação genérica sem inventar contato ou canal de suporte.
+- [X] T042 [US1] **Adapt**: usar viewport dinâmica/safe areas, permitir rolagem com teclado virtual,
+  evitar zoom automático em touch e garantir alvos de 44 px.
+- [X] T043 [US1] **Harden**: acrescentar estado `Entrando…`, bloqueio de duplo envio e restauração
+  após bfcache, mantendo o POST funcional sem JavaScript.
+- [X] T044 [US1] **Audit**: associar os IDs reais dos erros aos `aria-describedby` emitidos pelo
+  Django e cobrir o contrato por teste, sem ampliar o escopo para uma auditoria ampla de WCAG.
+- [X] T045 [US1] **Polish**: rodar testes, detector e verificação visual responsiva; corrigir apenas
+  defeitos observados, fechar o snapshot do critique quando os cinco achados estiverem resolvidos.
 
 ---
 
@@ -393,7 +414,8 @@ corrigir aqui nada que devesse ter sido parte de uma story anterior.
   US2 nem de US3.
 - **Phase 7 (Polish)**: depende de US1 e US4 (revisa `login.html`+`home.html` já com o botão de
   logout).
-- **Phase 8 (Validação)**: depende de todas as fases anteriores.
+- **Phase 8 (Validação)**: depende de todas as fases anteriores de implementação.
+- **Phase 9 (Critique)**: sucede a validação original; T041→T045 são executadas em sequência.
 
 ### Independência real entre user stories
 
@@ -487,8 +509,10 @@ Cada incremento soma valor sem quebrar o anterior.
 
 - `[P]` = arquivos diferentes, sem dependência entre si.
 - `[US#]` mapeia a task à user story correspondente para rastreabilidade.
-- Nenhuma decisão de `research.md` foi reaberta: sem `contas/auth.py`, sem `contas/forms.py`, sem
-  `WMSLogoutView`, sem `handler403`, sem marcador de retorno em query string, sem `unique=True` em
+- As revisões mantiveram: sem `contas/auth.py`, sem `WMSLogoutView`, sem `handler403`, sem marcador
+  de retorno em query string, sem `unique=True` em
   `Setor.nome`, sem `Group`/`Permission` como catálogo de papéis, sem nova dependência.
+  `contas/forms.py` foi reaberto de forma mínima e documentada em `research.md`, R3, apenas para a
+  mensagem de recusa; rótulo, campo e autenticação continuam nativos.
 - Verificar que os testes falham antes da implementação correspondente, quando escritos primeiro.
 - Parar em qualquer checkpoint de fase para validar a story isoladamente.

@@ -29,5 +29,7 @@ class WMSAuthenticationForm(AuthenticationForm):
 
     error_messages = {
         **AuthenticationForm.error_messages,
-        "invalid_login": "Matrícula ou senha inválidas.",
+        "invalid_login": (
+            "Matrícula ou senha inválidas. Confira os dados e tente novamente."
+        ),
     }
