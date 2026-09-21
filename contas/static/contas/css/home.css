@@ -1,0 +1,53 @@
+/*
+ * Home autenticada mínima — WMS-Almoxarifado
+ *
+ * Consome exclusivamente os tokens de static/css/tokens.css. Superfície mínima e neutra
+ * (User Story 1) — sem sidebar/app-shell, menu, KPI ou qualquer feature de negócio
+ * antecipada (DESIGN.md → Layout → App shell segue em aberto).
+ *
+ * Primitivos compartilhados (`.btn`/`.btn-secondary`) vivem em static/css/components.css
+ * (nível de projeto) — este arquivo contém apenas composição/layout específicos desta
+ * tela.
+ */
+
+.home-page {
+  min-height: 100vh;
+  padding: max(var(--space-6), env(safe-area-inset-top, 0px))
+    max(var(--space-4), env(safe-area-inset-right, 0px))
+    max(var(--space-6), env(safe-area-inset-bottom, 0px))
+    max(var(--space-4), env(safe-area-inset-left, 0px));
+}
+
+.home-card {
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-4);
+}
+
+.home-title {
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--space-4);
+}
+
+.home-status {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* "Sair" é uma ação secundária desta tela, não a ação primária — mantém distância
+   visual do texto de status para não parecer parte da mesma frase. */
+.home-logout-form {
+  margin-top: var(--space-6);
+}
+
+@media (min-width: 480px) {
+  .home-card {
+    padding: var(--space-8) var(--space-6);
+  }
+}

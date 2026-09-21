@@ -1,0 +1,95 @@
+/*
+ * Tokens visuais — WMS-Almoxarifado
+ *
+ * Fonte normativa: DESIGN.md (raiz do repositório).
+ * Todos os valores de cor abaixo são "initial design value" conforme DESIGN.md → Colors:
+ * hipótese de direção para viabilizar implementação, não identidade institucional aprovada.
+ * Tamanhos de tipografia e passos de spacing são "valor inicial sugerido" (DESIGN.md → Typography
+ * e Layout), sujeitos a validação em implementação futura — não redefina estes valores em outro
+ * arquivo; ajuste aqui quando a fundação evoluir.
+ *
+ * Nenhum componente é definido neste arquivo — apenas custom properties.
+ */
+
+:root {
+  /* ---------------------------------------------------------------------
+   * Cor — Primary (DESIGN.md → Colors → Primary)
+   * Único accent funcional do sistema (The One Accent Rule).
+   * ------------------------------------------------------------------- */
+  --color-primary: #2F5D8A;
+
+  /* ---------------------------------------------------------------------
+   * Cor — Neutral (DESIGN.md → Colors → Neutral)
+   * ------------------------------------------------------------------- */
+  --color-background: #F7F8FA;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #EEF0F3;
+  --color-border: #D7DBE0;
+  --color-border-strong: #9AA1AC;
+  --color-text: #1B1E22;
+  --color-text-muted: #5B6270;
+  --color-disabled: #B7BCC4;
+
+  /* ---------------------------------------------------------------------
+   * Cor — Estados semânticos (DESIGN.md → Colors → Estados semânticos)
+   * ------------------------------------------------------------------- */
+  --color-success: #2E7D46;
+  --color-warning: #A66A00;
+  --color-danger: #B3261E;
+  --color-info: #3B6EA5;
+  --color-selected: #E4ECF4;
+  /* Foco: mesmo tom do Azul-Operação (DESIGN.md → Colors → Estados semânticos → Foco). */
+  --color-focus: var(--color-primary);
+
+  /* ---------------------------------------------------------------------
+   * Tipografia — famílias (DESIGN.md → Typography)
+   * Par funcional único: sistema para tudo que é dado/interface, monoespaçada só para
+   * identificador opaco do domínio (ex.: CADPRO). Sem fonte de exibição decorativa
+   * (The No Display Font Rule).
+   * ------------------------------------------------------------------- */
+  --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---------------------------------------------------------------------
+   * Tipografia — pesos
+   * ------------------------------------------------------------------- */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* ---------------------------------------------------------------------
+   * Tipografia — escala (DESIGN.md → Typography → Hierarquia)
+   * Valor inicial sugerido dentro da faixa indicada; densidade final por contexto
+   * (desktop/tablet/celular) fica para validação em implementação.
+   * ------------------------------------------------------------------- */
+  --font-size-page-title: 1.25rem;    /* ~20px — título de página (peso semibold) */
+  --font-size-section-title: 1rem;    /* ~16px — título de seção (peso semibold/médio) */
+  --font-size-body: 0.875rem;         /* ~14px — corpo / dado tabular (peso regular) */
+  --font-size-meta: 0.8125rem;        /* ~13px — metadado / legenda (peso regular, text-muted) */
+  --font-size-badge: 0.75rem;         /* ~12px — estado / badge (peso médio) */
+  --font-size-code: var(--font-size-body); /* CADPRO e identificadores: mesmo tamanho do corpo */
+
+  /* Suporte de leitura para corpo de texto corrido; DESIGN.md não fixa um valor —
+     mantido moderado e neutro, sem função de hierarquia. */
+  --line-height-base: 1.5;
+  --line-height-tight: 1.25;
+
+  /* ---------------------------------------------------------------------
+   * Espaçamento — escala base 4px (DESIGN.md → Layout → Densidade por contexto)
+   * Nome do token = múltiplo do passo de 4px (space-N = N × 4px).
+   * ------------------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ---------------------------------------------------------------------
+   * Raio — mínimo e funcional (DESIGN.md → Shapes)
+   * Sem arredondamento pronunciado; bordas finas continuam o principal recurso
+   * de separação entre linha, campo e seção.
+   * ------------------------------------------------------------------- */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}

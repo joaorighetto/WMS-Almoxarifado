@@ -1,8 +1,109 @@
-<!-- SEED: established with the user before implementation, via /impeccable shape (fundação visual + revisão incremental de responsividade por papel/dispositivo), sem código, comp ou geração de imagem. Re-execute /impeccable document em modo scan assim que houver templates, CSS e componentes reais implementados, para extrair os tokens e o sidecar `.impeccable/design.json` a partir do código de fato construído. -->
-
 ---
 name: WMS-Almoxarifado
 description: Ferramenta operacional interna de gestão de materiais, estoque e movimentações do almoxarifado do SAEP.
+colors:
+  primary: "#2F5D8A"
+  background: "#F7F8FA"
+  surface: "#FFFFFF"
+  surface-subtle: "#EEF0F3"
+  border: "#D7DBE0"
+  border-strong: "#9AA1AC"
+  text: "#1B1E22"
+  text-muted: "#5B6270"
+  disabled: "#B7BCC4"
+  success: "#2E7D46"
+  warning: "#A66A00"
+  danger: "#B3261E"
+  info: "#3B6EA5"
+  selected: "#E4ECF4"
+  focus: "#2F5D8A"
+typography:
+  page-title:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 600
+    lineHeight: 1.25
+  section-title:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 600
+    lineHeight: 1.25
+  body:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  meta:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "0.8125rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  badge:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 500
+    lineHeight: 1.25
+  code:
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.5
+rounded:
+  sm: "2px"
+  md: "4px"
+spacing:
+  space-1: "4px"
+  space-2: "8px"
+  space-3: "12px"
+  space-4: "16px"
+  space-6: "24px"
+  space-8: "32px"
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.surface}"
+    typography: "{typography.body}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    minHeight: "44px"
+  button-primary-disabled:
+    backgroundColor: "{colors.disabled}"
+    textColor: "{colors.surface}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    minHeight: "44px"
+  button-secondary:
+    backgroundColor: "transparent"
+    textColor: "{colors.text}"
+    typography: "{typography.body}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    minHeight: "44px"
+  button-secondary-hover:
+    backgroundColor: "{colors.surface-subtle}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    minHeight: "44px"
+  alert-danger:
+    backgroundColor: "{colors.surface-subtle}"
+    textColor: "{colors.danger}"
+    typography: "{typography.body}"
+    rounded: "{rounded.sm}"
+    padding: "12px"
+  input-text:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.body}"
+    rounded: "{rounded.sm}"
+    padding: "8px 12px"
+    width: "100%"
+    minHeight: "44px"
+  card-surface:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
+    padding: "24px 16px"
 ---
 
 # Design System: WMS-Almoxarifado
@@ -26,7 +127,7 @@ Rejeições visuais confirmadas: dashboards decorativos, cards como estrutura un
 
 ## Colors
 
-Estratégia cromática: **Restrained** — base neutra, um único accent funcional para ação primária, cores semânticas usadas apenas para estado e significado. Todos os valores abaixo são **initial design values**: hipótese de direção para viabilizar implementação futura, não aprovados como identidade institucional e sujeitos a refinamento visual.
+Estratégia cromática: **Restrained** — base neutra, um único accent funcional para ação primária, cores semânticas usadas apenas para estado e significado. Todos os valores abaixo estão **implementados** como custom properties em `static/css/tokens.css` (fonte única; o frontmatter acima é normativo). Eles continuam **não aprovados como identidade institucional** — o SAEP não tem logotipo nem cor oficial definidos — e permanecem sujeitos a refinamento visual; o que mudou é que deixaram de ser hipótese não escrita e passaram a ser o token real consumido pela aplicação.
 
 ### Primary
 - **Azul-Operação** (`#2F5D8A`, initial design value): cor de ação primária. Usada na ação visualmente dominante de cada contexto de interação e em estados de foco/seleção — nunca em áreas grandes de fundo. É o único accent funcional do sistema; dentro de um mesmo contexto, outras cores não devem competir com ele por destaque de ação.
@@ -64,7 +165,7 @@ Estratégia cromática: **Restrained** — base neutra, um único accent funcion
 
 ### Hierarquia
 
-Os tamanhos abaixo são a escala sugerida pelo shape original: **valor inicial sugerido**, não validado em uso real; a densidade final por contexto (desktop/tablet/celular) será confirmada durante a implementação (ver Layout).
+Os tamanhos abaixo estão **implementados** em `static/css/tokens.css` (valores exatos no frontmatter). Dentro de cada faixa sugerida pelo shape original foi escolhido o passo mais baixo/redondo (título de página 20px, metadado 13px), deixando margem de ajuste para cima. A densidade por contexto (desktop/tablet/celular) segue **não validada em uso real** — só as superfícies de autenticação existem hoje, e nenhuma delas é uma superfície densa (ver Layout).
 
 - **Título de página** (peso semibold, ~20–22px, valor inicial sugerido): título no page header de cada superfície.
 - **Título de seção** (peso semibold/médio, ~16px, valor inicial sugerido): divide blocos dentro de uma página densa (ex.: "Arquivo" vs. "Confirmação" na importação).
@@ -137,6 +238,8 @@ Cantos com raio mínimo e funcional (initial design value, ~2–4px) em botões,
 ## Components
 
 Conjunto mínimo necessário para a vertical slice de referência (catálogo + importação do SCPI). Nenhum componente é antecipado para feature futura ainda não especificada.
+
+**Estado de implementação** (extraído do código em `002-autenticacao-login`): `Buttons` (primário e secundário/ghost), `Alert` (variante `danger`) e `Inputs / Fields` existem de fato, em `static/css/components.css` — primitivos de projeto, compartilhados entre páginas, nunca duplicados por tela. `Table`, `Status/Badge`, `Confirmation / Dialog`, `File Upload`, `Filter Bar`, `Pagination`, `Page Header`, `Empty State`, `Loading Indicator` e `Navigation` permanecem **especificados mas ainda não implementados** — nascem com a feature que primeiro precisar deles.
 
 ### Buttons
 - **Forma:** raio mínimo funcional (ver Shapes).

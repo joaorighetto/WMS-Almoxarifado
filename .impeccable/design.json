@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-19T19:30:59Z",
+  "title": "Design System: WMS-Almoxarifado",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Azul-Operação",
+        "canonical": "#2F5D8A",
+        "purpose": "Cor de ação primária e de foco/seleção; único accent funcional do sistema.",
+        "tonalRamp": [
+          "#132639",
+          "#224465",
+          "#316190",
+          "#407EBB",
+          "#6A9BCC",
+          "#95B8DB",
+          "#C1D5EA",
+          "#ECF2F9"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Fundo",
+        "canonical": "#F7F8FA",
+        "purpose": "Fundo geral da página.",
+        "tonalRamp": [
+          "#1D232F",
+          "#343E53",
+          "#4A5977",
+          "#61749B",
+          "#8493B2",
+          "#A8B2C8",
+          "#CBD2DF",
+          "#EFF1F5"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Superfície",
+        "canonical": "#FFFFFF",
+        "purpose": "Fundo de tabela, formulário, modal e demais blocos de conteúdo.",
+        "tonalRamp": [
+          "#262626",
+          "#434343",
+          "#616161",
+          "#7E7E7E",
+          "#9B9B9B",
+          "#B8B8B8",
+          "#D5D5D5",
+          "#F2F2F2"
+        ]
+      },
+      "surface-subtle": {
+        "role": "neutral",
+        "displayName": "Superfície sutil",
+        "canonical": "#EEF0F3",
+        "purpose": "Hover funcional, região secundária, realce leve sem função de estado.",
+        "tonalRamp": [
+          "#20252D",
+          "#38414F",
+          "#505D71",
+          "#687993",
+          "#8A97AC",
+          "#ACB6C4",
+          "#CED4DC",
+          "#F0F2F4"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Borda",
+        "canonical": "#D7DBE0",
+        "purpose": "Divisores padrão entre linhas, campos e seções.",
+        "tonalRamp": [
+          "#21262B",
+          "#3B424C",
+          "#545F6D",
+          "#6E7C8E",
+          "#8E99A8",
+          "#AFB7C1",
+          "#D0D5DA",
+          "#F1F2F4"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Borda de ênfase",
+        "canonical": "#9AA1AC",
+        "purpose": "Marca linha/região que exige atenção, sempre com texto ou badge junto.",
+        "tonalRamp": [
+          "#23252A",
+          "#3D424A",
+          "#575E6A",
+          "#717B8A",
+          "#9199A5",
+          "#B1B6BF",
+          "#D1D4D9",
+          "#F1F2F3"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Texto",
+        "canonical": "#1B1E22",
+        "purpose": "Texto principal, dado tabular, título.",
+        "tonalRamp": [
+          "#22262B",
+          "#3C424B",
+          "#555F6C",
+          "#6F7C8C",
+          "#8F99A6",
+          "#B0B7C0",
+          "#D0D4DA",
+          "#F1F2F4"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Texto secundário",
+        "canonical": "#5B6270",
+        "purpose": "Metadado, legenda, texto auxiliar.",
+        "tonalRamp": [
+          "#22252A",
+          "#3C414A",
+          "#575D6B",
+          "#71798B",
+          "#9097A5",
+          "#B1B6BF",
+          "#D1D4D9",
+          "#F1F2F4"
+        ]
+      },
+      "disabled": {
+        "role": "neutral",
+        "displayName": "Desabilitado",
+        "canonical": "#B7BCC4",
+        "purpose": "Controle inativo; sempre com cursor: not-allowed.",
+        "tonalRamp": [
+          "#22252A",
+          "#3D424A",
+          "#575E6A",
+          "#717B8A",
+          "#9199A5",
+          "#B1B6BF",
+          "#D1D4D9",
+          "#F1F2F4"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Sucesso",
+        "canonical": "#2E7D46",
+        "purpose": "Confirmação de operação concluída.",
+        "tonalRamp": [
+          "#15381F",
+          "#246337",
+          "#348D4F",
+          "#44B867",
+          "#6DC989",
+          "#97D9AB",
+          "#C2E8CE",
+          "#ECF8F0"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Alerta",
+        "canonical": "#A66A00",
+        "purpose": "Condição que merece atenção mas não bloqueia.",
+        "tonalRamp": [
+          "#4C3100",
+          "#875600",
+          "#C17B00",
+          "#FBA100",
+          "#FFB737",
+          "#FFCC71",
+          "#FFE1AB",
+          "#FFF6E5"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Perigo",
+        "canonical": "#B3261E",
+        "purpose": "Erro, recusa ou ação destrutiva/irreversível.",
+        "tonalRamp": [
+          "#420E0B",
+          "#731913",
+          "#A5231C",
+          "#D72E24",
+          "#E25B53",
+          "#EB8B85",
+          "#F3BAB7",
+          "#FBEAE9"
+        ]
+      },
+      "info": {
+        "role": "tertiary",
+        "displayName": "Informação",
+        "canonical": "#3B6EA5",
+        "purpose": "Mensagem neutra de contexto, distinta do accent de ação.",
+        "tonalRamp": [
+          "#142638",
+          "#244263",
+          "#335F8E",
+          "#427BB9",
+          "#6B99CA",
+          "#96B7DA",
+          "#C1D4E9",
+          "#ECF2F8"
+        ]
+      },
+      "selected": {
+        "role": "secondary",
+        "displayName": "Selecionado",
+        "canonical": "#E4ECF4",
+        "purpose": "Linha selecionada e item de navegação ativo.",
+        "tonalRamp": [
+          "#162636",
+          "#274360",
+          "#386189",
+          "#497EB3",
+          "#719BC5",
+          "#9AB8D6",
+          "#C3D5E7",
+          "#EDF2F8"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Foco",
+        "canonical": "#2F5D8A",
+        "purpose": "Anel de foco visível em todo controle interativo; nunca removido.",
+        "tonalRamp": [
+          "#132639",
+          "#224465",
+          "#316190",
+          "#407EBB",
+          "#6A9BCC",
+          "#95B8DB",
+          "#C1D5EA",
+          "#ECF2F9"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "page-title": {
+        "displayName": "Título de página",
+        "purpose": "Título no page header de cada superfície."
+      },
+      "section-title": {
+        "displayName": "Título de seção",
+        "purpose": "Divide blocos dentro de uma página densa."
+      },
+      "body": {
+        "displayName": "Corpo / dado tabular",
+        "purpose": "Texto de tabela, formulário, conteúdo padrão. Números comparáveis usam tabular-nums."
+      },
+      "meta": {
+        "displayName": "Metadado / legenda",
+        "purpose": "Informação auxiliar, contexto secundário, timestamp. Usa text-muted."
+      },
+      "badge": {
+        "displayName": "Estado / badge",
+        "purpose": "Rótulo curto de estado semântico."
+      },
+      "code": {
+        "displayName": "Código / identificador",
+        "purpose": "CADPRO e identificadores técnicos opacos do domínio, em monoespaçada."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "480px"
+      }
+    ],
+    "notes": [
+      "Sistema flat por padrão: nenhum shadow token existe, por decisão (The Flat-By-Default Rule). Profundidade vem de tom de superfície e borda.",
+      "Nenhum motion token existe: nenhuma animação foi introduzida até agora.",
+      "App shell desktop (largura/colapso de sidebar) e navegação mobile permanecem decisões EM ABERTO em DESIGN.md — não implementadas, não presumir."
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação visualmente dominante do contexto. No máximo uma por tela, dialog ou região independente (The One Accent Rule).",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Entrar</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); cursor: pointer; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary:disabled { background-color: var(--color-disabled); border-color: var(--color-disabled); color: var(--color-surface); cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ação secundária/ghost: borda ou texto, sem preenchimento de primary. Nunca compete com a ação primária do mesmo contexto. Usado hoje no 'Sair' da Home.",
+      "html": "<button class=\"ds-btn ds-btn-secondary\">Sair</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); cursor: pointer; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; }"
+    },
+    {
+      "name": "Alert (danger)",
+      "kind": "custom",
+      "refersTo": "alert-danger",
+      "description": "Feedback de erro em nível de seção/página, sempre com texto explícito — nunca só cor (The No Color-Only State Rule). Usado na recusa genérica de login.",
+      "html": "<div class=\"ds-alert ds-alert-danger\" role=\"alert\"><p>Matrícula e/ou senha inválidas. Note que ambos os campos diferenciam maiúsculas e minúsculas.</p></div>",
+      "css": ".ds-alert { padding: var(--space-3); border-radius: var(--radius-sm); margin-bottom: var(--space-4); font-size: var(--font-size-body); } .ds-alert p { margin: 0; } .ds-alert-danger { background-color: var(--color-surface-subtle); border: 1px solid var(--color-danger); color: var(--color-danger); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Label acima do campo; erro abaixo em danger com texto, nunca só borda vermelha. Foco sempre visível.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-field-matricula\">Matrícula</label><input id=\"ds-field-matricula\" type=\"text\" maxlength=\"32\" aria-invalid=\"true\" aria-describedby=\"ds-field-matricula-error\"><p id=\"ds-field-matricula-error\" class=\"ds-field-error\">Informe sua matrícula.</p></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"], .ds-field input[type=\"password\"] { width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-error { color: var(--color-danger); font-size: var(--font-size-meta); margin: 0; }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Bloco de conteúdo sobre o fundo da página. Separação por borda fina, nunca por sombra (The Flat-By-Default Rule). Não é a estrutura universal de conteúdo — listagens densas não viram card.",
+      "html": "<div class=\"ds-card\"><h1 class=\"ds-card-title\">WMS-Almoxarifado</h1><p>Sessão autenticada.</p></div>",
+      "css": ".ds-card { background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-6) var(--space-4); } .ds-card-title { font-size: var(--font-size-page-title); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); margin: 0 0 var(--space-4); } @media (min-width: 480px) { .ds-card { padding: var(--space-8) var(--space-6); } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Bancada de Trabalho Confiável",
+    "overview": "O WMS-Almoxarifado é uma ferramenta operacional interna, não um produto de mercado: quem a abre já sabe o que veio fazer, e a interface existe para que essa tarefa seja concluída rápido, sem ambiguidade e sem erro — como uma bancada de trabalho bem organizada, onde cada ferramenta está sempre no mesmo lugar. A personalidade é a de uma ferramenta operacional confiável, não a de um software vistoso: densidade útil, baixa carga cognitiva, comparação rápida entre registros, previsibilidade de onde cada ação mora e clareza inequívoca de estado. Hierarquia visual é resolvida por tipografia, alinhamento, spacing, bordas e superfície — nunca por decoração aplicada por cima.\n\nEste sistema é compartilhado entre papéis com contextos operacionais muito diferentes — Solicitantes e Chefes de setor usam predominantemente celular, Funcionários do almoxarifado usam predominantemente desktop, e também operam em tablet dentro do almoxarifado. Por isso a fundação (papéis semânticos, primitives, comportamento de estado) é uma só, mas a composição e a densidade variam conscientemente por papel, tarefa e dispositivo — isto é uma decisão de produto estabelecida, não uma lacuna.\n\nRejeições visuais confirmadas: dashboards decorativos, cards como estrutura universal de conteúdo, glassmorphism, gradientes, sombras decorativas, arredondamento excessivo, animações chamativas, estética de SaaS genérico, tipografia de marketing, excesso de whitespace tratado como hierarquia. Não existe identidade institucional definida hoje (sem logotipo, sem cor oficial do órgão); nenhum valor cromático é branding aprovado.",
+    "keyCharacteristics": [
+      "Densidade útil como padrão, não como exceção.",
+      "Estado ou seleção relevante nunca depende só de cor — sempre há uma pista não cromática adequada ao contexto.",
+      "Ação primária previsível, no mesmo lugar, em toda superfície equivalente.",
+      "Uma só fundação visual para mobile, tablet e desktop — composição varia, papéis e tokens não.",
+      "Nenhuma decoração sem função operacional."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Deve existir uma ação visualmente dominante por contexto de interação, quando houver uma ação principal clara — a tela inteira, um dialog/modal que abre seu próprio contexto, ou uma região independente da página. O uso de primary permanece raro e hierarquizado, evitando múltiplas ações concorrentes com o mesmo peso visual.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Color-Only State Rule",
+        "body": "Nenhum estado ou seleção relevante depende exclusivamente de cor; deve existir ao menos uma pista não cromática adequada ao contexto — texto, ícone, peso tipográfico, borda, forma, posição ou outro indicador estrutural.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Display Font Rule",
+        "body": "Nenhuma fonte de exibição decorativa é introduzida; hierarquia se resolve por peso, contraste e posição antes de tamanho.",
+        "section": "typography"
+      },
+      {
+        "name": "The Shared Foundation Rule",
+        "body": "Papéis semânticos, primitives e comportamento de estado são únicos e compartilhados entre mobile, tablet e desktop. O que varia por contexto é composição e densidade, nunca a linguagem de tokens.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Superfícies em repouso são planas. Sombra só aparece como recurso funcional de separação em elementos genuinamente sobrepostos ao conteúdo, nunca como decoração de card, botão, tabela ou hover.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do resolver hierarquia por peso tipográfico, alinhamento e spacing antes de recorrer a card ou sombra.",
+      "Do manter papéis semânticos, primitives e comportamento de estado únicos entre mobile, tablet e desktop (The Shared Foundation Rule).",
+      "Do preservar coluna de tabela por padrão e usar scroll horizontal antes de ocultar dado.",
+      "Do usar tabular-nums para número comparável e monoespaçada para CADPRO e identificadores opacos.",
+      "Do exigir confirmação explícita antes de ação de impacto (ex.: efetivar importação).",
+      "Do garantir que nenhuma ação necessária dependa de hover, em qualquer dispositivo.",
+      "Do apoiar todo estado ou seleção relevante em ao menos uma pista não cromática."
+    ],
+    "donts": [
+      "Don't transformar cada registro de catálogo (ou qualquer listagem densa) em card por estar em tela mobile/tablet.",
+      "Don't introduzir sombra decorativa, gradiente, glassmorphism ou arredondamento pronunciado.",
+      "Don't esconder ação frequente (buscar, filtrar, confirmar) atrás de menu de três pontos.",
+      "Don't reduzir permanentemente a densidade do desktop para acomodar tablet ou celular.",
+      "Don't criar dois design systems separados — um 'mobile' e outro 'desktop' — em vez de compartilhar papéis e primitives.",
+      "Don't reformatar, truncar de forma destrutiva ou 'limpar' o CADPRO ou qualquer identificador opaco do domínio (viola INV-CATALOG-001 mesmo só na camada visual).",
+      "Don't deixar erro ou exceção de importação desaparecer sozinho — o usuário depende dela para corrigir e reprocessar.",
+      "Don't usar toast para informação já visível pela própria mudança de resultado."
+    ]
+  }
+}

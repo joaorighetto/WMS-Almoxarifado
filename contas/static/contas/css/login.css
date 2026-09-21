@@ -1,0 +1,116 @@
+/*
+ * Login — WMS-Almoxarifado
+ *
+ * Consome exclusivamente os tokens de static/css/tokens.css — nenhum valor literal de
+ * cor, tipografia, spacing ou raio é redefinido aqui.
+ *
+ * Primitivos compartilhados (`.btn`/`.btn-primary`, `.alert`/`.alert-danger`,
+ * `.field`/`.field-error`) vivem em static/css/components.css (nível de projeto) — este
+ * arquivo contém apenas composição/layout específicos da tela de login.
+ *
+ * Layout mobile-first: coluna única, campo ocupando a largura do container em telas
+ * estreitas (DESIGN.md → Layout → Superfícies de Solicitante/Chefe de setor são
+ * mobile-first; Inputs/Fields). Nenhuma ação depende de hover. O anel de foco visível é
+ * herdado do :focus-visible global definido em static/css/base.css — não é removido nem
+ * sobrescrito aqui.
+ */
+
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding-block: max(var(--space-4), env(safe-area-inset-top, var(--space-1)))
+    max(var(--space-4), env(safe-area-inset-bottom, var(--space-1)));
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, var(--space-1)))
+    max(var(--space-4), env(safe-area-inset-right, var(--space-1)));
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-4);
+}
+
+.login-card-title {
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--space-1);
+}
+
+.login-card-subtitle {
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-6);
+}
+
+.login-error-block {
+  margin-bottom: var(--space-4);
+}
+
+.login-error-block .alert {
+  margin-bottom: var(--space-2);
+}
+
+.login-recovery {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  margin: 0;
+}
+
+/* Ação primária do contexto (The One Accent Rule): ocupa a largura do card, coerente
+   com o formulário em coluna única mobile-first. */
+.login-submit {
+  width: 100%;
+  margin-top: var(--space-2);
+  gap: var(--space-2);
+}
+
+/* Indicador de carregamento local ao botão (DESIGN.md → Components → Loading
+   Indicator): reforça o texto "Entrando…" já trocado por login.js em conexões lentas,
+   sem bloquear a página. Herda a cor do texto do botão via `currentColor`. */
+.login-submit-spinner {
+  display: none;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: login-submit-spin 0.6s linear infinite;
+}
+
+.login-form[data-submitting="true"] .login-submit-spinner {
+  display: inline-block;
+}
+
+@keyframes login-submit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-submit-spinner {
+    animation: none;
+  }
+}
+
+/* Em viewports altas a tarefa permanece centralizada. Quando o teclado virtual reduz
+   a altura útil, o alinhamento superior evita que o início do formulário saia da tela. */
+@media (min-height: 32rem) {
+  .login-page {
+    align-items: center;
+  }
+}
+
+@media (min-width: 480px) {
+  .login-card {
+    padding: var(--space-8) var(--space-6);
+  }
+}

@@ -23,9 +23,11 @@ existe ainda).
 > em toda requisição subsequente, sem código nenhum. Removido o `handler403` global, substituído
 > por um mecanismo restrito ao contexto do retorno pós-login. Removida a unicidade inventada de
 > `Setor.nome`. Corrigido o contrato de `logout` (não exige sessão válida). Recheck de simplicidade
-> também eliminou dois arquivos/classes sem responsabilidade real: `contas/forms.py` (rótulo e
-> tamanho do campo de login já vêm do model, verificado no código-fonte do `AuthenticationForm`) e
-> `WMSLogoutView` (o `LogoutView` nativo já basta, sem nenhum override). Ver `research.md`
+> também eliminou abstrações sem responsabilidade real: uma subclasse para rótulo/tamanho do
+> login (esses atributos já vêm do model, verificado no código-fonte do `AuthenticationForm`) e
+> `WMSLogoutView` (o `LogoutView` nativo já basta, sem nenhum override). Uma revisão posterior
+> reintroduziu `contas/forms.py` como subclasse mínima, exclusivamente para corrigir e tornar
+> acionável a mensagem traduzida de recusa. Ver `research.md`
 > (R3, R7, R8, R9) e "Correções realizadas" no relatório desta revisão para o detalhe completo.
 >
 > **Segunda revisão corretiva**: o marcador de retorno pós-login deixou de viver na query string
@@ -80,7 +82,7 @@ requisitantes), um único almoxarifado físico (`PRODUCT.md`, Operating Context)
 
 | Princípio | Status | Justificativa |
 |---|---|---|
-| I. Simplicidade Arquitetural | PASS | Nenhuma camada nova (sem service layer, repository, DTO). Usa `AbstractBaseUser`/`PermissionsMixin`/`LoginView`/`LogoutView`/`ModelBackend`/`login_required`/`LoginRequiredMixin` — todos recursos convencionais do Django. Um único middleware pequeno e de responsabilidade única (`RetornoPosLoginMiddleware`, usando os hooks nativos `process_view`/`process_exception`) para o caso específico de fallback pós-login — não um `handler403` global, sem nonce/model/cache extra além da sessão já existente (ver `research.md`, R8). Único app novo (`contas`), justificado por ser a primeira feature de produto do projeto. Revisão desta feature removeu abstrações/arquivos sem responsabilidade real (`contas/auth.py`, `contas/forms.py`, `WMSLogoutView`), verificado no código-fonte instalado. |
+| I. Simplicidade Arquitetural | PASS | Nenhuma camada nova (sem service layer, repository, DTO). Usa `AbstractBaseUser`/`PermissionsMixin`/`LoginView`/`LogoutView`/`ModelBackend`/`login_required`/`LoginRequiredMixin` — todos recursos convencionais do Django. Um único middleware pequeno e de responsabilidade única (`RetornoPosLoginMiddleware`, usando os hooks nativos `process_view`/`process_exception`) para o caso específico de fallback pós-login — não um `handler403` global, sem nonce/model/cache extra além da sessão já existente (ver `research.md`, R8). Único app novo (`contas`), justificado por ser a primeira feature de produto do projeto. A revisão removeu `contas/auth.py` e `WMSLogoutView`; `contas/forms.py` contém somente a mensagem de recusa corrigida, sem campo ou autenticação próprios. |
 | II. Arquitetura Server-Driven | PASS | Django Templates puros para login/Home; nenhuma SPA; HTMX deliberadamente não usado por não trazer ganho concreto em fluxos de request/redirect completo (ver `research.md`, R12). |
 | III. Integridade de Dados | PASS | `matricula` única garantida por índice único no PostgreSQL; `setor` obrigatório com `on_delete=PROTECT` garante `INV-ORG-001` também em persistência; unicidade de papel por usuário garantida por `UniqueConstraint` (`PapelUsuario.Meta.constraints`, forma moderna equivalente a `unique_together`). Não há operação de escrita concorrente sobre saldo/estoque nesta feature (fora de escopo), então locking/atomicidade de estoque não se aplicam aqui. |
 | IV. Rastreabilidade e Auditoria | PASS (mínimo aplicável) | Nenhuma exclusão física é introduzida. Login/logout não geram histórico de negócio (não é uma "operação relevante" de estoque/requisição); a spec não exige log de tentativas de autenticação. Ver Open Questions para uma nota não bloqueante sobre observabilidade. |
@@ -88,7 +90,7 @@ requisitantes), um único almoxarifado físico (`PRODUCT.md`, Operating Context)
 | VI. Segurança por Padrão | PASS | CSRF já ativo (`MIDDLEWARE` existente) — inclusive no `POST /logout/` sem sessão, que continua exigindo CSRF válido. Hash de senha via hashers nativos do Django (nenhuma criptografia própria). Sessão gira a chave no login (proteção nativa contra fixação). Mensagem de erro genérica não revela detalhe interno. `LogoutView` aceita só `POST` (verificado: `http_method_names = ["post", "options"]`). Redirecionamento externo bloqueado nativamente (`url_has_allowed_host_and_scheme`); fallback de autorização pós-login restrito por marcador, sem alterar o tratamento de 403 do resto do sistema. |
 | VII. Testes como Parte da Implementação | PASS | Estratégia de testes cobre regras de negócio (matrícula/setor/papéis), autenticação, sessão, proteção, logout e UI mínima — ver seção Testes abaixo. |
 | VIII. Design System e Interface Operacional Consistente | PASS (com itens documentados em aberto) | Login e Home seguem tokens/cores/tipografia de `DESIGN.md`. Sidebar/app-shell completo **não** é implementado agora, porque `DESIGN.md` deixa largura/colapso (desktop) e navegação (mobile) explicitamente em aberto — a Home usa apenas uma superfície mínima e neutra, sem antecipar essas decisões (ver "Home autenticada mínima" abaixo). |
-| IX. Progressive Enhancement | PASS | Login/logout funcionam via `POST` tradicional, sem exigir JavaScript. |
+| IX. Progressive Enhancement | PASS | Login/logout funcionam via `POST` tradicional, sem exigir JavaScript; o script do login apenas acrescenta estado de envio e bloqueio de duplo clique. |
 | X. Performance Baseada em Evidências | PASS | Nenhuma consulta N+1 (usuário/setor/papéis são lookups simples por PK/FK); nenhuma listagem grande envolvida. |
 | XI. Dependências com Parcimônia | PASS | Zero dependências novas (ver `research.md`, R15). |
 | XII. Manutenibilidade | PASS | Nomes de domínio em português (`matricula`, `Setor`, `Papel`, `PapelUsuario`, `tem_papel`) para conceitos próprios do domínio; campos herdados do Django (`is_active`, `is_staff`, `password`) mantêm o nome nativo do framework — não traduzir contrato do framework, só o que é nosso. |
@@ -139,20 +141,24 @@ contas/                              # NOVO app
 ├── models.py                        # User, UserManager, Setor, Papel (TextChoices), PapelUsuario
 │                                     #   (UniqueConstraint em Meta.constraints, não unique_together)
 ├── admin.py                         # UserAdmin customizado + SetorAdmin + PapelUsuario inline/admin
+├── forms.py                         # AuthenticationForm nativo com apenas a mensagem corrigida
 ├── views.py                         # WMSLoginView (só override de get_redirect_url), HomeView —
-│                                     #   SEM forms.py (rótulo/tamanho vêm do model, ver research.md
-│                                     #   R3) e SEM WMSLogoutView (LogoutView nativo já basta, R7)
+│                                     #   SEM autenticação própria e SEM WMSLogoutView
 ├── middleware.py                    # RetornoPosLoginMiddleware (fallback pós-login, ver research.md R8)
 ├── urls.py                          # login/ (WMSLoginView), logout/ (LogoutView nativo), "" (home)
 ├── migrations/
-│   └── 0001_initial.py              # User, Setor, PapelUsuario
+│   ├── 0001_initial.py              # User, Setor, PapelUsuario
+│   └── 0002_alter_setor_ativo.py    # Setor nasce inativo até ativação deliberada
 ├── templates/contas/
 │   ├── base.html                    # Base local ao app (ver research.md, R12)
 │   ├── login.html
 │   └── home.html
-└── static/contas/css/
-    ├── login.css
-    └── home.css
+└── static/contas/
+    ├── css/
+    │   ├── login.css
+    │   └── home.css
+    └── js/
+        └── login.js                 # Estado de envio; fluxo funcional sem JavaScript
 
 static/                              # NOVO diretório de projeto (exige STATICFILES_DIRS)
 └── css/

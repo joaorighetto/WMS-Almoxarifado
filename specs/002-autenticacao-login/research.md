@@ -37,8 +37,23 @@ suposição de versão nem contra documentação genérica.
 
 ## R2. Matrícula como identificador opaco
 
-- **Decision**: `matricula = models.CharField(max_length=32, unique=True)`. Nenhuma normalização,
-  nenhuma conversão numérica, nenhuma máscara ou regex de formato.
+- **Decision**: `matricula = models.CharField(max_length=32, unique=True)`. Nenhuma conversão
+  numérica, nenhuma máscara ou regex de formato; a representação cadastrada é preservada.
+- **Ressalva (revisão 3) — "nunca normalizada" não era literalmente verdadeiro.** Verificado no
+  código-fonte instalado (`django/contrib/auth/forms.py`, `UsernameField.to_python()`): o campo de
+  login do `AuthenticationForm` nativo é um `UsernameField` que aplica `unicodedata.normalize(
+  "NFKC", value)` sobre um `CharField` com `strip=True`. O mesmo NFKC é aplicado por
+  `AbstractBaseUser.clean()` ao salvar pelo Admin. Já `UserManager.create_user()` (ORM, bootstrap,
+  testes) grava o valor exatamente como recebido.
+  Ou seja, a **entrada submetida no login** passa por canonicalização técnica do framework; o
+  **valor cadastrado** não é reformulado. Para matrículas ASCII — o caso real do SAEP — o efeito é
+  nulo. Existe apenas para uma matrícula gravada via ORM com espaços nas pontas ou caracteres fora
+  da forma NFKC, que ficaria impossível de usar no login.
+  `FR-001b` foi reescrito para descrever isso com honestidade, em vez de afirmar "nunca
+  normalizada". **Não** foi introduzido campo próprio para suprimir o NFKC: o comportamento nativo
+  é o mais seguro na prática (evita duas representações Unicode distintas colidirem como
+  identidades diferentes), e suprimi-lo seria complexidade sem problema concreto. Há teste que
+  documenta o strip/NFKC para impedir nova divergência entre documento e código.
 - **Rationale**: `FR-001b` exige tratamento como identificador opaco, preservando a representação
   cadastrada. `max_length=32` é um limite técnico de sanidade de entrada (evita valores
   patologicamente grandes na coluna/índice), não uma regra de formato do produto — não há evidência
@@ -85,12 +100,38 @@ suposição de versão nem contra documentação genérica.
   (a mensagem genérica), junto com senha errada e matrícula inexistente. **Não sobrescrever
   `confirm_login_allowed()`** na implementação — fazer isso não teria efeito com o backend padrão e
   poderia sugerir, incorretamente, que a distinção de conta inativa depende desse método.
+- **REABERTURA PARCIAL (revisão 3) — `contas/forms.py` passa a existir, só para a mensagem.**
+  A revisão anterior rejeitou qualquer subclasse de `AuthenticationForm` afirmando que "nenhuma
+  precisa de override". Isso valia para **rótulo e tamanho** (que de fato vêm do model, como
+  verificado), mas não para a **mensagem de recusa**: validada em execução real, a string traduzida
+  do Django em pt-BR sai como *"Por favor, entre com um matrícula e senha corretos…"*. O
+  `%(username)s` é interpolado com o `verbose_name` do `USERNAME_FIELD`, e "matrícula" é feminino —
+  o artigo masculino da tradução produz desacordo de gênero visível ao usuário, em texto que a
+  equipe do almoxarifado lê toda vez que erra a senha.
+
+  Isso é evidência concreta de necessidade, que era exatamente o critério que faltava antes.
+  A subclasse é mínima e sobrescreve **apenas** `error_messages["invalid_login"]`:
+
+  - não implementa autenticação própria (continua `ModelBackend`);
+  - não sobrescreve `confirm_login_allowed()` (inalcançável, ver acima);
+  - não toca rótulo, `max_length` nem campo algum;
+  - mantém **uma única** string genérica para as três causas de recusa — senha incorreta,
+    matrícula inexistente e conta inativa —, preservando `FR-003`/`SC-003` (não-enumeração de
+    usuário). O texto final, após a crítica de interface, é *"Matrícula ou senha inválidas.
+    Confira os dados e tente novamente."*; a orientação genérica *"Se o problema continuar,
+    procure o responsável pelo sistema."* fica no template e não revela canal ou contato
+    inexistente. O teste de igualdade direta entre as três mensagens continua valendo.
+
+  A decisão de segurança permanece intacta; o que muda é só o texto exibido.
 - **Alternatives considered**:
   - View de login própria, validando credenciais manualmente: rejeitado — duplicaria exatamente o
     que `AuthenticationForm`/`ModelBackend` já fazem corretamente, na contramão do Princípio I
     (simplicidade) e do pedido explícito de preferir capacidades nativas do stack.
-  - Subclasse de `AuthenticationForm` só para rótulo/mensagens: rejeitado nesta revisão — nenhuma
-    delas precisa de override (ver correção acima).
+  - Subclasse de `AuthenticationForm` só para rótulo/tamanho: permanece rejeitado — ambos já vêm
+    do model, verificado no código-fonte instalado.
+  - Corrigir a tradução do próprio Django (`django.po`) ou trocar o `verbose_name` para um termo
+    masculino: rejeitado — a primeira carrega uma tradução divergente do upstream para todo o
+    projeto; a segunda distorceria o vocabulário de domínio ("matrícula") para contornar gramática.
 
 ## R4. Setor mínimo, sem gestão de setor
 
@@ -110,15 +151,42 @@ suposição de versão nem contra documentação genérica.
   constraint, sem justificativa concreta). `nome` permanece obrigatório (`blank=False`), sem
   `unique=True`. Eventual identidade canônica de setor (nome único, código) pertence à futura
   definição da administração de setores (`PERM-SECTOR-MANAGE`), não a esta feature.
-- **Fronteira explícita**: `INV-ORG-002` (todo setor ativo tem exatamente um chefe ativo) e
-  `INV-ORG-003` (um chefe responde por um único setor) **não são impostas por este modelo**. Essas
-  invariantes pertencem à futura feature de administração de setores (`PERM-SECTOR-MANAGE`, ainda
-  não implementada) — a própria matriz de permissões já registra essa capability como pendente.
-  Como a feature 002 não cria nem administra setores (apenas consome, ver "Fora de Escopo" da
-  spec), não há nesta feature nenhuma operação de escrita sobre `Setor` que pudesse violar
-  `INV-ORG-002`/`INV-ORG-003` — a responsabilidade de garanti-las nasce apenas quando a
-  administração de setores for construída. Documentado aqui para rastreabilidade; **não é PLAN
-  BLOCKER**, é fronteira de escopo já definida pela spec e pela matriz canônica.
+- **CORREÇÃO (revisão 3) — `INV-ORG-002` é preservada por esta feature, não adiada.** A versão
+  anterior desta seção afirmava que `INV-ORG-002`/`INV-ORG-003` não precisavam ser impostas aqui
+  "porque não há nesta feature nenhuma operação de escrita sobre `Setor`". **Essa premissa era
+  factualmente falsa** na implementação entregue: `SetorAdmin` cria e altera setores, o Admin
+  permite desativar um chefe, transferi-lo de setor e remover-lhe o papel, `Setor.ativo` nascia
+  `True`, e o próprio `quickstart.md` começava criando um setor ativo sem chefe algum. O caminho de
+  bootstrap desta feature é, portanto, uma superfície de escrita sujeita à invariante como qualquer
+  outra.
+
+  Escopo de feature não supera a matriz canônica nem a Constitution: uma invariante CRÍTICA não
+  pode ficar violável só porque a administração de setores ainda não foi especificada. Duas saídas
+  eram legítimas — (a) impor a invariante agora, ou (b) emendar `INV-ORG-002` explicitamente para
+  admitir um estado transitório de provisionamento, o que seria decisão de domínio/governança, não
+  correção editorial. **Decisão do dono do produto: (a)**.
+
+  Mecanismo adotado (ver `spec.md`, FR-019 a FR-023):
+  1. setor nasce **inativo** (`Setor.ativo` default `False`) — criar setor nunca produz, sozinho,
+     um setor ativo sem chefe;
+  2. ativação só é permitida quando existe exatamente um chefe ativo do próprio setor;
+  3. desativar o chefe, transferi-lo de setor ou remover-lhe `ROLE-SECTOR-HEAD` é bloqueado quando
+     deixaria um setor ativo sem chefe;
+  4. atribuir um segundo chefe a setor com chefe ativo é bloqueado;
+  5. todas essas mutações são transacionais e cobertas por teste.
+
+  `INV-ORG-003` permanece garantida **estruturalmente**, sem regra nova: a chefia é derivada de
+  `ROLE-SECTOR-HEAD` combinado ao setor único do próprio usuário (`INV-ORG-001`), nunca de um
+  vínculo separado — logo um chefe nunca responde por mais de um setor.
+
+  A invariante não pôde ser expressa como constraint de banco (Constitution, Princípio III): "um
+  chefe ativo por setor ativo" é um predicado agregado que cruza `Setor`, `User.is_active`,
+  `User.setor` e `PapelUsuario.papel`, fora do alcance de `UniqueConstraint`/`CheckConstraint` e
+  exigindo trigger própria. Fica garantida na aplicação, em ponto único e coberta por testes.
+
+  Isto **não** transforma a 002 em feature de administração de setores: `PERM-SECTOR-MANAGE`
+  continua pendente e nenhuma tela de gestão é entregue. O que se garante é que o caminho de
+  provisionamento que esta feature realmente possui não produz estado inválido.
 - **Alternatives considered**:
   - Adiar até a feature de administração de setores existir: rejeitado — sem `Setor`, não há como
     satisfazer `INV-ORG-001` nem testar identificação de setor (User Story 3 da spec).

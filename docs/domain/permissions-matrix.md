@@ -51,11 +51,25 @@ Versão: 1.0
 
 **Notas de composição** (aplicação da Regra 4, sem criar papel novo):
 
-- Todo usuário ativo do WMS ocupa, no mínimo, `ROLE-REQUESTER` — é a definição do papel
-  (`PRODUCT.md`: "Requisitante: qualquer funcionário de qualquer setor do SAEP... que cria uma
+- Toda **identidade de negócio** ativa do WMS ocupa, no mínimo, `ROLE-REQUESTER` — é a definição do
+  papel (`PRODUCT.md`: "Requisitante: qualquer funcionário de qualquer setor do SAEP... que cria uma
   solicitação de material"). Por isso, uma capability concedida a `ROLE-REQUESTER` está, na
-  prática, disponível para qualquer identidade com conta ativa, independentemente de quais outros
-  papéis ela também ocupe.
+  prática, disponível para qualquer identidade de negócio com conta ativa, independentemente de
+  quais outros papéis ela também ocupe.
+
+  Isso é uma **concessão explícita, nunca inferida**: a criação de uma identidade de negócio
+  persiste a atribuição `ROLE-REQUESTER` junto com a conta, atomicamente. Nenhum papel é derivado
+  em tempo de consulta a partir de `is_active` — coerente com a Regra 3 (sem herança implícita) e
+  com o requisito de atribuição explícita da feature `002-autenticacao-login` (FR-015).
+
+  **Exceção — superusuário técnico do Django**: a conta criada por `createsuperuser` é um
+  mecanismo técnico de manutenção, não uma identidade de negócio (ver Regra 8). Ela **não** recebe
+  `ROLE-REQUESTER` nem nenhum outro `ROLE-*`, e portanto não possui nenhuma capability de negócio.
+  Para operar o domínio, a pessoa precisa de uma identidade de negócio com os papéis explícitos
+  correspondentes.
+
+  Desativar uma conta (`is_active = False`) **não** remove seus papéis: a atribuição é preservada
+  para rastreabilidade, e o bloqueio de acesso é transversal, garantido por `INV-AUTH-001`.
 - A pessoa que chefia o almoxarifado ocupa, ao mesmo tempo, três papéis explícitos — nunca por
   herança: `ROLE-WAREHOUSE-STAFF` (opera como qualquer funcionário do almoxarifado);
   `ROLE-SECTOR-HEAD`, com escopo restrito ao setor Almoxarifado (`PRODUCT.md`: "aprova, como chefe
