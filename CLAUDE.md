@@ -45,7 +45,8 @@ implementação com as dependências obrigatórias satisfeitas e com os "Pontos 
 a afetam resolvidos na spec; pontos compartilhados entre recortes são decididos em conjunto.
 Alterar recorte, fronteira ou dependência, ou incluir capacidade ausente do mapa, exige decisão
 explícita do usuário e atualização do `ROADMAP.md` antes da spec. Mantenha o status do roadmap
-fiel ao estado real da feature. Bugs, refactors e tarefas triviais não precisam consultá-lo.
+fiel ao estado real da feature. Bugs, refactors, ajustes pontuais e tarefas triviais não precisam
+consultá-lo, salvo quando ameaçarem mover a fronteira entre capacidades.
 
 O fluxo detalhado está em `.claude/rules/agent-orchestration.md`, seções "Roadmap funcional" e
 "Feature nova".
