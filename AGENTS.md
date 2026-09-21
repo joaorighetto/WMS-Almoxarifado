@@ -15,7 +15,8 @@ do Serena MCP.
 Qualquer alteração de regra de domínio, gate obrigatório, escopo de agente ou fonte de
 autoridade DEVE ser aplicada nos dois lados no mesmo commit. Se os dois divergirem, nenhum dos
 dois prevalece automaticamente: identifique a divergência e obtenha uma decisão antes de agir
-com base nela. Nenhum dos dois sobrepõe a Constitution, `PRODUCT.md` ou as matrizes canônicas.
+com base nela. Nenhum dos dois sobrepõe a Constitution, `PRODUCT.md`, as matrizes canônicas ou
+o `ROADMAP.md`.
 
 ## Princípio geral
 
@@ -85,7 +86,7 @@ necessidade nova → decisão explícita de domínio → atualizar a matriz can�
 `ROADMAP.md` é a fonte de verdade para a **decomposição funcional** do produto: quais
 capacidades merecem spec própria, o que cada uma inclui e não inclui, suas dependências
 obrigatórias (`O`) e recomendadas (`R`), a ordem recomendada de evolução e o status de cada
-capacidade.
+capacidade. Não é necessário invocar um agente só para lê-lo.
 
 A autoridade do roadmap é delimitada:
 
@@ -100,7 +101,9 @@ A autoridade do roadmap é delimitada:
 
 Os IDs `ORG`, `ENT`, `REQ` etc. são rótulos do mapa, não números de spec. A numeração é
 atribuída sequencialmente pelo `speckit-specify` ao criar cada spec, independentemente da ordem
-do roadmap; `001` e `002` permanecem com seus números.
+do roadmap; `001` e `002` permanecem com seus números. Como o número é o próximo livre em
+`specs/` no momento da criação, duas specs criadas em paralelo, em branches separados, recebem o
+mesmo número: serialize o `speckit-specify` ou confira a numeração antes do merge.
 
 O roadmap orienta planejamento de features. Bugs, refactors, ajustes pontuais e tarefas triviais
 não precisam consultá-lo, salvo quando ameaçarem mover a fronteira entre capacidades.
@@ -125,6 +128,15 @@ acompanha: atualize-o ao criar a spec, sempre que a anotação deixar de ser ver
 exemplo, ao gerar `plan.md` e `tasks.md` de uma feature anotada como "sem plano/tarefas" — e
 depois do merge em `main`, quando ela passa a concluída. Não marque uma feature como concluída
 antes da entrega efetiva.
+
+O estado de entrega de uma feature vive no roadmap. O campo `Status` de `spec.md` descreve o
+documento da spec e não é mantido depois do merge; havendo divergência sobre a entrega,
+prevalece o roadmap.
+
+Tirar uma capacidade de "Requer clarificação" não é acompanhamento. Esse status significa que
+nem o conteúdo mínimo do aceite nem suas fontes estão definidos, e defini-los muda o "Inclui" e
+as dependências da capacidade: é decisão de recorte, sujeita ao fluxo acima, e só depois dela a
+capacidade passa a "Planejada".
 
 Isso chega aos subagents pelo prompt de delegação, sem alterar suas definições:
 
@@ -219,11 +231,14 @@ Spec Kit para uma capacidade, situe o pedido no roadmap:
    feature que as administra. A especificação pode antecipar contratos de uma feature
    dependente; a implementação e o aceite de ponta a ponta exigem as dependências
    obrigatórias satisfeitas;
-3. não leve à implementação uma capacidade com status "Requer clarificação" enquanto o
-   conteúdo mínimo do aceite não estiver definido. Com qualquer status, os "Pontos ainda
-   indefinidos" que afetam a capacidade precisam estar resolvidos na spec, pelo `clarify`,
-   antes da implementação — o roadmap os lista justamente como decisões exigidas antes da
-   spec ou da implementação;
+3. não leve à implementação uma capacidade com status "Requer clarificação": definir seu
+   conteúdo e suas fontes é decisão de recorte, anterior à spec pronta para implementação. Para
+   as demais, a spec precisa fixar, antes da implementação, as decisões pendentes que a própria
+   capacidade exige para funcionar — não toda pendência da seção "Pontos ainda indefinidos" em
+   que ela é mencionada. Respeite o momento que o roadmap indica: por exemplo, estados e reserva
+   compartilhados por `REQ` e `ATE` são resolvidos antes da implementação de `ATE`, e a reserva
+   não precisa existir antes das demais operações. Pendências de artefato, como a amostra de CSV
+   para validar a 001, bloqueiam a validação e o aceite, não a implementação;
 4. passe ao `speckit-specify` uma descrição que nomeie a capacidade e carregue seu recorte — o
    "Inclui", o "Não inclui" e os pontos indefinidos que lhe dizem respeito — em vez de deixar o
    escopo ser inferido só do texto do pedido.
@@ -246,23 +261,30 @@ pauta natural das perguntas. Não reabra o que o roadmap já decidiu sobre recor
 granularidade: se uma resposta mover a fronteira da feature, trate como alteração de recorte em
 vez de deixar a clarificação redefinir o mapa.
 
-Quando um ponto indefinido for compartilhado entre recortes — como reserva, disponibilidade ou
-material inativo —, esclareça-o em conjunto, e não na clarificação de uma feature isolada.
-Antes de fixá-lo, verifique o que as specs das outras features afetadas já dizem sobre ele; se
-a decisão mudar o que elas pressupõem, apresente o conflito ao usuário em vez de deixar uma
-feature decidir pelas demais.
+Uma decisão pendente é compartilhada quando fixá-la para a feature em andamento restringe ou
+contradiz o que outro recorte vai precisar — como reserva, disponibilidade ou material inativo.
+Pontos apenas mencionados em mais de um recorte, sem esse efeito, não exigem decisão conjunta.
+Quando o efeito existir, não fixe a decisão só pela clarificação da feature isolada: pergunte
+diretamente ao usuário, apresentando o efeito sobre os demais recortes e o que as specs já
+existentes deles dizem. Registre a decisão na spec da feature em andamento e, pelo fluxo normal,
+nas specs existentes que ela afete; se ela virar regra transversal de domínio, siga o fluxo das
+matrizes canônicas. Depois, atualize a pendência correspondente no roadmap indicando onde ela
+foi decidida — o roadmap registra o andamento, não guarda a decisão.
 
 Em `speckit-analyze`, verifique também que a spec não contradiz as matrizes canônicas, que
 `plan.md`/`tasks.md` oferecem meios adequados para preservar as invariantes e permissões
 aplicáveis, que a spec não ultrapassa o "Não inclui" do roadmap, não absorve capacidade
-atribuída a outra feature, declara dependências compatíveis com as do mapa e resolve os
-"Pontos ainda indefinidos" que afetam a capacidade.
+atribuída a outra feature, declara dependências compatíveis com as do mapa e fixa as decisões
+pendentes que a própria capacidade exige para funcionar.
 
 Em `speckit-converge`, verifique que implementação, testes e specs continuam consistentes com
 as matrizes canônicas e que nenhuma decisão de domínio nova ficou registrada só no código. O
 converge continua usando `spec.md`, `plan.md` e `tasks.md` como fonte da intenção da feature —
-o roadmap não acrescenta requisitos a ele. Se a implementação tiver movido a fronteira da
-feature, isso é alteração de recorte a registrar no roadmap, não trabalho a absorver.
+o roadmap não acrescenta requisitos a ele. Se a implementação tiver atravessado a fronteira da
+feature, não atualize o roadmap para acomodar o código: é um conflito de recorte a apresentar
+ao usuário. Ou a fronteira é restaurada — e a task que o converge gera para revisar ou remover
+o trabalho não pedido segue normalmente —, ou o usuário decide ampliar o recorte, e então se
+atualiza o `ROADMAP.md` e depois a spec, pelo fluxo da seção "Roadmap funcional".
 
 Depois que spec, plan e tasks estiverem suficientemente definidos:
 

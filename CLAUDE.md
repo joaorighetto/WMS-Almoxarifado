@@ -41,12 +41,14 @@ solução técnica (é do plan), e não é cronograma. Os IDs `ORG`, `ENT`, `REQ
 mapa, não números de spec: a numeração é atribuída sequencialmente ao criar cada spec.
 
 Antes de iniciar ou retomar uma feature pelo Spec Kit, situe-a no roadmap. Uma feature só vai à
-implementação com as dependências obrigatórias satisfeitas e com os "Pontos ainda indefinidos" que
-a afetam resolvidos na spec; pontos compartilhados entre recortes são decididos em conjunto.
-Alterar recorte, fronteira ou dependência, ou incluir capacidade ausente do mapa, exige decisão
+implementação com as dependências obrigatórias satisfeitas e com a spec fixando as decisões
+pendentes que a própria capacidade exige; uma decisão que restrinja outro recorte é tomada pelo
+usuário, considerando os recortes afetados. Alterar recorte, fronteira ou dependência, incluir
+capacidade ausente do mapa ou tirar uma capacidade de "Requer clarificação" exige decisão
 explícita do usuário e atualização do `ROADMAP.md` antes da spec. Mantenha o status do roadmap
-fiel ao estado real da feature. Bugs, refactors, ajustes pontuais e tarefas triviais não precisam
-consultá-lo, salvo quando ameaçarem mover a fronteira entre capacidades.
+fiel ao estado real da feature: o estado de entrega vive nele, não no `Status` de `spec.md`.
+Bugs, refactors, ajustes pontuais e tarefas triviais não precisam consultá-lo, salvo quando
+ameaçarem mover a fronteira entre capacidades.
 
 O fluxo detalhado está em `.claude/rules/agent-orchestration.md`, seções "Roadmap funcional" e
 "Feature nova".
