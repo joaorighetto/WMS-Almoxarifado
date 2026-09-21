@@ -49,8 +49,12 @@ como PK, porque `createsuperuser` entrega a chave, não o objeto.
 
 `create_user` cria uma **identidade de negócio** e concede `ROLE-REQUESTER` na mesma transação
 (`FR-016a`/`FR-023`). `create_superuser` cria a conta **técnica** do Django e **não** concede papel
-algum (`permissions-matrix.md`, regras 7-8). A criação administrativa (`ContaCriacaoForm.save()`)
-segue a mesma regra de `create_user` — são os dois caminhos suportados.
+algum (`permissions-matrix.md`, regras 7-8). A criação administrativa segue a mesma regra de
+`create_user`/`create_superuser`, mas a concessão vive em `UserAdmin.save_related`, não no form:
+`ModelAdmin.save_form` sempre chama `form.save(commit=False)`, então qualquer lógica de concessão
+dentro do `save()` do form nunca executaria no fluxo real do Admin. `save_related` concede
+`ROLE-REQUESTER` na criação apenas quando `not form.instance.is_superuser` — mesma exceção de
+`create_superuser`.
 
 ## `Papel` (catálogo, não é tabela)
 
@@ -115,7 +119,7 @@ Papel (enum) ──── restringe PapelUsuario.papel (não é uma tabela, não
 | `INV-ORG-001`, `FR-016` | `User.setor` obrigatório (`null=False`), `on_delete=PROTECT` |
 | `FR-014` | `PapelUsuario` + enum `Papel` + `User.tem_papel()` |
 | `FR-015` | `UniqueConstraint` em `PapelUsuario.Meta.constraints` (cada papel é uma concessão explícita e independente) |
-| `FR-016a` | `UserManager.create_user` + `ContaCriacaoForm.save()`, ambos em transação |
+| `FR-016a` | `UserManager.create_user` + `UserAdmin.save_related`, ambos em transação |
 | `FR-019`, `FR-020` | `Setor.ativo` default `False` + validação em `Setor.save()` |
 | `FR-021`, `FR-022` | Validação em `User.save()` e `PapelUsuario.save()`/`delete()` |
 | `FR-023`, `INV-ORG-002` | `transaction.atomic()` + `select_for_update()` nos caminhos acima |
