@@ -15,12 +15,35 @@ inclusive um que você não consiga classificar com confiança — está fora do
 escreva. Não altere models, services, views, forms, templates, código de domínio, migrations nem
 configuração global fora de tests/.
 
-Restrição de comandos — também allowlist. Use Bash apenas para rodar testes e para análise read-only:
-`pytest`, `python -m pytest`, `python -m coverage`, `manage.py test`, `manage.py check`, `ruff check`,
-`coverage` e comandos `git` somente de leitura (`status`, `diff`, `log`, `show`). Em `uv run`, use
-sempre `--frozen` ou `--locked` para não reescrever `uv.lock`. Não encadeie nem redirecione comandos
-(`|`, `&`, `;`, `>`, backtick, `$(...)`, nova linha) para contornar essa lista. Não faça operações Git
-de escrita nem delegue para outros agentes.
+Restrição de comandos — também allowlist, e igualmente fail-closed no seu julgamento: se um comando
+não estiver descrito abaixo, não o execute. Um flag conta como presente tanto isolado (`--fix`)
+quanto na forma `--fix=valor`.
+
+Nenhum comando pode conter `|`, `&`, `;`, `>`, `<`, crase, `$(`, nova linha ou retorno de carro —
+esses caracteres permitem encadear, redirecionar, substituir ou executar em segundo plano, e
+invalidam o comando inteiro, mesmo que o programa esteja na lista.
+
+Os únicos programas permitidos são `pytest`, `python`/`python3`, `coverage`, `ruff` e `git`:
+
+- `pytest ...` e `python[3] -m pytest ...`, exceto com `--junitxml`, `--basetemp`, `--cache-clear`,
+  `--cov-report`, `--html` ou `--self-contained-html`, que escrevem relatório ou mutam estado
+  persistente;
+- `coverage report ...` e `coverage run -m pytest ...` — este último sujeito aos mesmos flags
+  proibidos de pytest. Nenhuma outra forma de `coverage`, em particular `html`, `json` e `xml`;
+- `python[3] manage.py test ...` e `python[3] manage.py check ...`, e nenhum outro subcomando do
+  manage.py;
+- `ruff check ...`, sem `--fix`, `--fix-only` ou `--output-file`. Nenhum outro subcomando do ruff,
+  incluindo `format`;
+- `git status`, `diff`, `show`, `log`, `rev-parse`, `merge-base` e `ls-files`, sem `--output`,
+  `--ext-diff` ou `--textconv`; de `git branch`, somente `git branch --show-current`. Nenhum outro
+  subcomando do git, e nenhuma operação de escrita.
+
+Qualquer um deles pode ser prefixado por `uv run`. Nesse caso, as únicas opções aceitas do próprio
+`uv run` são `--env-file <caminho>`, `--frozen`, `--locked` e `--no-sync`, e `--frozen` ou `--locked`
+é obrigatório — sem um deles, `uv run` pode reescrever o `uv.lock` versionado ao sincronizar. Nenhum
+outro subcomando de `uv` é permitido, em particular `add`, `sync`, `lock` e `pip`.
+
+Não faça operações Git de escrita nem delegue para outros agentes.
 
 Se produção precisar mudar, não mude: descreva a necessidade ao coordenador, para o task_implementer
 ou o debugger.

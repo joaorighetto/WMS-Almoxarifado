@@ -56,9 +56,17 @@ redirecionamento e substituição, e exige `--frozen`/`--locked` em `uv run`).
 
 O `hooks.json` desta pasta só registra PostToolUse/Stop do detector Impeccable; não há
 equivalente por agente. No Codex, portanto, essa restrição existe apenas como instrução dentro
-de `agents/test_engineer.toml`, onde o allowlist foi reproduzido literalmente para permanecer
-verificável em review. Se o Codex passar a oferecer hook PreToolUse com escopo de subagent,
-porte os dois validadores e remova esta seção.
+de `agents/test_engineer.toml`, que descreve os mesmos caminhos, programas e flags que os
+validadores aplicam.
+
+Isso é uma **equivalência instrucional, não enforcement**. A instrução depende do agente
+respeitá-la; o hook não depende — ele bloqueia a chamada e sai com código 2, inclusive nos casos
+que não consegue classificar. Não trate as duas formas como garantias equivalentes: no Codex, uma
+violação é detectável em review, não impedida em tempo de execução. Por isso o allowlist está
+escrito de forma explícita o suficiente para que a revisão consiga apontá-la.
+
+Se o Codex passar a oferecer hook PreToolUse com escopo de subagent, porte os dois validadores e
+remova esta seção.
 
 ## Manutenção
 

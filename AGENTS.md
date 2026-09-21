@@ -285,9 +285,16 @@ Adicione `wms_explorer` quando o código ou as dependências não estiverem clar
 O `frontend_implementer` trabalha dentro de `DESIGN.md`, da Constitution e dos componentes e
 tokens existentes. Regras críticas, autorização e invariantes permanecem no backend.
 
-O implementador não conduz o workflow `impeccable`. A skill é do coordenador: ela estabelece,
-documenta e audita a fundação do design system e executa o gate visual depois da
-implementação. Um gate executado pelo próprio autor da mudança não é gate.
+A skill `impeccable` tem dois usos, e a separação entre eles é o que sustenta o gate.
+
+Como orientação de craft, ela é do implementador: trabalho de frontend significativo corresponde
+à descrição da skill e pode ativá-la, e o `frontend_implementer` deve segui-la ao construir,
+dentro da fundação já estabelecida em `DESIGN.md`.
+
+Como revisão, ela é do coordenador: `impeccable critique`, `impeccable audit` e
+`impeccable_finish_reviewer` são executados por quem coordena, depois da entrega — nunca pelo
+autor sobre o próprio trabalho. Um gate executado pelo autor da mudança não é gate. A fundação do
+design system — estabelecer, documentar e auditar estruturalmente — também é do coordenador.
 
 Fluxo para frontend significativo:
 
