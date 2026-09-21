@@ -45,15 +45,41 @@ def _exigir_chefia_preservada(setor_id, excluir_usuario_id=None):
     Setor inativo não está sob `INV-ORG-002` — é exatamente por isso que um
     setor nasce inativo (`FR-019`): provisionar deixa de exigir um chefe que
     ainda não existe.
+
+    Faz `select_for_update()` na própria linha do `Setor`: é o mesmo lock que
+    `Setor.save()` adquire ao ativar um setor. Sem esse lock compartilhado, uma
+    ativação de setor e uma desativação/remoção do único chefe podem cada uma
+    ler o estado anterior da outra (setor ainda inativo; chefe ainda ativo) e
+    ambas comitar, violando `INV-ORG-002` (condição de corrida).
     """
     if setor_id is None:
         return
-    if not Setor.objects.filter(pk=setor_id, ativo=True).exists():
+    setor = Setor.objects.select_for_update().filter(pk=setor_id).first()
+    if setor is None or not setor.ativo:
         return
     if not chefes_ativos(setor_id, excluir_usuario_id=excluir_usuario_id).exists():
         raise ValidationError(
             "Operação recusada: deixaria o setor ativo sem chefe ativo "
             "(INV-ORG-002). Desative o setor ou designe outro chefe antes."
+        )
+
+
+def _exigir_chefia_nao_duplicada(setor_id, excluir_usuario_id=None):
+    """Recusa a operação se ela daria a um setor um segundo chefe ativo
+    (`FR-022`). Mantém, intencionalmente, o comportamento anterior de não
+    condicionar a checagem a `Setor.ativo` — a mesma checagem já feita antes
+    desta correção.
+
+    Faz o mesmo `select_for_update()` na linha do `Setor` que
+    `_exigir_chefia_preservada` e `Setor.save()` — todas as mutações que
+    podem afetar a chefia de um setor serializam sobre o mesmo lock.
+    """
+    if setor_id is None:
+        return
+    Setor.objects.select_for_update().filter(pk=setor_id).first()
+    if chefes_ativos(setor_id, excluir_usuario_id=excluir_usuario_id).exists():
+        raise ValidationError(
+            "Operação recusada: o setor já possui um chefe ativo (INV-ORG-002)."
         )
 
 
@@ -86,6 +112,13 @@ class Setor(models.Model):
                         "ativo antes de o setor existir (INV-ORG-002). Crie o setor, "
                         "designe o chefe e só então ative."
                     )
+                # Mesmo lock usado por `_exigir_chefia_preservada`/
+                # `_exigir_chefia_nao_duplicada`: serializa esta ativação com
+                # qualquer mutação concorrente de usuário/papel que poderia
+                # alterar a contagem de chefes ativos deste setor, prevenindo
+                # a condição de corrida entre ativar o setor e desativar (ou
+                # remover) o seu único chefe.
+                Setor.objects.select_for_update().filter(pk=self.pk).first()
                 total = chefes_ativos(self.pk).count()
                 if total != 1:
                     raise ValidationError(
@@ -192,6 +225,27 @@ class User(AbstractBaseUser, PermissionsMixin):
         # deixar um setor ativo sem chefe. Avaliado dentro da transação, sobre o
         # estado anterior lido do banco.
         with transaction.atomic():
+            # Ordem determinística de lock: trava o(s) `Setor` envolvidos ANTES
+            # da própria linha de `User`. `PapelUsuario.save()`/`delete()`
+            # travam `Setor` (via `_exigir_chefia_*`) e só depois tocam
+            # `PapelUsuario`, cujo FK para `User` adquire `FOR KEY SHARE` na
+            # linha referenciada — travar `User` antes de `Setor` aqui
+            # inverteria essa ordem e criaria risco de deadlock entre as duas
+            # operações. A leitura abaixo não é travada: serve só para
+            # descobrir qual(is) `Setor` travar nesta ordem; a decisão de
+            # negócio usa a leitura definitiva feita a seguir, já com `User`
+            # travado (uma segunda escrita concorrente neste mesmo usuário
+            # entre as duas leituras é a única janela residual não coberta —
+            # rara e ortogonal à inversão de ordem que motivou esta correção).
+            setor_anterior_id = (
+                User.objects.filter(pk=self.pk).values_list("setor_id", flat=True).first()
+            )
+            setores_para_travar = sorted(
+                {sid for sid in (setor_anterior_id, self.setor_id) if sid is not None}
+            )
+            for setor_id in setores_para_travar:
+                Setor.objects.select_for_update().filter(pk=setor_id).first()
+
             anterior = (
                 User.objects.select_for_update()
                 .filter(pk=self.pk)
@@ -212,13 +266,8 @@ class User(AbstractBaseUser, PermissionsMixin):
             entrou_no_setor = saiu_do_setor
             foi_reativado = not anterior["is_active"] and self.is_active
             if (entrou_no_setor or foi_reativado) and self.is_active:
-                if self.tem_papel(Papel.CHEFE_SETOR) and chefes_ativos(
-                    self.setor_id, excluir_usuario_id=self.pk
-                ).exists():
-                    raise ValidationError(
-                        "Operação recusada: o setor já possui um chefe ativo "
-                        "(INV-ORG-002)."
-                    )
+                if self.tem_papel(Papel.CHEFE_SETOR):
+                    _exigir_chefia_nao_duplicada(self.setor_id, excluir_usuario_id=self.pk)
 
             return super().save(*args, **kwargs)
 
@@ -243,19 +292,81 @@ class PapelUsuario(models.Model):
         return f"{self.usuario_id} — {self.papel}"
 
     def save(self, *args, **kwargs):
-        # `FR-022`: um setor ativo não pode ganhar um segundo chefe ativo.
-        if self.pk is None and self.papel == Papel.CHEFE_SETOR:
-            with transaction.atomic():
-                usuario = User.objects.select_related("setor").get(pk=self.usuario_id)
-                if usuario.is_active and chefes_ativos(
-                    usuario.setor_id, excluir_usuario_id=usuario.pk
-                ).exists():
-                    raise ValidationError(
-                        "Operação recusada: o setor já possui um chefe ativo "
-                        "(INV-ORG-002)."
-                    )
+        with transaction.atomic():
+            # Lido dentro da transação (e sob lock da própria linha, como
+            # `User.save()` já faz na sua): duas edições concorrentes desta
+            # mesma linha devem serializar sobre o mesmo estado "anterior",
+            # nunca cada uma decidir com base numa leitura possivelmente
+            # obsoleta.
+            papel_anterior = None
+            usuario_id_anterior = None
+            if self.pk is not None:
+                anterior = (
+                    PapelUsuario.objects.select_for_update()
+                    .filter(pk=self.pk)
+                    .values("papel", "usuario_id")
+                    .first()
+                )
+                if anterior is not None:
+                    papel_anterior = anterior["papel"]
+                    usuario_id_anterior = anterior["usuario_id"]
+
+            usuario_mudou = (
+                usuario_id_anterior is not None and usuario_id_anterior != self.usuario_id
+            )
+
+            # `FR-021`: o titular ANTIGO desta linha deixa de ser chefe quando
+            # o `papel` muda para outra coisa OU quando a própria linha passa
+            # a apontar para outro usuário (troca de titular sem passar por
+            # `delete()`) — os dois casos abandonam a chefia do titular antigo.
+            deixando_de_ser_chefe = papel_anterior == Papel.CHEFE_SETOR and (
+                usuario_mudou or self.papel != Papel.CHEFE_SETOR
+            )
+
+            # `FR-022`: o titular ATUAL (`self.usuario_id`) passa a ser chefe
+            # por esta linha quando `papel` é (ou permanece) `CHEFE_SETOR` e
+            # essa atribuição é nova para ele — concessão nova, edição de
+            # outro papel para chefe, ou troca de titular mantendo
+            # `CHEFE_SETOR` (o mesmo caso de troca acima, do lado do novo
+            # titular).
+            tornando_se_chefe = self.papel == Papel.CHEFE_SETOR and (
+                self.pk is None or usuario_mudou or papel_anterior != Papel.CHEFE_SETOR
+            )
+
+            if not (tornando_se_chefe or deixando_de_ser_chefe):
                 return super().save(*args, **kwargs)
-        return super().save(*args, **kwargs)
+
+            usuario_antigo = (
+                User.objects.select_related("setor").get(pk=usuario_id_anterior)
+                if deixando_de_ser_chefe
+                else None
+            )
+            usuario_novo = (
+                User.objects.select_related("setor").get(pk=self.usuario_id)
+                if tornando_se_chefe
+                else None
+            )
+
+            # Ordem determinística de lock entre os setores envolvidos —
+            # mesma ordenação por `pk` usada em `User.save()` — para que uma
+            # troca de titular concorrente na direção oposta (ex.: chefe A de
+            # S1→S2 enquanto chefe B vai de S2→S1) não trave os mesmos dois
+            # setores em ordem inversa (risco de deadlock).
+            operacoes = []
+            if usuario_antigo is not None and usuario_antigo.is_active:
+                operacoes.append(
+                    (usuario_antigo.setor_id, _exigir_chefia_preservada, usuario_antigo.pk)
+                )
+            if usuario_novo is not None and usuario_novo.is_active:
+                operacoes.append(
+                    (usuario_novo.setor_id, _exigir_chefia_nao_duplicada, usuario_novo.pk)
+                )
+            operacoes.sort(key=lambda operacao: operacao[0])
+
+            for setor_id, checagem, excluir_usuario_id in operacoes:
+                checagem(setor_id, excluir_usuario_id=excluir_usuario_id)
+
+            return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         # `FR-021`: remover o papel do único chefe de um setor ativo o deixaria
