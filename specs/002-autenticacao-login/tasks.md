@@ -75,7 +75,7 @@ todas as histórias seguintes.
   exclusivamente PostgreSQL, que suporta `CharField` sem `max_length` — `supports_unlimited_charfield`
   — então nenhum limite arbitrário é inventado só para satisfazer o campo) e **obrigatório, sem
   `unique=True`** (nenhuma fonte normativa exige nome de setor único — `research.md`, R4/correção);
-  `ativo = models.BooleanField(default=True)`. Sem campo `chefe` (chefia é derivada de
+  `ativo = models.BooleanField(default=False)`. Sem campo `chefe` (chefia é derivada de
   `PapelUsuario`, não uma coluna própria). Sem código/identificador de setor inventado.
 - [X] T009 Criar `UserManager(BaseUserManager)` em `contas/models.py` com `create_user(matricula,
   password=None, setor=None, **extra_fields)` e `create_superuser(matricula, password=None,

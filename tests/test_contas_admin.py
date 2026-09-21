@@ -129,14 +129,23 @@ def test_criacao_via_admin_de_superusuario_nao_concede_nenhum_papel(admin_logado
     (`permissions-matrix.md`, regra 8; `FR-016a`)."""
     client, setor = admin_logado
 
+    payload = _payload_inline_vazio(
+        matricula="adm-007",
+        setor=setor.pk,
+        is_staff=True,
+        is_superuser=True,
+    )
+    payload.update(
+        {
+            "papeis-TOTAL_FORMS": "1",
+            "papeis-0-papel": "ROLE-SYSTEM-ADMIN",
+            "papeis-0-id": "",
+        }
+    )
+
     resp = client.post(
         reverse("admin:contas_user_add"),
-        data=_payload_inline_vazio(
-            matricula="adm-007",
-            setor=setor.pk,
-            is_staff=True,
-            is_superuser=True,
-        ),
+        data=payload,
     )
     if resp.status_code == 200:
         pytest.fail(f"form inválido: {resp.context['adminform'].form.errors}")
@@ -172,15 +181,12 @@ def test_criacao_via_admin_nao_duplica_papel_ja_concedido_no_inline(admin_logado
 
 
 @pytest.mark.django_db
-def test_alteracao_via_admin_nao_re_concede_papel_removido(admin_logado):
-    """Editar uma conta existente pelo Admin não deve re-conceder
-    `ROLE-REQUESTER` (a concessão automática só se aplica à criação —
-    `FR-023`: conta e papel mínimo nascem juntos ou não nascem; removê-lo
-    depois é uma decisão deliberada, não revertida por uma edição comum)."""
+def test_alteracao_via_admin_nao_remove_papel_minimo_de_identidade_ativa(admin_logado):
+    """O inline recusa a remoção de ROLE-REQUESTER antes de persistir."""
     client, setor = admin_logado
 
     usuario = User.objects.create_user(matricula="adm-006", password=SENHA, setor=setor)
-    PapelUsuario.objects.filter(usuario=usuario, papel="ROLE-REQUESTER").delete()
+    atribuicao = PapelUsuario.objects.get(usuario=usuario, papel="ROLE-REQUESTER")
 
     resp = client.post(
         reverse("admin:contas_user_change", args=[usuario.pk]),
@@ -188,16 +194,34 @@ def test_alteracao_via_admin_nao_re_concede_papel_removido(admin_logado):
             "matricula": "adm-006",
             "setor": setor.pk,
             "is_active": True,
-            "papeis-TOTAL_FORMS": "0",
-            "papeis-INITIAL_FORMS": "0",
+            "papeis-TOTAL_FORMS": "1",
+            "papeis-INITIAL_FORMS": "1",
             "papeis-MIN_NUM_FORMS": "0",
             "papeis-MAX_NUM_FORMS": "1000",
+            "papeis-0-id": atribuicao.pk,
+            "papeis-0-papel": "ROLE-REQUESTER",
+            "papeis-0-DELETE": "on",
         },
     )
-    assert resp.status_code == 302
+    assert resp.status_code == 200
 
     usuario.refresh_from_db()
-    assert list(usuario.papeis.values_list("papel", flat=True)) == []
+    assert list(usuario.papeis.values_list("papel", flat=True)) == ["ROLE-REQUESTER"]
+
+
+@pytest.mark.django_db
+def test_admin_oculta_inline_de_papeis_apenas_para_superusuario_tecnico(admin_logado):
+    client, setor = admin_logado
+    superusuario = User.objects.get(matricula="root-admin")
+    identidade = User.objects.create_user(matricula="adm-008", password=SENHA, setor=setor)
+
+    resposta_superusuario = client.get(
+        reverse("admin:contas_user_change", args=[superusuario.pk])
+    )
+    resposta_identidade = client.get(reverse("admin:contas_user_change", args=[identidade.pk]))
+
+    assert b"id_papeis-TOTAL_FORMS" not in resposta_superusuario.content
+    assert b"id_papeis-TOTAL_FORMS" in resposta_identidade.content
 
 
 @pytest.mark.django_db

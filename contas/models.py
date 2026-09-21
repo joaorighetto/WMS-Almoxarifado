@@ -83,6 +83,33 @@ def _exigir_chefia_nao_duplicada(setor_id, excluir_usuario_id=None):
         )
 
 
+class SetorQuerySet(models.QuerySet):
+    """Impede que operações em lote contornem ``Setor.save()``."""
+
+    def update(self, **kwargs):
+        if "ativo" in kwargs:
+            raise ValidationError(
+                "Atualize o estado do setor por Setor.save(), que preserva INV-ORG-002."
+            )
+        return super().update(**kwargs)
+
+    def bulk_create(self, objs, **kwargs):
+        objs = list(objs)
+        if any(obj.ativo for obj in objs):
+            raise ValidationError(
+                "Setores ativos não podem ser criados em lote; use Setor.save() "
+                "para preservar INV-ORG-002."
+            )
+        return super().bulk_create(objs, **kwargs)
+
+    def bulk_update(self, objs, fields, **kwargs):
+        if "ativo" in fields:
+            raise ValidationError(
+                "Atualize o estado do setor por Setor.save(), que preserva INV-ORG-002."
+            )
+        return super().bulk_update(objs, fields, **kwargs)
+
+
 class Setor(models.Model):
     """Setor organizacional ao qual todo usuário pertence (`INV-ORG-001`).
 
@@ -96,6 +123,8 @@ class Setor(models.Model):
     # Nasce INATIVO (`FR-019`): criar um setor nunca produz, por si só, um setor
     # ativo sem chefe ativo. A ativação é um passo deliberado, validado abaixo.
     ativo = models.BooleanField(default=False)
+
+    objects = SetorQuerySet.as_manager()
 
     def __str__(self):
         return self.nome
@@ -129,7 +158,40 @@ class Setor(models.Model):
         return super().save(*args, **kwargs)
 
 
-class UserManager(BaseUserManager):
+class UserQuerySet(models.QuerySet):
+    """Fecha os atalhos do ORM que não chamam ``User.save()``/``delete()``."""
+
+    CAMPOS_ORGANIZACIONAIS = {"is_active", "is_superuser", "setor", "setor_id"}
+
+    def update(self, **kwargs):
+        if self.CAMPOS_ORGANIZACIONAIS.intersection(kwargs):
+            raise ValidationError(
+                "Atualize is_active, is_superuser ou setor por User.save(), que preserva "
+                "as invariantes de identidade e INV-ORG-002."
+            )
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, **kwargs):
+        if self.CAMPOS_ORGANIZACIONAIS.intersection(fields):
+            raise ValidationError(
+                "Atualize is_active, is_superuser ou setor por User.save(), que preserva "
+                "as invariantes de identidade e INV-ORG-002."
+            )
+        return super().bulk_update(objs, fields, **kwargs)
+
+    def delete(self):
+        with transaction.atomic():
+            total = 0
+            detalhes = {}
+            for usuario in self.order_by("pk"):
+                removidos, por_modelo = usuario.delete()
+                total += removidos
+                for modelo, quantidade in por_modelo.items():
+                    detalhes[modelo] = detalhes.get(modelo, 0) + quantidade
+            return total, detalhes
+
+
+class UserManager(BaseUserManager.from_queryset(UserQuerySet)):
     """Manager de `User`, seguindo o padrão documentado do Django para modelo
     de usuário customizado com `USERNAME_FIELD` diferente de `username`."""
 
@@ -255,6 +317,20 @@ class User(AbstractBaseUser, PermissionsMixin):
             if anterior is None:
                 return super().save(*args, **kwargs)
 
+            if self.is_superuser and self.papeis.exists():
+                raise ValidationError(
+                    "Superusuário técnico não pode possuir papéis de negócio ROLE-*."
+                )
+
+            if (
+                self.is_active
+                and not self.is_superuser
+                and not self.tem_papel(Papel.REQUISITANTE)
+            ):
+                raise ValidationError(
+                    "Identidade de negócio ativa precisa possuir ROLE-REQUESTER."
+                )
+
             saiu_do_setor = anterior["setor_id"] != self.setor_id
             foi_desativado = anterior["is_active"] and not self.is_active
 
@@ -271,6 +347,50 @@ class User(AbstractBaseUser, PermissionsMixin):
 
             return super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.is_active and self.tem_papel(Papel.CHEFE_SETOR):
+                _exigir_chefia_preservada(self.setor_id, excluir_usuario_id=self.pk)
+            return super().delete(*args, **kwargs)
+
+
+class PapelUsuarioQuerySet(models.QuerySet):
+    """Mantém as invariantes de papéis também nas operações em lote."""
+
+    def update(self, **kwargs):
+        if {"papel", "usuario", "usuario_id"}.intersection(kwargs):
+            raise ValidationError(
+                "Altere papel ou usuário por PapelUsuario.save(), que preserva as invariantes."
+            )
+        return super().update(**kwargs)
+
+    def bulk_create(self, objs, **kwargs):
+        objs = list(objs)
+        if objs:
+            raise ValidationError(
+                "Papéis não podem ser criados em lote; use PapelUsuario.save() para preservar "
+                "as invariantes."
+            )
+        return super().bulk_create(objs, **kwargs)
+
+    def bulk_update(self, objs, fields, **kwargs):
+        if {"papel", "usuario", "usuario_id"}.intersection(fields):
+            raise ValidationError(
+                "Altere papel ou usuário por PapelUsuario.save(), que preserva as invariantes."
+            )
+        return super().bulk_update(objs, fields, **kwargs)
+
+    def delete(self):
+        with transaction.atomic():
+            total = 0
+            detalhes = {}
+            for atribuicao in self.order_by("pk"):
+                removidos, por_modelo = atribuicao.delete()
+                total += removidos
+                for modelo, quantidade in por_modelo.items():
+                    detalhes[modelo] = detalhes.get(modelo, 0) + quantidade
+            return total, detalhes
+
 
 class PapelUsuario(models.Model):
     """Atribuição explícita de um papel a um usuário — a única forma de um
@@ -279,6 +399,8 @@ class PapelUsuario(models.Model):
 
     usuario = models.ForeignKey("contas.User", related_name="papeis", on_delete=models.CASCADE)
     papel = models.CharField(max_length=32, choices=Papel.choices)
+
+    objects = PapelUsuarioQuerySet.as_manager()
 
     class Meta:
         constraints = [
@@ -291,8 +413,39 @@ class PapelUsuario(models.Model):
     def __str__(self):
         return f"{self.usuario_id} — {self.papel}"
 
+    @staticmethod
+    def exigir_papel_removivel(usuario_id, papel):
+        usuario = User.objects.filter(pk=usuario_id).values("is_active", "is_superuser").first()
+        if (
+            papel == Papel.REQUISITANTE
+            and usuario is not None
+            and usuario["is_active"]
+            and not usuario["is_superuser"]
+        ):
+            raise ValidationError(
+                "ROLE-REQUESTER não pode ser removido de uma identidade de negócio ativa."
+            )
+
+    def _exigir_usuario_de_negocio(self):
+        if User.objects.filter(pk=self.usuario_id, is_superuser=True).exists():
+            raise ValidationError(
+                "Superusuário técnico não pode possuir papéis de negócio ROLE-*."
+            )
+
+    def clean(self):
+        super().clean()
+        self._exigir_usuario_de_negocio()
+        if self.pk is None:
+            return
+        anterior = PapelUsuario.objects.filter(pk=self.pk).values("papel", "usuario_id").first()
+        if anterior is not None and (
+            anterior["papel"] != self.papel or anterior["usuario_id"] != self.usuario_id
+        ):
+            self.exigir_papel_removivel(anterior["usuario_id"], anterior["papel"])
+
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            self._exigir_usuario_de_negocio()
             # Lido dentro da transação (e sob lock da própria linha, como
             # `User.save()` já faz na sua): duas edições concorrentes desta
             # mesma linha devem serializar sobre o mesmo estado "anterior",
@@ -314,6 +467,11 @@ class PapelUsuario(models.Model):
             usuario_mudou = (
                 usuario_id_anterior is not None and usuario_id_anterior != self.usuario_id
             )
+
+            if papel_anterior is not None and (
+                usuario_mudou or papel_anterior != self.papel
+            ):
+                self.exigir_papel_removivel(usuario_id_anterior, papel_anterior)
 
             # `FR-021`: o titular ANTIGO desta linha deixa de ser chefe quando
             # o `papel` muda para outra coisa OU quando a própria linha passa
@@ -369,6 +527,7 @@ class PapelUsuario(models.Model):
             return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        self.exigir_papel_removivel(self.usuario_id, self.papel)
         # `FR-021`: remover o papel do único chefe de um setor ativo o deixaria
         # sem chefia.
         if self.papel == Papel.CHEFE_SETOR:

@@ -65,22 +65,26 @@ components:
     typography: "{typography.body}"
     rounded: "{rounded.sm}"
     padding: "8px 16px"
+    minHeight: "44px"
   button-primary-disabled:
     backgroundColor: "{colors.disabled}"
     textColor: "{colors.surface}"
     rounded: "{rounded.sm}"
     padding: "8px 16px"
+    minHeight: "44px"
   button-secondary:
     backgroundColor: "transparent"
     textColor: "{colors.text}"
     typography: "{typography.body}"
     rounded: "{rounded.sm}"
     padding: "8px 16px"
+    minHeight: "44px"
   button-secondary-hover:
     backgroundColor: "{colors.surface-subtle}"
     textColor: "{colors.text}"
     rounded: "{rounded.sm}"
     padding: "8px 16px"
+    minHeight: "44px"
   alert-danger:
     backgroundColor: "{colors.surface-subtle}"
     textColor: "{colors.danger}"
@@ -94,6 +98,7 @@ components:
     rounded: "{rounded.sm}"
     padding: "8px 12px"
     width: "100%"
+    minHeight: "44px"
   card-surface:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"

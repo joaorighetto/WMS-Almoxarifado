@@ -15,6 +15,7 @@ Invariantes/requisitos protegidos:
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
 from contas.models import Papel, PapelUsuario, Setor, User
@@ -205,6 +206,68 @@ def test_create_superuser_e_tecnico_e_nao_concede_role_system_admin(setor):
     assert superusuario.is_superuser is True
     assert PapelUsuario.objects.filter(usuario=superusuario).exists() is False
     assert superusuario.tem_papel(Papel.ADMINISTRADOR_SISTEMA) is False
+
+
+@pytest.mark.django_db
+def test_superusuario_tecnico_nao_pode_receber_papel_por_save(setor):
+    superusuario = User.objects.create_superuser(
+        matricula="000002", password="senha-valida", setor=setor
+    )
+
+    with pytest.raises(ValidationError, match="Superusuário técnico"):
+        PapelUsuario.objects.create(usuario=superusuario, papel=Papel.ADMINISTRADOR_SISTEMA)
+
+    assert superusuario.papeis.exists() is False
+
+
+@pytest.mark.django_db
+def test_usuario_com_papel_nao_pode_ser_promovido_a_superusuario_tecnico(setor):
+    usuario = User.objects.create_user(matricula="000003", password="senha-valida", setor=setor)
+    usuario.is_superuser = True
+
+    with pytest.raises(ValidationError, match="Superusuário técnico"):
+        usuario.save()
+
+    usuario.refresh_from_db()
+    assert usuario.is_superuser is False
+    assert usuario.tem_papel(Papel.REQUISITANTE) is True
+
+
+@pytest.mark.django_db
+def test_role_requester_nao_pode_ser_removido_de_identidade_ativa(setor):
+    usuario = User.objects.create_user(matricula="000004", password="senha-valida", setor=setor)
+    atribuicao = usuario.papeis.get(papel=Papel.REQUISITANTE)
+
+    with pytest.raises(ValidationError, match="ROLE-REQUESTER"):
+        atribuicao.delete()
+    with pytest.raises(ValidationError, match="ROLE-REQUESTER"):
+        usuario.papeis.filter(papel=Papel.REQUISITANTE).delete()
+
+    atribuicao.papel = Papel.AUXILIAR_SETOR
+    with pytest.raises(ValidationError, match="ROLE-REQUESTER"):
+        atribuicao.save()
+
+    atribuicao.refresh_from_db()
+    assert atribuicao.papel == Papel.REQUISITANTE
+
+
+@pytest.mark.django_db
+def test_role_requester_pode_ser_removido_de_identidade_inativa(setor):
+    usuario = User.objects.create_user(
+        matricula="000005", password="senha-valida", setor=setor, is_active=False
+    )
+
+    removidos, _ = usuario.papeis.filter(papel=Papel.REQUISITANTE).delete()
+
+    assert removidos == 1
+    assert usuario.papeis.exists() is False
+
+    usuario.is_active = True
+    with pytest.raises(ValidationError, match="precisa possuir ROLE-REQUESTER"):
+        usuario.save()
+
+    usuario.refresh_from_db()
+    assert usuario.is_active is False
 
 
 def test_catalogo_de_papeis_bate_com_os_ids_canonicos():
