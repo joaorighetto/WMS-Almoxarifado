@@ -5,6 +5,18 @@ O agente principal coordena o trabalho, consolida resultados e mantém a respons
 pela resposta final. Subagents executam somente o papel recebido e não criam uma segunda
 camada de orquestração.
 
+## Espelho normativo
+
+Este arquivo é o espelho, para o Codex, da orquestração definida em `CLAUDE.md` e
+`.claude/rules/agent-orchestration.md`. As duas versões descrevem a mesma política; diferem
+apenas no que é específico de ferramenta — nomes de agente com `_`, `sandbox_mode` e ausência
+do Serena MCP.
+
+Qualquer alteração de regra de domínio, gate obrigatório, escopo de agente ou fonte de
+autoridade DEVE ser aplicada nos dois lados no mesmo commit. Se os dois divergirem, nenhum dos
+dois prevalece automaticamente: identifique a divergência e obtenha uma decisão antes de agir
+com base nela. Nenhum dos dois sobrepõe a Constitution, `PRODUCT.md` ou as matrizes canônicas.
+
 ## Princípio geral
 
 Use subagents quando a especialização, o isolamento de contexto ou o paralelismo trouxerem
@@ -42,8 +54,13 @@ Respeite, de forma combinada, as seguintes fontes:
 9. código existente — realidade atual da implementação.
 
 Relatórios em `docs/domain/reconciliation/` e `docs/domain-legacy/reconciliation/` são
-históricos e não normativos. Relatórios de subagents são evidência e análise; não alteram
-automaticamente nenhuma fonte normativa.
+históricos e não normativos: explicam origem, alternativas consideradas, decisões descartadas
+e pendências, mas nunca substituem as matrizes canônicas. Quando houver divergência, as
+matrizes representam o estado vigente — não use um relatório de reconciliação para reviver
+algo lá descartado, pendente ou substituído.
+
+Relatórios de subagents são evidência e análise; não alteram automaticamente nenhuma fonte
+normativa.
 
 Se houver conflito material, não escolha silenciosamente uma interpretação. Identifique o
 conflito e obtenha uma decisão antes de implementar algo que dependa dela.
@@ -66,14 +83,22 @@ As definições ficam em `.codex/agents/`:
   JavaScript pontual, dentro de `DESIGN.md`;
 - `code_reviewer`: revisão independente e read-only;
 - `debugger`: diagnóstico, causa raiz, correção mínima e teste de regressão;
-- `test_engineer`: desenho, criação e revisão de testes, sem alterar produção;
-- `impeccable_asset_producer`, `impeccable_documenter`,
-  `impeccable_finish_reviewer` e `impeccable_manual_edit_applier`: auxiliares do
-  workflow visual Impeccable.
+- `test_engineer`: desenho, criação e revisão de testes, sem alterar produção.
+
+Os auxiliares do workflow visual Impeccable — `impeccable_asset_producer`,
+`impeccable_documenter`, `impeccable_finish_reviewer` e `impeccable_manual_edit_applier` — não
+são definidos aqui: a própria skill os empacota em `.agents/skills/impeccable/agents/`, e essa
+é a definição vigente. Não crie uma segunda definição desses nomes em `.codex/agents/`; ela
+divergiria silenciosamente a cada atualização da skill. Eles estabelecem, documentam e auditam
+a fundação do design system — não implementam telas do dia a dia.
 
 Use os nomes acima ao solicitar explicitamente um papel. Os agentes especializados não
 devem delegar para outros agentes; quando precisarem de outro papel, devem devolver ao
 coordenador uma solicitação objetiva.
+
+Quando uma etapa for importante para o workflow, invoque explicitamente o agente apropriado.
+Use roteamento implícito apenas para casos óbvios: não dependa dele para gates importantes,
+como a revisão de uma implementação crítica.
 
 ## Contexto do projeto
 
@@ -105,6 +130,18 @@ críticas. Trabalho crítico de estoque que também envolva autorização consul
 Quando aplicável, preserve a rastreabilidade pelos IDs `PERM-*` e `INV-*` em specs, tasks,
 testes, implementação e review. Não copie a definição inteira das matrizes para outros
 artefatos nem redefina seu significado silenciosamente.
+
+Specs relacionadas a operações ou regras transversais referenciam as capabilities e
+invariantes aplicáveis por ID numa seção `## Regras canônicas aplicáveis`, com as subseções
+`### Permissões` e `### Invariantes` (por exemplo `PERM-REQ-CREATE-SELF` e `INV-STOCK-004`).
+Use essa seção só quando houver regra transversal relevante — nunca como seção obrigatória em
+toda spec, e nunca copiando o texto completo das matrizes. Tasks de domínio crítico podem
+referenciar os IDs que aplicam e preservam (ex.: `Aplica: PERM-STOCK-ENTRY-CREATE` /
+`Preserva: INV-STOCK-001, INV-STOCK-004`); isso não é obrigatório para tasks triviais.
+
+Uma spec nova não redefine silenciosamente o significado de uma capability ou invariante
+existente. Para alterar uma, registre a decisão e atualize a matriz canônica antes de usar o
+novo comportamento na spec.
 
 ## Workflow de feature com Spec Kit
 
@@ -245,32 +282,58 @@ Adicione `wms_explorer` quando o código ou as dependências não estiverem clar
 
 ## Trabalho frontend
 
-O `frontend_implementer` trabalha dentro de `DESIGN.md`, da Constitution e dos componentes
-existentes. Para tarefas de design ou melhoria de interface, use a skill `impeccable` conforme
-suas instruções. Regras críticas, autorização e invariantes permanecem no backend.
+O `frontend_implementer` trabalha dentro de `DESIGN.md`, da Constitution e dos componentes e
+tokens existentes. Regras críticas, autorização e invariantes permanecem no backend.
 
-Fluxo sugerido para frontend significativo:
+O implementador não conduz o workflow `impeccable`. A skill é do coordenador: ela estabelece,
+documenta e audita a fundação do design system e executa o gate visual depois da
+implementação. Um gate executado pelo próprio autor da mudança não é gate.
+
+Fluxo para frontend significativo:
 
 ```text
 wms_explorer, quando necessário
 → frontend_implementer
 → code_reviewer (funcional)
-→ revisão visual com a skill impeccable
+→ revisão visual (gate obrigatório — ver abaixo)
 → correções aprovadas
 → nova revisão quando material
 ```
 
-O review funcional não substitui o gate visual. Use `impeccable critique` para a crítica de
-design e `impeccable audit` como complemento técnico. Quando existir um build Impeccable
-com contrato de direção e capturas, use `impeccable_finish_reviewer`.
+O pipeline acima é uma sugestão; a revisão visual não é. A Constitution (Princípio VIII) exige
+que mudanças significativas de frontend DEVAM passar por revisão visual quanto à aderência ao
+`DESIGN.md`, reutilização de componentes, consistência visual e eficiência operacional. O
+`code_reviewer` faz revisão funcional e declara explicitamente que não faz auditoria estética;
+não considere uma mudança frontend significativa concluída apenas porque ele aprovou.
 
-Se a crítica produzir três ou mais Priority Issues e a skill exigir escolha do usuário,
-aguarde essa seleção antes de encaminhar correções. Não use `impeccable polish` como gate,
-pois ele modifica a implementação.
+Use `impeccable critique <target>` como gate visual obrigatório — é crítica de design, não
+checagem técnica. `impeccable audit` é complementar e cobre acessibilidade, performance,
+responsividade e integridade técnica; não substitui a crítica. Quando existir um build
+Impeccable completo, com contrato de direção e capturas, use `impeccable_finish_reviewer` em
+lugar do `critique`. `impeccable polish` não faz parte do gate: ele modifica a implementação, e
+só cabe como alternativa explícita de correção quando o coordenador optar por corrigir assim em
+vez de encaminhar os findings ao `frontend_implementer`.
 
-Após a primeira implementação visual real, execute o modo de documentação/scan definido
-pela skill `impeccable` para promover o seed de `DESIGN.md` a uma representação do código
-construído. Em mudanças posteriores, documente apenas tokens e padrões reutilizáveis duráveis.
+Quando o `critique` reportar três ou mais Priority Issues, o próprio contrato dele para na
+entrega do relatório e exige perguntas direcionadas ao usuário antes de qualquer correção.
+Nesse caso, aguarde a seleção do usuário e encaminhe ao `frontend_implementer` somente os
+findings aprovados — não repasse o relatório inteiro automaticamente. Com menos de três
+Priority Issues, quando o próprio `critique` permitir seguir sem perguntas, os findings podem
+ir direto ao `frontend_implementer`.
+
+Após a primeira implementação visual real — quando templates, CSS e componentes deixam de ser
+hipotéticos — execute o comando `impeccable document` em modo scan para promover o seed de
+`DESIGN.md` a uma representação do código construído e extrair o sidecar
+`.impeccable/design.json`. Trate essa transição como obrigatória, não como algo a perceber
+depois. Não delegue esse passo ao agente `impeccable_documenter`: ele pressupõe um build
+Impeccable completo — contrato de direção e artefatos próprios desse workflow — que uma
+implementação comum do `frontend_implementer` não produz; reserve-o para quando esse contrato
+existir. Em implementações posteriores, documente apenas mudanças duráveis do sistema (novo
+token, novo padrão reutilizável), não cada tela individualmente.
+
+Se ficar evidente que a fundação do design system precisa ser criada, revista ou auditada
+estruturalmente — e não apenas uma tela específica — direcione esse trabalho ao workflow
+`impeccable`, não ao `frontend_implementer`.
 
 ## Tarefas triviais
 

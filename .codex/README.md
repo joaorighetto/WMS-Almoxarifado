@@ -20,7 +20,12 @@ Os nomes usam `_` porque esse formato é compatível com identificadores de task
 | `code-reviewer` | `code_reviewer` |
 | `debugger` | `debugger` |
 | `test-engineer` | `test_engineer` |
-| `impeccable-*` | `impeccable_*` |
+| `impeccable-*` | `impeccable_*` (empacotados pela skill, ver abaixo) |
+
+Os quatro auxiliares `impeccable_*` não são definidos em `agents/`. A skill Impeccable já os
+versiona em `../.agents/skills/impeccable/agents/`, com os mesmos `name`, e essa é a definição
+vigente. Redefini-los aqui criaria dois registros do mesmo id e faria as cópias divergirem em
+silêncio a cada atualização da skill.
 
 ## Uso
 
@@ -34,7 +39,32 @@ cenários críticos em paralelo. Aguarde ambos e então encaminhe uma tarefa del
 task_implementer. Ao final, use code_reviewer e consolide os findings.
 ```
 
-Subagents read-only possuem `sandbox_mode = "read-only"`. Agentes de implementação herdam
-as permissões do turno principal e continuam sujeitos às instruções de escopo do próprio
-arquivo. Reinicie a sessão do Codex depois de alterar `AGENTS.md`, `config.toml` ou uma
-definição de agente para garantir que toda a configuração seja recarregada.
+## Permissões
+
+Subagents read-only possuem `sandbox_mode = "read-only"`. Agentes de implementação declaram
+`workspace-write`, mas isso não eleva permissão: o Codex reaplica a política de sandbox e as
+escolhas de aprovação do turno pai ao criar o filho, mesmo quando o arquivo do agente declara
+outro padrão. Na prática, `sandbox_mode` só consegue restringir um subagent, nunca ampliá-lo
+além do que a sessão principal já tem.
+
+### Lacuna conhecida: guardrails do `test_engineer`
+
+No Claude Code, a restrição "o `test_engineer` só edita testes" não é prosa: dois hooks
+PreToolUse fail-closed a impõem — `validate-test-engineer-write.py` (allowlist estrutural de
+caminhos) e `validate-test-engineer-bash.py` (allowlist de comandos, que bloqueia encadeamento,
+redirecionamento e substituição, e exige `--frozen`/`--locked` em `uv run`).
+
+O `hooks.json` desta pasta só registra PostToolUse/Stop do detector Impeccable; não há
+equivalente por agente. No Codex, portanto, essa restrição existe apenas como instrução dentro
+de `agents/test_engineer.toml`, onde o allowlist foi reproduzido literalmente para permanecer
+verificável em review. Se o Codex passar a oferecer hook PreToolUse com escopo de subagent,
+porte os dois validadores e remova esta seção.
+
+## Manutenção
+
+Reinicie a sessão do Codex depois de alterar `AGENTS.md`, `config.toml` ou uma definição de
+agente para garantir que toda a configuração seja recarregada.
+
+`AGENTS.md` é o espelho normativo de `../CLAUDE.md` e `../.claude/rules/agent-orchestration.md`.
+Alterações de regra de domínio, gate obrigatório, escopo de agente ou fonte de autoridade devem
+ser aplicadas nos dois lados no mesmo commit.

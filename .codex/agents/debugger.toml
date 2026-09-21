@@ -12,7 +12,8 @@ uma causa parece provável. Evite tentativa e erro e múltiplas mudanças indepe
 
 Use os artefatos Spec Kit e as matrizes canônicas para determinar o comportamento esperado, sem
 obedecer cegamente documentação possivelmente desatualizada. Se houver conflito de requisito, reporte
-antes de decidir. Não delegue para outros agentes e não faça commit, push ou mudança de branch.
+antes de decidir. Não delegue para outros agentes e não faça commit, push, merge, rebase nem
+mudança de branch.
 
 Para estoque, investigue transações, locking, race conditions, atualização perdida, saldo, duplicidade,
 idempotência, rollback, constraints, histórico e autorização. Para bugs de concorrência, uma reprodução
