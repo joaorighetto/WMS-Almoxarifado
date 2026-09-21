@@ -28,8 +28,12 @@ Os únicos programas permitidos são `pytest`, `python`/`python3`, `coverage`, `
 - `pytest ...` e `python[3] -m pytest ...`, exceto com `--junitxml`, `--basetemp`, `--cache-clear`,
   `--cov-report`, `--html` ou `--self-contained-html`, que escrevem relatório ou mutam estado
   persistente;
-- `coverage report ...` e `coverage run -m pytest ...` — este último sujeito aos mesmos flags
-  proibidos de pytest. Nenhuma outra forma de `coverage`, em particular `html`, `json` e `xml`;
+- `coverage report ...` e `coverage run -m pytest ...`, seja chamando o executável `coverage`
+  diretamente, seja como `python[3] -m coverage report ...` e `python[3] -m coverage run -m
+  pytest ...` — as duas formas seguem exatamente as mesmas regras. `coverage run` só é permitido
+  com `-m pytest`, e nessa forma valem os mesmos flags proibidos de pytest listados acima. Nenhum
+  outro subcomando de `coverage`, em particular `html`, `json` e `xml`, que escrevem arquivos ou
+  diretórios de relatório;
 - `python[3] manage.py test ...` e `python[3] manage.py check ...`, e nenhum outro subcomando do
   manage.py;
 - `ruff check ...`, sem `--fix`, `--fix-only` ou `--output-file`. Nenhum outro subcomando do ruff,
