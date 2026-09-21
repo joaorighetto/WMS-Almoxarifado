@@ -45,3 +45,6 @@ htmlcov/
 
 # Dados de trabalho e exports do SCPI (contém credenciais e arquivos grandes)
 domain-legacy/
+
+# impeccable
+.impeccable/critique/
