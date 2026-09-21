@@ -16,18 +16,42 @@ Ao trabalhar neste projeto, respeite a seguinte ordem de contexto:
 2. `PRODUCT.md` e a documentação canônica de domínio (`docs/domain/permissions-matrix.md` e
    `docs/domain/invariants-matrix.md`) — verdade de produto, de autorização e de invariantes válida
    em todo o repositório, não só na feature em andamento;
-3. `spec.md` — requisitos e comportamento esperado da feature;
-4. `plan.md` — solução técnica planejada;
-5. `tasks.md` — unidades de implementação;
-6. `DESIGN.md` — design system, quando existir;
-7. código existente — realidade atual da implementação.
+3. `ROADMAP.md` — decomposição funcional: quais capacidades merecem spec própria, seu recorte,
+   dependências, ordem recomendada e status;
+4. `spec.md` — requisitos e comportamento esperado da feature;
+5. `plan.md` — solução técnica planejada;
+6. `tasks.md` — unidades de implementação;
+7. `DESIGN.md` — design system, quando existir;
+8. código existente — realidade atual da implementação.
 
 Essa ordem não é uma regra simples de "arquivo de cima sempre sobrescreve arquivo de baixo". Uma
 feature deve respeitar os artefatos canônicos transversais. Se uma nova decisão de produto precisar
 alterar uma permissão ou invariante já canônica, o artefato transversal correspondente deve ser
-atualizado explicitamente — nunca contornado silenciosamente por uma spec.
+atualizado explicitamente — nunca contornado silenciosamente por uma spec. Da mesma forma, uma spec
+não move silenciosamente a fronteira que o roadmap definiu para a feature.
 
 Se houver conflito material entre essas fontes, não escolha silenciosamente uma interpretação. Identifique o conflito antes de prosseguir.
+
+## Roadmap funcional
+
+`ROADMAP.md` define **o que é cada feature**: recorte ("Inclui"/"Não inclui"), dependências
+obrigatórias e recomendadas, ordem recomendada e status. Sua autoridade é delimitada — não define
+requisitos de comportamento (são da spec), regras de domínio (são das matrizes canônicas) nem
+solução técnica (é do plan), e não é cronograma. Os IDs `ORG`, `ENT`, `REQ` etc. são rótulos do
+mapa, não números de spec: a numeração é atribuída sequencialmente ao criar cada spec.
+
+Antes de iniciar ou retomar uma feature pelo Spec Kit, situe-a no roadmap. Uma feature só vai à
+implementação com as dependências obrigatórias satisfeitas e com a spec fixando as decisões
+pendentes que a própria capacidade exige; uma decisão que restrinja outro recorte é tomada pelo
+usuário, considerando os recortes afetados. Alterar recorte, fronteira ou dependência, incluir
+capacidade ausente do mapa ou tirar uma capacidade de "Requer clarificação" exige decisão
+explícita do usuário e atualização do `ROADMAP.md` antes da spec. Mantenha o status do roadmap
+fiel ao estado real da feature: o estado de entrega vive nele, não no `Status` de `spec.md`.
+Bugs, refactors, ajustes pontuais e tarefas triviais não precisam consultá-lo, salvo quando
+ameaçarem mover a fronteira entre capacidades.
+
+O fluxo detalhado está em `.claude/rules/agent-orchestration.md`, seções "Roadmap funcional" e
+"Feature nova".
 
 ## Documentação canônica de domínio
 
@@ -123,7 +147,8 @@ Use os agentes quando agregarem valor real. Não execute pipelines completos par
 
 ## Escopo
 
-Evite ampliar escopo silenciosamente.
+Evite ampliar escopo silenciosamente. Em trabalho de feature, o "Não inclui" do `ROADMAP.md` é
+limite de escopo: atravessá-lo exige decisão de recorte, não uma implementação oportunista.
 
 Não use uma tarefa como oportunidade para:
 
