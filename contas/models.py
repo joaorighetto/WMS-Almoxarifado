@@ -296,6 +296,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.pk is None:
             return super().save(*args, **kwargs)
 
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and not UserQuerySet.CAMPOS_ORGANIZACIONAIS.intersection(
+            update_fields
+        ):
+            return super().save(*args, **kwargs)
+
         # `FR-021`/`FR-023`: desativar o chefe ou transferi-lo de setor não pode
         # deixar um setor ativo sem chefe. Avaliado dentro da transação, sobre o
         # estado anterior lido do banco.
@@ -399,6 +405,9 @@ class _TitularAlteradoDuranteBloqueio(Exception):
     """Sinal interno para liberar os locks e reler uma atribuição reapontada."""
 
 
+_MAX_TENTATIVAS_BLOQUEIO_ATRIBUICAO = 3
+
+
 @contextmanager
 def _bloquear_atribuicao(atribuicao_id, usuario_destino_id=None):
     """Lê o estado atual na ordem Usuário → Setor → PapelUsuario.
@@ -408,7 +417,7 @@ def _bloquear_atribuicao(atribuicao_id, usuario_destino_id=None):
     locks antes de repetir, inclusive dentro da transação externa do Admin.
     Evita validar um usuário diferente daquele efetivamente alterado/excluído.
     """
-    while True:
+    for _ in range(_MAX_TENTATIVAS_BLOQUEIO_ATRIBUICAO):
         try:
             with transaction.atomic():
                 titular_id = (
@@ -432,6 +441,10 @@ def _bloquear_atribuicao(atribuicao_id, usuario_destino_id=None):
                 return
         except _TitularAlteradoDuranteBloqueio:
             continue
+
+    raise ValidationError(
+        "O titular mudou durante o bloqueio; a operação deve ser repetida."
+    )
 
 
 class PapelUsuario(models.Model):

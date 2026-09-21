@@ -7,6 +7,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import connection
 
+import contas.models as models_mod
 from contas.models import Papel, PapelUsuario, Setor, User, chefes_ativos
 
 
@@ -86,6 +87,65 @@ def test_exclusao_de_atribuicao_revalida_papel_minimo_atual(setor):
         antiga.delete()
 
     assert usuario.tem_papel(Papel.REQUISITANTE)
+
+
+@pytest.mark.django_db
+def test_save_com_update_fields_nao_organizacionais_ignora_estado_organizacional_em_memoria(
+    setor,
+):
+    usuario = User.objects.create_user(matricula="senha-isolada", setor=setor)
+    usuario.is_superuser = True
+    usuario.set_password("nova-senha")
+
+    usuario.save(update_fields=["password"])
+
+    usuario.refresh_from_db()
+    assert usuario.check_password("nova-senha")
+    assert usuario.is_superuser is False
+
+
+@pytest.mark.django_db
+def test_save_com_update_fields_organizacionais_preserva_validacoes(setor):
+    chefe = User.objects.create_user(matricula="chefe-update-fields", setor=setor)
+    PapelUsuario.objects.create(usuario=chefe, papel=Papel.CHEFE_SETOR)
+    setor.ativo = True
+    setor.save()
+    chefe.is_active = False
+
+    with pytest.raises(ValidationError, match="sem chefe ativo"):
+        chefe.save(update_fields=["is_active"])
+
+
+@pytest.mark.django_db
+def test_bloqueio_falha_apos_limite_quando_titular_muda_repetidamente(
+    setor, monkeypatch
+):
+    titular_lido = User.objects.create_user(matricula="titular-lido", setor=setor)
+    titular_atual = User.objects.create_user(matricula="titular-atual", setor=setor)
+    atribuicao = PapelUsuario.objects.create(
+        usuario=titular_atual,
+        papel=Papel.AUXILIAR_SETOR,
+    )
+    first_original = models_mod.PapelUsuarioQuerySet.first
+    tentativas = 0
+
+    def first_com_titular_alterado(queryset):
+        nonlocal tentativas
+        if queryset.query.values_select == ("usuario_id",):
+            tentativas += 1
+            return titular_lido.pk
+        return first_original(queryset)
+
+    monkeypatch.setattr(models_mod.PapelUsuarioQuerySet, "first", first_com_titular_alterado)
+
+    with pytest.raises(
+        ValidationError,
+        match="titular mudou durante o bloqueio; a operação deve ser repetida",
+    ):
+        with models_mod._bloquear_atribuicao(atribuicao.pk):
+            pytest.fail("o contexto não deve ser liberado com titular divergente")
+
+    assert tentativas == models_mod._MAX_TENTATIVAS_BLOQUEIO_ATRIBUICAO
 
 
 def _concorrer_apos_validacao(monkeypatch, nome_validacao, primeira, segunda):
