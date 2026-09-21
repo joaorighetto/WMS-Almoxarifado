@@ -2,6 +2,12 @@
 
 Este repositório utiliza Claude Code com Spec Kit, Serena MCP e subagents especializados.
 
+O repositório também é usado com o Codex, cuja orquestração equivalente está em `AGENTS.md` e
+`.codex/`. `AGENTS.md` é o espelho normativo deste arquivo e de
+`.claude/rules/agent-orchestration.md`: as duas versões descrevem a mesma política e diferem
+apenas no que é específico de ferramenta. Alterações de regra de domínio, gate obrigatório,
+escopo de agente ou fonte de autoridade devem ser aplicadas nos dois lados no mesmo commit.
+
 ## Fontes de autoridade
 
 Ao trabalhar neste projeto, respeite a seguinte ordem de contexto:
