@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.exceptions import ValidationError
@@ -163,6 +165,17 @@ class UserQuerySet(models.QuerySet):
 
     CAMPOS_ORGANIZACIONAIS = {"is_active", "is_superuser", "setor", "setor_id"}
 
+    def create(self, **kwargs):
+        raise ValidationError(
+            "Crie contas por create_user() ou create_superuser(), que preservam "
+            "a atribuição atômica dos papéis de negócio."
+        )
+
+    def bulk_create(self, objs, **kwargs):
+        raise ValidationError(
+            "Contas não podem ser criadas em lote; use create_user() ou create_superuser()."
+        )
+
     def update(self, **kwargs):
         if self.CAMPOS_ORGANIZACIONAIS.intersection(kwargs):
             raise ValidationError(
@@ -287,27 +300,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         # deixar um setor ativo sem chefe. Avaliado dentro da transação, sobre o
         # estado anterior lido do banco.
         with transaction.atomic():
-            # Ordem determinística de lock: trava o(s) `Setor` envolvidos ANTES
-            # da própria linha de `User`. `PapelUsuario.save()`/`delete()`
-            # travam `Setor` (via `_exigir_chefia_*`) e só depois tocam
-            # `PapelUsuario`, cujo FK para `User` adquire `FOR KEY SHARE` na
-            # linha referenciada — travar `User` antes de `Setor` aqui
-            # inverteria essa ordem e criaria risco de deadlock entre as duas
-            # operações. A leitura abaixo não é travada: serve só para
-            # descobrir qual(is) `Setor` travar nesta ordem; a decisão de
-            # negócio usa a leitura definitiva feita a seguir, já com `User`
-            # travado (uma segunda escrita concorrente neste mesmo usuário
-            # entre as duas leituras é a única janela residual não coberta —
-            # rara e ortogonal à inversão de ordem que motivou esta correção).
-            setor_anterior_id = (
-                User.objects.filter(pk=self.pk).values_list("setor_id", flat=True).first()
-            )
-            setores_para_travar = sorted(
-                {sid for sid in (setor_anterior_id, self.setor_id) if sid is not None}
-            )
-            for setor_id in setores_para_travar:
-                Setor.objects.select_for_update().filter(pk=setor_id).first()
-
+            # Todas as escritas de identidade/papel seguem Usuário → Setor →
+            # PapelUsuario. Travar o usuário primeiro estabiliza seu setor e
+            # serializa reativação/promoção com concessão/remoção de papéis.
+            # Setor.save() só trava o setor; nunca adquire lock de usuário.
             anterior = (
                 User.objects.select_for_update()
                 .filter(pk=self.pk)
@@ -316,6 +312,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             )
             if anterior is None:
                 return super().save(*args, **kwargs)
+
+            setores_para_travar = sorted(
+                {sid for sid in (anterior["setor_id"], self.setor_id) if sid is not None}
+            )
+            for setor_id in setores_para_travar:
+                Setor.objects.select_for_update().filter(pk=setor_id).first()
 
             if self.is_superuser and self.papeis.exists():
                 raise ValidationError(
@@ -349,8 +351,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
-            if self.is_active and self.tem_papel(Papel.CHEFE_SETOR):
-                _exigir_chefia_preservada(self.setor_id, excluir_usuario_id=self.pk)
+            atual = User.objects.select_for_update().filter(pk=self.pk).first()
+            if atual is not None and atual.is_active and atual.tem_papel(Papel.CHEFE_SETOR):
+                _exigir_chefia_preservada(atual.setor_id, excluir_usuario_id=atual.pk)
             return super().delete(*args, **kwargs)
 
 
@@ -390,6 +393,45 @@ class PapelUsuarioQuerySet(models.QuerySet):
                 for modelo, quantidade in por_modelo.items():
                     detalhes[modelo] = detalhes.get(modelo, 0) + quantidade
             return total, detalhes
+
+
+class _TitularAlteradoDuranteBloqueio(Exception):
+    """Sinal interno para liberar os locks e reler uma atribuição reapontada."""
+
+
+@contextmanager
+def _bloquear_atribuicao(atribuicao_id, usuario_destino_id=None):
+    """Lê o estado atual na ordem Usuário → Setor → PapelUsuario.
+
+    O titular precisa ser descoberto antes de travar a atribuição. Se outra
+    transação o trocar nessa janela, desfazemos o savepoint para liberar os
+    locks antes de repetir, inclusive dentro da transação externa do Admin.
+    Evita validar um usuário diferente daquele efetivamente alterado/excluído.
+    """
+    while True:
+        try:
+            with transaction.atomic():
+                titular_id = (
+                    PapelUsuario.objects.filter(pk=atribuicao_id)
+                    .values_list("usuario_id", flat=True)
+                    .first()
+                )
+                ids = {pk for pk in (titular_id, usuario_destino_id) if pk is not None}
+                usuarios = {
+                    usuario.pk: usuario
+                    for usuario in (
+                        User.objects.select_for_update().filter(pk__in=ids).order_by("pk")
+                    )
+                }
+                setores = {usuario.setor_id for usuario in usuarios.values()}
+                list(Setor.objects.select_for_update().filter(pk__in=setores).order_by("pk"))
+                atual = PapelUsuario.objects.select_for_update().filter(pk=atribuicao_id).first()
+                if atual is not None and atual.usuario_id not in usuarios:
+                    raise _TitularAlteradoDuranteBloqueio
+                yield atual, usuarios
+                return
+        except _TitularAlteradoDuranteBloqueio:
+            continue
 
 
 class PapelUsuario(models.Model):
@@ -433,6 +475,8 @@ class PapelUsuario(models.Model):
             )
 
     def clean(self):
+        # Pré-validação de formulário, que pode ocorrer fora de transação.
+        # save()/delete() repetem as regras com os usuários atuais bloqueados.
         super().clean()
         self._exigir_usuario_de_negocio()
         if self.pk is None:
@@ -444,33 +488,15 @@ class PapelUsuario(models.Model):
             self.exigir_papel_removivel(anterior["usuario_id"], anterior["papel"])
 
     def save(self, *args, **kwargs):
-        with transaction.atomic():
+        with _bloquear_atribuicao(self.pk, self.usuario_id) as (anterior, usuarios):
             self._exigir_usuario_de_negocio()
-            # Lido dentro da transação (e sob lock da própria linha, como
-            # `User.save()` já faz na sua): duas edições concorrentes desta
-            # mesma linha devem serializar sobre o mesmo estado "anterior",
-            # nunca cada uma decidir com base numa leitura possivelmente
-            # obsoleta.
-            papel_anterior = None
-            usuario_id_anterior = None
-            if self.pk is not None:
-                anterior = (
-                    PapelUsuario.objects.select_for_update()
-                    .filter(pk=self.pk)
-                    .values("papel", "usuario_id")
-                    .first()
-                )
-                if anterior is not None:
-                    papel_anterior = anterior["papel"]
-                    usuario_id_anterior = anterior["usuario_id"]
-
+            papel_anterior = anterior.papel if anterior is not None else None
+            usuario_id_anterior = anterior.usuario_id if anterior is not None else None
             usuario_mudou = (
                 usuario_id_anterior is not None and usuario_id_anterior != self.usuario_id
             )
 
-            if papel_anterior is not None and (
-                usuario_mudou or papel_anterior != self.papel
-            ):
+            if papel_anterior is not None and (usuario_mudou or papel_anterior != self.papel):
                 self.exigir_papel_removivel(usuario_id_anterior, papel_anterior)
 
             # `FR-021`: o titular ANTIGO desta linha deixa de ser chefe quando
@@ -494,48 +520,28 @@ class PapelUsuario(models.Model):
             if not (tornando_se_chefe or deixando_de_ser_chefe):
                 return super().save(*args, **kwargs)
 
-            usuario_antigo = (
-                User.objects.select_related("setor").get(pk=usuario_id_anterior)
-                if deixando_de_ser_chefe
-                else None
-            )
-            usuario_novo = (
-                User.objects.select_related("setor").get(pk=self.usuario_id)
-                if tornando_se_chefe
-                else None
-            )
-
-            # Ordem determinística de lock entre os setores envolvidos —
-            # mesma ordenação por `pk` usada em `User.save()` — para que uma
-            # troca de titular concorrente na direção oposta (ex.: chefe A de
-            # S1→S2 enquanto chefe B vai de S2→S1) não trave os mesmos dois
-            # setores em ordem inversa (risco de deadlock).
-            operacoes = []
-            if usuario_antigo is not None and usuario_antigo.is_active:
-                operacoes.append(
-                    (usuario_antigo.setor_id, _exigir_chefia_preservada, usuario_antigo.pk)
-                )
-            if usuario_novo is not None and usuario_novo.is_active:
-                operacoes.append(
-                    (usuario_novo.setor_id, _exigir_chefia_nao_duplicada, usuario_novo.pk)
-                )
-            operacoes.sort(key=lambda operacao: operacao[0])
-
-            for setor_id, checagem, excluir_usuario_id in operacoes:
-                checagem(setor_id, excluir_usuario_id=excluir_usuario_id)
+            if deixando_de_ser_chefe:
+                usuario_antigo = usuarios[usuario_id_anterior]
+                if usuario_antigo.is_active:
+                    _exigir_chefia_preservada(
+                        usuario_antigo.setor_id, excluir_usuario_id=usuario_antigo.pk
+                    )
+            if tornando_se_chefe:
+                usuario_novo = usuarios[self.usuario_id]
+                if usuario_novo.is_active:
+                    _exigir_chefia_nao_duplicada(
+                        usuario_novo.setor_id, excluir_usuario_id=usuario_novo.pk
+                    )
 
             return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        self.exigir_papel_removivel(self.usuario_id, self.papel)
-        # `FR-021`: remover o papel do único chefe de um setor ativo o deixaria
-        # sem chefia.
-        if self.papel == Papel.CHEFE_SETOR:
-            with transaction.atomic():
-                usuario = User.objects.filter(pk=self.usuario_id).first()
-                if usuario is not None and usuario.is_active:
+        with _bloquear_atribuicao(self.pk) as (atual, usuarios):
+            if atual is not None:
+                self.exigir_papel_removivel(atual.usuario_id, atual.papel)
+                usuario = usuarios[atual.usuario_id]
+                if atual.papel == Papel.CHEFE_SETOR and usuario.is_active:
                     _exigir_chefia_preservada(
                         usuario.setor_id, excluir_usuario_id=usuario.pk
                     )
-                return super().delete(*args, **kwargs)
-        return super().delete(*args, **kwargs)
+            return super().delete(*args, **kwargs)

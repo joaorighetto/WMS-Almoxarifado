@@ -67,6 +67,12 @@ provisionamento não entrega a administração de produto (`ORG`). Novos fluxos 
 chefias e setores, recuperação de senha, painéis e autorizações operacionais não devem ser
 absorvidos pela 002. Cada feature de negócio aplica suas próprias permissões canônicas.
 
+Os três [achados da revisão do PR 5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5#pullrequestreview-5266085774)
+pertencem à 002: criação de contas sem o papel mínimo, exclusões baseadas em estado desatualizado
+e alterações concorrentes incompatíveis de usuários/papéis violam garantias já exigidas por
+FR-016a e FR-019 a FR-023. Corrigir esses caminhos existentes de provisionamento não antecipa
+os novos fluxos administrativos de `ORG` e não deve ser adiado até sua implementação.
+
 **Requisição e autorização juntas; atendimento separado.** `REQ` entrega uma solicitação que chega
 à decisão do chefe competente, sem criar uma spec trivial apenas para aprovar. `ATE` tem outro
 resultado: cumprir a solicitação autorizada, efetivar a saída e manter sua conclusão consultável.
