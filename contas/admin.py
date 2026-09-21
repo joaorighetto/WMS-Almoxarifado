@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.forms.models import BaseInlineFormSet
 
 from .models import Papel, PapelUsuario, Setor, User
 
@@ -41,6 +43,19 @@ class ContaAlteracaoForm(UserChangeForm):
         )
 
 
+class PapelUsuarioInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        for form in self.forms:
+            if not form.cleaned_data or not self._should_delete_form(form):
+                continue
+            atribuicao = form.instance
+            try:
+                atribuicao.exigir_papel_removivel(atribuicao.usuario_id, atribuicao.papel)
+            except ValidationError as exc:
+                raise ValidationError(exc.messages) from exc
+
+
 class PapelUsuarioInline(admin.TabularInline):
     """Atribuição de papéis manuais sempre explícita: nenhuma linha é
     pré-preenchida (`extra = 0`) — o inline em si nunca sugere ou pré-marca um
@@ -49,6 +64,7 @@ class PapelUsuarioInline(admin.TabularInline):
     e apenas na criação de contas não-superusuário."""
 
     model = PapelUsuario
+    formset = PapelUsuarioInlineFormSet
     extra = 0
 
 
@@ -88,6 +104,21 @@ class UserAdmin(DjangoUserAdmin):
     )
 
     inlines = [PapelUsuarioInline]
+
+    def get_inlines(self, request, obj=None):
+        # Contas técnicas nunca exibem o editor de papéis de negócio. No POST
+        # de criação, ``obj`` ainda é None; o valor validado será persistido pelo
+        # form principal, e ocultar o inline impede que uma submissão forjada
+        # grave ROLE-* no mesmo fluxo.
+        valor_superusuario = request.POST.get("is_superuser", "").lower()
+        superusuario_no_post = (
+            obj is None
+            and request.method == "POST"
+            and valor_superusuario in {"1", "true", "on", "yes"}
+        )
+        if (obj is not None and obj.is_superuser) or superusuario_no_post:
+            return []
+        return super().get_inlines(request, obj)
 
     def save_related(self, request, form, formsets, change):
         """Concede `ROLE-REQUESTER` junto com a conta nova (`FR-016a`).
@@ -132,3 +163,13 @@ class PapelUsuarioAdmin(admin.ModelAdmin):
     list_display = ["usuario", "papel"]
     list_filter = ["papel"]
     autocomplete_fields = ["usuario"]
+
+    def has_delete_permission(self, request, obj=None):
+        if (
+            obj is not None
+            and obj.papel == Papel.REQUISITANTE
+            and obj.usuario.is_active
+            and not obj.usuario.is_superuser
+        ):
+            return False
+        return super().has_delete_permission(request, obj)

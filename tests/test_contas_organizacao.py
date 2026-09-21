@@ -138,6 +138,32 @@ def test_desativar_o_unico_chefe_de_setor_ativo_e_recusado(setor_inativo):
 
 
 @pytest.mark.django_db
+def test_queryset_update_nao_contorna_guarda_do_unico_chefe(setor_inativo):
+    chefe = _criar_chefe(setor_inativo)
+    _ativar(setor_inativo)
+
+    with pytest.raises(ValidationError, match="User.save"):
+        User.objects.filter(pk=chefe.pk).update(is_active=False)
+
+    chefe.refresh_from_db()
+    assert chefe.is_active is True
+
+
+@pytest.mark.django_db
+def test_excluir_o_unico_chefe_de_setor_ativo_e_recusado(setor_inativo):
+    chefe = _criar_chefe(setor_inativo)
+    _ativar(setor_inativo)
+
+    with pytest.raises(ValidationError):
+        chefe.delete()
+    with pytest.raises(ValidationError):
+        User.objects.filter(pk=chefe.pk).delete()
+
+    assert User.objects.filter(pk=chefe.pk).exists()
+    assert chefes_ativos(setor_inativo.pk).count() == 1
+
+
+@pytest.mark.django_db
 def test_transferir_o_unico_chefe_para_outro_setor_e_recusado(setor_inativo):
     chefe = _criar_chefe(setor_inativo)
     _ativar(setor_inativo)
@@ -161,6 +187,32 @@ def test_remover_o_papel_do_unico_chefe_de_setor_ativo_e_recusado(setor_inativo)
         atribuicao.delete()
 
     assert PapelUsuario.objects.filter(usuario=chefe, papel=Papel.CHEFE_SETOR).exists()
+
+
+@pytest.mark.django_db
+def test_queryset_delete_nao_remove_papel_do_unico_chefe(setor_inativo):
+    chefe = _criar_chefe(setor_inativo)
+    _ativar(setor_inativo)
+
+    with pytest.raises(ValidationError):
+        PapelUsuario.objects.filter(usuario=chefe, papel=Papel.CHEFE_SETOR).delete()
+
+    assert PapelUsuario.objects.filter(usuario=chefe, papel=Papel.CHEFE_SETOR).exists()
+
+
+@pytest.mark.django_db
+def test_excluir_usuario_comum_remove_papeis_em_cascata_sem_afetar_chefia(setor_inativo):
+    chefe = _criar_chefe(setor_inativo)
+    _ativar(setor_inativo)
+    comum = User.objects.create_user(matricula="comum-cascata", password=SENHA, setor=setor_inativo)
+    usuario_id = comum.pk
+    papel_id = comum.papeis.get(papel=Papel.REQUISITANTE).pk
+
+    comum.delete()
+
+    assert User.objects.filter(pk=usuario_id).exists() is False
+    assert PapelUsuario.objects.filter(pk=papel_id).exists() is False
+    assert list(chefes_ativos(setor_inativo.pk).values_list("pk", flat=True)) == [chefe.pk]
 
 
 @pytest.mark.django_db

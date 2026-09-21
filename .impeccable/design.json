@@ -292,7 +292,7 @@
       "refersTo": "button-primary",
       "description": "Ação visualmente dominante do contexto. No máximo uma por tela, dialog ou região independente (The One Accent Rule).",
       "html": "<button class=\"ds-btn ds-btn-primary\">Entrar</button>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); cursor: pointer; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary:disabled { background-color: var(--color-disabled); border-color: var(--color-disabled); color: var(--color-surface); cursor: not-allowed; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); cursor: pointer; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary:disabled { background-color: var(--color-disabled); border-color: var(--color-disabled); color: var(--color-surface); cursor: not-allowed; }"
     },
     {
       "name": "Secondary Button",
@@ -300,14 +300,14 @@
       "refersTo": "button-secondary",
       "description": "Ação secundária/ghost: borda ou texto, sem preenchimento de primary. Nunca compete com a ação primária do mesmo contexto. Usado hoje no 'Sair' da Home.",
       "html": "<button class=\"ds-btn ds-btn-secondary\">Sair</button>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); cursor: pointer; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); cursor: pointer; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; }"
     },
     {
       "name": "Alert (danger)",
       "kind": "custom",
       "refersTo": "alert-danger",
       "description": "Feedback de erro em nível de seção/página, sempre com texto explícito — nunca só cor (The No Color-Only State Rule). Usado na recusa genérica de login.",
-      "html": "<div class=\"ds-alert ds-alert-danger\" role=\"alert\"><p>Matrícula e/ou senha corretos. Note que ambos os campos diferenciam maiúsculas e minúsculas.</p></div>",
+      "html": "<div class=\"ds-alert ds-alert-danger\" role=\"alert\"><p>Matrícula e/ou senha inválidas. Note que ambos os campos diferenciam maiúsculas e minúsculas.</p></div>",
       "css": ".ds-alert { padding: var(--space-3); border-radius: var(--radius-sm); margin-bottom: var(--space-4); font-size: var(--font-size-body); } .ds-alert p { margin: 0; } .ds-alert-danger { background-color: var(--color-surface-subtle); border: 1px solid var(--color-danger); color: var(--color-danger); }"
     },
     {
@@ -315,8 +315,8 @@
       "kind": "input",
       "refersTo": "input-text",
       "description": "Label acima do campo; erro abaixo em danger com texto, nunca só borda vermelha. Foco sempre visível.",
-      "html": "<div class=\"ds-field\"><label for=\"ds-field-matricula\">Matrícula</label><input id=\"ds-field-matricula\" type=\"text\" maxlength=\"32\"><p class=\"ds-field-error\">Informe sua matrícula.</p></div>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"], .ds-field input[type=\"password\"] { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-error { color: var(--color-danger); font-size: var(--font-size-meta); margin: 0; }"
+      "html": "<div class=\"ds-field\"><label for=\"ds-field-matricula\">Matrícula</label><input id=\"ds-field-matricula\" type=\"text\" maxlength=\"32\" aria-invalid=\"true\" aria-describedby=\"ds-field-matricula-error\"><p id=\"ds-field-matricula-error\" class=\"ds-field-error\">Informe sua matrícula.</p></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"], .ds-field input[type=\"password\"] { width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-error { color: var(--color-danger); font-size: var(--font-size-meta); margin: 0; }"
     },
     {
       "name": "Surface Card",
