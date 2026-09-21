@@ -23,11 +23,11 @@ são históricos: candidatos pendentes não foram promovidos a requisitos.
 - **001 é `001-importacao-catalogo-materiais`**, não uma spec genérica de infraestrutura.
   Contém importação inicial, consulta, auditoria e reimportação do catálogo. Está como `Draft`,
   com checklist; não há `plan.md`, `tasks.md` ou implementação do catálogo identificada.
-- **002 é `002-autenticacao-login`**. Há plano, tarefas, código de autenticação e testes.
-  As 45 tarefas estão marcadas como concluídas em seu
-  [tasks.md](specs/002-autenticacao-login/tasks.md), mas a spec continua `Draft`.
-  O status abaixo distingue implementação evidenciada de encerramento formal; este roadmap
-  não reexecutou o aceite da feature nem alterou os artefatos existentes.
+- **002 — `002-autenticacao-login`: concluída e entregue em `main`** pelo merge do
+  [PR #5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5)
+  (commit `24b8c44`). A entrega inclui a fundação de acesso e as correções de integridade
+  do provisionamento identificadas na revisão. A dependência de autenticação das próximas
+  features está satisfeita; a administração de produto (`ORG`) permanece planejada.
 - O SCPI permanece oficial para cadastro e administração/contabilidade. O WMS controla a
   operação do almoxarifado. A carga vem de CSV e o lançamento posterior no SCPI é manual,
   externo ao WMS. Não há integração automática em nenhuma direção (`INV-SCPI-001`).
@@ -68,10 +68,10 @@ chefias e setores, recuperação de senha, painéis e autorizações operacionai
 absorvidos pela 002. Cada feature de negócio aplica suas próprias permissões canônicas.
 
 Os três [achados da revisão do PR 5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5#pullrequestreview-5266085774)
-pertencem à 002: criação de contas sem o papel mínimo, exclusões baseadas em estado desatualizado
-e alterações concorrentes incompatíveis de usuários/papéis violam garantias já exigidas por
-FR-016a e FR-019 a FR-023. Corrigir esses caminhos existentes de provisionamento não antecipa
-os novos fluxos administrativos de `ORG` e não deve ser adiado até sua implementação.
+foram corrigidos e entregues na 002: criação de contas sem o papel mínimo, exclusões baseadas
+em estado desatualizado e alterações concorrentes incompatíveis de usuários/papéis.
+Essas correções preservam garantias já exigidas por FR-016a e FR-019 a FR-023 e não antecipam
+os novos fluxos administrativos de `ORG`.
 
 **Requisição e autorização juntas; atendimento separado.** `REQ` entrega uma solicitação que chega
 à decisão do chefe competente, sem criar uma spec trivial apenas para aprovar. `ATE` tem outro
@@ -102,7 +102,7 @@ features estão na seção 6.
 | ID | Feature | Objetivo / resultado verificável | Inclui | Não inclui | Dependências | Status |
 |---|---|---|---|---|---|---|
 | 001 | Importação e consulta do catálogo | Do CSV à consulta de materiais e conferência auditável da carga | Prévia e confirmação; saldo inicial; busca; histórico de importações; reimportação cadastral e divergências informativas | Cadastro manual; manutenção local; correção de saldo; movimentações; integração automática | O: 002 | Em especificação (`Draft`; sem plano/tarefas) |
-| 002 | Autenticação e acesso inicial | Da matrícula e senha à sessão identificada, acesso protegido e logout | Home mínima; retorno seguro; papéis/setor consultáveis; salvaguardas do provisionamento inicial já especificadas | Gestão de produto de usuários/setores; recuperação de senha; painel; autorização das operações de negócio | Nenhuma feature funcional anterior | Implementada conforme código/tarefas; spec ainda `Draft` |
+| 002 | Autenticação e acesso inicial | Da matrícula e senha à sessão identificada, acesso protegido e logout | Home mínima; retorno seguro; papéis/setor consultáveis; salvaguardas do provisionamento inicial já especificadas | Gestão de produto de usuários/setores; recuperação de senha; painel; autorização das operações de negócio | Nenhuma feature funcional anterior | Concluída — entregue em `main` pelo [PR #5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5) |
 | ORG | Administração de usuários, papéis e setores | Manter identidades e sua organização com chefia válida e atribuições explícitas | Gestão pelo administrador de sistema; vínculo setorial; atribuição dos papéis canônicos; manutenção das invariantes organizacionais | Redefinir papéis; conceder poderes operacionais implícitos; gestão de estoque; redefinir login | O: 002; R: antes do uso amplo de REQ | Planejada |
 | ENT | Entrada de materiais | Registrar recebimento e conferir seu efeito no saldo e no registro da operação | Entrada nos motivos canônicos, com referência; rastreabilidade da operação | Criar materiais; compras/licitações; devolução de requisição; ajuste de inventário; importar movimentações do SCPI | O: 001; R: primeira movimentação após catálogo | Planejada |
 | REQ | Solicitação e autorização de materiais | Criar solicitação para si ou para terceiro permitido e levá-la à decisão do chefe do setor | Criação; consulta conforme escopo; fila e autorização setorial; definição dos estados desta etapa | Atendimento; baixa física; saída excepcional; notificações; pressupor reserva ou autorização parcial | O: 001 e identidades/setores/chefias válidos; R: ORG | Planejada |
@@ -138,7 +138,8 @@ escopos completos das matrizes:
 
 ### Obrigatórias
 
-- `002 → 001`; `002 →` todas as demais superfícies protegidas.
+- `002 → 001`; `002 →` todas as demais superfícies protegidas. Dependência de autenticação
+  satisfeita com a entrega da 002.
 - `001 → ENT, REQ, SAE, INV, MAT`: materiais e saldos iniciais vêm do catálogo importado.
 - `REQ → ATE → DEV`: atendimento exige autorização; devolução exige atendimento de origem.
   `ATE → REL` fornece o consumo por requisição; outras dependências de `REL` serão definidas
@@ -154,7 +155,7 @@ escopos completos das matrizes:
   rastreável. Não é dependência obrigatória: a importação já estabelece saldo utilizável.
 - Entregar `HIS` cedo facilita conferir operações e preparar o lançamento manual externo.
   Sua ausência não dispensa cada operação de registrar e tornar verificáveis os próprios efeitos.
-- Após `002`, `ORG` pode evoluir paralelamente à `001`. Após `001`, `ENT` e `REQ` podem evoluir
+- Com `002` entregue, `ORG` pode evoluir paralelamente à `001`. Após `001`, `ENT` e `REQ` podem evoluir
   em paralelo; `SAE`, `INV` e `MAT` não dependem do ciclo completo de requisição.
 - A independência acima não autoriza decisões contraditórias sobre reserva, disponibilidade ou
   material inativo. Se afetarem dois recortes, essas decisões devem ser esclarecidas em conjunto.
@@ -166,7 +167,7 @@ escopos completos das matrizes:
 ## 5. Ordem recomendada
 
 1. **Retomar `001-importacao-catalogo-materiais` no fluxo do Spec Kit.** A fundação de acesso
-   da 002 já tem implementação evidenciada; a 001 ainda não tem plano nem tarefas e fornece
+   da 002 já está entregue em `main`; a 001 ainda não tem plano nem tarefas e fornece
    catálogo e saldo inicial a todas as operações. Revisar suas clarificações existentes e seguir
    para planejamento, tarefas e implementação, preservando seu número e seu escopo.
 2. **Especificar `ORG` e `ENT`**, permitindo que ORG evolua junto da 001. A primeira organiza a

@@ -29,7 +29,8 @@ coloque dois agentes editando os mesmos arquivos simultaneamente.
 
 O agente principal deve:
 
-1. entender a intenção do usuário e delimitar o escopo;
+1. entender a intenção do usuário e delimitar o escopo — quando o pedido envolver uma feature,
+   situando-o no `ROADMAP.md`;
 2. selecionar o menor workflow suficiente;
 3. fornecer objetivo, contexto, artefatos e limites claros a cada subagent;
 4. aguardar e interpretar os resultados;
@@ -47,11 +48,18 @@ Respeite, de forma combinada, as seguintes fontes:
    escopos e condições de autorização;
 4. `docs/domain/invariants-matrix.md` — fonte canônica das propriedades transversais
    que devem permanecer verdadeiras;
-5. `spec.md` — comportamento e requisitos da feature;
-6. `plan.md` — solução técnica planejada;
-7. `tasks.md` — unidades de implementação;
-8. `DESIGN.md` — design system e direção visual;
-9. código existente — realidade atual da implementação.
+5. `ROADMAP.md` — decomposição funcional: quais capacidades merecem spec própria, seu
+   recorte, dependências, ordem recomendada e status;
+6. `spec.md` — comportamento e requisitos da feature;
+7. `plan.md` — solução técnica planejada;
+8. `tasks.md` — unidades de implementação;
+9. `DESIGN.md` — design system e direção visual;
+10. código existente — realidade atual da implementação.
+
+Essa ordem não é uma regra simples de "fonte de cima sempre sobrescreve a de baixo". Uma
+feature respeita os artefatos canônicos transversais: uma spec não contorna silenciosamente
+uma permissão ou invariante canônica, nem move silenciosamente a fronteira que o roadmap
+definiu para a feature.
 
 Relatórios em `docs/domain/reconciliation/` e `docs/domain-legacy/reconciliation/` são
 históricos e não normativos: explicam origem, alternativas consideradas, decisões descartadas
@@ -71,6 +79,61 @@ Uma mudança em permissão ou invariante canônica segue este fluxo:
 necessidade nova → decisão explícita de domínio → atualizar a matriz canônica
 → atualizar specs afetadas → plan/tasks → implementação → review
 ```
+
+## Roadmap funcional
+
+`ROADMAP.md` é a fonte de verdade para a **decomposição funcional** do produto: quais
+capacidades merecem spec própria, o que cada uma inclui e não inclui, suas dependências
+obrigatórias (`O`) e recomendadas (`R`), a ordem recomendada de evolução e o status de cada
+capacidade.
+
+A autoridade do roadmap é delimitada:
+
+- decide **recorte, fronteiras, dependências e ordem** entre features;
+- não define requisitos nem comportamento dentro de uma feature — isso é de `spec.md`;
+- não define regra de domínio — isso é das matrizes canônicas, das quais o roadmap apenas
+  cita IDs como evidência;
+- não define solução técnica — isso é de `plan.md`;
+- não é cronograma, e a ordem recomendada não é bloqueio funcional: só as dependências
+  obrigatórias bloqueiam implementação e aceite;
+- os "Pontos ainda indefinidos" são pendências a esclarecer, não regras vigentes.
+
+Os IDs `ORG`, `ENT`, `REQ` etc. são rótulos do mapa, não números de spec. A numeração é
+atribuída sequencialmente pelo `speckit-specify` ao criar cada spec, independentemente da ordem
+do roadmap; `001` e `002` permanecem com seus números.
+
+O roadmap orienta planejamento de features. Bugs, refactors, ajustes pontuais e tarefas triviais
+não precisam consultá-lo, salvo quando ameaçarem mover a fronteira entre capacidades.
+
+Alterar recorte, fronteira ou dependência, ou incluir uma capacidade que não está no mapa, segue
+o mesmo princípio das matrizes — decisão explícita antes da spec, nunca o caminho inverso. A
+decisão é do usuário, como dono do produto: nem o agente principal nem um subagent alteram o
+recorte por conta própria; eles identificam a necessidade e a apresentam.
+
+```text
+necessidade nova → decisão explícita de recorte → atualizar ROADMAP.md
+→ specify/atualizar specs afetadas → plan/tasks → implementação → review
+```
+
+Se a mudança também alterar uma permissão ou invariante, o fluxo das matrizes canônicas vem
+primeiro. Uma spec não amplia silenciosamente o próprio recorte para absorver capacidade que o
+roadmap atribui a outra feature.
+
+Atualizar a coluna de status não exige decisão de recorte; é acompanhamento e cabe ao agente
+principal. Mantenha o status fiel ao estado observável da feature, incluindo a anotação que o
+acompanha: atualize-o ao criar a spec, sempre que a anotação deixar de ser verdadeira — por
+exemplo, ao gerar `plan.md` e `tasks.md` de uma feature anotada como "sem plano/tarefas" — e
+depois do merge em `main`, quando ela passa a concluída. Não marque uma feature como concluída
+antes da entrega efetiva.
+
+Isso chega aos subagents pelo prompt de delegação, sem alterar suas definições:
+
+- `wms_explorer`: quando a análise de impacto tocar outra capacidade do mapa, aponta a
+  fronteira afetada;
+- `code_reviewer`: verifica se o diff implementa algo que o roadmap atribui a outra feature ou
+  lista em "Não inclui" da feature em andamento;
+- implementadores: tratam "Não inclui" como limite de escopo; se a task exigir atravessá-lo,
+  param e reportam ao coordenador.
 
 ## Agentes disponíveis
 
@@ -145,17 +208,61 @@ novo comportamento na spec.
 
 ## Workflow de feature com Spec Kit
 
-Quando uma feature possuir o fluxo Spec Kit, use as skills existentes em `.agents/skills`
-e siga normalmente:
+Antes de iniciar — ou retomar, como no caso de uma spec já existente em `Draft` — o ciclo do
+Spec Kit para uma capacidade, situe o pedido no roadmap:
+
+1. identifique a linha correspondente em `ROADMAP.md`. Se o pedido não corresponder a
+   nenhuma, ou atravessar a fronteira entre duas, pare e trate como alteração de recorte
+   (seção "Roadmap funcional");
+2. verifique as dependências obrigatórias. Algumas são features a entregar; outras são
+   condições, como identidades, setores e chefias válidos, que podem ser atendidas sem a
+   feature que as administra. A especificação pode antecipar contratos de uma feature
+   dependente; a implementação e o aceite de ponta a ponta exigem as dependências
+   obrigatórias satisfeitas;
+3. não leve à implementação uma capacidade com status "Requer clarificação" enquanto o
+   conteúdo mínimo do aceite não estiver definido. Com qualquer status, os "Pontos ainda
+   indefinidos" que afetam a capacidade precisam estar resolvidos na spec, pelo `clarify`,
+   antes da implementação — o roadmap os lista justamente como decisões exigidas antes da
+   spec ou da implementação;
+4. passe ao `speckit-specify` uma descrição que nomeie a capacidade e carregue seu recorte — o
+   "Inclui", o "Não inclui" e os pontos indefinidos que lhe dizem respeito — em vez de deixar o
+   escopo ser inferido só do texto do pedido.
+
+Com a capacidade situada, use as skills existentes em `.agents/skills` e siga normalmente:
 
 ```text
-speckit-specify → speckit-clarify → speckit-plan → speckit-checklist (quando agregar valor)
+ROADMAP.md (situar a capacidade)
+→ speckit-specify → speckit-clarify → speckit-plan → speckit-checklist (quando agregar valor)
 → speckit-tasks → speckit-analyze → implementação → review → correções
 → speckit-converge
+→ atualizar o status no ROADMAP.md após o merge
 ```
 
 Não execute `speckit-converge` antes da implementação. Se a clarificação ou análise conflitar
 com uma regra canônica, exponha o conflito e siga o fluxo explícito de mudança de domínio.
+
+Em `speckit-clarify`, os "Pontos ainda indefinidos" do roadmap para aquela capacidade são a
+pauta natural das perguntas. Não reabra o que o roadmap já decidiu sobre recorte e
+granularidade: se uma resposta mover a fronteira da feature, trate como alteração de recorte em
+vez de deixar a clarificação redefinir o mapa.
+
+Quando um ponto indefinido for compartilhado entre recortes — como reserva, disponibilidade ou
+material inativo —, esclareça-o em conjunto, e não na clarificação de uma feature isolada.
+Antes de fixá-lo, verifique o que as specs das outras features afetadas já dizem sobre ele; se
+a decisão mudar o que elas pressupõem, apresente o conflito ao usuário em vez de deixar uma
+feature decidir pelas demais.
+
+Em `speckit-analyze`, verifique também que a spec não contradiz as matrizes canônicas, que
+`plan.md`/`tasks.md` oferecem meios adequados para preservar as invariantes e permissões
+aplicáveis, que a spec não ultrapassa o "Não inclui" do roadmap, não absorve capacidade
+atribuída a outra feature, declara dependências compatíveis com as do mapa e resolve os
+"Pontos ainda indefinidos" que afetam a capacidade.
+
+Em `speckit-converge`, verifique que implementação, testes e specs continuam consistentes com
+as matrizes canônicas e que nenhuma decisão de domínio nova ficou registrada só no código. O
+converge continua usando `spec.md`, `plan.md` e `tasks.md` como fonte da intenção da feature —
+o roadmap não acrescenta requisitos a ele. Se a implementação tiver movido a fronteira da
+feature, isso é alteração de recorte a registrar no roadmap, não trabalho a absorver.
 
 Depois que spec, plan e tasks estiverem suficientemente definidos:
 
@@ -177,7 +284,8 @@ rodada não produzir progresso concreto.
 Todo prompt de delegação deve incluir, quando aplicável:
 
 - objetivo e comportamento esperado;
-- escopo e exclusões;
+- escopo e exclusões — em trabalho de feature, o recorte do roadmap, em especial o
+  "Não inclui";
 - spec/task e outros artefatos relevantes;
 - arquivos ou símbolos já conhecidos;
 - IDs `PERM-*` e `INV-*` aplicáveis;
@@ -354,9 +462,14 @@ Uma implementação significativa só está concluída quando:
 
 - as verificações relevantes passaram;
 - findings bloqueantes foram tratados;
-- o resultado permanece dentro do escopo;
+- o resultado permanece dentro do escopo e do recorte do roadmap;
 - limitações e verificações não executadas foram informadas;
 - gates de domínio e frontend aplicáveis foram satisfeitos.
+
+Quando a tarefa concluir a entrega de uma feature do roadmap, atualize seu status no
+`ROADMAP.md` depois do merge em `main` — e, se a entrega satisfizer dependências de outras
+features, registre isso também. Como depende do merge, essa atualização vai num commit
+posterior à entrega, sujeito à regra abaixo.
 
 Não faça commit, push, merge ou rebase automaticamente. Essas ações exigem solicitação
 explícita do usuário.
