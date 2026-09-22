@@ -1,0 +1,208 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% block title %}Prévia da importação — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalogo/css/catalogo.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="catalogo-page">
+  <p class="catalogo-back-link"><a href="{% url 'catalogo:importacao_envio' %}">&larr; Envio</a></p>
+
+  {% include "catalogo/_mensagens.html" %}
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Prévia da importação</h1>
+      <p class="page-header-description">
+        Arquivo <strong>{{ pedido.nome_arquivo }}</strong> ({{ pedido.tamanho|filesizeformat }})
+      </p>
+    </div>
+  </header>
+
+  <div class="alert alert-info" role="status">
+    <p>
+      Esta é só uma prévia: nada foi gravado ainda. Confira os totais e as exceções
+      abaixo antes de confirmar.
+    </p>
+  </div>
+
+  {% comment %}
+  Barra de confirmação persistente (revisão do gate visual, achado P1): mesmo par de
+  formulários da seção "Confirmação" no fim da página, disponível a qualquer momento
+  da rolagem — a ação de impacto real (FR-044a) não fica só no fim de uma página que
+  pode ter muitas divergências/exceções. Ver `catalogo/static/catalogo/css/catalogo.css`.
+  {% endcomment %}
+  <div class="catalogo-confirmacao-sticky">
+    <form
+      method="post"
+      action="{% url 'catalogo:importacao_confirmar' %}"
+      data-processing-form
+      data-processing-label="Confirmando…"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="token" value="{{ token }}">
+      <input type="hidden" name="impressao_digital" value="{{ impressao_digital }}">
+      <button type="submit" class="btn btn-primary" data-processing-submit>
+        <span data-processing-submit-label
+          >Confirmar importação: {{ plano.total_inseridos }} inseridos, {{ plano.total_atualizados }} atualizados</span
+        >
+      </button>
+    </form>
+    <form method="post" action="{% url 'catalogo:importacao_cancelar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary">Cancelar</button>
+    </form>
+  </div>
+
+  <section class="catalogo-section">
+    <h2 class="catalogo-section-title">Resumo</h2>
+    <dl class="catalogo-summary">
+      <div class="catalogo-summary-item">
+        <dt>Recebidos</dt>
+        <dd>{{ plano.total_recebidos }}</dd>
+      </div>
+      <div class="catalogo-summary-item">
+        <dt>Serão inseridos</dt>
+        <dd>{{ plano.total_inseridos }}</dd>
+      </div>
+      <div class="catalogo-summary-item">
+        <dt>Serão atualizados</dt>
+        <dd>
+          {{ plano.total_atualizados }}
+          <span class="catalogo-summary-detail">({{ plano.total_atualizados_com_alteracao }} com alteração)</span>
+        </dd>
+      </div>
+      <div class="catalogo-summary-item">
+        <dt>Rejeitados</dt>
+        <dd>{{ plano.total_rejeitados }}</dd>
+      </div>
+      <div class="catalogo-summary-item catalogo-summary-item-separado">
+        <dt>Ausentes do arquivo</dt>
+        <dd>{{ plano.total_ausentes_no_arquivo }}</dd>
+      </div>
+    </dl>
+    <p class="catalogo-divergencia-nota">
+      "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
+      Rejeitados: são materiais já cadastrados no WMS que não vieram neste CSV. Esta
+      importação <strong>não altera nem remove</strong> esses materiais — eles
+      permanecem como estão (FR-031).
+    </p>
+  </section>
+
+  <section class="catalogo-section" id="divergencias" data-secao="divergencias">
+    <h2 class="catalogo-section-title">Divergências de saldo ({{ plano.total_divergencias }})</h2>
+    <p class="catalogo-divergencia-nota">
+      Divergência: diferença entre o saldo no arquivo do SCPI e o saldo atual no WMS
+      (diferença = saldo no arquivo − saldo no WMS). É só informativa — esta importação
+      <strong>não altera o saldo do WMS</strong>; o ajuste, quando necessário, é feito pelo
+      inventário (funcionalidade futura), nunca por aqui.
+    </p>
+    {% if divergencias_pagina.object_list %}
+    <div class="table-wrapper table-sticky-header">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Código (CADPRO)</th>
+            <th scope="col" class="table-cell-numeric">Saldo no WMS</th>
+            <th scope="col" class="table-cell-numeric">Saldo no arquivo</th>
+            <th scope="col" class="table-cell-numeric">Diferença</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for divergencia in divergencias_pagina %}
+          <tr>
+            <td class="table-cell-code">{{ divergencia.cadpro }}</td>
+            <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:3 }}</td>
+            <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:3 }}</td>
+            <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:3 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "catalogo/_paginacao.html" with pagina=divergencias_pagina parametro="pagina_divergencias" rotulo="Paginação de divergências" ancora="divergencias" %}
+    {% else %}
+    <div class="empty-state" data-estado="vazio">
+      <p class="empty-state-title">Nenhuma divergência de saldo.</p>
+      <p class="empty-state-description">
+        O saldo do WMS coincide com o saldo do arquivo para todos os materiais atualizados.
+      </p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="catalogo-section" id="excecoes">
+    <h2 class="catalogo-section-title">Exceções ({{ plano.total_rejeitados }})</h2>
+    {% if excecoes_pagina.object_list %}
+    <div class="table-wrapper table-sticky-header">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Linha</th>
+            <th scope="col">Código (CADPRO)</th>
+            <th scope="col">Motivo</th>
+            <th scope="col">Detalhe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for excecao in excecoes_pagina %}
+          <tr class="table-row-error">
+            <td>
+              {% if excecao.linha_inicial == excecao.linha_final %}
+              {{ excecao.linha_inicial }}
+              {% else %}
+              {{ excecao.linha_inicial }}–{{ excecao.linha_final }}
+              {% endif %}
+            </td>
+            <td class="table-cell-code">
+              {% if excecao.cadpro %}{{ excecao.cadpro }}{% else %}<span class="catalogo-muted">—</span>{% endif %}
+            </td>
+            <td>{{ excecao.motivo_label }}</td>
+            <td>{{ excecao.detalhe|default:""|linebreaksbr }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "catalogo/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" ancora="excecoes" %}
+    {% else %}
+    <div class="empty-state">
+      <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
+      <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="catalogo-section">
+    <h2 class="catalogo-section-title">Confirmação</h2>
+    <div class="catalogo-confirmacao">
+      <form
+        method="post"
+        action="{% url 'catalogo:importacao_confirmar' %}"
+        data-processing-form
+        data-processing-label="Confirmando…"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="impressao_digital" value="{{ impressao_digital }}">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label
+            >Confirmar importação: {{ plano.total_inseridos }} inseridos, {{ plano.total_atualizados }} atualizados</span
+          >
+        </button>
+      </form>
+      <form method="post" action="{% url 'catalogo:importacao_cancelar' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">Cancelar</button>
+      </form>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'catalogo/js/envio.js' %}" defer></script>
+{% endblock %}

@@ -2,16 +2,21 @@
  * Componentes compartilhados — WMS-Almoxarifado
  *
  * Primitivos de UI já acordados em DESIGN.md → Components (Buttons, Alert,
- * Inputs/Fields), usados por mais de uma página (contas/templates/contas/login.html e
- * home.html, no mínimo). Vivem em static/css/ (nível de projeto), ao lado de
- * tokens.css/base.css, para que nenhuma página duplique estes primitivos —
- * Constitution, Princípio VIII: "componentes reutilizáveis DEVEM ser preferidos a
- * markup duplicado".
+ * Inputs/Fields, Table, Status/Badge, File Upload, Pagination, Page Header, Empty
+ * State), usados por mais de uma página/feature. Vivem em static/css/ (nível de
+ * projeto), ao lado de tokens.css/base.css, para que nenhuma página duplique estes
+ * primitivos — Constitution, Princípio VIII: "componentes reutilizáveis DEVEM ser
+ * preferidos a markup duplicado".
  *
  * Consome exclusivamente os tokens de tokens.css — nenhum valor literal de cor,
  * tipografia, spacing ou raio é redefinido aqui.
  *
  * Carregar sempre depois de tokens.css e base.css.
+ *
+ * Buttons/Alert/Inputs (contas, feature 002) abrem o arquivo; Table, Status/Badge,
+ * File Upload, Pagination, Page Header e Empty State (catalogo, feature 001, T028)
+ * foram anexados ao final para minimizar diff — a ordem no arquivo não segue a ordem
+ * de leitura de DESIGN.md → Components, mas cada bloco cita a seção correspondente.
  */
 
 /* ---------------------------------------------------------------------
@@ -92,6 +97,28 @@
   color: var(--color-danger);
 }
 
+/* Variantes de warning/info/success (DESIGN.md → Components → Alert: "informação,
+   sucesso, warning ou erro") — mesma convenção visual de `.alert-danger` acima.
+   Acrescentadas em T029: `django.contrib.messages` já emite os três níveis
+   (info/warning/error) nas views de importação, e só `alert-danger` existia até aqui. */
+.alert-warning {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-warning);
+  color: var(--color-warning);
+}
+
+.alert-info {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-info);
+  color: var(--color-info);
+}
+
+.alert-success {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
 /* ---------------------------------------------------------------------
  * Inputs / Fields (DESIGN.md → Components → Inputs/Fields): label acima do campo,
  * erro abaixo em `danger` com texto (nunca só borda vermelha). Foco sempre visível —
@@ -138,4 +165,586 @@
   color: var(--color-danger);
   font-size: var(--font-size-meta);
   margin: 0;
+}
+
+/* Campo em estado de erro de validação (revisão do gate visual, achado P2): borda
+   em `danger`, sempre acompanhada do texto de `.field-error` acima — nunca só a cor
+   da borda (DESIGN.md → The No Color-Only State Rule). Aplicado no `.field`
+   ancestral, não no input, para não depender de um atributo/classe própria do
+   widget do Django. */
+.field-has-error input[type="text"],
+.field-has-error input[type="password"],
+.field-has-error .file-upload-trigger {
+  border-color: var(--color-danger);
+}
+
+/* Texto auxiliar abaixo do campo (DESIGN.md → Components → Inputs/Fields: "texto
+   auxiliar abaixo do campo, em text-muted") — já citado na estrutura de exemplo do File
+   Upload abaixo, mas nunca antes implementado. */
+.field-hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Table (DESIGN.md → Components → Table)
+ * Superfície de primeira classe do produto (catálogo, prévia/histórico de
+ * importação). Densidade compacta é o padrão (linha ~36-40px no desktop), alvo de
+ * toque cresce em contexto touch via `pointer: coarse` — mesmo recurso já usado em
+ * `.field input` acima, sem reduzir a densidade do desktop (DESIGN.md → Layout →
+ * Touch). Sem zebra striping por padrão; hover só em linha com ação
+ * (`.table-row-clickable`).
+ *
+ * Estrutura esperada:
+ *   <div class="table-wrapper"> (scroll horizontal consciente, sem virar card)
+ *     <table class="table">
+ *       <thead><tr><th scope="col">...</th><th scope="col" class="table-cell-numeric">...</th></tr></thead>
+ *       <tbody>
+ *         <tr><td>...</td><td class="table-cell-code">CADPRO</td></tr>
+ *         <tr class="table-row-error"><td>...</td></tr>  (erro/divergência)
+ *         <tr class="table-empty-row"><td colspan="N">Nenhum resultado encontrado.</td></tr>
+ *       </tbody>
+ *     </table>
+ *   </div>
+ * ------------------------------------------------------------------- */
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-surface);
+  font-size: var(--font-size-body);
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table thead th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  background-color: var(--color-surface-subtle);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (pointer: coarse) {
+  .table th,
+  .table td {
+    padding-block: var(--space-3);
+  }
+}
+
+/* Números comparáveis (saldo, quantidade): alinhados à direita, dígitos alinhados
+   entre linhas (DESIGN.md → Typography → Hierarquia; Table).
+   Seletor qualificado por `th`/`td` (revisão do gate visual, achado P1): `.table th,
+   .table td` acima tem especificidade 0,1,1 (uma classe + um elemento); uma classe
+   isolada como `.table-cell-numeric` (0,1,0) nunca venceria o `text-align: left`
+   herdado de lá, não importa a ordem no arquivo — confirmado por `getComputedStyle`
+   no navegador, que devolvia `left` mesmo com esta regra presente. */
+.table th.table-cell-numeric,
+.table td.table-cell-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* CADPRO e demais identificadores opacos do domínio: só a família muda para sinalizar
+   "não é prosa" — nunca reformatado, truncado de forma destrutiva ou "limpo"
+   (DESIGN.md → Typography; Do's and Don'ts — viola INV-CATALOG-001 mesmo na camada
+   visual). Não combinar com text-transform. */
+.table-cell-code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+  white-space: nowrap;
+}
+
+/* Linha em erro/divergência: borda de ênfase lateral, nunca fundo da linha inteira
+   colorido (DESIGN.md → Table; The No Color-Only State Rule) — sempre acompanhada de
+   texto/badge dentro da própria célula, não só a borda. */
+.table-row-error > td:first-child {
+  border-left: 3px solid var(--color-border-strong);
+}
+
+/* Linha clicável: hover só quando a linha tiver ação própria (DESIGN.md → Table). */
+.table-row-clickable {
+  cursor: pointer;
+}
+
+.table-row-clickable:hover {
+  background-color: var(--color-surface-subtle);
+}
+
+/* Empty state como linha única ocupando a largura da tabela (DESIGN.md → Table;
+   Empty State) — usar com colspan igual ao número de colunas, nunca substituindo a
+   tabela por um bloco fora dela. */
+.table-empty-row {
+  color: var(--color-text-muted);
+}
+
+.table-empty-row td {
+  padding: var(--space-6) var(--space-3);
+  text-align: left;
+  white-space: normal;
+}
+
+/* Cabeçalho fixo quando a listagem for longa (DESIGN.md → Table). `position: sticky`
+   exige um scrollport vertical de verdade — sem altura máxima e `overflow-y`, o
+   cabeçalho não tem contra o que colar (revisão do gate visual, achado P2:
+   `.table-wrapper` só tinha `overflow-x: auto`, sem altura). Decisão: manter a
+   capacidade (as seções aqui já são paginadas a 20–50 linhas, altura plausível de
+   ultrapassar a viewport em telas menores) dando ao wrapper um scrollport interno
+   quando esta classe estiver presente, em vez de remover o recurso — `.table-wrapper`
+   simples (sem esta classe, ex.: estado vazio da consulta) continua sem altura máxima,
+   rolando com a página inteira. */
+.table-wrapper.table-sticky-header {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.table-sticky-header thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* ---------------------------------------------------------------------
+ * Status/Badge (DESIGN.md → Components → Status/Badge)
+ * Rótulo curto de estado semântico — sempre com texto, nunca só uma pastilha colorida
+ * (The No Color-Only State Rule). Mesma convenção visual de `.alert-danger` acima:
+ * fundo `surface-subtle`, borda e texto no tom semântico.
+ *
+ * Uso: <span class="badge badge-success">Concluída</span>
+ * ------------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-badge);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
+}
+
+.badge-success {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.badge-warning {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-warning);
+  color: var(--color-warning);
+}
+
+.badge-danger {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.badge-info {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-info);
+  color: var(--color-info);
+}
+
+/* Estado neutro (ex.: "Pendente", "Sem alteração") sem semântica de sucesso/alerta/
+   erro/info. */
+.badge-neutral {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text);
+}
+
+/* ---------------------------------------------------------------------
+ * File Upload (DESIGN.md → Components → File Upload)
+ * Usado no envio do CSV de importação do catálogo. Revisão do gate visual (achado
+ * P2): o botão nativo do input (`::file-selector-button`, restilizado) e o texto
+ * "Nenhum arquivo selecionado" que o acompanha são gerados pelo navegador no idioma
+ * do navegador/SO, não da página — em um navegador em inglês, a tela em pt-BR
+ * mostrava "Choose File / No file chosen" sem tradução possível via CSS (não é
+ * conteúdo estilizável, é texto nativo do widget). Por isso o input passa a ficar
+ * oculto só visualmente (nunca `display: none`, que o tiraria da ordem de tabulação
+ * — Constitution, Princípio IX): um `<label>` do formulário associado por `for`
+ * assume a aparência de `.btn-secondary` e, por ser `<label for="...">`, abre o
+ * seletor nativo de arquivo ao clique sem nenhum JS. O envio continua funcionando
+ * sem JS; `.file-upload-meta` (`data-file-upload-meta`, `catalogo/static/catalogo/js/envio.js`)
+ * passa a ser renderizado com um texto padrão em pt-BR desde o HTML (não mais
+ * `hidden`) e só é atualizado por JS quando o usuário escolhe um arquivo — sem JS,
+ * o rótulo estático permanece, o que é aceitável: é exatamente o texto nativo do
+ * navegador (agora em inglês, fora do nosso controle) que este componente existe
+ * para substituir.
+ *
+ * Estrutura esperada (dentro de um `.field` existente):
+ *   <div class="field">
+ *     <label for="arquivo">Arquivo CSV</label>
+ *     <div class="file-upload">
+ *       <input type="file" id="arquivo" name="arquivo" accept=".csv"
+ *              class="file-upload-input" data-file-upload-input>
+ *       <label for="arquivo" class="btn btn-secondary file-upload-trigger">Escolher arquivo</label>
+ *       <span class="file-upload-meta" data-file-upload-meta>Nenhum arquivo selecionado.</span>
+ *     </div>
+ *     <p class="field-hint">Texto de apoio, se necessário.</p>
+ *   </div>
+ * ------------------------------------------------------------------- */
+.file-upload {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Oculto só visualmente (técnica "visually hidden" padrão, sem `display: none`):
+   permanece no fluxo do formulário, focável e ativável por teclado (Enter/Espaço
+   com foco nele abre o seletor nativo) — o `<label>` associado é só o atalho visual
+   de clique do mouse. */
+.file-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Foco visível (DESIGN.md → Inputs/Fields → Foco) transferido do input (que fica
+   com tamanho de 1px, onde um anel de foco não seria percebido) para o `<label>`
+   que o representa visualmente — o input em si tem seu outline nativo suprimido só
+   aqui, nunca perdendo o indicador de foco em si. */
+.file-upload-input:focus-visible {
+  outline: none;
+}
+
+.file-upload-input:focus-visible + .file-upload-trigger {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.file-upload-meta {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Pagination (DESIGN.md → Components → Pagination)
+ * Usada em toda listagem do catálogo, sempre pelo parcial
+ * `catalogo/_paginacao.html` (só Anterior/Próxima + indicador da página atual;
+ * `querystring_pagina` preserva os demais parâmetros). Página atual sinalizada por peso + borda (indicador estrutural,
+ * DESIGN.md → The No Color-Only State Rule já permite isso para seleção/navegação
+ * ativa) e `aria-current="page"` para tecnologia assistiva — não depende só de cor.
+ *
+ * Estrutura esperada:
+ *   <nav class="pagination" aria-label="Paginação">
+ *     <p class="pagination-summary">Mostrando 1–20 de 134</p>
+ *     <ul class="pagination-list">
+ *       <li><a class="pagination-link" href="?pagina=1">Anterior</a></li>
+ *       <li><span class="pagination-link pagination-link-current" aria-current="page">2</span></li>
+ *       <li><span class="pagination-link pagination-link-disabled" aria-disabled="true">Próxima</span></li>
+ *     </ul>
+ *   </nav>
+ * ------------------------------------------------------------------- */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.pagination-summary {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.pagination-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pagination-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-8);
+  min-height: var(--space-8);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--font-size-body);
+}
+
+.pagination-link:hover {
+  background-color: var(--color-surface-subtle);
+}
+
+.pagination-link-current {
+  border-color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.pagination-link-disabled {
+  color: var(--color-disabled);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Alvo de toque confortável em tablet/celular, sem alterar a densidade do desktop
+   (DESIGN.md → Layout → Touch) — mesmo recurso de `.table` acima. */
+@media (pointer: coarse) {
+  .pagination-link {
+    min-width: calc(var(--space-8) + var(--space-3));
+    min-height: calc(var(--space-8) + var(--space-3));
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Page Header (DESIGN.md → Components → Page Header)
+ * Título + contexto opcional + ações. Em desktop/largura confortável, título à
+ * esquerda e ações à direita; abaixo de 480px as ações quebram para linha própria e
+ * ocupam a largura, sem comprimir controles (DESIGN.md → Layout → Estrutura de
+ * página). Divisor por borda fina, nunca card/sombra (Elevation & Depth).
+ *
+ * Estrutura esperada:
+ *   <header class="page-header">
+ *     <div>
+ *       <h1 class="page-header-title">Título</h1>
+ *       <p class="page-header-description">Contexto opcional</p>
+ *     </div>
+ *     <div class="page-header-actions">
+ *       <button class="btn btn-secondary">Ação secundária</button>
+ *       <button class="btn btn-primary">Ação primária</button>
+ *     </div>
+ *   </header>
+ * ------------------------------------------------------------------- */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.page-header-title {
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.page-header-description {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+}
+
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@media (max-width: 480px) {
+  .page-header-actions {
+    width: 100%;
+  }
+
+  .page-header-actions .btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Empty State (DESIGN.md → Components → Empty State)
+ * Ausência de resultado explícita fora de uma tabela (ex.: página/seção inteira sem
+ * conteúdo) — nunca uma lista vazia sem explicação (FR-043). Dentro de uma tabela, use
+ * `.table-empty-row` acima em vez deste bloco, para não quebrar a estrutura da
+ * tabela.
+ *
+ * Estrutura esperada:
+ *   <div class="empty-state">
+ *     <p class="empty-state-title">Nenhum material encontrado.</p>
+ *     <p class="empty-state-description">Ajuste os filtros ou tente outro termo de busca.</p>
+ *   </div>
+ * ------------------------------------------------------------------- */
+.empty-state {
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: var(--font-size-section-title);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.empty-state-description {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-body);
+}
+
+/* ---------------------------------------------------------------------
+ * Filter Bar (DESIGN.md → Components → Filter Bar)
+ * Região de filtros posicionada próxima e antes do conteúdo que afeta. Desktop:
+ * horizontal quando houver espaço, com os campos ocupando a largura disponível.
+ * Tablet: quebra em múltiplas linhas por `flex-wrap` natural, sem regra própria.
+ * Celular: empilha em coluna única, cada campo e a ação ocupando a largura do
+ * container (DESIGN.md → Layout → Touch). Nunca vira coluna lateral (Do's and Don'ts).
+ *
+ * Reutiliza `.field` (Inputs/Fields) para cada campo — aqui só remove a margem
+ * inferior própria de formulário vertical e permite que os campos cresçam/encolham
+ * lado a lado.
+ *
+ * `align-items: flex-start` (revisão do dono do produto em /catalogo/, acompanhado
+ * de captura em 1440×900): campos alinham rótulo e input pelo TOPO, não pela base.
+ * Isso é o que garante rótulo com rótulo e input com input alinhados entre campos
+ * mesmo quando só um deles mostra `.field-hint`/`.field-error` abaixo do input — o
+ * texto extra só estende a altura da própria caixa por baixo, sem deslocar o que já
+ * está acima dela nos vizinhos. A alternativa anterior (`flex-end`) alinhava pela
+ * base da caixa inteira: um campo com dica ficava mais alto que um sem dica, e por
+ * ancorar as duas caixas pela base, o campo mais baixo (sem dica) tinha rótulo e
+ * input empurrados para baixo em relação ao outro — o desalinhamento relatado.
+ * `.filter-bar-actions` não tem rótulo acima do botão; sem compensação, alinhado
+ * pelo topo ele ficaria à altura do RÓTULO dos campos, não do input. A regra
+ * abaixo (`@media (min-width: 641px)`) resolve isso com um `margin-top` equivalente
+ * a uma linha de rótulo + o gap que `.field` aplica entre rótulo e input — sem
+ * depender da presença ou altura de dica/erro em nenhum campo.
+ *
+ * Estrutura esperada:
+ *   <form class="filter-bar" method="get">
+ *     <div class="field filter-bar-field">
+ *       <label for="id_codigo">Código</label>
+ *       <input type="text" id="id_codigo" name="codigo">
+ *     </div>
+ *     <div class="field filter-bar-field">...</div>
+ *     <div class="filter-bar-actions">
+ *       <button type="submit" class="btn btn-primary">Buscar</button>
+ *     </div>
+ *   </form>
+ * ------------------------------------------------------------------- */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.filter-bar-field {
+  flex: 1 1 220px;
+  min-width: 160px;
+  margin-bottom: 0;
+}
+
+.filter-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+}
+
+/* Só quando a barra está de fato em linha (abaixo disso ela vira coluna, bloco
+   seguinte, e cada ação ocupa sua própria linha sem rótulo ao lado para compensar). */
+@media (min-width: 641px) {
+  .filter-bar-actions {
+    margin-top: calc(var(--font-size-body) * var(--line-height-base) + var(--space-1));
+  }
+}
+
+/* Celular: filtro essencial nunca escondido, mas a barra deixa de ser horizontal —
+   cada campo e ação passam a ocupar a largura do container (DESIGN.md → Layout →
+   Superfícies mobile-first de leitura/toque, aplicado aqui à barra em si, mesmo numa
+   superfície densa de almoxarifado). */
+@media (max-width: 640px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar-field {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .filter-bar-actions .btn {
+    flex: 1 1 0;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Loading Indicator (DESIGN.md → Components → Loading Indicator)
+ * Local à região atualizada por HTMX — nunca bloqueio de página inteira. Usa o
+ * mecanismo padrão do HTMX (`htmx.config.includeIndicatorStyles`, ativo por padrão):
+ * o elemento referenciado por `hx-indicator` recebe a classe `htmx-indicator` (opacidade
+ * 0 em repouso) e o próprio HTMX alterna a visibilidade durante a requisição — sem JS
+ * de projeto. `role="status"` substitui um `aria-live` manual.
+ *
+ * Estrutura esperada:
+ *   <p id="resultados-indicador" class="htmx-indicator loading-indicator" role="status">
+ *     <span class="loading-indicator-spinner" aria-hidden="true"></span>
+ *     Carregando resultados…
+ *   </p>
+ * ------------------------------------------------------------------- */
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.loading-indicator-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: loading-indicator-spin 0.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-indicator-spinner {
+    animation: none;
+  }
+}
+
+@keyframes loading-indicator-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

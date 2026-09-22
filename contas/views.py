@@ -8,6 +8,8 @@ from django.urls import resolve
 from django.urls.exceptions import Resolver404
 from django.views.generic import TemplateView
 
+from contas.models import Papel
+
 
 class WMSLoginView(LoginView):
     """Login com resolução segura do destino pós-login (`next`, User Story 2).
@@ -71,3 +73,20 @@ class HomeView(LoginRequiredMixin, TemplateView):
     """
 
     template_name = "contas/home.html"
+
+    def get_context_data(self, **kwargs):
+        """`pode_importar_catalogo` cobre a capability `PERM-SCPI-IMPORT-EXECUTE`
+        (importação) e `PERM-SCPI-IMPORT-HISTORY-VIEW` (histórico), ambas
+        exigindo `ROLE-WAREHOUSE-HEAD` (`contracts/rotas-e-autorizacao.md`,
+        001). `pode_consultar_catalogo` cobre `PERM-MATERIAL-VIEW`
+        (`ROLE-REQUESTER`, concedido a toda identidade de negócio). Os links
+        são conveniência de navegação — a autorização efetiva continua nas
+        próprias rotas (Constitution VI)."""
+        contexto = super().get_context_data(**kwargs)
+        contexto["pode_importar_catalogo"] = self.request.user.tem_papel(
+            Papel.CHEFE_ALMOXARIFADO
+        )
+        contexto["pode_consultar_catalogo"] = self.request.user.tem_papel(
+            Papel.REQUISITANTE
+        )
+        return contexto

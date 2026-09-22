@@ -1,0 +1,108 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% comment %}
+Histórico de importações do catálogo (US3, FR-033–FR-037,
+`contracts/rotas-e-autorizacao.md` → "GET /catalogo/importacoes/").
+
+Versão final (T040) sobre `HistoricoImportacoesView` (ListView, `execucoes`
+paginado 20/página via `?pagina=`, `-concluida_em` já aplicado na queryset —
+da mais recente para a mais antiga). Reutiliza os mesmos primitivos de
+`execucao_detalhe.html`/`consulta.html`: Page Header, Table, Pagination e
+Empty State (`static/css/components.css`, `catalogo/static/catalogo/css/catalogo.css`).
+
+Marcador exigido por `tests/test_catalogo_historico.py` (contrato fixo):
+`data-estado="vazio"` quando não houver nenhuma execução — mesma convenção de
+`catalogo/templates/catalogo/execucao_detalhe.html` (seção "Exceções"): sem
+nenhuma linha, a ausência é explícita fora da tabela (`.empty-state`), não
+`.table-empty-row` dentro dela, já que não há filtro/coluna a preservar como
+referência (DESIGN.md → Empty State).
+
+Cada execução leva ao detalhe (`catalogo:execucao_detalhe`, pk) por um `<a>`
+real na coluna "Execução" — funciona sozinho, sem nenhum JS. Revisão do gate
+visual (achados menores 9a/9c/9d): (a) "Concluída em" usa formato curto
+(`d/m/Y H:i`) em vez do formato por extenso do L10N pt-BR, que empurrava as
+colunas numéricas para fora da tela no celular; (c)
+`catalogo/static/catalogo/js/historico.js` estende o clique para a linha
+inteira como aprimoramento progressivo, sem o overlay CSS anterior que
+impedia selecionar texto das outras células; (d) a coluna "Execução"
+(`#{{ e.pk }}`) mostra o mesmo número usado como título em
+`execucao_detalhe.html`, ausente antes desta revisão.
+{% endcomment %}
+
+{% block title %}Histórico de importações — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalogo/css/catalogo.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="catalogo-page">
+  <p class="catalogo-back-link"><a href="{% url 'home' %}">&larr; Início</a></p>
+
+  {% include "catalogo/_mensagens.html" %}
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Histórico de importações</h1>
+      <p class="page-header-description">
+        Execuções de importação do catálogo confirmadas, da mais recente para a mais antiga.
+      </p>
+    </div>
+    <div class="page-header-actions">
+      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-secondary">Importar catálogo</a>
+    </div>
+  </header>
+
+  <section class="catalogo-section">
+    {% if execucoes %}
+    <div class="table-wrapper table-sticky-header">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Execução</th>
+            <th scope="col">Concluída em</th>
+            <th scope="col">Executada por</th>
+            <th scope="col">Arquivo</th>
+            <th scope="col" class="table-cell-numeric">Recebidos</th>
+            <th scope="col" class="table-cell-numeric">Inseridos</th>
+            <th scope="col" class="table-cell-numeric">Atualizados</th>
+            <th scope="col" class="table-cell-numeric">Rejeitados</th>
+            <th scope="col" class="table-cell-numeric">Divergências</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in execucoes %}
+          <tr class="table-row-clickable catalogo-historico-row">
+            <td>
+              <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="catalogo-historico-link">#{{ e.pk }}</a>
+            </td>
+            <td>{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
+            <td>{{ e.executada_por.matricula }}</td>
+            <td>{{ e.nome_arquivo }}</td>
+            <td class="table-cell-numeric">{{ e.total_recebidos }}</td>
+            <td class="table-cell-numeric">{{ e.total_inseridos }}</td>
+            <td class="table-cell-numeric">{{ e.total_atualizados }}</td>
+            <td class="table-cell-numeric">{{ e.total_rejeitados }}</td>
+            <td class="table-cell-numeric">{{ e.total_divergencias }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if is_paginated %}
+    {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" %}
+    {% endif %}
+    {% else %}
+    <div class="empty-state" data-estado="vazio">
+      <p class="empty-state-title">Nenhuma importação registrada.</p>
+      <p class="empty-state-description">As execuções confirmadas de importação do catálogo aparecerão aqui.</p>
+    </div>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'catalogo/js/historico.js' %}" defer></script>
+{% endblock %}
