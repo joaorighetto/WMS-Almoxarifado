@@ -173,7 +173,8 @@
    ancestral, não no input, para não depender de um atributo/classe própria do
    widget do Django. */
 .field-has-error input[type="text"],
-.field-has-error input[type="password"] {
+.field-has-error input[type="password"],
+.field-has-error .file-upload-trigger {
   border-color: var(--color-danger);
 }
 
@@ -202,7 +203,7 @@
  *       <tbody>
  *         <tr><td>...</td><td class="table-cell-code">CADPRO</td></tr>
  *         <tr class="table-row-error"><td>...</td></tr>  (erro/divergência)
- *         <tr><td colspan="N" class="table-empty-row">Nenhum resultado encontrado.</td></tr>
+ *         <tr class="table-empty-row"><td colspan="N">Nenhum resultado encontrado.</td></tr>
  *       </tbody>
  *     </table>
  *   </div>

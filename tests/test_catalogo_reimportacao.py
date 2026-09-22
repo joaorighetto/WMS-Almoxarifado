@@ -164,14 +164,22 @@ def test_cadpro_saldo_inicial_e_execucao_origem_de_existentes_nunca_mudam(catalo
     `cadpro`, `saldo_inicial` e `execucao_origem` continuam apontando para a
     execução original, mesmo quando o cadastro foi atualizado."""
     execucao_inicial = catalogo_reimportado["execucao_inicial"]
-    codigos_preexistentes = [
-        "000.000.002", "010.020.030", "010.020.031", "010.020.032",
-        "010.020.033", "000.029.742", "010.020.034", "010.020.035", "004.001.002",
-    ]
-    for cadpro in codigos_preexistentes:
+    saldos_iniciais_esperados = {
+        "000.000.002": Decimal("0.000"),
+        "010.020.030": Decimal("25.000"),
+        "010.020.031": Decimal("10.000"),
+        "010.020.032": Decimal("1234.500"),
+        "010.020.033": Decimal("8.000"),
+        "000.029.742": Decimal("53.400"),
+        "010.020.034": Decimal("4.000"),
+        "010.020.035": Decimal("12.000"),
+        "004.001.002": Decimal("6.000"),
+    }
+    for cadpro, saldo_inicial in saldos_iniciais_esperados.items():
         material = Material.objects.get(cadpro=cadpro)
         assert material.cadpro == cadpro
         assert material.execucao_origem_id == execucao_inicial.pk, cadpro
+        assert material.saldo_inicial == saldo_inicial, cadpro
 
 
 @pytest.mark.django_db
