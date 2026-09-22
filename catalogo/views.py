@@ -134,6 +134,9 @@ class ConsultaCatalogoView(ExigePapelMixin, View):
             # resposta — o campo é sinalizado à parte, via out-of-band swap,
             # dentro do próprio fragmento (ver docstring do template).
             resposta["HX-Reswap"] = "none"
+            # Sem trocar os resultados, a URL também não deve passar a mostrar o
+            # filtro inválido (o `hx-push-url="true"` do formulário a empurraria).
+            resposta["HX-Push-Url"] = "false"
         return resposta
 
 

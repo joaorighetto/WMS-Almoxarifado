@@ -125,7 +125,7 @@
   </section>
 
   <section class="catalogo-section" id="alteracoes" data-secao="alteracoes">
-    <h2 class="catalogo-section-title">Alterações cadastrais ({{ execucao.total_atualizados_com_alteracao }})</h2>
+    <h2 class="catalogo-section-title">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</h2>
     {% if alteracoes_pagina.object_list %}
     <div class="table-wrapper table-sticky-header">
       <table class="table">

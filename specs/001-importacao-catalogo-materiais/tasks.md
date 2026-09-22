@@ -501,6 +501,10 @@ listada com os dois valores e a diferença, e contagem de ausentes (US4 cenário
   campo, valor anterior, valor novo); cada seção com empty state próprio. Deixar explícito que a
   divergência é informativa e que o ajuste não acontece aqui (FR-047). Nenhuma ação de ajuste é
   oferecida.
+  **Nota (T059, 2026-09-22):** o Badge "Divergência" por linha foi dispensado pela revisão visual
+  aprovada em T052. Com toda linha da seção marcada, a ênfase se anulava e contradizia a nota de
+  que a divergência é informativa; o sinal da diferença, com peso tipográfico, passou a ser o
+  diferenciador, e `table-row-error` ficou reservado às exceções.
 
 **Checkpoint**: todas as stories funcionam de forma independente; a reimportação preserva saldo.
 
@@ -528,14 +532,22 @@ listada com os dois valores e a diferença, e contagem de ausentes (US4 cenário
 - [X] T052 (coordenador) Gate visual obrigatório: `impeccable critique` das telas de consulta,
   envio/prévia, detalhe e histórico. Encaminhar os findings aprovados ao `frontend-implementer`
   (com 3+ Priority Issues, perguntar ao usuário antes).
-- [ ] T053 (coordenador) `impeccable document` (modo scan) para registrar em `DESIGN.md` e em
+- [X] T053 (coordenador) `impeccable document` (modo scan) para registrar em `DESIGN.md` e em
   `.impeccable/design.json` os componentes que passaram a existir (Table, Pagination, Filter Bar,
   Empty State, Loading Indicator, File Upload, Page Header, Status/Badge). Só mudanças duráveis
   do sistema.
-- [ ] T054 (coordenador) Executar o roteiro manual de `quickstart.md` §3–§4 e, se o arquivo real
+- [X] T054 (coordenador) Executar o roteiro manual de `quickstart.md` §3–§4 e, se o arquivo real
   estiver disponível no ambiente, §5 (aceite de SC-001, SC-002, SC-004, SC-008). Registrar o
   resultado ou a pendência.
-- [ ] T055 (coordenador) Executar `/speckit-converge`; encaminhar tasks restantes ao implementador
+  **Resultado (2026-09-22):** §3–§4 executados no navegador (Chromium/Playwright, login pelo
+  formulário real) num banco descartável `wms_quickstart`, com os usuários de §1: 25/25 passos
+  conferidos, incluindo catálogo vazio durante a prévia, reenvio do POST sem segunda execução,
+  403 do requisitante, busca sem JavaScript e reimportação com saldo 8 preservado (divergência
+  8 / 15 / +7). §5 com o arquivo real: `tests/test_catalogo_arquivo_real.py` passa com
+  `SCPI_CSV_REAL` (1588 recebidos e inseridos, reimportação sem alteração nem divergência) —
+  evidência técnica para SC-001, SC-002, SC-004 e SC-008. Achado durante o roteiro e corrigido:
+  o título "Alterações cadastrais (N)" do detalhe contava materiais, não as linhas listadas.
+- [X] T055 (coordenador) Executar `/speckit-converge`; encaminhar tasks restantes ao implementador
   apropriado e repetir review/converge só enquanto houver trabalho concreto.
 - [ ] T056 (coordenador) Depois do merge em `main`, atualizar o status da 001 no `ROADMAP.md`
   para concluída, com a pendência de aceite do arquivo real se ainda existir, e registrar que a
@@ -637,3 +649,9 @@ a validação; não são entregas separadas em `main`.
   T021 (I-3), T016/T022/T044 (I-4) e T018/T024 (I-6). Se o dono do produto mudar alguma, ajustar essas tasks antes
   de implementá-las.
 - Commit, push, merge e troca de branch só por pedido explícito do usuário.
+
+## Phase 8: Convergence
+
+- [X] T057 Trocar o texto do cabeçalho de `catalogo/templates/catalogo/consulta.html` ("por um trecho da descrição") por um que descreva a busca por palavras da descrição, em qualquer ordem, per FR-040 / US2/AC2 (contradicts)
+- [X] T058 Acrescentar a `tests/test_catalogo_leitura_scpi.py` um teste em que um registro `ESTRUTURA_INCONSISTENTE` repete o `CADPRO` de um registro íntegro e o íntegro continua aceito, sem `CADPRO_DUPLICADO_NO_ARQUIVO`, per research.md R5 (decisão de 2026-09-22) (partial)
+- [X] T059 Registrar em `tasks.md`, junto da T047, que o Badge "Divergência" por linha foi dispensado pela revisão visual aprovada em T052 (divergência é informativa; o sinal da diferença é o diferenciador), per T047 / FR-029 / FR-030 (partial)

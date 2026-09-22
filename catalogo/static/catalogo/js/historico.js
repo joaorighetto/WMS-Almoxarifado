@@ -26,6 +26,14 @@
         return;
       }
 
+      /* Clique com modificador (Ctrl/Cmd/Shift/Alt) ou botão não-primário: um
+         `link.click()` sintético não carrega o modificador e navegaria na mesma aba.
+         Deixa o gesto ao navegador; o link real da coluna "Execução" continua
+         aceitando abrir em nova aba. */
+      if (evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) {
+        return;
+      }
+
       const selecao = window.getSelection ? window.getSelection() : null;
       if (selecao && selecao.toString().length > 0) {
         return;

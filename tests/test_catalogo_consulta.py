@@ -490,12 +490,31 @@ def test_codigo_invalido_via_htmx_nao_troca_os_resultados_e_sinaliza_so_o_campo(
 
     assert resposta.status_code == 200
     assert resposta.headers.get("HX-Reswap") == "none"
+    assert resposta.headers.get("HX-Push-Url") == "false", (
+        "sem trocar os resultados, a URL não pode passar a mostrar o filtro inválido"
+    )
     conteudo = resposta.content.decode("utf-8")
     assert 'id="campo-codigo"' in conteudo
     assert 'hx-swap-oob="true"' in conteudo
     assert "field-has-error" in conteudo
     assert 'data-estado="codigo-invalido"' in conteudo
     assert "informe o código completo no formato xxx.yyy.zzz" in conteudo.lower()
+
+
+def test_codigo_invalido_em_pagina_inteira_nao_emite_bloco_oob(client, requisitante):
+    """Sem `HX-Request`, a página inteira já marca o campo inline em
+    `consulta.html`: o bloco `hx-swap-oob` de `_resultados_consulta.html` não
+    pode ser emitido de novo, ou `id="campo-codigo"` apareceria duplicado."""
+    client.force_login(requisitante)
+
+    resposta = client.get(reverse("catalogo:consulta"), {"codigo": "abc"})
+
+    assert resposta.status_code == 200
+    assert "HX-Reswap" not in resposta.headers
+    conteudo = resposta.content.decode("utf-8")
+    assert conteudo.count('id="campo-codigo"') == 1
+    assert "hx-swap-oob" not in conteudo
+    assert 'data-estado="codigo-invalido"' in conteudo
 
 
 def test_codigo_valido_via_htmx_nao_define_hx_reswap_e_reseta_o_campo(

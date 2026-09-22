@@ -11,6 +11,13 @@
 (() => {
   "use strict";
 
+  /* Formulários da mesma página que enviam para a mesma action (a prévia tem dois
+     pares confirmar/cancelar: a barra fixa e a seção do fim) compartilham o bloqueio
+     de duplo envio — confirmar num e depois no outro enviaria dois POSTs. O servidor
+     já recusa a segunda confirmação pelo token único; isto só evita que o usuário
+     perca a mensagem de sucesso da primeira. */
+  const ocupantesPorAction = new Map();
+
   const inicializarProcessamento = (form) => {
     const submitButton = form.querySelector("[data-processing-submit]");
     const submitLabel = form.querySelector("[data-processing-submit-label]");
@@ -28,16 +35,26 @@
       submitLabel.textContent = rotuloOriginal;
     };
 
+    const ocupar = () => {
+      form.dataset.submitting = "true";
+      form.setAttribute("aria-busy", "true");
+      submitButton.disabled = true;
+      submitLabel.textContent = rotuloOcupado;
+    };
+
+    const chave = form.action;
+    if (!ocupantesPorAction.has(chave)) {
+      ocupantesPorAction.set(chave, []);
+    }
+    ocupantesPorAction.get(chave).push(ocupar);
+
     form.addEventListener("submit", (event) => {
       if (form.dataset.submitting === "true") {
         event.preventDefault();
         return;
       }
 
-      form.dataset.submitting = "true";
-      form.setAttribute("aria-busy", "true");
-      submitButton.disabled = true;
-      submitLabel.textContent = rotuloOcupado;
+      ocupantesPorAction.get(chave).forEach((ocuparIrmao) => ocuparIrmao());
     });
 
     /* Restaura os controles ao voltar pelo histórico quando a página vem do bfcache. */

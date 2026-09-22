@@ -504,6 +504,24 @@ def test_cadpro_malformado_repetido_nao_conta_como_duplicado():
     ]
 
 
+
+def test_registro_com_estrutura_inconsistente_nao_conta_na_duplicidade():
+    """research.md R5, decisão de 2026-09-22: a duplicidade só é apurada entre
+    registros de estrutura íntegra. Um registro `ESTRUTURA_INCONSISTENTE`
+    que repete o `CADPRO` de um registro íntegro é recusado pela estrutura,
+    e o íntegro continua aceito — as colunas do quebrado não são confiáveis,
+    então o primeiro campo dele não é tratado como o seu `CADPRO`."""
+    integra = _linha(cadpro="090.090.090", disc1="Item íntegro", unid1="UN", quan3="1")
+    quebrada = _linha(cadpro="090.090.090", disc1="Item quebrado", unid1="UN", quan3="2") + "X"
+    conteudo = _arquivo(integra, quebrada)
+
+    resultado = leitura_scpi.ler_registros(conteudo)
+
+    assert [a.cadpro for a in resultado.aceitos] == ["090.090.090"]
+    assert resultado.aceitos[0].descricao == "Item íntegro"
+    assert [r.motivo for r in resultado.recusas] == [MotivoRecusa.ESTRUTURA_INCONSISTENTE]
+    assert resultado.total_recebidos == 2
+
 # ---------------------------------------------------------------------------
 # interpretar_quantidade (§3, research.md R6)
 # ---------------------------------------------------------------------------

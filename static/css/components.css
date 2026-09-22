@@ -325,7 +325,7 @@
  * (The No Color-Only State Rule). Mesma convenção visual de `.alert-danger` acima:
  * fundo `surface-subtle`, borda e texto no tom semântico.
  *
- * Uso: <span class="badge badge-warning">Divergência</span>
+ * Uso: <span class="badge badge-success">Concluída</span>
  * ------------------------------------------------------------------- */
 .badge {
   display: inline-flex;
@@ -446,8 +446,9 @@
 
 /* ---------------------------------------------------------------------
  * Pagination (DESIGN.md → Components → Pagination)
- * Obrigatória na consulta do catálogo (FR-042); recomendável no histórico de
- * execuções. Página atual sinalizada por peso + borda (indicador estrutural,
+ * Usada em toda listagem do catálogo, sempre pelo parcial
+ * `catalogo/_paginacao.html` (só Anterior/Próxima + indicador da página atual;
+ * `querystring_pagina` preserva os demais parâmetros). Página atual sinalizada por peso + borda (indicador estrutural,
  * DESIGN.md → The No Color-Only State Rule já permite isso para seleção/navegação
  * ativa) e `aria-current="page"` para tecnologia assistiva — não depende só de cor.
  *
@@ -455,8 +456,8 @@
  *   <nav class="pagination" aria-label="Paginação">
  *     <p class="pagination-summary">Mostrando 1–20 de 134</p>
  *     <ul class="pagination-list">
- *       <li><a class="pagination-link" href="?page=1">Anterior</a></li>
- *       <li><a class="pagination-link pagination-link-current" aria-current="page" href="?page=2">2</a></li>
+ *       <li><a class="pagination-link" href="?pagina=1">Anterior</a></li>
+ *       <li><span class="pagination-link pagination-link-current" aria-current="page">2</span></li>
  *       <li><span class="pagination-link pagination-link-disabled" aria-disabled="true">Próxima</span></li>
  *     </ul>
  *   </nav>
