@@ -549,7 +549,7 @@ listada com os dois valores e a diferença, e contagem de ausentes (US4 cenário
   o título "Alterações cadastrais (N)" do detalhe contava materiais, não as linhas listadas.
 - [X] T055 (coordenador) Executar `/speckit-converge`; encaminhar tasks restantes ao implementador
   apropriado e repetir review/converge só enquanto houver trabalho concreto.
-- [ ] T056 (coordenador) Depois do merge em `main`, atualizar o status da 001 no `ROADMAP.md`
+- [X] T056 (coordenador) Depois do merge em `main`, atualizar o status da 001 no `ROADMAP.md`
   para concluída, com a pendência de aceite do arquivo real se ainda existir, e registrar que a
   dependência `001` de `ENT`, `REQ`, `SAE`, `INV` e `MAT` foi satisfeita. É um commit posterior à
   entrega, só por pedido explícito do usuário.
