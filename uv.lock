@@ -194,7 +194,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "django", specifier = ">=5.2" },
+    { name = "django", specifier = ">=6.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
 ]
 

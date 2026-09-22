@@ -11,6 +11,7 @@ from catalogo import importacao
 from catalogo.forms import ArquivoImportacaoForm, ConsultaCatalogoForm
 from catalogo.leitura_scpi import normalizar_para_busca
 from catalogo.models import ExecucaoImportacao, Material, MotivoRecusa
+from catalogo.ordenacao import ColunaOrdenacao, OrdenacaoMixin
 from contas.models import Papel
 
 logger = logging.getLogger("catalogo.importacao")
@@ -57,38 +58,61 @@ CAMPOS_EXIBIDOS_CONSULTA = (
     "detalhamento",
 )
 
+class ConsultaCatalogoView(OrdenacaoMixin, ExigePapelMixin, View):
+    """Consulta do catálogo de materiais (US2, FR-039–FR-043, FR-042a).
 
-class ConsultaCatalogoView(ExigePapelMixin, View):
-    """Consulta do catálogo de materiais (US2, FR-039–FR-043).
-
-    Contrato de contexto (fixo, `catalogo/consulta.html` e
-    `catalogo/_resultados_consulta.html`, T035):
+    Contrato de contexto (fixo, `catalogo/consulta.html`, partial
+    `resultados_consulta`, T035):
     - `form`: `ConsultaCatalogoForm` ligado a `request.GET` (campos
       `codigo`, `descricao`);
     - `codigo_invalido`: `bool`, True quando `codigo` foi preenchido fora do
       formato `XXX.YYY.ZZZ`. Nesse caso **nenhuma** query é feita em
       `Material` e `pagina` é `None`;
     - `pagina`: `Page` de `Material` (50/página, `Paginator.get_page`) ou
-      `None` quando `codigo_invalido`.
+      `None` quando `codigo_invalido`;
+    - `ordem`: `str` com a ordenação efetiva normalizada (ex. `"cadpro"`,
+      `"-saldo"`), sempre presente — inclusive quando `codigo_invalido`, para
+      que o cabeçalho da tabela continue indicando a coluna/direção vigentes
+      mesmo sem resultado (FR-042a, `OrdenacaoMixin.resolver_ordenacao`);
+    - `ordenacao_rotulos`: `dict[str, str]` de `OrdenacaoMixin.ordenacao_rotulos`,
+      os rótulos em pt-BR das colunas ordenáveis desta tela, usado por
+      `rotulo_ordenacao` (`catalogo/templatetags/catalogo_extras.py`).
 
     Os links de paginação (`catalogo/_paginacao.html`, revisão T051) montam a
     querystring a partir de `request.GET` diretamente (tag `querystring_pagina`,
     `catalogo/templatetags/catalogo_extras.py`) — não precisam de um valor
-    calculado à parte no contexto para preservar `codigo`/`descricao`.
+    calculado à parte no contexto para preservar `codigo`/`descricao`. Os
+    links de ordenação do cabeçalho usam `querystring_ordenacao`, que também
+    lê `ordem` do contexto para decidir se alterna para decrescente.
 
     `codigo` filtra por `cadpro=` exato; `descricao` é normalizada
     (`normalizar_para_busca`) e separada em palavras, e cada palavra vira um
     `descricao_busca__contains` combinado por E — todas as palavras, em
     qualquer ordem, cada uma parcial (FR-040, emenda de 2026-09-21). Os dois
-    campos combinados restringem por interseção (FR-039, FR-040). Sem filtro,
-    devolve o catálogo inteiro ordenado por `cadpro` (`Meta.ordering` de
-    `Material`). Com o cabeçalho `HX-Request`, a resposta é só o fragmento
-    de resultados (research R16).
+    campos combinados restringem por interseção (FR-039, FR-040). O
+    resultado é ordenado por `?ordem=` (FR-042a, emenda de 2026-09-22) via
+    `OrdenacaoMixin.resolver_ordenacao` (`catalogo/ordenacao.py`) — nunca
+    pelo valor bruto do usuário — e cai na ordem padrão (`cadpro` crescente)
+    quando o parâmetro está ausente ou é desconhecido; a ordenação se combina
+    com os filtros e não altera o conjunto de materiais retornado, só a
+    ordem. Com o cabeçalho `HX-Request`, a resposta é só o partial de
+    resultados (research R16), renderizado via `"catalogo/consulta.html#resultados_consulta"`
+    (template partials, Django 6) — não mais um template separado.
     """
 
     papel_exigido = Papel.REQUISITANTE
     template_name = "catalogo/consulta.html"
-    fragmento_template_name = "catalogo/_resultados_consulta.html"
+    fragmento_partial_name = "resultados_consulta"
+
+    colunas_ordenacao = {
+        "cadpro": ColunaOrdenacao(("cadpro",), "código"),
+        "descricao": ColunaOrdenacao(("descricao_busca",), "descrição"),
+        "unidade": ColunaOrdenacao(("unidade",), "unidade"),
+        "classificacao": ColunaOrdenacao(("nome_grupo", "nome_subgrupo"), "classificação"),
+        "saldo": ColunaOrdenacao(("saldo",), "saldo"),
+    }
+    ordem_padrao = "cadpro"
+    campo_desempate = "cadpro"
 
     def get(self, request, *args, **kwargs):
         form = ConsultaCatalogoForm(request.GET)
@@ -97,9 +121,16 @@ class ConsultaCatalogoView(ExigePapelMixin, View):
         # Usado tanto para escolher o template (fragmento x página inteira)
         # quanto pelo próprio fragmento, que precisa saber se está numa
         # troca HTMX para decidir como comunicar erro de validação (ver
-        # docstring de `catalogo/templates/catalogo/_resultados_consulta.html`,
-        # revisão do gate visual, achado P2).
+        # comentário do partial `resultados_consulta`, em
+        # `catalogo/templates/catalogo/consulta.html`, revisão do gate
+        # visual, achado P2).
         veio_de_htmx = bool(request.headers.get("HX-Request"))
+
+        # FR-042a: resolvida mesmo com `codigo_invalido`, para o cabeçalho da
+        # tabela continuar indicando a coluna/direção vigentes.
+        ordem_efetiva, campos_ordenacao = self.resolver_ordenacao(
+            request.GET.get("ordem", "")
+        )
 
         pagina = None
         if not codigo_invalido:
@@ -113,6 +144,7 @@ class ConsultaCatalogoView(ExigePapelMixin, View):
             # precisam estar na descrição, em qualquer ordem, cada uma parcial.
             for palavra in normalizar_para_busca(descricao).split():
                 materiais = materiais.filter(descricao_busca__contains=palavra)
+            materiais = materiais.order_by(*campos_ordenacao)
             paginador = Paginator(materiais, TAMANHO_PAGINA_CONSULTA)
             pagina = paginador.get_page(request.GET.get("pagina"))
 
@@ -121,9 +153,13 @@ class ConsultaCatalogoView(ExigePapelMixin, View):
             "codigo_invalido": codigo_invalido,
             "pagina": pagina,
             "veio_de_htmx": veio_de_htmx,
+            "ordem": ordem_efetiva,
+            "ordenacao_rotulos": self.ordenacao_rotulos,
         }
         template_name = (
-            self.fragmento_template_name if veio_de_htmx else self.template_name
+            f"{self.template_name}#{self.fragmento_partial_name}"
+            if veio_de_htmx
+            else self.template_name
         )
         resposta = render(request, template_name, contexto)
         if codigo_invalido and veio_de_htmx:
@@ -132,7 +168,7 @@ class ConsultaCatalogoView(ExigePapelMixin, View):
             # alerta de erro (o usuário perde o que estava vendo). `HX-Reswap:
             # none` instrui o htmx a não tocar em `#resultados-consulta` nesta
             # resposta — o campo é sinalizado à parte, via out-of-band swap,
-            # dentro do próprio fragmento (ver docstring do template).
+            # dentro do próprio partial (ver comentário em `consulta.html`).
             resposta["HX-Reswap"] = "none"
             # Sem trocar os resultados, a URL também não deve passar a mostrar o
             # filtro inválido (o `hx-push-url="true"` do formulário a empurraria).
@@ -386,8 +422,9 @@ class ExecucaoDetalheView(ExigePapelMixin, DetailView):
         return contexto
 
 
-class HistoricoImportacoesView(ExigePapelMixin, ListView):
-    """Histórico de importações confirmadas do catálogo (US3, FR-033–FR-037).
+class HistoricoImportacoesView(OrdenacaoMixin, ExigePapelMixin, ListView):
+    """Histórico de importações confirmadas do catálogo (US3, FR-033–FR-037,
+    FR-037a).
 
     Aplica `PERM-SCPI-IMPORT-HISTORY-VIEW`; preserva `INV-AUTH-001` (anônimo
     → login; sem papel → 403; superusuário técnico sem papel → 403 — já
@@ -398,6 +435,21 @@ class HistoricoImportacoesView(ExigePapelMixin, ListView):
     `ListView`): paginação de 20/página, parametrizada por `?pagina=`
     (`tests/test_catalogo_historico.py`, mesmo nome de parâmetro da consulta
     e do parcial `catalogo/_paginacao.html`).
+
+    Ordenação por coluna (FR-037a, emenda de 2026-09-22), via
+    `OrdenacaoMixin` (`catalogo/ordenacao.py`) — mesma infraestrutura da
+    consulta do catálogo (`ConsultaCatalogoView`), reutilizada aqui sem
+    alterar seu comportamento: `ordem` (contexto) e `ordenacao_rotulos` são
+    expostos ao template do mesmo jeito. Colunas ordenáveis: `concluida`
+    (`concluida_em`), `executor` (`executada_por__matricula`), `recebidos`,
+    `rejeitados`, `divergencias`. "Execução", "Arquivo", "Inseridos" e
+    "Atualizados" não são ordenáveis (fora de `colunas_ordenacao`, sem link
+    no template). Ordem padrão: `concluida_em` decrescente (mais recente
+    primeiro). `campo_desempate = "-pk"` desfaz empates pela execução mais
+    recente primeiro, qualquer que seja a coluna escolhida — diferente da
+    consulta (`campo_desempate = "cadpro"`, crescente), por isso o mixin
+    aceita desde esta task um campo de desempate com sinal próprio (ver
+    `OrdenacaoMixin.resolver_ordenacao`).
     """
 
     papel_exigido = Papel.CHEFE_ALMOXARIFADO
@@ -407,10 +459,29 @@ class HistoricoImportacoesView(ExigePapelMixin, ListView):
     paginate_by = 20
     page_kwarg = "pagina"
 
+    colunas_ordenacao = {
+        "concluida": ColunaOrdenacao(("concluida_em",), "data de conclusão"),
+        "executor": ColunaOrdenacao(("executada_por__matricula",), "executor"),
+        "recebidos": ColunaOrdenacao(("total_recebidos",), "recebidos"),
+        "rejeitados": ColunaOrdenacao(("total_rejeitados",), "rejeitados"),
+        "divergencias": ColunaOrdenacao(("total_divergencias",), "divergências"),
+    }
+    ordem_padrao = "-concluida"
+    campo_desempate = "-pk"
+
     def get_queryset(self):
-        return ExecucaoImportacao.objects.select_related("executada_por").order_by(
-            "-concluida_em", "-pk"
+        self.ordem_efetiva, campos_order_by = self.resolver_ordenacao(
+            self.request.GET.get("ordem", "")
         )
+        return ExecucaoImportacao.objects.select_related("executada_por").order_by(
+            *campos_order_by
+        )
+
+    def get_context_data(self, **kwargs):
+        contexto = super().get_context_data(**kwargs)
+        contexto["ordem"] = self.ordem_efetiva
+        contexto["ordenacao_rotulos"] = self.ordenacao_rotulos
+        return contexto
 
 
 def _token_valido(token: str) -> bool:

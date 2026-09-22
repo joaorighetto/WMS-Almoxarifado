@@ -64,6 +64,23 @@ de recomposição, que produz exatamente 22 campos em todos os 1588 registros.
   termos como "valvula registro" para "Válvula de Registro". Não altera nenhum outro comportamento
   da consulta (busca por código continua exata e completa, FR-039).
 
+### Sessão 2026-09-22 — ordenação e paginação numerada da consulta
+
+- **Ordenação por coluna**: o resultado da consulta pode ser reordenado pelo cabeçalho das colunas
+  Código, Descrição, Unidade, Classificação e Saldo, em ordem crescente ou decrescente; Detalhamento
+  não é ordenável. A ordem padrão continua sendo o código (FR-042a). Decisão do dono do produto após
+  a entrega da 001, inspirada no padrão de tabela com Django e HTMX; não altera filtro, formato de
+  código nem qualquer regra de importação.
+- **Paginação numerada**: a paginação passa a exibir os números das páginas, com reticências
+  (`…`) no lugar dos intervalos intermediários quando houver muitas páginas, mantendo Anterior e
+  Próxima (FR-042b). Vale para todas as listas paginadas da feature, que compartilham o mesmo
+  componente. Decisão do dono do produto; substitui a regra "só Anterior/Próxima" do `DESIGN.md`.
+- **Ordenação no histórico de importações**: o histórico passa a ser ordenável pelo cabeçalho das
+  colunas Concluída em, Executada por, Recebidos, Rejeitados e Divergências; Execução, Arquivo,
+  Inseridos e Atualizados não são ordenáveis. A ordem padrão continua sendo da mais recente para a
+  mais antiga (FR-037a). Decisão do dono do produto, para o histórico seguir o mesmo padrão de tabela
+  da consulta.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Realizar a carga inicial do catálogo (Priority: P1)
@@ -349,6 +366,13 @@ sobrescrito e que a divergência aparece listada.
   da recusa e o `CADPRO` quando este for identificável.
 - **FR-037**: O sistema DEVE preservar o resultado de cada execução para consulta posterior, sem
   que o histórico seja sobrescrito por execuções seguintes.
+- **FR-037a**: O sistema DEVE permitir ordenar o histórico de execuções, crescente ou decrescente,
+  por data de conclusão, matrícula de quem executou, total de recebidos, total de rejeitados ou total
+  de divergências, indicando no cabeçalho a coluna e a direção vigentes e dizendo a ordem em texto
+  junto ao resumo da paginação. A ordem padrão é a data de conclusão decrescente (mais recente
+  primeiro); empates são desfeitos pela execução mais recente, para que a paginação seja estável.
+  Mudar a ordem volta à primeira página; um valor de ordenação desconhecido é ignorado e a ordem
+  padrão é usada. *Emenda de 2026-09-22 (Clarifications, sessão 2026-09-22).*
 - **FR-038**: O sistema DEVE efetivar o conjunto de inserções e atualizações aceitas de forma
   atômica, de modo que uma falha durante o processamento não deixe o catálogo parcialmente gravado.
 
@@ -364,6 +388,16 @@ sobrescrito e que a divergência aparece listada.
   unidade de medida, a classificação recebida, o saldo e o detalhamento técnico do material.
 - **FR-042**: O sistema DEVE paginar os resultados da consulta, sem carregar o catálogo inteiro de
   uma vez.
+- **FR-042a**: O sistema DEVE permitir ordenar o resultado da consulta, crescente ou decrescente,
+  por código, descrição (sem diferenciar maiúsculas nem acentuação), unidade, classificação (nome
+  do grupo e do subgrupo) ou saldo, indicando no cabeçalho a coluna e a direção vigentes. A ordem
+  padrão é o código crescente; empates são desfeitos pelo código, para que a paginação seja estável.
+  A ordenação se combina com os filtros: mudar a ordem preserva os filtros e volta à primeira
+  página, e uma nova busca preserva a ordem escolhida. Um valor de ordenação desconhecido é
+  ignorado e a ordem padrão é usada. *Emenda de 2026-09-22 (Clarifications, sessão 2026-09-22).*
+- **FR-042b**: A paginação DEVE exibir, além de Anterior e Próxima, links para as páginas numeradas,
+  substituindo por reticências os intervalos distantes da página atual quando houver muitas
+  páginas; a primeira e a última página ficam sempre acessíveis. *Emenda de 2026-09-22.*
 - **FR-043**: O sistema DEVE apresentar explicitamente os estados de carregamento, ausência de
   resultados e erro na consulta.
 

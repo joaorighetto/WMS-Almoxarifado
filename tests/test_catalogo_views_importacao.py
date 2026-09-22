@@ -503,8 +503,8 @@ def test_execucao_detalhe_mostra_totais_e_excecoes(chefe_almoxarifado, csv_fixtu
 # Contrato de marcadores `data-*` proposto por este teste para o template de
 # T047 (nenhuma seção de divergências/alterações existe ainda em
 # `importacao_previa.html`/`execucao_detalhe.html` — só a de exceções, sem
-# `data-secao`). Segue o padrão JÁ estabelecido em
-# `catalogo/templates/catalogo/_resultados_consulta.html` (T035):
+# `data-secao`). Segue o padrão JÁ estabelecido no partial `resultados_consulta`
+# da consulta do catálogo (`catalogo/templates/catalogo/consulta.html`, T035):
 # `data-estado="vazio"` no elemento vazio de uma seção. Como não há
 # precedente de `data-secao` no app, este arquivo FIXA a convenção que T047
 # deve seguir:

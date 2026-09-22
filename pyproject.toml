@@ -5,7 +5,7 @@ description = "WMS Almoxarifado — gestão de materiais, estoque e movimentaç�
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "django>=5.2",
+    "django>=6.0",
     "psycopg[binary]>=3.2",
 ]
 

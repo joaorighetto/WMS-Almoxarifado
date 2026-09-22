@@ -143,8 +143,9 @@ catalogo/                          # NOVO app
 │   ├── 0001_pg_trgm.py            # TrigramExtension
 │   └── 0002_initial.py            # modelos, constraints e índices
 ├── templates/catalogo/
-│   ├── consulta.html              # página
-│   ├── _resultados_consulta.html  # fragmento (HTMX e página)
+│   ├── consulta.html              # página + partial `resultados_consulta` (fragmento HTMX, Django 6)
+│   ├── _th_ordenavel.html         # cabeçalho ordenável (consulta e histórico)
+│   ├── _paginacao.html            # paginação numerada compartilhada
 │   ├── importacao_envio.html
 │   ├── importacao_previa.html
 │   ├── historico.html

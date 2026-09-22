@@ -320,6 +320,153 @@
   z-index: 1;
 }
 
+/* Rolagem dentro de rolagem no celular (DESIGN.md → Table; decisão do dono do
+   produto, 2026-09-22): em contexto de toque OU tela estreita, o scrollport
+   vertical próprio do wrapper atrapalha mais do que ajuda — o usuário precisa
+   rolar a tabela (dedo sobre a tabela) e depois a página (dedo fora dela),
+   dois gestos de rolagem vertical concorrentes na mesma região. Combinamos
+   `pointer: coarse` (cobre touch mesmo em tela grande, ex. tablet grande) com
+   `max-width: 768px` (cobre também uma janela estreita com mouse — mesmo
+   incômodo de duas barras de rolagem verticais, mesma correção) — nenhum dos
+   dois sozinho cobre os dois casos. A tabela passa a rolar com a página
+   inteira (como `.table-wrapper` sem esta classe); a rolagem horizontal
+   continua só no wrapper (`overflow-x: auto`, inalterado). `position: static`
+   no `th` (em vez de manter `sticky` sem scrollport) evita que ele fique
+   preso a um ancestral de rolagem inesperado (a própria página). Desktop
+   (mouse, ≥769px) não muda. */
+@media (pointer: coarse), (max-width: 768px) {
+  .table-wrapper.table-sticky-header {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .table-sticky-header thead th {
+    position: static;
+  }
+}
+
+/* Cabeçalho de coluna ordenável (DESIGN.md → Table; FR-042a). O `<th>` perde
+   o padding próprio (herdado do bloco `.table th, .table td` acima) — o link
+   assume esse padding, para a mesma altura visual de um cabeçalho comum — e
+   ganha `position: relative`, base de posicionamento do `::after` do link
+   logo abaixo. Qualificado por `.table th` pelo mesmo motivo do
+   `.table-cell-numeric` acima: uma classe isolada não venceria a
+   especificidade de `.table th, .table td`. */
+.table th.table-th-sortable {
+  position: relative;
+  padding: 0;
+}
+
+/* Dentro de `.table-sticky-header`, o `<th>` ordenável continua `sticky` no
+   desktop — `.table th.table-th-sortable` (0,2,1) venceria
+   `.table-sticky-header thead th` (0,1,2) e soltaria o cabeçalho fixo só nas
+   colunas ordenáveis (re-revisão, achado P2). `sticky` também é base de
+   posicionamento do `::after`. Onde o cabeçalho fixo é desligado (toque ou
+   tela estreita, bloco acima), volta a `relative` pelo mesmo motivo. */
+.table-sticky-header thead th.table-th-sortable {
+  position: sticky;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  .table-sticky-header thead th.table-th-sortable {
+    position: relative;
+  }
+}
+
+/* `<th>` vigente (DESIGN.md → Table, achado P2 do gate visual, 2026-09-22):
+   borda inferior de 2px em `primary` como pista estrutural adicional — soma
+   ao `aria-sort`, ao indicador de seta e ao texto do resumo/anúncio, nunca
+   substitui nenhum deles (The No Color-Only State Rule). `[aria-sort]`
+   existe só na coluna vigente (`_th_ordenavel.html` só emite o atributo
+   quando `ordem == coluna` ou a decrescente correspondente). */
+.table th.table-th-sortable[aria-sort] {
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* Seta colada ao rótulo em qualquer largura de coluna (revisão do gate
+   visual, achado P2: `width: 100%` empurrava a seta para a borda direita em
+   rótulos de duas linhas — "Código (CADPRO)", "Classificação (SCPI)" —
+   porque largura percentual de filho de `<th>` em `table-layout: auto` entra
+   num cálculo circular com a própria largura da coluna). O link volta a ter
+   largura natural (shrink-to-fit): rótulo e seta sempre adjacentes. A célula
+   inteira continua clicável/tocável pelo `::after` abaixo, não por esticar o
+   link. */
+.table-sort-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+.table-sort-link:hover,
+.table-sort-link:focus-visible {
+  text-decoration: underline;
+}
+
+/* Área de clique/toque cobrindo o `<th>` inteiro (revisão do gate visual,
+   achado P2: o link só cobria 37px de um `<th>` de 58px) — técnica padrão de
+   expandir o alvo de um link sem esticar seu conteúdo visível: o `::after`,
+   parte do próprio `<a>`, é posicionado `absolute` em relação ao ancestral
+   posicionado mais próximo (`.table-th-sortable`, `position: relative`
+   acima — ou o próprio `th` quando `position: sticky`, que também conta como
+   posicionado), não ao link. Transparente: não esconde o texto por cima. O
+   anel de foco (`:focus-visible`, `base.css`) continua no `<a>` real,
+   contornando só o rótulo+seta — não a célula inteira. */
+.table-sort-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+@media (pointer: coarse) {
+  .table-sort-link {
+    padding-block: var(--space-3);
+  }
+}
+
+/* Indicador de direção: um único SVG (duas setas, sempre a mesma forma nos
+   três estados — nunca troca de glifo; revisão do gate visual, 2026-09-22:
+   `⇅`/`▲`/`▼` vinham de fontes diferentes, desalinhados entre si).
+   `aria-hidden` no SVG (template) — nunca a única pista de direção, que
+   também vive em `aria-sort`, na borda inferior do `th` vigente acima e no
+   texto do resumo/anúncio (`rotulo_ordenacao`, `_paginacao.html`,
+   `consulta.html`). */
+.table-sort-indicator {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Coluna não vigente: as duas setas neutras, mesma cor (DESIGN.md → The No
+   Color-Only State Rule — aqui a "cor neutra" é só reforço de affordance,
+   nunca a pista de estado em si). */
+.table-sort-arrow-up,
+.table-sort-arrow-down {
+  fill: var(--color-text-muted);
+}
+
+/* Coluna vigente: a seta da direção atual em `primary`, opaca; a outra
+   esmaece (`opacity`) — diferença de ênfase entre as duas, não só cor, então
+   continua legível em modo de alto contraste/escala de cinza. */
+.table-sort-indicator-asc .table-sort-arrow-up {
+  fill: var(--color-primary);
+}
+
+.table-sort-indicator-asc .table-sort-arrow-down {
+  opacity: 0.4;
+}
+
+.table-sort-indicator-desc .table-sort-arrow-down {
+  fill: var(--color-primary);
+}
+
+.table-sort-indicator-desc .table-sort-arrow-up {
+  opacity: 0.4;
+}
+
 /* ---------------------------------------------------------------------
  * Status/Badge (DESIGN.md → Components → Status/Badge)
  * Rótulo curto de estado semântico — sempre com texto, nunca só uma pastilha colorida
@@ -448,18 +595,39 @@
 /* ---------------------------------------------------------------------
  * Pagination (DESIGN.md → Components → Pagination)
  * Usada em toda listagem do catálogo, sempre pelo parcial
- * `catalogo/_paginacao.html` (só Anterior/Próxima + indicador da página atual;
- * `querystring_pagina` preserva os demais parâmetros). Página atual sinalizada por peso + borda (indicador estrutural,
- * DESIGN.md → The No Color-Only State Rule já permite isso para seleção/navegação
- * ativa) e `aria-current="page"` para tecnologia assistiva — não depende só de cor.
+ * `catalogo/_paginacao.html` — Anterior / páginas numeradas / Próxima, com
+ * reticências (`…`) nos intervalos distantes da página atual quando houver
+ * muitas páginas (FR-042b, decisão do dono do produto de 2026-09-22;
+ * substitui a regra anterior de só Anterior/Próxima). A sequência de
+ * números/reticências vem de `intervalo_paginas`
+ * (`catalogo/templatetags/catalogo_extras.py`); `querystring_pagina`
+ * preserva os demais parâmetros. Página atual sinalizada por peso + borda
+ * (indicador estrutural, DESIGN.md → The No Color-Only State Rule já
+ * permite isso para seleção/navegação ativa) e `aria-current="page"` para
+ * tecnologia assistiva — não depende só de cor. A reticência é texto não
+ * interativo (`aria-hidden`), nunca um controle. Com uma página só
+ * (`pagina.has_other_pages` falso), o parcial nem emite `.pagination-list`
+ * — só o resumo (revisão do gate visual, achado P3, 2026-09-22).
+ *
+ * Lista larga (`.pagination-item-wide`, ≥641px) x compacta
+ * (`.pagination-item-compact`, ≤640px, só um vizinho de cada lado — revisão
+ * do gate visual, achado P2, 2026-09-22): as duas são renderizadas pelo
+ * parcial, uma delas sempre com `display: none` (fora da árvore de
+ * acessibilidade) — nunca as duas visíveis nem as duas removidas.
+ * Anterior/Próxima não duplicam, só a lista de números/reticências.
  *
  * Estrutura esperada:
  *   <nav class="pagination" aria-label="Paginação">
- *     <p class="pagination-summary">Mostrando 1–20 de 134</p>
+ *     <p class="pagination-summary">Página 3 de 12 — 573 no total</p>
  *     <ul class="pagination-list">
- *       <li><a class="pagination-link" href="?pagina=1">Anterior</a></li>
- *       <li><span class="pagination-link pagination-link-current" aria-current="page">2</span></li>
- *       <li><span class="pagination-link pagination-link-disabled" aria-disabled="true">Próxima</span></li>
+ *       <li><a class="pagination-link" href="?pagina=2">Anterior</a></li>
+ *       <li class="pagination-item-wide"><a class="pagination-link" href="?pagina=1" aria-label="Página 1">1</a></li>
+ *       <li class="pagination-item-wide"><span class="pagination-ellipsis" aria-hidden="true">…</span></li>
+ *       <li class="pagination-item-wide"><span class="pagination-link pagination-link-current" aria-current="page" aria-label="Página 3">3</span></li>
+ *       <li class="pagination-item-wide"><span class="pagination-ellipsis" aria-hidden="true">…</span></li>
+ *       <li class="pagination-item-wide"><a class="pagination-link" href="?pagina=12" aria-label="Página 12">12</a></li>
+ *       <li class="pagination-item-compact">...(mesma coisa, on_each_side=1)</li>
+ *       <li><a class="pagination-link" href="?pagina=4">Próxima</a></li>
  *     </ul>
  *   </nav>
  * ------------------------------------------------------------------- */
@@ -519,12 +687,83 @@
   pointer-events: none;
 }
 
+/* Reticência (FR-042b): texto não interativo entre intervalos distantes da
+   página atual, alinhada verticalmente com `.pagination-link` (`align-items:
+   center` do `.pagination-list` pai) sem herdar a mesma área de alvo de
+   toque — não é um controle (revisão do gate visual, achado "reticência
+   larga demais", 2026-09-22: 32px no desktop e 44px sob `pointer: coarse`
+   para um caractere que não recebe clique/toque). Largura livre (padding
+   estreito em vez de `min-width`), altura acompanha a linha. */
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+}
+
 /* Alvo de toque confortável em tablet/celular, sem alterar a densidade do desktop
-   (DESIGN.md → Layout → Touch) — mesmo recurso de `.table` acima. */
+   (DESIGN.md → Layout → Touch) — mesmo recurso de `.table` acima. Só
+   `.pagination-link` (controle real); `.pagination-ellipsis` fica de fora
+   desde a revisão citada acima. */
 @media (pointer: coarse) {
   .pagination-link {
     min-width: calc(var(--space-8) + var(--space-3));
     min-height: calc(var(--space-8) + var(--space-3));
+  }
+}
+
+/* Lista larga x compacta (revisão do gate visual, achado P2, 2026-09-22): a
+   compacta (só um vizinho de cada lado, `on_each_side=1` — `_paginacao.html`)
+   fica fora da árvore de acessibilidade em telas largas (`display: none`,
+   nunca só visualmente oculta) até o breakpoint de 640px — mesmo ponto de
+   corte de `.pagination`/Filter Bar abaixo — trocar de papel com a larga
+   (`on_each_side=2`, a mesma já usada em `intervalo_paginas`). As duas nunca
+   ficam visíveis ao mesmo tempo, nem as duas escondidas: um leitor de tela
+   nunca anuncia duas listas de página redundantes. */
+.pagination-item-compact {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .pagination-item-wide {
+    display: none;
+  }
+
+  .pagination-item-compact {
+    display: list-item;
+  }
+}
+
+/* Telas estreitas (DESIGN.md → Layout; mesmo ponto de corte de 640px usado
+   pela Filter Bar): com números de página, a lista pode crescer mais que
+   Anterior/Próxima sozinhos. `.pagination-list` já quebra por
+   `flex-wrap: wrap` — aqui só evitamos que o resumo e a lista disputem a
+   mesma linha, para nunca haver rolagem horizontal da página. */
+@media (max-width: 640px) {
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* A 375px não cabem sete alvos de 44px + reticências numa linha só com
+     Anterior/Próxima junto: sem isto a lista quebrava ao meio, com Anterior
+     numa linha e Próxima na outra (verificação visual pós-critique,
+     2026-09-22). Os números ficam numa linha própria e Anterior/Próxima
+     descem juntos para a linha de baixo, dividindo a largura — na zona do
+     polegar e sempre no mesmo lugar, qualquer que seja a página. `order` só
+     muda a posição visual: a ordem do DOM (e do Tab) continua Anterior →
+     números → Próxima. */
+  .pagination-item-prev,
+  .pagination-item-next {
+    order: 1;
+    flex: 1 1 40%;
+  }
+
+  .pagination-item-prev .pagination-link,
+  .pagination-item-next .pagination-link {
+    width: 100%;
   }
 }
 
@@ -565,7 +804,15 @@
   margin: 0;
 }
 
+/* Medida de leitura (revisão do gate visual, achado pré-existente,
+   2026-09-22: a descrição da consulta ficava com ~96 caracteres por linha
+   em desktop largo — mais que o confortável para prosa corrida). `max-width`
+   em `ch` (unidade tipográfica, acompanha o tamanho de fonte em vez de um
+   valor fixo em px) mantém a faixa de 65–75 caracteres por linha
+   recomendada para texto corrido, sem limitar o `page-header` inteiro (só
+   este parágrafo — o título e as ações continuam livres). */
 .page-header-description {
+  max-width: 70ch;
   margin: var(--space-1) 0 0;
   font-size: var(--font-size-body);
   color: var(--color-text-muted);

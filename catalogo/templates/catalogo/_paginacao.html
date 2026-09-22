@@ -8,45 +8,89 @@ Parâmetros esperados:
 - `rotulo`: texto de `aria-label` do `<nav>` (ex.: "Paginação de exceções").
 
 Parâmetros opcionais:
-- `rotulo_item`: substantivo do total, para o resumo dizer "N <rotulo_item>(s)
-  no total" em vez de só "N no total" (usado pela consulta do catálogo, com
-  `rotulo_item="material"`).
+- `rotulo_item`/`rotulo_item_plural`: substantivo do total, no singular e no
+  plural, para o resumo dizer "N <rotulo_item(_plural)> no total" em vez de
+  só "N no total" (usado pela consulta do catálogo, com `rotulo_item="material"`
+  `rotulo_item_plural="materiais"`). Dois parâmetros explícitos — não
+  `pluralize:"s"` sobre `rotulo_item` — porque a regra de plural de "s" é
+  frágil para substantivo em português (produzia "materials" a partir de
+  "material"; revisão do gate visual, achado "Mundo real", 2026-09-22).
+  `rotulo_item_plural` sem `rotulo_item` não tem efeito.
+- `ordem_texto`: frase pronta da ordenação vigente (ex. "saldo, decrescente",
+  de `rotulo_ordenacao`), acrescentada ao resumo como "· ordenado por
+  saldo, decrescente" (revisão do gate visual, achado P1, 2026-09-22) — usado
+  pela consulta do catálogo e pelo histórico de importações (FR-037a); as
+  demais listas (prévia, resultado da execução) não têm ordenação por
+  coluna e não passam este parâmetro.
 - `htmx_alvo`/`htmx_indicador`: quando os dois são passados, Anterior/Próxima
-  viram atualização HTMX parcial (`hx-get`/`hx-target`/`hx-push-url`/
-  `hx-indicator`) em vez de navegação de página inteira — usado pela consulta
-  do catálogo, cujo `#resultados-consulta` já é atualizado via HTMX no envio
-  do formulário de filtro. Sem esses parâmetros, os links são navegação
-  normal (usado no detalhe da execução, na prévia e no histórico).
+  e os números de página viram atualização HTMX parcial (`hx-get`/
+  `hx-target`/`hx-push-url`/`hx-indicator`) em vez de navegação de página
+  inteira — usado pela consulta do catálogo, cujo `#resultados-consulta` já
+  é atualizado via HTMX no envio do formulário de filtro. Sem esses
+  parâmetros, os links são navegação normal (usado no detalhe da execução,
+  na prévia e no histórico).
 - `ancora`: id de seção (ex.: "divergencias") acrescentado como fragmento
   (`#ancora`) só ao `href` de navegação normal (revisão do gate visual,
   achado P1) — paginar uma seção não joga mais o usuário para o topo da
   página; ele volta à própria seção. Não se aplica a `hx-get` (que já é uma
   troca parcial, sem recarregar/rolar a página).
 
-Só Anterior/Próxima + indicador da página atual — sem lista de todos os
-números de página, para continuar utilizável mesmo com muitas páginas (ex.:
-milhares de materiais). Página atual e itens desabilitados usam `<span>`,
-nunca `<a>`, e não dependem só de cor (peso + borda +
+Anterior / páginas numeradas (`intervalo_paginas`, FR-042b, emenda de
+2026-09-22) / Próxima — a primeira e a última página ficam sempre
+acessíveis, com reticências (`…`, texto não interativo, `aria-hidden`) nos
+intervalos distantes da página atual, para continuar utilizável mesmo com
+muitas páginas (ex.: milhares de materiais). A página atual é um
+`<span aria-current="page">` (não clicável); os demais números são `<a>`
+com `aria-label="Página N"`. Página atual e itens desabilitados usam
+`<span>`, nunca `<a>`, e não dependem só de cor (peso + borda +
 `aria-current`/`aria-disabled`).
 
-`href`/`hx-get` usam a tag `querystring_pagina` (`catalogo/templatetags/catalogo_extras.py`):
-substitui só `parametro` na querystring atual da requisição, preservando os
-demais parâmetros — inclusive os de outras seções paginadas na mesma página
-(revisão T051, achado P3) e os filtros da consulta.
+Página única (revisão do gate visual, achado P3, 2026-09-22): quando
+`pagina.has_other_pages` é falso, só o resumo é exibido — "Anterior 1
+Próxima" sem nenhuma outra página para navegar era ruído puro
+(DESIGN.md → Layout, minimalismo).
+
+Lista larga x lista compacta (revisão do gate visual, achado P2, 2026-09-22):
+`on_each_side=2` (larga, ≥641px) e `on_each_side=1` (compacta, ≤640px) usam
+reticências em posições diferentes — esconder itens de uma única lista larga
+por CSS abriria um buraco sem reticência em algum ponto. Por isso as duas
+listas de números/reticências são renderizadas juntas, alternadas por media
+query em `.pagination-item-wide`/`.pagination-item-compact`
+(`static/css/components.css`): a lista escondida some da árvore de
+acessibilidade (`display: none`), então um leitor de tela nunca anuncia as
+duas. Anterior/Próxima, ao contrário, aparecem uma única vez — não fazem
+parte do range que muda de largura, e duplicá-los duplicaria `id` (ver
+abaixo).
+
+`href`/`hx-get` usam as tags `querystring_pagina`/`intervalo_paginas`
+(`catalogo/templatetags/catalogo_extras.py`): a primeira substitui só
+`parametro` na querystring atual da requisição, preservando os demais
+parâmetros — inclusive os de outras seções paginadas na mesma página
+(revisão T051, achado P3) e os filtros/ordenação da consulta; a segunda
+resolve a sequência de números e reticências a partir do `Paginator`.
 
 `id` de Anterior/Próxima é derivado de `parametro`
 (`pagina-anterior-{{ parametro }}`/`pagina-proxima-{{ parametro }}`): (a)
 permanece estável entre trocas HTMX, o que permite ao htmx restaurar o foco
 do teclado após o swap (revisão T051, achado P3); (b) continua único quando
 o parcial aparece mais de uma vez na mesma página — `execucao_detalhe.html`
-o inclui três vezes, uma por seção, cada uma com um `parametro` diferente.
+o inclui três vezes, uma por seção, cada uma com um `parametro` diferente —
+e também único dentro de uma mesma inclusão, mesmo com a lista larga e a
+compacta lado a lado. Cada número tem `id` estável
+`pagina-{{ parametro }}-{{ N }}-larga|compacta` (sufixo por lista, para não
+duplicar entre as duas). O htmx restaura o foco pelo `id`: o link da página N
+ativado vira, depois do swap, o `<span>` da página atual com o MESMO `id` e
+`tabindex="-1"` (focável só por script), então o foco de quem usa teclado
+cai na página em que acabou de entrar, em vez do `<body>` (re-revisão,
+achado P3).
 {% endcomment %}
 <nav class="pagination" aria-label="{{ rotulo }}">
   <p class="pagination-summary">
-    Página {{ pagina.number }} de {{ pagina.paginator.num_pages }} — {{ pagina.paginator.count }}{% if rotulo_item %} {{ rotulo_item }}{{ pagina.paginator.count|pluralize:"s" }}{% endif %} no total
+    Página {{ pagina.number }} de {{ pagina.paginator.num_pages|separador_milhar }} — {{ pagina.paginator.count|separador_milhar }}{% if rotulo_item %} {% if pagina.paginator.count == 1 %}{{ rotulo_item }}{% else %}{{ rotulo_item_plural|default:rotulo_item }}{% endif %}{% endif %} no total{% if ordem_texto %} · ordenado por {{ ordem_texto }}{% endif %}
   </p>
+  {% if pagina.has_other_pages %}
   <ul class="pagination-list">
-    <li>
+    <li class="pagination-item-prev">
       {% if pagina.has_previous %}
       {% querystring_pagina parametro pagina.previous_page_number as href_anterior %}
       <a
@@ -64,10 +108,55 @@ o inclui três vezes, uma por seção, cada uma com um `parametro` diferente.
       <span id="pagina-anterior-{{ parametro }}" class="pagination-link pagination-link-disabled" aria-disabled="true">Anterior</span>
       {% endif %}
     </li>
-    <li>
-      <span class="pagination-link pagination-link-current" aria-current="page">{{ pagina.number }}</span>
+    {% intervalo_paginas pagina as paginas_larga %}
+    {% for item in paginas_larga %}
+    <li class="pagination-item-wide">
+      {% if item.reticencia %}
+      <span class="pagination-ellipsis" aria-hidden="true">…</span>
+      {% elif item.numero == pagina.number %}
+      <span id="pagina-{{ parametro }}-{{ item.numero }}-larga" class="pagination-link pagination-link-current" aria-current="page" aria-label="Página {{ item.numero }}" tabindex="-1">{{ item.numero }}</span>
+      {% else %}
+      {% querystring_pagina parametro item.numero as href_pagina %}
+      <a
+        id="pagina-{{ parametro }}-{{ item.numero }}-larga"
+        class="pagination-link"
+        href="{{ href_pagina }}{% if ancora %}#{{ ancora }}{% endif %}"
+        aria-label="Página {{ item.numero }}"
+        {% if htmx_alvo %}
+        hx-get="{{ href_pagina }}"
+        hx-target="{{ htmx_alvo }}"
+        hx-push-url="true"
+        hx-indicator="{{ htmx_indicador }}"
+        {% endif %}
+      >{{ item.numero }}</a>
+      {% endif %}
     </li>
-    <li>
+    {% endfor %}
+    {% intervalo_paginas pagina 1 as paginas_compacta %}
+    {% for item in paginas_compacta %}
+    <li class="pagination-item-compact">
+      {% if item.reticencia %}
+      <span class="pagination-ellipsis" aria-hidden="true">…</span>
+      {% elif item.numero == pagina.number %}
+      <span id="pagina-{{ parametro }}-{{ item.numero }}-compacta" class="pagination-link pagination-link-current" aria-current="page" aria-label="Página {{ item.numero }}" tabindex="-1">{{ item.numero }}</span>
+      {% else %}
+      {% querystring_pagina parametro item.numero as href_pagina %}
+      <a
+        id="pagina-{{ parametro }}-{{ item.numero }}-compacta"
+        class="pagination-link"
+        href="{{ href_pagina }}{% if ancora %}#{{ ancora }}{% endif %}"
+        aria-label="Página {{ item.numero }}"
+        {% if htmx_alvo %}
+        hx-get="{{ href_pagina }}"
+        hx-target="{{ htmx_alvo }}"
+        hx-push-url="true"
+        hx-indicator="{{ htmx_indicador }}"
+        {% endif %}
+      >{{ item.numero }}</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+    <li class="pagination-item-next">
       {% if pagina.has_next %}
       {% querystring_pagina parametro pagina.next_page_number as href_proxima %}
       <a
@@ -86,4 +175,5 @@ o inclui três vezes, uma por seção, cada uma com um `parametro` diferente.
       {% endif %}
     </li>
   </ul>
+  {% endif %}
 </nav>
