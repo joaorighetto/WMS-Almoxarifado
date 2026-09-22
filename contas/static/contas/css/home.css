@@ -40,10 +40,16 @@
   margin: 0;
 }
 
+/* Links condicionais por papel (ex.: "Importar catálogo", 001) — mesma
+   distância vertical do texto de status que "Sair" já usa. */
+.home-actions {
+  margin-top: var(--space-6);
+}
+
 /* "Sair" é uma ação secundária desta tela, não a ação primária — mantém distância
    visual do texto de status para não parecer parte da mesma frase. */
 .home-logout-form {
-  margin-top: var(--space-6);
+  margin-top: var(--space-4);
 }
 
 @media (min-width: 480px) {

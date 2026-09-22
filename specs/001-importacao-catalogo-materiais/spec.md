@@ -55,6 +55,15 @@ de recomposição, que produz exatamente 22 campos em todos os 1588 registros.
   comportamento desta feature — proibição de criação manual, regras de saldo/divergência, histórico
   de execuções e não normalização de unidade de medida permanecem exatamente como especificados.
 
+### Sessão 2026-09-21 — busca por descrição
+
+- **Busca por palavras soltas**: a busca por descrição deixa de exigir um trecho contínuo. O termo é
+  separado em palavras e um material é listado quando sua descrição contém **todas** elas, em
+  qualquer ordem, cada uma podendo ser parcial, sem diferenciar maiúsculas nem acentuação (FR-040;
+  US2, cenário 2). Decisão do dono do produto durante a implementação da US2: operadores digitam
+  termos como "valvula registro" para "Válvula de Registro". Não altera nenhum outro comportamento
+  da consulta (busca por código continua exata e completa, FR-039).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Realizar a carga inicial do catálogo (Priority: P1)
@@ -127,8 +136,9 @@ que foi importado.
 1. **Given** o catálogo carregado, **When** o operador informa o código `000.000.002` na busca por
    código, **Then** o material correspondente é exibido com descrição, unidade, classificação,
    saldo e detalhamento.
-2. **Given** o catálogo carregado, **When** o operador busca por um trecho da descrição, **Then**
-   são listados todos os materiais cuja descrição contém aquele trecho, cada um com seu próprio
+2. **Given** o catálogo carregado, **When** o operador busca por uma ou mais palavras da descrição,
+   inteiras ou parciais e em qualquer ordem (ex.: `valvula reg` para "Válvula de Registro"), **Then**
+   são listados todos os materiais cuja descrição contém todas essas palavras, cada um com seu próprio
    código.
 3. **Given** uma busca que não encontra nenhum material, **When** o resultado é apresentado,
    **Then** o sistema exibe explicitamente o estado de ausência de resultados, e não uma lista
@@ -342,8 +352,11 @@ sobrescrito e que a divergência aparece listada.
 #### Consulta do catálogo
 
 - **FR-039**: O sistema DEVE permitir localizar um material informando o `CADPRO` exato e completo.
-- **FR-040**: O sistema DEVE permitir localizar materiais por trecho da descrição principal, sem
-  diferenciar maiúsculas de minúsculas nem acentuação.
+- **FR-040**: O sistema DEVE permitir localizar materiais por palavras da descrição principal: o termo
+  informado é separado em palavras, e um material é localizado quando sua descrição contém todas
+  elas, em qualquer ordem, cada uma inteira ou parcial, sem diferenciar maiúsculas de minúsculas nem
+  acentuação. *Emenda de 2026-09-21: substitui a busca por trecho contínuo; decisão do dono do
+  produto (Clarifications, sessão 2026-09-21).*
 - **FR-041**: O sistema DEVE exibir, no resultado da consulta, o código, a descrição principal, a
   unidade de medida, a classificação recebida, o saldo e o detalhamento técnico do material.
 - **FR-042**: O sistema DEVE paginar os resultados da consulta, sem carregar o catálogo inteiro de
@@ -475,8 +488,9 @@ Invariantes de `docs/domain/invariants-matrix.md` que esta feature preserva:
   únicos que podem vir vazios.
 - A comparação de saldo na reexecução considera divergente qualquer diferença numérica, sem
   tolerância, já que a precisão decimal é preservada dos dois lados.
-- A busca por descrição é por correspondência parcial, ignorando maiúsculas, minúsculas e
-  acentuação, por ser o comportamento esperado em busca operacional.
+- A busca por descrição é por palavras, cada uma com correspondência parcial, exigindo todas as
+  palavras em qualquer ordem e ignorando maiúsculas, minúsculas e acentuação, por ser o
+  comportamento esperado em busca operacional (FR-040, emenda de 2026-09-21).
 - O catálogo tem porte de milhares a dezenas de milhares de materiais, compatível com um
   almoxarifado de órgão público estadual.
 - A exclusão física de materiais, execuções, exceções e divergências não é prevista, em

@@ -1,0 +1,23 @@
+{% comment %}
+Feedback de `django.contrib.messages` (envio, prévia, confirmação, cancelamento e
+detalhe) — DESIGN.md → Components → Alert. Cada mensagem permanece visível até a
+próxima navegação (nunca some sozinha) e nunca é usada como toast para um resultado
+que já é visível pela própria mudança de tela.
+
+Django emite `message.tags == "error"` para `messages.error(...)`, mas o primitivo de
+Alert usa `alert-danger` (DESIGN.md → Colors → Estados semânticos). O mapeamento fica
+neste partial em vez de `MESSAGE_TAGS` (settings) para manter a mudança restrita aos
+arquivos desta task.
+{% endcomment %}
+{% if messages %}
+<div class="catalogo-messages">
+  {% for message in messages %}
+  <div
+    class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}"
+    role="alert"
+  >
+    <p>{{ message }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

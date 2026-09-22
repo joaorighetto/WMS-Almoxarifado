@@ -1,0 +1,89 @@
+{% load catalogo_extras %}
+{% comment %}
+Paginação (DESIGN.md → Components → Pagination; `static/css/components.css`).
+
+Parâmetros esperados:
+- `pagina`: um `Page` de `django.core.paginator.Paginator`.
+- `parametro`: nome do parâmetro de query string (ex.: "pagina_excecoes").
+- `rotulo`: texto de `aria-label` do `<nav>` (ex.: "Paginação de exceções").
+
+Parâmetros opcionais:
+- `rotulo_item`: substantivo do total, para o resumo dizer "N <rotulo_item>(s)
+  no total" em vez de só "N no total" (usado pela consulta do catálogo, com
+  `rotulo_item="material"`).
+- `htmx_alvo`/`htmx_indicador`: quando os dois são passados, Anterior/Próxima
+  viram atualização HTMX parcial (`hx-get`/`hx-target`/`hx-push-url`/
+  `hx-indicator`) em vez de navegação de página inteira — usado pela consulta
+  do catálogo, cujo `#resultados-consulta` já é atualizado via HTMX no envio
+  do formulário de filtro. Sem esses parâmetros, os links são navegação
+  normal (usado no detalhe da execução, na prévia e no histórico).
+- `ancora`: id de seção (ex.: "divergencias") acrescentado como fragmento
+  (`#ancora`) só ao `href` de navegação normal (revisão do gate visual,
+  achado P1) — paginar uma seção não joga mais o usuário para o topo da
+  página; ele volta à própria seção. Não se aplica a `hx-get` (que já é uma
+  troca parcial, sem recarregar/rolar a página).
+
+Só Anterior/Próxima + indicador da página atual — sem lista de todos os
+números de página, para continuar utilizável mesmo com muitas páginas (ex.:
+milhares de materiais). Página atual e itens desabilitados usam `<span>`,
+nunca `<a>`, e não dependem só de cor (peso + borda +
+`aria-current`/`aria-disabled`).
+
+`href`/`hx-get` usam a tag `querystring_pagina` (`catalogo/templatetags/catalogo_extras.py`):
+substitui só `parametro` na querystring atual da requisição, preservando os
+demais parâmetros — inclusive os de outras seções paginadas na mesma página
+(revisão T051, achado P3) e os filtros da consulta.
+
+`id` de Anterior/Próxima é derivado de `parametro`
+(`pagina-anterior-{{ parametro }}`/`pagina-proxima-{{ parametro }}`): (a)
+permanece estável entre trocas HTMX, o que permite ao htmx restaurar o foco
+do teclado após o swap (revisão T051, achado P3); (b) continua único quando
+o parcial aparece mais de uma vez na mesma página — `execucao_detalhe.html`
+o inclui três vezes, uma por seção, cada uma com um `parametro` diferente.
+{% endcomment %}
+<nav class="pagination" aria-label="{{ rotulo }}">
+  <p class="pagination-summary">
+    Página {{ pagina.number }} de {{ pagina.paginator.num_pages }} — {{ pagina.paginator.count }}{% if rotulo_item %} {{ rotulo_item }}{{ pagina.paginator.count|pluralize:"s" }}{% endif %} no total
+  </p>
+  <ul class="pagination-list">
+    <li>
+      {% if pagina.has_previous %}
+      {% querystring_pagina parametro pagina.previous_page_number as href_anterior %}
+      <a
+        id="pagina-anterior-{{ parametro }}"
+        class="pagination-link"
+        href="{{ href_anterior }}{% if ancora %}#{{ ancora }}{% endif %}"
+        {% if htmx_alvo %}
+        hx-get="{{ href_anterior }}"
+        hx-target="{{ htmx_alvo }}"
+        hx-push-url="true"
+        hx-indicator="{{ htmx_indicador }}"
+        {% endif %}
+      >Anterior</a>
+      {% else %}
+      <span id="pagina-anterior-{{ parametro }}" class="pagination-link pagination-link-disabled" aria-disabled="true">Anterior</span>
+      {% endif %}
+    </li>
+    <li>
+      <span class="pagination-link pagination-link-current" aria-current="page">{{ pagina.number }}</span>
+    </li>
+    <li>
+      {% if pagina.has_next %}
+      {% querystring_pagina parametro pagina.next_page_number as href_proxima %}
+      <a
+        id="pagina-proxima-{{ parametro }}"
+        class="pagination-link"
+        href="{{ href_proxima }}{% if ancora %}#{{ ancora }}{% endif %}"
+        {% if htmx_alvo %}
+        hx-get="{{ href_proxima }}"
+        hx-target="{{ htmx_alvo }}"
+        hx-push-url="true"
+        hx-indicator="{{ htmx_indicador }}"
+        {% endif %}
+      >Próxima</a>
+      {% else %}
+      <span id="pagina-proxima-{{ parametro }}" class="pagination-link pagination-link-disabled" aria-disabled="true">Próxima</span>
+      {% endif %}
+    </li>
+  </ul>
+</nav>

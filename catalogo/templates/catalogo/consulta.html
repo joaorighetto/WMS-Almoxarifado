@@ -1,0 +1,96 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% block title %}Consulta do catálogo — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalogo/css/catalogo.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="catalogo-page">
+  <p class="catalogo-back-link"><a href="{% url 'home' %}">&larr; Início</a></p>
+
+  {% include "catalogo/_mensagens.html" %}
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Consulta do catálogo</h1>
+      <p class="page-header-description">
+        Localize um material pelo código completo (CADPRO) ou por um trecho da descrição.
+      </p>
+    </div>
+  </header>
+
+  {% comment %}
+  `hx-on` cobre falha de rede/5xx sem arquivo JS próprio (contrato de T035): os
+  eventos `htmx:sendError`/`htmx:responseError` disparados pelo formulário ou por
+  qualquer link de paginação (dentro de `#resultados-consulta`, descendente desta
+  seção) sobem por bubbling até aqui. Em erro, o HTMX não troca `#resultados-consulta`
+  (só troca em 2xx) — os resultados anteriores continuam visíveis e o alerta aparece
+  junto deles.
+  {% endcomment %}
+  <section
+    class="catalogo-section"
+    hx-on::before-request="document.getElementById('resultados-erro-rede').hidden = true"
+    hx-on::send-error="document.getElementById('resultados-erro-rede').hidden = false"
+    hx-on::response-error="document.getElementById('resultados-erro-rede').hidden = false"
+  >
+    <form
+      method="get"
+      class="filter-bar"
+      hx-get="{% url 'catalogo:consulta' %}"
+      hx-target="#resultados-consulta"
+      hx-push-url="true"
+      hx-indicator="#resultados-indicador"
+    >
+      <div id="campo-codigo" class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}">
+        <label for="{{ form.codigo.id_for_label }}">Código (CADPRO)</label>
+        {{ form.codigo }}
+        {% if form.codigo.errors %}
+        <p class="field-error">{{ form.codigo.errors.0 }}</p>
+        {% else %}
+        <p class="field-hint">Formato completo XXX.YYY.ZZZ.</p>
+        {% endif %}
+      </div>
+      <div class="field filter-bar-field">
+        <label for="{{ form.descricao.id_for_label }}">Descrição</label>
+        {{ form.descricao }}
+      </div>
+      <div class="filter-bar-actions">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        {% comment %}
+        Navegação normal (sem `hx-get`), de propósito (revisão T051, achado
+        P2): o formulário de filtros fica fora de `#resultados-consulta` (o
+        `hx-target` do envio), então uma atualização HTMX aqui só trocaria os
+        resultados, deixando "Buscar" reaplicar um filtro que os campos, sem
+        recarregar, ainda mostrariam preenchido. Uma navegação cheia para a
+        URL sem querystring recarrega a página inteira já limpa — filtro e
+        resultado sempre consistentes entre si, sem JS extra para limpar os
+        campos manualmente.
+        {% endcomment %}
+        <a href="{% url 'catalogo:consulta' %}" class="btn btn-secondary">Limpar</a>
+      </div>
+    </form>
+
+    <div class="catalogo-consulta-status">
+      <p id="resultados-indicador" class="htmx-indicator loading-indicator" role="status">
+        <span class="loading-indicator-spinner" aria-hidden="true"></span>
+        Carregando resultados…
+      </p>
+    </div>
+
+    <div id="resultados-erro-rede" class="alert alert-danger" role="alert" hidden>
+      <p>Não foi possível atualizar os resultados agora. Verifique a conexão e tente novamente.</p>
+    </div>
+
+    <div id="resultados-consulta">
+      {% include "catalogo/_resultados_consulta.html" %}
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/htmx/htmx-2.0.10.min.js' %}" defer></script>
+{% endblock %}

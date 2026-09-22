@@ -24,6 +24,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "contas",
+    "django.contrib.postgres",
+    "catalogo",
 ]
 
 MIDDLEWARE = [
@@ -102,3 +104,21 @@ AUTH_USER_MODEL = "contas.User"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
+
+# Logger dedicado à importação do catálogo (Constitution XIV). Não altera o
+# comportamento dos demais loggers do Django.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "catalogo.importacao": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}

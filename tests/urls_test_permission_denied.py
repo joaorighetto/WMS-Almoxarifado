@@ -19,6 +19,9 @@ Expõe:
 - as rotas `login`/`home` de `contas.urls` (via `include`), porque
   `RetornoPosLoginMiddleware.process_exception()` redireciona para `home`, e
   o próprio fluxo de autenticação usado pelos testes precisa de `login`.
+- as rotas de `catalogo.urls` (namespace `catalogo`), porque `home.html`
+  resolve os links condicionais do catálogo (`catalogo:consulta` para todo
+  `ROLE-REQUESTER`, feature 001) ao renderizar a Home.
 """
 
 from django.contrib.auth.decorators import login_required
@@ -40,5 +43,6 @@ def destino_autorizado(request):
 urlpatterns = [
     path("destino-nao-autorizado/", destino_nao_autorizado, name="destino_nao_autorizado"),
     path("destino-autorizado/", destino_autorizado, name="destino_autorizado"),
+    path("catalogo/", include("catalogo.urls")),
     path("", include("contas.urls")),
 ]

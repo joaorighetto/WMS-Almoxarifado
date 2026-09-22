@@ -1,0 +1,319 @@
+/*
+ * Catálogo — composição das telas de importação (T029)
+ *
+ * Consome exclusivamente os tokens de static/css/tokens.css e os primitivos de
+ * static/css/components.css (Page Header, File Upload, Table, Badge, Pagination,
+ * Empty State, Alert, Buttons, Inputs/Fields) — nenhum deles é redefinido aqui.
+ *
+ * Superfícies operacionais densas do almoxarifado são desktop-first
+ * (DESIGN.md → Layout): páginas ocupam a largura disponível (sem contenção estreita
+ * de página de marketing), separadas por estrutura/divisor/spacing — nunca cards
+ * empilhados (DESIGN.md → Layout → Estrutura de página; Do's and Don'ts).
+ */
+
+.catalogo-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+/* Envio é um formulário simples, não uma superfície densa de comparação — largura
+   mais contida favorece leitura, sem virar "card" (sem borda/superfície própria). */
+.catalogo-page-narrow {
+  max-width: 640px;
+}
+
+.catalogo-back-link {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-meta);
+}
+
+.catalogo-back-link a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.catalogo-back-link a:hover {
+  text-decoration: underline;
+}
+
+.catalogo-messages {
+  margin-bottom: var(--space-2);
+}
+
+/* Seções separadas por divisor + spacing (nunca card empilhado) — a primeira não
+   recebe o divisor superior, já separada do page header por sua própria borda. */
+.catalogo-section {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.catalogo-section:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.catalogo-section-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-section-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+/* Resumo de totais: números como o elemento de maior peso da seção — hierarquia por
+   tamanho/peso, não por card ou cor (DESIGN.md → Typography; Elevation & Depth). */
+.catalogo-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: 0;
+}
+
+.catalogo-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--color-border);
+}
+
+.catalogo-summary-item:last-child {
+  padding-right: 0;
+  border-right: none;
+}
+
+.catalogo-summary-item dt {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.catalogo-summary-item dd {
+  margin: 0;
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* Detalhe secundário de um total (ex.: "N com alteração" dentro de "Atualizados") —
+   mesmo número em destaque, complemento em peso/tamanho menor e cor atenuada, nunca
+   um segundo total do mesmo peso visual (DESIGN.md → Typography → Hierarquia). */
+.catalogo-summary-detail {
+  margin-left: var(--space-1);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .catalogo-summary {
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .catalogo-summary-item {
+    flex: 1 1 40%;
+  }
+}
+
+/* "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
+   Rejeitados (revisão do gate visual, achado P2) — os cinco números tinham peso
+   idêntico e nenhuma relação declarada. Gap adicional detacha esse item do grupo que
+   soma entre si; a nota textual logo abaixo (`.catalogo-divergencia-nota`, FR-031)
+   declara a relação por extenso, sem depender só do espaçamento. */
+.catalogo-summary-item-separado {
+  margin-left: var(--space-4);
+}
+
+/* Metadados textuais da execução (quem, quando, arquivo) — mesma convenção de
+   rótulo muted acima do valor, sem função numérica comparável (sem tabular-nums). */
+.catalogo-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4) var(--space-6);
+  margin: 0;
+}
+
+.catalogo-meta dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.catalogo-meta dd {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* SHA-256 do arquivo: identificador técnico opaco, mesma convenção visual de
+   `.table-cell-code` (DESIGN.md → Typography → Fonte de código/identificador). */
+.catalogo-hash {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+}
+
+.catalogo-muted {
+  color: var(--color-text-muted);
+}
+
+/* Nota de convenção de sinal/escopo acima da tabela de divergências (US4, FR-047) —
+   texto corrido, não um alerta de página: a divergência não exige ação nem é um erro
+   da importação, só informação para o chefe do almoxarifado avaliar depois. */
+.catalogo-divergencia-nota {
+  max-width: 72ch;
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+/* Diferença de saldo (revisão do gate visual, achado P2): a tabela de divergências
+   deixou de marcar toda linha com `table-row-error` + selo "Divergência" — ênfase
+   universal que se anulava e contradizia a própria nota acima, que já diz que isto
+   não é erro nem acionável aqui. O sinal (+/-, já no template) segue sendo o dado que
+   diferencia; peso tipográfico reforça sem introduzir uma segunda cor/selo
+   (DESIGN.md → The No Color-Only State Rule permite peso/posição como pista
+   estrutural, sem exigir texto redundante quando o significado já é inequívoco). */
+.catalogo-diferenca {
+  font-weight: var(--font-weight-semibold);
+}
+
+.catalogo-form-submit {
+  margin-top: var(--space-2);
+}
+
+.catalogo-confirmacao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+@media (max-width: 480px) {
+  .catalogo-confirmacao {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .catalogo-confirmacao .btn {
+    width: 100%;
+  }
+}
+
+/* Barra de confirmação persistente (revisão do gate visual, achado P1): a ação de
+   confirmar/cancelar a importação (impacto real, FR-044a) ficava só no fim de uma
+   página potencialmente longa (divergências + exceções). `position: sticky` (nunca
+   `fixed`) mantém a barra dentro do fluxo normal da página — plana, sem sombra
+   decorativa (DESIGN.md → Elevation & Depth) — mas grudada ao fim da viewport
+   enquanto o usuário rola pelas seções acima. A seção "Confirmação" no fim da página
+   permanece como estava; esta barra é o mesmo par de formulários, disponível mais
+   cedo, e não a substitui. */
+.catalogo-confirmacao-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-6);
+  padding: var(--space-3) 0;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 480px) {
+  .catalogo-confirmacao-sticky {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .catalogo-confirmacao-sticky .btn {
+    width: 100%;
+  }
+}
+
+/* Selo de estado no page header (revisão do gate visual, achado P1): a confirmação
+   da importação passou a emitir `messages.success`, mas a mensagem some na próxima
+   navegação — o selo "Concluída" no título permanece legível a qualquer momento. */
+.catalogo-page-header-badge {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}
+
+/*
+ * Consulta do catálogo (T035) — composição sobre os primitivos Filter Bar,
+ * Loading Indicator, Table, Pagination e Empty State (`static/css/components.css`).
+ */
+
+/* Linha entre a barra de filtros e a tabela: hospeda o Loading Indicator. Correção de
+   comentário (revisão do gate visual, achado menor 9e): a `min-height` abaixo reserva
+   24px permanentemente, de propósito — o indicador (`role="status"`, ver Loading
+   Indicator) só fica visível via opacidade durante a requisição, mas continua no
+   fluxo o tempo todo; sem essa altura mínima reservada, o restante da página
+   "pularia" verticalmente sempre que o indicador aparecesse/sumisse. */
+.catalogo-consulta-status {
+  min-height: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+/* Classificação recebida do SCPI (FR-023): nome legível em destaque, códigos brutos de
+   grupo/subgrupo como metadado abaixo — preserva os 4 campos (`grupo`, `subgrupo`,
+   `nome_grupo`, `nome_subgrupo`) na mesma coluna, sem inventar hierarquia que o SCPI não
+   forneceu. */
+.catalogo-classificacao-nome {
+  display: block;
+}
+
+.catalogo-classificacao-codigo {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+/* Detalhamento longo (`<details>`): truncamento só visual, nunca do dado — a versão
+   completa fica disponível sem JS, com \n preservado como quebra de linha visível
+   (`white-space: pre-line`, sem alterar o texto armazenado). */
+.catalogo-detalhamento summary {
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.catalogo-detalhamento summary::-webkit-details-marker {
+  color: var(--color-text-muted);
+}
+
+.catalogo-detalhamento-completo {
+  margin-top: var(--space-2);
+  white-space: pre-line;
+  color: var(--color-text);
+}
+
+.catalogo-descricao-cell {
+  white-space: pre-line;
+}
+
+/*
+ * Histórico de importações (T040) — cada linha leva ao detalhe da execução por um
+ * `<a>` real na coluna "Execução" (nunca só `onclick`/JS: o link funciona sozinho,
+ * sem nenhum script). Revisão do gate visual (achado menor 9c): a versão anterior
+ * estendia a área de clique por toda a linha com um `::after { inset: 0 }` — um
+ * overlay posicionado por cima de toda a linha, o que também bloqueava selecionar e
+ * copiar qualquer texto das outras células (data, matrícula, arquivo, totais).
+ * Substituído por `catalogo/static/catalogo/js/historico.js`: aprimoramento
+ * progressivo pontual que delega o clique em qualquer ponto da linha para o `<a>`
+ * já existente, e explicitamente ignora o clique quando há uma seleção de texto em
+ * andamento. Sem JS, a linha continua navegável — só pelo texto do link, como
+ * qualquer link normal, sem overlay bloqueando nada.
+ */
+.catalogo-historico-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.catalogo-historico-link:hover {
+  text-decoration: underline;
+}

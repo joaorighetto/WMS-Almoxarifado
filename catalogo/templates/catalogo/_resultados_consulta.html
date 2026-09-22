@@ -1,0 +1,134 @@
+{% comment %}
+Fragmento de resultados da consulta do catálogo (T035, US2).
+
+Renderizado sozinho quando a requisição traz `HX-Request` (view troca só o
+`innerHTML` de `#resultados-consulta`, em `catalogo/consulta.html`) e incluído
+dentro desse mesmo contêiner na renderização normal da página — por isso NÃO
+inclui `{% extends %}`, page header, filter bar ou qualquer layout de página
+(contrato de T035).
+
+Contexto (igual em página e fragmento, `views.ConsultaCatalogoView`):
+- `form`: usado aqui só para o texto do erro de `codigo` no estado de
+  validação — o campo em si é exibido na filter bar (`consulta.html`).
+- `codigo_invalido`: `bool`.
+- `pagina`: `Page` de `Material`, ou `None` quando `codigo_invalido`.
+
+Marcadores exigidos por `tests/test_catalogo_consulta.py` (contrato fixo,
+nunca classe CSS ou texto): `data-estado="codigo-invalido"` e
+`data-estado="vazio"`.
+
+Paginação via `catalogo/_paginacao.html` (revisão T051): os links Anterior/
+Próxima usam `hx-get`/`hx-target="#resultados-consulta"` (mesma região desta
+inclusão) para permanecer uma atualização parcial, e a tag `querystring_pagina`
+lê `request.GET` para preservar `codigo`/`descricao` — não precisa mais de um
+`querystring_filtros` calculado à parte na view.
+
+Revisão do gate visual (achado P2): um `codigo` fora do formato, vindo de uma
+troca HTMX (`veio_de_htmx`, `ConsultaCatalogoView.get`), não pode mais
+substituir a última tabela visível pelo alerta de erro — o usuário perde os
+resultados que estava lendo. Nesse caso a view acrescenta o cabeçalho de
+resposta `HX-Reswap: none`, então o htmx não troca `#resultados-consulta`
+usando o que está abaixo (o conteúdo desta região nem chega a importar); em
+vez disso, o bloco `#campo-codigo` — o mesmo `<div>` de `consulta.html`,
+fora desta região — é atualizado à parte por out-of-band swap
+(`hx-swap-oob`), marcando o campo com borda de erro (`.field-has-error`,
+`static/css/components.css`) e a mensagem de validação junto dele. O mesmo
+bloco também é emitido (revertendo para o estado normal) em toda resposta
+HTMX válida, para limpar um erro de uma tentativa anterior. Sem HTMX (navegação
+normal ou primeiro carregamento da página), o campo já é marcado inline por
+`consulta.html` — o alerta abaixo cobre só esse caso, quando não há nenhum
+resultado anterior na página para preservar.
+{% endcomment %}
+{% if veio_de_htmx %}
+<div
+  id="campo-codigo"
+  hx-swap-oob="true"
+  class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}"
+  {% if codigo_invalido %}data-estado="codigo-invalido"{% endif %}
+>
+  <label for="{{ form.codigo.id_for_label }}">Código (CADPRO)</label>
+  {{ form.codigo }}
+  {% if form.codigo.errors %}
+  <p class="field-error">{{ form.codigo.errors.0 }}</p>
+  {% else %}
+  <p class="field-hint">Formato completo XXX.YYY.ZZZ.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% if codigo_invalido %}
+{% if not veio_de_htmx %}
+<div class="alert alert-danger" role="alert" data-estado="codigo-invalido">
+  <p>{{ form.codigo.errors.0 }}</p>
+</div>
+{% endif %}
+{% elif pagina.object_list %}
+<div class="table-wrapper table-sticky-header">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Código (CADPRO)</th>
+        <th scope="col">Descrição</th>
+        <th scope="col">Unidade</th>
+        <th scope="col">Classificação (SCPI)</th>
+        <th scope="col" class="table-cell-numeric">Saldo</th>
+        <th scope="col">Detalhamento</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for material in pagina %}
+      <tr>
+        <td class="table-cell-code">{{ material.cadpro }}</td>
+        <td class="catalogo-descricao-cell">{{ material.descricao }}</td>
+        <td>{{ material.unidade }}</td>
+        <td>
+          {% if material.nome_grupo or material.nome_subgrupo %}
+          <span class="catalogo-classificacao-nome">{{ material.nome_grupo }}{% if material.nome_grupo and material.nome_subgrupo %} / {% endif %}{{ material.nome_subgrupo }}</span>
+          {% else %}
+          <span class="catalogo-classificacao-nome catalogo-muted">Sem classificação no SCPI</span>
+          {% endif %}
+          {% if material.grupo or material.subgrupo %}
+          <span class="catalogo-classificacao-codigo">{{ material.grupo }}{% if material.grupo and material.subgrupo %}.{% endif %}{{ material.subgrupo }}</span>
+          {% endif %}
+        </td>
+        <td class="table-cell-numeric">{{ material.saldo|floatformat:3 }}</td>
+        <td>
+          {% if material.detalhamento %}
+          <details class="catalogo-detalhamento">
+            <summary>{{ material.detalhamento|truncatechars:60 }}</summary>
+            <div class="catalogo-detalhamento-completo">{{ material.detalhamento }}</div>
+          </details>
+          {% else %}
+          <span class="catalogo-muted">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include "catalogo/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de materiais" rotulo_item="material" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+{% else %}
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Código (CADPRO)</th>
+        <th scope="col">Descrição</th>
+        <th scope="col">Unidade</th>
+        <th scope="col">Classificação (SCPI)</th>
+        <th scope="col" class="table-cell-numeric">Saldo</th>
+        <th scope="col">Detalhamento</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="table-empty-row" data-estado="vazio">
+        <td colspan="6">
+          <p class="empty-state-title">Nenhum material encontrado.</p>
+          <p class="empty-state-description">Ajuste o código ou a descrição e tente novamente.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}

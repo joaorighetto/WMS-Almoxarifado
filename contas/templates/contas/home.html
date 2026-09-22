@@ -13,6 +13,28 @@
     <h1 class="home-title">WMS-Almoxarifado</h1>
     <p class="home-status">Sessão autenticada como <strong>{{ user.matricula }}</strong>.</p>
 
+    {% if pode_consultar_catalogo or pode_importar_catalogo %}
+    {% comment %}
+    Links de conveniência — cada rota já verifica seu papel exigido no
+    servidor (o esconder do link não é a autorização, Constitution VI).
+    {% endcomment %}
+    <p class="home-actions">
+      {% if pode_consultar_catalogo %}
+      <a href="{% url 'catalogo:consulta' %}" class="btn btn-secondary">
+        Catálogo de materiais
+      </a>
+      {% endif %}
+      {% if pode_importar_catalogo %}
+      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-secondary">
+        Importar catálogo
+      </a>
+      <a href="{% url 'catalogo:historico' %}" class="btn btn-secondary">
+        Histórico de importações
+      </a>
+      {% endif %}
+    </p>
+    {% endif %}
+
     {% comment %}
     "Sair" é ação secundária desta tela (The One Accent Rule) — sem preenchimento de
     `primary`, para não competir com nenhuma ação principal do contexto.
