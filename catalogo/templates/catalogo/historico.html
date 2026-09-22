@@ -38,6 +38,36 @@ inteira como aprimoramento progressivo, sem o overlay CSS anterior que
 impedia selecionar texto das outras células; (d) a coluna "Execução"
 (`#{{ e.pk }}`) mostra o mesmo número usado como título em
 `execucao_detalhe.html`, ausente antes desta revisão.
+
+Correção do gate visual (P1, 2026-09-22): a coluna "Situação" usa o
+primitivo `.badge` (`static/css/components.css`) com texto explícito —
+"Sem rejeições" (`badge-success`) quando `total_rejeitados` é zero, "Com
+rejeições" (`badge-warning`) quando não é — derivado no template a partir
+de `total_rejeitados`, já anotado em `execucoes` (sem campo de modelo
+novo). O par de rótulos não diz "Concluída" porque esta tela só lista
+execuções confirmadas: a palavra não distinguiria nenhuma linha das outras
+e custava a largura que quebrava o próprio selo em três linhas dentro da
+borda. O número em si (célula "Rejeitados") continua a pista primária: quando diferente de zero, ganha peso semibold + `danger`
+(`.catalogo-historico-rejeitados-alerta`, `catalogo.css`) — nunca só a cor,
+nunca a linha inteira. Colunas numéricas passam pelo filtro
+`separador_milhar` (mesmo usado no resumo da paginação), para "8536" e
+"3.408 materiais" pararem de divergir na mesma tela.
+
+Posição/largura das colunas (mesma correção, achado "coluna nova não pode
+empurrar as demais para fora da tela"): "Situação" logo depois de
+"Execução" — a 1440px, a soma das 10 colunas excede em ~62px a área
+disponível dentro de `.table-wrapper` (medido), e encostar o estado bem no
+início da linha garante que ele — e os números de Recebidos/Inseridos/
+Atualizados/Rejeitados logo depois — fiquem visíveis sem rolagem; só
+"Divergências", ao final, cai na rolagem horizontal residual (mecanismo já
+existente do `.table-wrapper`, nunca conteúdo inacessível). É o nível 3 da
+regra de responsividade de tabela (DESIGN.md → Tabelas), preferível a
+ocultar coluna (nível 5) ou a espremer o selo de estado em três linhas. "Arquivo"
+ganhou `.catalogo-historico-arquivo` (`max-width: 15ch`, `catalogo.css`)
+para não ser o fiel-da-balança que a tabela toda usa como largura mínima —
+sem `overflow-wrap: anywhere`, de propósito: quebrar um nome de arquivo em
+qualquer ponto (ex. "MOTHERLODE.CSV" → "MOTHE"/"RLODE") era pior do que a
+rolagem residual que sobrou.
 {% endcomment %}
 
 {% block title %}Histórico de importações — WMS-Almoxarifado{% endblock %}
@@ -60,7 +90,7 @@ impedia selecionar texto das outras células; (d) a coluna "Execução"
       </p>
     </div>
     <div class="page-header-actions">
-      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-secondary">Importar catálogo</a>
+      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-primary">Importar catálogo</a>
     </div>
   </header>
 
@@ -71,9 +101,10 @@ impedia selecionar texto das outras células; (d) a coluna "Execução"
         <thead>
           <tr>
             <th scope="col">Execução</th>
+            <th scope="col">Situação</th>
             {% include "catalogo/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
             {% include "catalogo/_th_ordenavel.html" with coluna="executor" rotulo="Executada por" rotulo_acao="executor" %}
-            <th scope="col">Arquivo</th>
+            <th scope="col" class="catalogo-historico-arquivo">Arquivo</th>
             {% include "catalogo/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
             <th scope="col" class="table-cell-numeric">Inseridos</th>
             <th scope="col" class="table-cell-numeric">Atualizados</th>
@@ -87,14 +118,21 @@ impedia selecionar texto das outras células; (d) a coluna "Execução"
             <td>
               <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="catalogo-historico-link">#{{ e.pk }}</a>
             </td>
+            <td class="catalogo-historico-situacao">
+              {% if e.total_rejeitados %}
+              <span class="badge badge-warning">Com rejeições</span>
+              {% else %}
+              <span class="badge badge-success">Sem rejeições</span>
+              {% endif %}
+            </td>
             <td>{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
             <td>{{ e.executada_por.matricula }}</td>
-            <td>{{ e.nome_arquivo }}</td>
-            <td class="table-cell-numeric">{{ e.total_recebidos }}</td>
-            <td class="table-cell-numeric">{{ e.total_inseridos }}</td>
-            <td class="table-cell-numeric">{{ e.total_atualizados }}</td>
-            <td class="table-cell-numeric">{{ e.total_rejeitados }}</td>
-            <td class="table-cell-numeric">{{ e.total_divergencias }}</td>
+            <td class="catalogo-historico-arquivo">{{ e.nome_arquivo }}</td>
+            <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
+            <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
+            <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
+            <td class="table-cell-numeric{% if e.total_rejeitados %} catalogo-historico-rejeitados-alerta{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
+            <td class="table-cell-numeric">{{ e.total_divergencias|separador_milhar }}</td>
           </tr>
           {% endfor %}
         </tbody>

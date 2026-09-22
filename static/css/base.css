@@ -61,6 +61,31 @@ textarea {
   color: inherit;
 }
 
+/* Superfícies do navegador (revisão de presença visual, 2026-09-22): seleção de texto,
+   cursor de digitação e barra de rolagem vêm com o padrão do navegador, que não pertence
+   a design system nenhum. Ficam nos tokens do próprio sistema — `selected` já é o tom de
+   seleção documentado, e `primary` o único accent de ação. Não é decoração: numa tela
+   densa, o operador copia CADPRO e saldo o tempo todo. */
+::selection {
+  background-color: var(--color-selected);
+  color: var(--color-text);
+}
+
+input,
+textarea {
+  caret-color: var(--color-primary);
+}
+
+html {
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+/* Sublinhado afastado o suficiente para não cortar descendentes (g, p, q) — o link de
+   retorno e o cabeçalho ordenável sublinham no hover/foco. */
+a {
+  text-underline-offset: 0.2em;
+}
+
 /* Anel de foco visível em todo controle interativo — nunca removido, mesmo em uso por
    teclado (DESIGN.md → Colors → Estados semânticos → Foco; Buttons/Inputs → Foco). */
 :focus-visible {

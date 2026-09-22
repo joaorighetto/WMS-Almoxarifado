@@ -200,8 +200,13 @@ def test_historico_lista_da_mais_recente_para_a_mais_antiga_com_dados_essenciais
     # dos totais na mesma `<tr>`) até o início da linha seguinte.
     linha_recente = conteudo[posicao_recente:posicao_antiga]
     for total_esperado in ("22", "9", "13"):
+        # `class="table-cell-numeric"` pode vir seguida de um modificador
+        # (ex.: `catalogo-historico-rejeitados-alerta`, quando o total for
+        # "Rejeitados" e diferente de zero — revisão do gate visual, achado
+        # P1, 2026-09-22) — o teste verifica a classe base, não a ausência de
+        # outras.
         assert re.search(
-            rf'<td class="table-cell-numeric">\s*{total_esperado}\s*</td>', linha_recente
+            rf'<td class="table-cell-numeric[^"]*">\s*{total_esperado}\s*</td>', linha_recente
         ), f"total {total_esperado!r} não encontrado numa célula numérica da linha recente"
 
 

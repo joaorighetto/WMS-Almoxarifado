@@ -115,9 +115,9 @@
           {% for divergencia in divergencias_pagina %}
           <tr>
             <td class="table-cell-code">{{ divergencia.cadpro }}</td>
-            <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:3 }}</td>
-            <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:3 }}</td>
-            <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:3 }}</td>
+            <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:"-3" }}</td>
+            <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:"-3" }}</td>
+            <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:"-3" }}</td>
           </tr>
           {% endfor %}
         </tbody>

@@ -26,12 +26,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(var(--space-8) + var(--space-3));
+  min-height: var(--control-height);
   padding: var(--space-2) var(--space-4);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-medium);
+  /* Um link com aparência de botão (DESIGN.md → Buttons → Secundário/Ghost: "Nova
+     importação", "Limpar", atalhos da página inicial) herdava o sublinhado padrão do
+     `<a>` — na página inicial os quatro atalhos ficavam sublinhados dentro da própria
+     borda do botão. A forma do botão já é a affordance; o sublinhado pertence a link
+     textual (verificação visual, 2026-09-22). */
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -44,19 +50,37 @@
   color: var(--color-surface);
 }
 
+/* Estado pressionado da própria ação dominante — mesma família, um passo mais escuro
+   (DESIGN.md → Components → Buttons). Não é hover decorativo: nenhuma ação depende dele,
+   e em toque o botão simplesmente nunca entra neste estado. */
+.btn-primary:hover:not(:disabled),
+.btn-primary:active:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* Desabilitado (revisão de presença visual, 2026-09-22): o par anterior — fundo
+   `disabled` com rótulo em `surface` — dava 1,91:1 e apagava justamente o rótulo de
+   "Enviando…"/"Confirmando…", o estado em que o usuário mais precisa ler o botão.
+   Superfície clara + rótulo escuro sobe para 4,9:1 e continua obviamente inativo. */
 .btn-primary:disabled {
-  background-color: var(--color-disabled);
-  border-color: var(--color-disabled);
-  color: var(--color-surface);
+  background-color: var(--color-disabled-surface);
+  border-color: var(--color-disabled-surface);
+  color: var(--color-disabled-text);
   cursor: not-allowed;
 }
 
 /* Secundário/Ghost (DESIGN.md → Components → Buttons → Secundário/Ghost): borda ou
    texto em text/border, sem preenchimento de `primary` — nunca compete com a ação
-   primária do mesmo contexto. */
+   primária do mesmo contexto.
+   Correção do gate visual (P1, 2026-09-22): contra o canvas mais escuro introduzido
+   nesta mesma revisão, a borda `border` media 1,15:1 — praticamente invisível fora de
+   uma superfície branca (ex.: /catalogo/importacao/, que não tem nenhuma). Fundo
+   `surface` explícito + `border-frame` (a mesma moldura da tabela) fazem o botão ler
+   como controle sobre qualquer um dos dois fundos. */
 .btn-secondary {
-  background-color: transparent;
-  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  border-color: var(--color-border-frame);
   color: var(--color-text);
 }
 
@@ -66,9 +90,13 @@
   background-color: var(--color-surface-subtle);
 }
 
+/* Desabilitado (correção do gate visual, P1, 2026-09-22): unificado com
+   `.btn-primary:disabled` e `.pagination-link-disabled` — `--color-disabled` media
+   1,57:1 contra o canvas; `--color-disabled-text` já resolvia o mesmo problema no
+   botão primário e passa a ser o único token de rótulo desabilitado do sistema. */
 .btn-secondary:disabled {
   border-color: var(--color-disabled);
-  color: var(--color-disabled);
+  color: var(--color-disabled-text);
   cursor: not-allowed;
 }
 
@@ -92,30 +120,36 @@
 }
 
 .alert-danger {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-danger);
+  background-color: var(--color-danger-surface);
+  border: 1px solid var(--color-danger-border);
   color: var(--color-danger);
 }
 
 /* Variantes de warning/info/success (DESIGN.md → Components → Alert: "informação,
    sucesso, warning ou erro") — mesma convenção visual de `.alert-danger` acima.
    Acrescentadas em T029: `django.contrib.messages` já emite os três níveis
-   (info/warning/error) nas views de importação, e só `alert-danger` existia até aqui. */
+   (info/warning/error) nas views de importação, e só `alert-danger` existia até aqui.
+
+   Revisão de presença visual (2026-09-22): os quatro níveis dividiam o mesmo fundo
+   `surface-subtle` e só se distinguiam pela cor de um texto de 14px — numa tela densa,
+   quatro retângulos cinza idênticos. Cada nível passa a ter superfície e borda da
+   própria família semântica; o texto explícito continua sendo o que carrega o
+   significado (The No Color-Only State Rule). */
 .alert-warning {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-warning);
+  background-color: var(--color-warning-surface);
+  border: 1px solid var(--color-warning-border);
   color: var(--color-warning);
 }
 
 .alert-info {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-info);
+  background-color: var(--color-info-surface);
+  border: 1px solid var(--color-info-border);
   color: var(--color-info);
 }
 
 .alert-success {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-success);
+  background-color: var(--color-success-surface);
+  border: 1px solid var(--color-success-border);
   color: var(--color-success);
 }
 
@@ -143,7 +177,7 @@
 .field input[type="text"],
 .field input[type="password"] {
   width: 100%;
-  min-height: calc(var(--space-8) + var(--space-3));
+  min-height: var(--control-height);
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -208,9 +242,12 @@
  *     </table>
  *   </div>
  * ------------------------------------------------------------------- */
+/* Moldura externa em `border-frame`, um passo mais firme que o divisor interno das
+   linhas: a estrutura da tabela aparece antes do conteúdo, e a superfície branca
+   assenta sobre o canvas sem nenhuma sombra (DESIGN.md → Elevation & Depth). */
 .table-wrapper {
   overflow-x: auto;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-frame);
   border-radius: var(--radius-sm);
 }
 
@@ -223,28 +260,31 @@
 
 .table th,
 .table td {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--table-cell-pad-y) var(--table-cell-pad-x);
   text-align: left;
   vertical-align: top;
   border-bottom: 1px solid var(--color-border);
 }
 
+/* Cabeçalho como rótulo, não como dado (revisão de presença visual, 2026-09-22):
+   menor, em caixa-alta com tracking e em `text-muted`, separado do corpo por uma borda
+   de 2px em `border-strong`. A inversão é deliberada — o dado passa a ser o elemento
+   mais escuro e mais pesado da tabela, que é a superfície de primeira classe do
+   produto. Rótulo curto é pré-requisito: acima de ~3 palavras, caixa-alta atrapalha a
+   leitura (DESIGN.md → Components → Table). */
 .table thead th {
+  font-size: var(--font-size-table-header);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
   background-color: var(--color-surface-subtle);
   vertical-align: middle;
+  border-bottom: 2px solid var(--color-border-strong);
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
-}
-
-@media (pointer: coarse) {
-  .table th,
-  .table td {
-    padding-block: var(--space-3);
-  }
 }
 
 /* Números comparáveis (saldo, quantidade): alinhados à direita, dígitos alinhados
@@ -395,7 +435,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--table-cell-pad-y) var(--table-cell-pad-x);
   color: inherit;
   font: inherit;
   font-weight: inherit;
@@ -422,11 +462,8 @@
   inset: 0;
 }
 
-@media (pointer: coarse) {
-  .table-sort-link {
-    padding-block: var(--space-3);
-  }
-}
+/* O alvo de toque do cabeçalho ordenável acompanha a densidade da célula, que já
+   cresce sob `pointer: coarse` no próprio token (`--table-cell-pad-y`, tokens.css). */
 
 /* Indicador de direção: um único SVG (duas setas, sempre a mesma forma nos
    três estados — nunca troca de glifo; revisão do gate visual, 2026-09-22:
@@ -470,8 +507,11 @@
 /* ---------------------------------------------------------------------
  * Status/Badge (DESIGN.md → Components → Status/Badge)
  * Rótulo curto de estado semântico — sempre com texto, nunca só uma pastilha colorida
- * (The No Color-Only State Rule). Mesma convenção visual de `.alert-danger` acima:
- * fundo `surface-subtle`, borda e texto no tom semântico.
+ * (The No Color-Only State Rule). Mesma convenção das famílias semânticas do Alert
+ * acima: superfície, borda e texto do próprio estado.
+ *
+ * O peso sobe de médio para semibold: a 12px, sobre superfície tingida, o peso médio
+ * lia como texto auxiliar e não como estado (revisão de presença visual, 2026-09-22).
  *
  * Uso: <span class="badge badge-success">Concluída</span>
  * ------------------------------------------------------------------- */
@@ -481,32 +521,32 @@
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-badge);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   white-space: nowrap;
 }
 
 .badge-success {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-success);
+  background-color: var(--color-success-surface);
+  border: 1px solid var(--color-success-border);
   color: var(--color-success);
 }
 
 .badge-warning {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-warning);
+  background-color: var(--color-warning-surface);
+  border: 1px solid var(--color-warning-border);
   color: var(--color-warning);
 }
 
 .badge-danger {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-danger);
+  background-color: var(--color-danger-surface);
+  border: 1px solid var(--color-danger-border);
   color: var(--color-danger);
 }
 
 .badge-info {
-  background-color: var(--color-surface-subtle);
-  border: 1px solid var(--color-info);
+  background-color: var(--color-info-surface);
+  border: 1px solid var(--color-info-border);
   color: var(--color-info);
 }
 
@@ -660,8 +700,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: var(--space-8);
-  min-height: var(--space-8);
+  min-width: var(--control-height-compact);
+  min-height: var(--control-height-compact);
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -680,8 +720,11 @@
   color: var(--color-primary);
 }
 
+/* Correção do gate visual (P1, 2026-09-22): mesmo token de rótulo desabilitado de
+   `.btn-primary:disabled`/`.btn-secondary:disabled` acima — `--color-disabled` media
+   1,57:1 contra o canvas (medido em "Anterior" desabilitado). */
 .pagination-link-disabled {
-  color: var(--color-disabled);
+  color: var(--color-disabled-text);
   border-color: var(--color-border);
   cursor: not-allowed;
   pointer-events: none;
@@ -704,15 +747,11 @@
 }
 
 /* Alvo de toque confortável em tablet/celular, sem alterar a densidade do desktop
-   (DESIGN.md → Layout → Touch) — mesmo recurso de `.table` acima. Só
-   `.pagination-link` (controle real); `.pagination-ellipsis` fica de fora
-   desde a revisão citada acima. */
-@media (pointer: coarse) {
-  .pagination-link {
-    min-width: calc(var(--space-8) + var(--space-3));
-    min-height: calc(var(--space-8) + var(--space-3));
-  }
-}
+   (DESIGN.md → Layout → Touch): `--control-height-compact` sobe para
+   `--control-height` sob `pointer: coarse` no próprio token (tokens.css) — a variação
+   por dispositivo mora num lugar só, não em cada componente. Só `.pagination-link`
+   (controle real) consome o token; `.pagination-ellipsis` fica de fora desde a
+   revisão citada acima. */
 
 /* Lista larga x compacta (revisão do gate visual, achado P2, 2026-09-22): a
    compacta (só um vizinho de cada lado, `on_each_side=1` — `_paginacao.html`)
@@ -794,13 +833,18 @@
   gap: var(--space-4);
   padding-bottom: var(--space-4);
   margin-bottom: var(--space-6);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-frame);
 }
 
+/* Título em 24px/bold com tracking negativo (revisão de presença visual, 2026-09-22):
+   a 20px/semibold ele empatava com o título de seção logo abaixo e a página não
+   declarava onde o operador estava. O tracking compensa o espaçamento da stack de
+   sistema, calibrado para corpo e frouxo neste tamanho. */
 .page-header-title {
   font-size: var(--font-size-page-title);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
   margin: 0;
 }
 

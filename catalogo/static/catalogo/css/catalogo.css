@@ -90,10 +90,16 @@
   color: var(--color-text-muted);
 }
 
+/* O número é o elemento de maior peso da seção (DESIGN.md → Resumo de totais). Até a
+   revisão de presença visual (2026-09-22) ele usava o tamanho do título de página e
+   empatava com ele; `--font-size-metric` é o passo acima, reservado a total de
+   operação — hierarquia por tipografia, sem card nem cor. */
 .catalogo-summary-item dd {
   margin: 0;
-  font-size: var(--font-size-page-title);
+  font-size: var(--font-size-metric);
   font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
   font-variant-numeric: tabular-nums;
   color: var(--color-text);
 }
@@ -180,6 +186,24 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* Moldura própria do formulário de envio (correção do gate visual, P1, 2026-09-22):
+   /catalogo/importacao/ era a única tela sem nenhuma superfície branca — o formulário
+   inteiro flutuava sobre o canvas, e "Escolher arquivo" (`.btn-secondary`, mesma
+   correção acima) lia como desabilitado ao lado do "Enviar arquivo" azul por falta de
+   qualquer referência de superfície ao redor. Mesma moldura da tabela (`surface` +
+   1px `border-frame`, sem sombra — Flat-By-Default), com o raio `md` que Shapes já
+   reserva a "containers isolados das telas de entrada e início" — esta é exatamente
+   essa tela. Isto substitui, para este formulário, a frase de Layout → Estrutura de
+   página que hoje diz que o envio do CSV não ganha "borda ou superfície própria":
+   escrita quando canvas e superfície ainda eram indistinguíveis (1,06:1); DESIGN.md
+   será atualizado por `impeccable document` em modo scan, não aqui. */
+.catalogo-form {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-4);
+}
+
 .catalogo-form-submit {
   margin-top: var(--space-2);
 }
@@ -219,9 +243,10 @@
   gap: var(--space-3);
   align-items: center;
   margin-top: var(--space-6);
-  padding: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  margin-inline: calc(var(--space-4) * -1);
   background-color: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-frame);
 }
 
 @media (max-width: 480px) {
@@ -316,4 +341,39 @@
 
 .catalogo-historico-link:hover {
   text-decoration: underline;
+}
+
+/* Rejeitados > 0 (correção do gate visual, P1, 2026-09-22): a execução #6 (5370 de
+   8536 rejeitados) era tipograficamente idêntica à #5 (0 rejeitados) — mesma família
+   `danger` do resto do sistema, aplicada ao próprio número, que continua sendo a
+   pista primária da célula. A coluna "Situação" (badge + texto) é o resumo em
+   palavras; isto é o reforço no dado. */
+.catalogo-historico-rejeitados-alerta {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-danger);
+}
+
+/* Coluna "Situação" (correção do gate visual, P1, 2026-09-22): o par de rótulos é
+   "Sem rejeições"/"Com rejeições", não "Concluída"/"Concluída com rejeições" — o
+   histórico só lista execuções confirmadas, então "Concluída" não distingue nada e
+   custava a largura que empurrava a tabela para fora da tela (medido: 135px além do
+   disponível a 1440px, com o badge quebrando em três linhas dentro da própria
+   borda). Os dois rótulos são paralelos, cabem numa linha e continuam texto
+   explícito — a cor nunca é a única pista (The No Color-Only State Rule). O
+   `white-space: nowrap` do primitivo basta; nenhuma regra própria é necessária. */
+
+/* Coluna "Arquivo" (correção do gate visual, P1, 2026-09-22): nome de arquivo já
+   quebra linha nos hifens do próprio nome (comportamento padrão do navegador,
+   sem `word-break`) — a coluna não precisa do espaço para caber o nome inteiro
+   numa linha só. `max-width` (em vez de deixar o layout `auto` da tabela usar o
+   maior nome de arquivo sem quebra como largura mínima) libera parte do espaço
+   que a nova coluna "Situação" passou a ocupar. Deliberadamente sem
+   `overflow-wrap: anywhere`: quebrar um nome de arquivo em qualquer ponto (ex.
+   "MOTHERLODE.CSV" → "MOTHE"/"RLODE") fica ilegível — pior do que a rolagem
+   horizontal residual que `.table-wrapper` já resolve estruturalmente (medido a
+   1440px: tabela cabe de 1221px para 1119px de conteúdo, contra 1086px
+   disponíveis — a diferença de 33px permanece na rolagem interna do wrapper,
+   nunca invisível/inacessível, e nunca estica a página). */
+.catalogo-historico-arquivo {
+  max-width: 15ch;
 }

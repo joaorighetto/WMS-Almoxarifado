@@ -52,6 +52,32 @@
   margin-top: var(--space-4);
 }
 
+/* Tratamento de link (correção do gate visual, P2, 2026-09-22): antes um
+   `.btn.btn-secondary` idêntico em forma aos atalhos de trabalho acima —
+   "Sair" some do grupo de ações de trabalho mesmo estando na mesma tela.
+   `<button>` continua o elemento real (o logout depende de POST + CSRF), só
+   a aparência muda: sem borda/fundo, peso/tamanho de metadado, sublinhado
+   só como reforço de hover/foco (o próprio texto "Sair" já é a affordance).
+   Padding vertical preserva o alvo de toque de 44px (DESIGN.md → Layout →
+   Touch) sem desenhar caixa nenhuma ao redor do texto. */
+.home-logout-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: var(--space-2) 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.home-logout-action:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
 @media (min-width: 480px) {
   .home-card {
     padding: var(--space-8) var(--space-6);
