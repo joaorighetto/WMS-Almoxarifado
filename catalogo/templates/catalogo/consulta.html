@@ -1,5 +1,5 @@
 {% extends "contas/base.html" %}
-{% load static %}
+{% load static catalogo_extras %}
 
 {% block title %}Consulta do catálogo — WMS-Almoxarifado{% endblock %}
 
@@ -44,7 +44,25 @@
       hx-push-url="true"
       hx-indicator="#resultados-indicador"
     >
-      <div id="campo-codigo" class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}">
+      {% comment %}
+      `campo_codigo` (template partial, Django 6) é declarado aqui, na
+      posição normal do formulário de filtros, e reaproveitado pelo partial
+      `resultados_consulta` abaixo — que emite uma segunda cópia, marcada
+      `oob=True`, via out-of-band swap (`hx-swap-oob`) sempre que uma troca
+      HTMX pelo cabeçalho de ordenação (dentro de `#resultados-consulta`,
+      fora deste `<form>`) muda o filtro `codigo`. `oob` (contexto do
+      partial) também controla o marcador `data-estado="codigo-invalido"`,
+      que só aparece na cópia OOB — na renderização normal da página, o
+      estado de "código inválido" já é comunicado pelo alerta emitido pelo
+      partial `resultados_consulta` (revisão do gate visual, achado P2).
+      {% endcomment %}
+      {% partialdef campo_codigo inline %}
+      <div
+        id="campo-codigo"
+        {% if oob %}hx-swap-oob="true"{% endif %}
+        class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}"
+        {% if oob and codigo_invalido %}data-estado="codigo-invalido"{% endif %}
+      >
         <label for="{{ form.codigo.id_for_label }}">Código (CADPRO)</label>
         {{ form.codigo }}
         {% if form.codigo.errors %}
@@ -53,10 +71,23 @@
         <p class="field-hint">Formato completo XXX.YYY.ZZZ.</p>
         {% endif %}
       </div>
+      {% endpartialdef %}
       <div class="field filter-bar-field">
         <label for="{{ form.descricao.id_for_label }}">Descrição</label>
         {{ form.descricao }}
       </div>
+      {% comment %}
+      Ordem vigente (FR-042a): campo oculto, não um filtro visível — carrega
+      a ordenação escolhida no cabeçalho da tabela para que uma nova busca a
+      preserve ("uma nova busca preserva a ordem escolhida"). `campo_ordem`
+      (partial) é mantido em sincronia por uma cópia OOB, emitida pelo
+      partial `resultados_consulta` sempre que a ordem muda via HTMX (os
+      links de ordenação ficam dentro de `#resultados-consulta`, fora deste
+      formulário).
+      {% endcomment %}
+      {% partialdef campo_ordem inline %}
+      <input type="hidden" name="ordem" id="campo-ordem" value="{{ ordem }}"{% if oob %} hx-swap-oob="true"{% endif %}>
+      {% endpartialdef %}
       <div class="filter-bar-actions">
         <button type="submit" class="btn btn-primary">Buscar</button>
         {% comment %}
@@ -78,6 +109,29 @@
         <span class="loading-indicator-spinner" aria-hidden="true"></span>
         Carregando resultados…
       </p>
+      {% comment %}
+      Anúncio da ordem vigente a leitor de tela (revisão do gate visual,
+      achado P1, 2026-09-22): a seta do cabeçalho e a borda inferior do `th`
+      vigente (`_th_ordenavel.html`) são pistas visuais — quem usa leitor de
+      tela e a coluna ordenada está fora da tela (celular) ou o próprio
+      cabeçalho não está em foco no momento não as percebe. `resultados_anuncio`
+      fica FORA de `#resultados-consulta` de propósito: esse contêiner é
+      trocado por inteiro a cada resposta HTMX (`hx-target`, innerHTML swap)
+      — um `aria-live` dentro dele seria recriado, não só atualizado, a cada
+      troca, e a maioria dos leitores de tela não anuncia um elemento que
+      acabou de ser inserido (só uma mudança de conteúdo dentro de um nó já
+      presente). Este parágrafo, fora da região trocada, permanece o mesmo
+      nó do início ao fim; o partial `resultados_consulta` só atualiza seu
+      texto via out-of-band swap (`hx-swap-oob="innerHTML"`, mesmo mecanismo
+      de `campo_ordem` acima), sempre que `veio_de_htmx` — inclusive quando a
+      ordem não muda (uma nova página, por exemplo), o que é aceitável: o
+      texto sai idêntico e a atualização de estado deste anúncio é só a
+      ordem, não o resto do resumo. `role="status"` substitui um
+      `aria-live` manual (mesmo recurso do indicador de carregamento acima).
+      {% endcomment %}
+      {% partialdef resultados_anuncio inline %}
+      <p id="resultados-anuncio"{% if oob %} hx-swap-oob="innerHTML"{% else %} class="visually-hidden" role="status"{% endif %}>Ordenado por {{ ordem|rotulo_ordenacao:ordenacao_rotulos }}.</p>
+      {% endpartialdef %}
     </div>
 
     <div id="resultados-erro-rede" class="alert alert-danger" role="alert" hidden>
@@ -85,7 +139,155 @@
     </div>
 
     <div id="resultados-consulta">
-      {% include "catalogo/_resultados_consulta.html" %}
+      {% comment %}
+      Partial de resultados da consulta do catálogo (T035, US2; template
+      partials, Django 6). `ConsultaCatalogoView` renderiza este mesmo
+      partial sozinho, como `"catalogo/consulta.html#resultados_consulta"`,
+      quando a requisição traz `HX-Request` (troca só o `innerHTML` de
+      `#resultados-consulta`); aqui, `inline`, ele é incluído dentro desse
+      mesmo contêiner na renderização normal da página inteira.
+
+      Contexto (igual nos dois casos, `views.ConsultaCatalogoView`):
+      `form`, `codigo_invalido` (`bool`), `pagina` (`Page` de `Material` ou
+      `None`), `veio_de_htmx` (`bool`), `ordem`, `ordenacao_rotulos`.
+
+      Marcadores exigidos por `tests/test_catalogo_consulta.py` (contrato
+      fixo, nunca classe CSS ou texto): `data-estado="codigo-invalido"` e
+      `data-estado="vazio"`.
+
+      Paginação via `catalogo/_paginacao.html` (revisão T051): os links
+      Anterior/Próxima usam `hx-get`/`hx-target="#resultados-consulta"`
+      (mesma região desta inclusão) para permanecer uma atualização parcial,
+      e a tag `querystring_pagina` lê `request.GET` para preservar
+      `codigo`/`descricao`.
+
+      Ordenação (FR-042a, emenda de 2026-09-22): os cabeçalhos de Código,
+      Descrição, Unidade, Classificação e Saldo são inclusões de
+      `catalogo/_th_ordenavel.html` (um link real por coluna, `aria-sort` na
+      coluna vigente, `htmx_alvo`/`htmx_indicador` apontando para esta mesma
+      região); Detalhamento não é ordenável e continua um `<th>` simples. A
+      coluna/direção vigente vem do contexto `ordem` (sempre presente, mesmo
+      com `codigo_invalido`). O estado `data-estado="vazio"` mantém
+      cabeçalhos simples — sem resultado a ordenar, não há ação de
+      ordenação a oferecer ali.
+
+      Como os links de ordenação do cabeçalho trocam só esta região via
+      HTMX, sem recarregar o formulário, este partial emite uma cópia OOB de
+      `campo_codigo`/`campo_ordem` (definidos acima, dentro do `<form>`) e de
+      `resultados_anuncio` (definido acima, fora desta região) — `{% partial %}`
+      com `oob=True` — sempre que `veio_de_htmx`, com os valores efetivos do
+      contexto.
+
+      A mesma frase (`ordem|rotulo_ordenacao:ordenacao_rotulos`) é passada a
+      `catalogo/_paginacao.html` como `ordem_texto`, para o resumo da
+      paginação dizer "· ordenado por saldo, decrescente" — só esta consulta
+      passa esse parâmetro (as demais listas que usam o mesmo parcial não
+      têm ordenação por coluna). `rotulo_item`/`rotulo_item_plural="material"`/
+      `"materiais"` evitam a regra frágil de `pluralize:"s"` sobre um
+      substantivo em português (produzia "materials").
+
+      Revisão do gate visual (achado P2): um `codigo` fora do formato, vindo
+      de uma troca HTMX (`veio_de_htmx`), não pode mais substituir a última
+      tabela visível pelo alerta de erro — o usuário perde os resultados que
+      estava lendo. Nesse caso a view acrescenta o cabeçalho de resposta
+      `HX-Reswap: none`, então o htmx não troca `#resultados-consulta`
+      usando o que está abaixo (o conteúdo desta região nem chega a
+      importar); em vez disso, a cópia OOB de `campo_codigo` é atualizada à
+      parte, marcando o campo com borda de erro (`.field-has-error`,
+      `static/css/components.css`) e a mensagem de validação junto dele. A
+      mesma cópia também é emitida (revertendo para o estado normal) em toda
+      resposta HTMX válida, para limpar um erro de uma tentativa anterior.
+      Sem HTMX (navegação normal ou primeiro carregamento da página), o
+      campo já é marcado inline pela cópia normal de `campo_codigo` acima —
+      o alerta abaixo cobre só esse caso, quando não há nenhum resultado
+      anterior na página para preservar.
+      {% endcomment %}
+      {% partialdef resultados_consulta inline %}
+      {% if veio_de_htmx %}
+      {% with oob=True %}
+      {% partial campo_codigo %}
+      {% partial campo_ordem %}
+      {% partial resultados_anuncio %}
+      {% endwith %}
+      {% endif %}
+      {% if codigo_invalido %}
+      {% if not veio_de_htmx %}
+      <div class="alert alert-danger" role="alert" data-estado="codigo-invalido">
+        <p>{{ form.codigo.errors.0 }}</p>
+      </div>
+      {% endif %}
+      {% elif pagina.object_list %}
+      <div class="table-wrapper table-sticky-header">
+        <table class="table">
+          <thead>
+            <tr>
+              {% include "catalogo/_th_ordenavel.html" with coluna="cadpro" rotulo="Código (CADPRO)" rotulo_acao="código (CADPRO)" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="descricao" rotulo="Descrição" rotulo_acao="descrição" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="unidade" rotulo="Unidade" rotulo_acao="unidade" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="classificacao" rotulo="Classificação (SCPI)" rotulo_acao="classificação" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="saldo" rotulo="Saldo" rotulo_acao="saldo" extra_class="table-cell-numeric" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              <th scope="col">Detalhamento</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for material in pagina %}
+            <tr>
+              <td class="table-cell-code">{{ material.cadpro }}</td>
+              <td class="catalogo-descricao-cell">{{ material.descricao }}</td>
+              <td>{{ material.unidade }}</td>
+              <td>
+                {% if material.nome_grupo or material.nome_subgrupo %}
+                <span class="catalogo-classificacao-nome">{{ material.nome_grupo }}{% if material.nome_grupo and material.nome_subgrupo %} / {% endif %}{{ material.nome_subgrupo }}</span>
+                {% else %}
+                <span class="catalogo-classificacao-nome catalogo-muted">Sem classificação no SCPI</span>
+                {% endif %}
+                {% if material.grupo or material.subgrupo %}
+                <span class="catalogo-classificacao-codigo">{{ material.grupo }}{% if material.grupo and material.subgrupo %}.{% endif %}{{ material.subgrupo }}</span>
+                {% endif %}
+              </td>
+              <td class="table-cell-numeric">{{ material.saldo|floatformat:3 }}</td>
+              <td>
+                {% if material.detalhamento %}
+                <details class="catalogo-detalhamento">
+                  <summary>{{ material.detalhamento|truncatechars:60 }}</summary>
+                  <div class="catalogo-detalhamento-completo">{{ material.detalhamento }}</div>
+                </details>
+                {% else %}
+                <span class="catalogo-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% include "catalogo/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de materiais" rotulo_item="material" rotulo_item_plural="materiais" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+      {% else %}
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Código (CADPRO)</th>
+              <th scope="col">Descrição</th>
+              <th scope="col">Unidade</th>
+              <th scope="col">Classificação (SCPI)</th>
+              <th scope="col" class="table-cell-numeric">Saldo</th>
+              <th scope="col">Detalhamento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-empty-row" data-estado="vazio">
+              <td colspan="6">
+                <p class="empty-state-title">Nenhum material encontrado.</p>
+                <p class="empty-state-description">Ajuste o código ou a descrição e tente novamente.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      {% endpartialdef %}
     </div>
   </section>
 </main>

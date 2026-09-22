@@ -1,15 +1,25 @@
 {% extends "contas/base.html" %}
-{% load static %}
+{% load static catalogo_extras %}
 
 {% comment %}
-Histórico de importações do catálogo (US3, FR-033–FR-037,
+Histórico de importações do catálogo (US3, FR-033–FR-037, FR-037a,
 `contracts/rotas-e-autorizacao.md` → "GET /catalogo/importacoes/").
 
 Versão final (T040) sobre `HistoricoImportacoesView` (ListView, `execucoes`
-paginado 20/página via `?pagina=`, `-concluida_em` já aplicado na queryset —
-da mais recente para a mais antiga). Reutiliza os mesmos primitivos de
-`execucao_detalhe.html`/`consulta.html`: Page Header, Table, Pagination e
-Empty State (`static/css/components.css`, `catalogo/static/catalogo/css/catalogo.css`).
+paginado 20/página via `?pagina=`; ordenação por coluna, FR-037a, padrão
+`-concluida_em`/`-pk` já aplicada na queryset). Reutiliza os mesmos
+primitivos de `execucao_detalhe.html`/`consulta.html`: Page Header, Table,
+Pagination e Empty State (`static/css/components.css`,
+`catalogo/static/catalogo/css/catalogo.css`).
+
+Ordenação por coluna (FR-037a, emenda de 2026-09-22, `OrdenacaoMixin`,
+`catalogo/ordenacao.py`): "Concluída em", "Executada por", "Recebidos",
+"Rejeitados" e "Divergências" usam `catalogo/_th_ordenavel.html`, sem
+`htmx_alvo`/`htmx_indicador` — o histórico é navegação normal de página
+inteira, sem troca parcial HTMX (diferente da consulta do catálogo).
+"Execução", "Arquivo", "Inseridos" e "Atualizados" continuam `<th>` simples,
+não ordenáveis. A ordem vigente também é dita em texto no resumo da
+paginação (`ordem_texto`, via `rotulo_ordenacao`) — mesmo padrão da consulta.
 
 Marcador exigido por `tests/test_catalogo_historico.py` (contrato fixo):
 `data-estado="vazio"` quando não houver nenhuma execução — mesma convenção de
@@ -46,7 +56,7 @@ impedia selecionar texto das outras células; (d) a coluna "Execução"
     <div>
       <h1 class="page-header-title">Histórico de importações</h1>
       <p class="page-header-description">
-        Execuções de importação do catálogo confirmadas, da mais recente para a mais antiga.
+        Execuções de importação do catálogo confirmadas.
       </p>
     </div>
     <div class="page-header-actions">
@@ -61,14 +71,14 @@ impedia selecionar texto das outras células; (d) a coluna "Execução"
         <thead>
           <tr>
             <th scope="col">Execução</th>
-            <th scope="col">Concluída em</th>
-            <th scope="col">Executada por</th>
+            {% include "catalogo/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
+            {% include "catalogo/_th_ordenavel.html" with coluna="executor" rotulo="Executada por" rotulo_acao="executor" %}
             <th scope="col">Arquivo</th>
-            <th scope="col" class="table-cell-numeric">Recebidos</th>
+            {% include "catalogo/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
             <th scope="col" class="table-cell-numeric">Inseridos</th>
             <th scope="col" class="table-cell-numeric">Atualizados</th>
-            <th scope="col" class="table-cell-numeric">Rejeitados</th>
-            <th scope="col" class="table-cell-numeric">Divergências</th>
+            {% include "catalogo/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
+            {% include "catalogo/_th_ordenavel.html" with coluna="divergencias" rotulo="Divergências" rotulo_acao="divergências" extra_class="table-cell-numeric" %}
           </tr>
         </thead>
         <tbody>
@@ -90,9 +100,7 @@ impedia selecionar texto das outras células; (d) a coluna "Execução"
         </tbody>
       </table>
     </div>
-    {% if is_paginated %}
-    {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" %}
-    {% endif %}
+    {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
     {% else %}
     <div class="empty-state" data-estado="vazio">
       <p class="empty-state-title">Nenhuma importação registrada.</p>

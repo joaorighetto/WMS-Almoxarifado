@@ -1,0 +1,105 @@
+{% load catalogo_extras %}
+{% comment %}
+Cabeçalho de coluna ordenável (FR-042a, DESIGN.md → Table — "Quando uma
+coluna for ordenável..."). Independente de tela — uma inclusão por coluna
+ordenável. Usado pelo partial `resultados_consulta` da consulta do catálogo
+(`consulta.html`, com `htmx_alvo`/`htmx_indicador`) e pelo histórico de
+importações (`historico.html`, FR-037a, sem `htmx_alvo`/`htmx_indicador` —
+navegação normal de página inteira).
+
+Parâmetros:
+- `coluna`: chave lógica aceita por `?ordem=` — uma chave de
+  `colunas_ordenacao` da view (`OrdenacaoMixin`, `catalogo/ordenacao.py`;
+  na consulta do catálogo: `cadpro`, `descricao`, `unidade`,
+  `classificacao`, `saldo`).
+- `rotulo`: texto visível do cabeçalho (ex. "Código (CADPRO)").
+- `rotulo_acao`: nome da coluna para o rótulo acessível do link (ex.
+  "código (CADPRO)"), sem repetir "Ordenar por" nem a direção — este
+  parcial monta a frase completa.
+- `extra_class` (opcional): classe extra no `<th>` (ex. `table-cell-numeric`
+  para Saldo).
+- `htmx_alvo`/`htmx_indicador` (opcionais, mesmo padrão de
+  `_paginacao.html`): quando os dois são passados, o link também dispara
+  uma troca HTMX parcial (`hx-get`/`hx-target`/`hx-push-url`/`hx-indicator`)
+  para o mesmo alvo já atualizado por filtros/paginação — usado pela
+  consulta do catálogo (`#resultados-consulta`/`#resultados-indicador`).
+  Sem esses parâmetros, o `<a>` é só navegação normal (sem `hx-get`).
+
+Herdados do contexto da inclusão, sem passagem explícita: `ordem` (ordenação
+efetiva resolvida pela view via `OrdenacaoMixin.resolver_ordenacao`) e
+`request` (usado por `querystring_ordenacao`).
+
+O `<a>` é navegação real (funciona sem JS) e, quando `htmx_alvo`/
+`htmx_indicador` são passados, também dispara a troca parcial via HTMX do
+mesmo alvo que o formulário de filtros e a paginação já atualizam. O nome
+acessível do link descreve a AÇÃO do clique
+("Ordenar por saldo, decrescente"), não o estado atual — o estado atual já é
+comunicado por `aria-sort` no `<th>`, pela borda inferior do `<th>` vigente e
+pela seta (SVG, `aria-hidden`, nunca a única pista de direção — DESIGN.md →
+The No Color-Only State Rule). A ordem vigente também é dita em texto no
+resumo da paginação (`_paginacao.html`, parâmetro `ordem_texto`) e num
+anúncio a leitor de tela (`#resultados-anuncio`, `consulta.html`) — os dois
+via `rotulo_ordenacao` (`catalogo_extras.py`), para continuar comunicada
+quando a coluna estiver fora da tela.
+
+Indicador de direção (revisão do gate visual, achado 2026-09-22: os glifos
+`⇅`/`▲`/`▼` vinham de fontes diferentes, com alinhamento e peso
+inconsistentes entre si). Um único SVG inline (duas setas, uma acima e uma
+abaixo, mesma forma nos três estados — nunca troca de glifo):
+- coluna não vigente: as duas setas neutras, cor `text-muted`
+  (`.table-sort-indicator` sem modificador);
+- coluna vigente: a seta da direção atual em `primary`, opaca
+  (`.table-sort-indicator-asc`/`-desc`, conforme a classe aplicada à seta
+  de cima/baixo) e a outra esmaecida (`opacity`) — ver
+  `static/css/components.css`.
+`aria-hidden="true"` no SVG: é reforço visual, nunca a única pista (a
+direção também está em `aria-sort` e no texto do resumo/anúncio acima).
+
+Seta colada ao rótulo + célula inteira clicável (revisão do gate visual,
+achado P2: a seta ia para a borda direita do `<th>` em rótulos de duas
+linhas — "Código (CADPRO)", "Classificação (SCPI)" — e o link só cobria
+37px de um `<th>` de 58px). `width: 100%` no link tinha esse efeito
+colateral porque largura percentual de filho de `<th>`/`<td>` em
+`table-layout: auto` entra num cálculo circular com a própria largura da
+coluna (o navegador ainda não sabe a largura do `<th>` ao resolver a do
+filho). A correção troca a estratégia: o link volta a ter largura natural
+(shrink-to-fit, rótulo + seta sempre adjacentes, em qualquer largura de
+coluna) e ganha um `::after` (`static/css/components.css`) posicionado
+`absolute; inset: 0` relativo ao `<th>` (`position: relative`, não ao
+próprio link) — um recurso padrão de expandir a área de clique de um link
+sem esticar seu conteúdo visível. O anel de foco (`:focus-visible`) continua
+contornando só o rótulo+seta, não a célula inteira — mais previsível para
+quem navega por teclado.
+
+`id="ordenar-{{ coluna }}"` é estável entre trocas HTMX, pelo mesmo motivo
+dos ids de Anterior/Próxima em `_paginacao.html` (revisão T051, achado P3):
+o htmx devolve o foco do teclado ao link ativado depois do swap, e quem
+ordena por teclado pode inverter a direção sem tabular desde o topo.
+{% endcomment %}
+{% querystring_ordenacao coluna as href %}
+{% with ordem_decrescente="-"|add:coluna %}
+<th
+  scope="col"
+  class="table-th-sortable{% if extra_class %} {{ extra_class }}{% endif %}"
+  {% if ordem == coluna %}aria-sort="ascending"{% elif ordem == ordem_decrescente %}aria-sort="descending"{% endif %}
+>
+  <a
+    id="ordenar-{{ coluna }}"
+    href="{{ href }}"
+    class="table-sort-link"
+    {% if htmx_alvo %}
+    hx-get="{{ href }}"
+    hx-target="{{ htmx_alvo }}"
+    hx-push-url="true"
+    hx-indicator="{{ htmx_indicador }}"
+    {% endif %}
+    aria-label="Ordenar por {{ rotulo_acao }}, {% if ordem == coluna %}decrescente{% else %}crescente{% endif %}"
+  >
+    {{ rotulo }}
+    <svg
+      class="table-sort-indicator{% if ordem == coluna %} table-sort-indicator-asc{% elif ordem == ordem_decrescente %} table-sort-indicator-desc{% endif %}"
+      width="8" height="10" viewBox="0 0 8 10" aria-hidden="true" focusable="false"
+    ><path class="table-sort-arrow-up" d="M4 0L8 4H0Z"/><path class="table-sort-arrow-down" d="M4 10L0 6H8Z"/></svg>
+  </a>
+</th>
+{% endwith %}

@@ -1,10 +1,12 @@
 """Testes da consulta do catálogo (T030 — US2, `PERM-MATERIAL-VIEW`).
 
 TDD: escrito antes de `ConsultaCatalogoForm`, `ConsultaCatalogoView`, da rota
-`catalogo:consulta` e dos templates `catalogo/consulta.html` /
-`catalogo/_resultados_consulta.html` (T032–T035, `tasks.md`). Este arquivo
-falha por inteiro até essas peças existirem (`NoReverseMatch`/`ImportError`,
-conforme a chamada) — esperado.
+`catalogo:consulta` e do template `catalogo/consulta.html` (T032–T035,
+`tasks.md`; o fragmento HTMX era originalmente um template próprio,
+`catalogo/_resultados_consulta.html` — desde o refactor de partials, Django
+6, é o partial `resultados_consulta`, declarado dentro do próprio
+`consulta.html`). Este arquivo falha por inteiro até essas peças existirem
+(`NoReverseMatch`/`ImportError`, conforme a chamada) — esperado.
 
 Cobre FR-023, FR-039–FR-043, SC-006, SC-007 (`spec.md`, US2) e o contrato
 `GET /catalogo/` de `contracts/rotas-e-autorizacao.md`. A matriz completa de
@@ -139,6 +141,42 @@ def _bulk_criar_materiais(execucao, quantidade, *, prefixo):
         )
         for indice in range(quantidade)
     ]
+    Material.objects.bulk_create(materiais)
+
+
+def _bulk_criar_muitos_materiais(execucao, quantidade, *, grupo_inicial):
+    """Como `_bulk_criar_materiais`, mas varia os dois primeiros segmentos do
+    CADPRO (formato fixo `XXX.YYY.ZZZ`, no máximo 999 por segmento) — só
+    `_bulk_criar_materiais` (um segmento fixo em "000") não alcança mais de
+    1000 materiais sem estourar `varchar(11)`. Usada só pelo teste do
+    separador de milhar (revisão do gate visual, achado "Mundo real",
+    2026-09-22), que precisa de mais de 999 materiais para exercitar
+    "1.234" em vez de "1234"."""
+    materiais = []
+    grupo = grupo_inicial
+    indice = 0
+    while indice < quantidade:
+        subgrupo = 0
+        while subgrupo < 1000 and indice < quantidade:
+            materiais.append(
+                Material(
+                    cadpro=f"{grupo:03d}.{subgrupo:03d}.001",
+                    descricao=f"Material milhar {indice}",
+                    descricao_busca=normalizar_para_busca(f"Material milhar {indice}"),
+                    unidade="UN",
+                    detalhamento="",
+                    grupo="",
+                    subgrupo="",
+                    nome_grupo="",
+                    nome_subgrupo="",
+                    saldo=Decimal("1.000"),
+                    saldo_inicial=Decimal("1.000"),
+                    execucao_origem=execucao,
+                )
+            )
+            subgrupo += 1
+            indice += 1
+        grupo += 1
     Material.objects.bulk_create(materiais)
 
 
@@ -406,6 +444,245 @@ def test_sem_filtro_lista_o_catalogo_ordenado_por_cadpro(client, requisitante, c
 
 
 # ---------------------------------------------------------------------------
+# Ordenação (FR-042a, emenda de 2026-09-22)
+# ---------------------------------------------------------------------------
+
+
+def _posicoes(conteudo, codigos):
+    return [conteudo.index(codigo) for codigo in codigos]
+
+
+@pytest.mark.parametrize("ordem_param, decrescente", [("cadpro", False), ("-cadpro", True)])
+def test_ordenacao_por_cadpro(client, requisitante, criar_material, ordem_param, decrescente):
+    criar_material(cadpro="000.009.001", descricao="A")
+    criar_material(cadpro="000.009.003", descricao="B")
+    criar_material(cadpro="000.009.002", descricao="C")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": ordem_param})
+
+    assert resposta.status_code == 200
+    assert resposta.context["ordem"] == ordem_param
+    codigos = ["000.009.001", "000.009.002", "000.009.003"]
+    if decrescente:
+        codigos = list(reversed(codigos))
+    posicoes = _posicoes(resposta.content.decode("utf-8"), codigos)
+    assert posicoes == sorted(posicoes)
+
+
+@pytest.mark.parametrize("ordem_param, decrescente", [("descricao", False), ("-descricao", True)])
+def test_ordenacao_por_descricao(client, requisitante, criar_material, ordem_param, decrescente):
+    criar_material(cadpro="000.010.001", descricao="Zebra")
+    criar_material(cadpro="000.010.002", descricao="Abacate")
+    criar_material(cadpro="000.010.003", descricao="Manga")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": ordem_param})
+
+    codigos = ["000.010.002", "000.010.003", "000.010.001"]  # Abacate, Manga, Zebra
+    if decrescente:
+        codigos = list(reversed(codigos))
+    posicoes = _posicoes(resposta.content.decode("utf-8"), codigos)
+    assert posicoes == sorted(posicoes)
+
+
+def test_ordenacao_por_descricao_ignora_acento_e_maiuscula(client, requisitante, criar_material):
+    """A ordenação por descrição usa `descricao_busca` (normalizado, sem
+    acento e em minúsculas): uma descrição acentuada/maiúscula ordena como se
+    já estivesse normalizada."""
+    criar_material(cadpro="000.011.001", descricao="Árvore")
+    criar_material(cadpro="000.011.002", descricao="banana")
+    criar_material(cadpro="000.011.003", descricao="Cachorro")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "descricao"})
+
+    posicoes = _posicoes(
+        resposta.content.decode("utf-8"),
+        ["000.011.001", "000.011.002", "000.011.003"],
+    )
+    assert posicoes == sorted(posicoes)
+
+
+@pytest.mark.parametrize("ordem_param, decrescente", [("unidade", False), ("-unidade", True)])
+def test_ordenacao_por_unidade(client, requisitante, criar_material, ordem_param, decrescente):
+    criar_material(cadpro="000.012.001", descricao="X", unidade="UN")
+    criar_material(cadpro="000.012.002", descricao="Y", unidade="KG")
+    criar_material(cadpro="000.012.003", descricao="Z", unidade="MT")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": ordem_param})
+
+    codigos = ["000.012.002", "000.012.003", "000.012.001"]  # KG, MT, UN
+    if decrescente:
+        codigos = list(reversed(codigos))
+    posicoes = _posicoes(resposta.content.decode("utf-8"), codigos)
+    assert posicoes == sorted(posicoes)
+
+
+@pytest.mark.parametrize(
+    "ordem_param, decrescente", [("classificacao", False), ("-classificacao", True)]
+)
+def test_ordenacao_por_classificacao(
+    client, requisitante, criar_material, ordem_param, decrescente
+):
+    """Classificação ordena por (nome do grupo, nome do subgrupo) juntos; em
+    decrescente os dois campos invertem como uma única ordenação lógica."""
+    criar_material(
+        cadpro="000.013.001", descricao="X", nome_grupo="Eletrico", nome_subgrupo="Fios"
+    )
+    criar_material(
+        cadpro="000.013.002", descricao="Y", nome_grupo="Eletrico", nome_subgrupo="Cabos"
+    )
+    criar_material(
+        cadpro="000.013.003", descricao="Z", nome_grupo="Hidraulico", nome_subgrupo="Canos"
+    )
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": ordem_param})
+
+    # Eletrico/Cabos, Eletrico/Fios, Hidraulico/Canos
+    codigos = ["000.013.002", "000.013.001", "000.013.003"]
+    if decrescente:
+        codigos = list(reversed(codigos))
+    posicoes = _posicoes(resposta.content.decode("utf-8"), codigos)
+    assert posicoes == sorted(posicoes)
+
+
+@pytest.mark.parametrize("ordem_param, decrescente", [("saldo", False), ("-saldo", True)])
+def test_ordenacao_por_saldo(client, requisitante, criar_material, ordem_param, decrescente):
+    criar_material(cadpro="000.014.001", descricao="X", saldo=Decimal("30.000"))
+    criar_material(cadpro="000.014.002", descricao="Y", saldo=Decimal("10.000"))
+    criar_material(cadpro="000.014.003", descricao="Z", saldo=Decimal("20.000"))
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": ordem_param})
+
+    codigos = ["000.014.002", "000.014.003", "000.014.001"]  # 10, 20, 30
+    if decrescente:
+        codigos = list(reversed(codigos))
+    posicoes = _posicoes(resposta.content.decode("utf-8"), codigos)
+    assert posicoes == sorted(posicoes)
+
+
+def test_ordenacao_desempata_por_cadpro_estavel_entre_paginas(client, requisitante, execucao):
+    """Materiais empatados na coluna ordenada (mesma `unidade` para todos)
+    precisam ficar em ordem de `cadpro` — sem desempate estável, a paginação
+    de um campo com muitos empates poderia repetir ou pular registros entre
+    páginas (FR-042a)."""
+    materiais = [
+        Material(
+            cadpro=f"600.000.{indice:03d}",
+            descricao=f"Empate {indice}",
+            descricao_busca=normalizar_para_busca(f"Empate {indice}"),
+            unidade="UN",  # mesmo valor para todos: força o desempate
+            detalhamento="",
+            grupo="",
+            subgrupo="",
+            nome_grupo="",
+            nome_subgrupo="",
+            saldo=Decimal("1.000"),
+            saldo_inicial=Decimal("1.000"),
+            execucao_origem=execucao,
+        )
+        for indice in range(60)
+    ]
+    Material.objects.bulk_create(materiais)
+
+    client.force_login(requisitante)
+    url = reverse("catalogo:consulta")
+    resposta_pagina_1 = client.get(url, {"ordem": "unidade"})
+    resposta_pagina_2 = client.get(url, {"ordem": "unidade", "pagina": "2"})
+
+    cadpros_pagina_1 = [material.cadpro for material in resposta_pagina_1.context["pagina"]]
+    cadpros_pagina_2 = [material.cadpro for material in resposta_pagina_2.context["pagina"]]
+
+    esperados = [f"600.000.{indice:03d}" for indice in range(60)]
+    assert cadpros_pagina_1 == esperados[:50]
+    assert cadpros_pagina_2 == esperados[50:]
+
+
+@pytest.mark.parametrize("ordem_invalida", ["senha", "--saldo", "descricao_busca"])
+def test_ordem_desconhecida_ou_injecao_cai_no_padrao_sem_erro(
+    client, requisitante, criar_material, ordem_invalida
+):
+    """FR-042a: valor de ordenação desconhecido é ignorado e a ordem padrão
+    (`cadpro` crescente) é usada, sem erro — nem o nome real de um campo
+    (`descricao_busca`) nem uma tentativa de injeção (`--saldo`) chegam a
+    `order_by`."""
+    criar_material(cadpro="000.015.003", descricao="C")
+    criar_material(cadpro="000.015.001", descricao="A")
+    criar_material(cadpro="000.015.002", descricao="B")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": ordem_invalida})
+
+    assert resposta.status_code == 200
+    assert resposta.context["ordem"] == "cadpro"
+    posicoes = _posicoes(
+        resposta.content.decode("utf-8"),
+        ["000.015.001", "000.015.002", "000.015.003"],
+    )
+    assert posicoes == sorted(posicoes)
+
+
+def test_ordem_ausente_expoe_ordem_padrao_no_contexto(client, requisitante, criar_material):
+    criar_material(cadpro="000.016.001", descricao="Sem ordenação explícita")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    assert resposta.context["ordem"] == "cadpro"
+
+
+def test_ordem_efetiva_exposta_mesmo_com_codigo_invalido(client, requisitante):
+    """FR-042a: mesmo sem nenhuma query (`codigo_invalido`), a ordem efetiva
+    continua no contexto, para o cabeçalho da tabela permanecer coerente."""
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"codigo": "abc", "ordem": "-saldo"})
+
+    assert resposta.status_code == 200
+    assert resposta.context["ordem"] == "-saldo"
+    assert resposta.context["pagina"] is None
+
+
+def test_ordenacao_combina_com_filtro_de_descricao(client, requisitante, criar_material):
+    """FR-042a: a ordenação se combina com os filtros — só os materiais
+    filtrados aparecem, na ordem escolhida."""
+    criar_material(cadpro="000.017.001", descricao="Válvula Grande", saldo=Decimal("30.000"))
+    criar_material(cadpro="000.017.002", descricao="Válvula Pequena", saldo=Decimal("10.000"))
+    criar_material(cadpro="000.017.003", descricao="Parafuso", saldo=Decimal("5.000"))
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"), {"descricao": "valvula", "ordem": "-saldo"}
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    assert "000.017.003" not in conteudo
+    posicoes = _posicoes(conteudo, ["000.017.001", "000.017.002"])
+    assert posicoes == sorted(posicoes)
+
+
+def test_fragmento_htmx_respeita_a_ordem(client, requisitante, criar_material):
+    criar_material(cadpro="000.018.002", descricao="B", saldo=Decimal("20.000"))
+    criar_material(cadpro="000.018.001", descricao="A", saldo=Decimal("10.000"))
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"), {"ordem": "-saldo"}, HTTP_HX_REQUEST="true"
+    )
+
+    assert resposta.status_code == 200
+    nomes_templates = [template.name for template in resposta.templates if template.name]
+    assert "resultados_consulta" in nomes_templates
+    posicoes = _posicoes(
+        resposta.content.decode("utf-8"), ["000.018.002", "000.018.001"]
+    )
+    assert posicoes == sorted(posicoes)
+
+
+# ---------------------------------------------------------------------------
 # "Limpar" (revisão T051, achado P2): o formulário de filtros fica fora de
 # `#resultados-consulta` (o `hx-target` do envio), então um "Limpar" com
 # `hx-get`/`hx-target="#resultados-consulta"` trocaria só os resultados,
@@ -465,7 +742,7 @@ def test_com_hx_request_a_resposta_e_so_o_fragmento(client, requisitante, criar_
 
     assert resposta.status_code == 200
     nomes_templates = [template.name for template in resposta.templates if template.name]
-    assert "catalogo/_resultados_consulta.html" in nomes_templates
+    assert "resultados_consulta" in nomes_templates
     assert "catalogo/consulta.html" not in nomes_templates
 
 
@@ -503,8 +780,9 @@ def test_codigo_invalido_via_htmx_nao_troca_os_resultados_e_sinaliza_so_o_campo(
 
 def test_codigo_invalido_em_pagina_inteira_nao_emite_bloco_oob(client, requisitante):
     """Sem `HX-Request`, a página inteira já marca o campo inline em
-    `consulta.html`: o bloco `hx-swap-oob` de `_resultados_consulta.html` não
-    pode ser emitido de novo, ou `id="campo-codigo"` apareceria duplicado."""
+    `consulta.html`: a cópia OOB de `campo_codigo`, emitida pelo partial
+    `resultados_consulta`, não pode ser emitida de novo, ou
+    `id="campo-codigo"` apareceria duplicado."""
     client.force_login(requisitante)
 
     resposta = client.get(reverse("catalogo:consulta"), {"codigo": "abc"})
@@ -540,3 +818,430 @@ def test_codigo_valido_via_htmx_nao_define_hx_reswap_e_reseta_o_campo(
     assert 'hx-swap-oob="true"' in conteudo
     assert "field-has-error" not in conteudo
     assert "000.008.001" in conteudo
+
+
+# ---------------------------------------------------------------------------
+# Cabeçalho ordenável (frontend, FR-042a, emenda de 2026-09-22)
+# ---------------------------------------------------------------------------
+
+
+def _th(conteudo, texto_visivel):
+    """Extrai o bloco `<th ...>...</th>` que contém `texto_visivel`, para
+    inspecionar seus atributos (`aria-sort`) sem depender de posição/índice
+    na string. Os blocos `<th>` da tabela não são aninhados, então cada
+    correspondência não-gulosa de `<th\\b.*?</th>` já para no próprio
+    fechamento — filtrar pelo texto depois evita capturar vários cabeçalhos
+    de uma vez (o que aconteceria se o texto fosse exigido dentro do próprio
+    padrão de busca)."""
+    for bloco in re.findall(r"<th\b.*?</th>", conteudo, re.S):
+        if texto_visivel in bloco:
+            return bloco
+    raise AssertionError(f"cabeçalho com {texto_visivel!r} não encontrado")
+
+
+def test_cabecalho_saldo_com_ordem_padrao_nao_tem_aria_sort(
+    client, requisitante, criar_material
+):
+    criar_material(cadpro="000.020.001", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    th_saldo = _th(resposta.content.decode("utf-8"), "Saldo")
+    assert "aria-sort" not in th_saldo
+
+
+def test_cabecalho_saldo_crescente_marca_aria_sort_ascending(
+    client, requisitante, criar_material
+):
+    criar_material(cadpro="000.020.002", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "saldo"})
+
+    th_saldo = _th(resposta.content.decode("utf-8"), "Saldo")
+    assert 'aria-sort="ascending"' in th_saldo
+
+
+def test_cabecalho_saldo_decrescente_marca_aria_sort_descending(
+    client, requisitante, criar_material
+):
+    criar_material(cadpro="000.020.003", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "-saldo"})
+
+    th_saldo = _th(resposta.content.decode("utf-8"), "Saldo")
+    assert 'aria-sort="descending"' in th_saldo
+
+
+def test_detalhamento_nao_e_ordenavel(client, requisitante, criar_material):
+    """Detalhamento não está em `ConsultaCatalogoView.colunas_ordenacao`
+    (`catalogo/views.py`, `OrdenacaoMixin`, `catalogo/ordenacao.py`) e
+    continua um `<th>` simples, sem link nem `aria-sort`."""
+    criar_material(cadpro="000.020.004", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    th_detalhamento = _th(resposta.content.decode("utf-8"), "Detalhamento")
+    assert "<a" not in th_detalhamento
+    assert "aria-sort" not in th_detalhamento
+
+
+def test_link_de_ordenacao_preserva_filtro_e_nao_carrega_pagina(
+    client, requisitante, criar_material
+):
+    """`querystring_ordenacao` preserva os demais parâmetros (aqui,
+    `descricao`) e remove `pagina` — mudar a ordem volta à primeira página
+    (FR-042a)."""
+    criar_material(cadpro="000.021.001", descricao="Válvula de Registro")
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"),
+        {"descricao": "valvula", "pagina": "2"},
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    th_saldo = _th(conteudo, "Saldo")
+    link_saldo = re.search(r'href="([^"]*)"', th_saldo).group(1)
+    assert "descricao=valvula" in link_saldo
+    assert "pagina=" not in link_saldo
+    assert "ordem=saldo" in link_saldo
+
+
+def test_link_de_ordenacao_alterna_direcao_da_coluna_vigente(
+    client, requisitante, criar_material
+):
+    criar_material(cadpro="000.021.002", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "saldo"})
+
+    th_saldo = _th(resposta.content.decode("utf-8"), "Saldo")
+    link_saldo = re.search(r'href="([^"]*)"', th_saldo).group(1)
+    assert "ordem=-saldo" in link_saldo
+    assert 'aria-label="Ordenar por saldo, decrescente"' in th_saldo
+
+
+def test_link_de_ordenacao_tem_hx_get_para_o_mesmo_alvo_dos_resultados(
+    client, requisitante, criar_material
+):
+    """O rótulo do cabeçalho é navegação real (funciona sem JS) e também
+    dispara a mesma troca parcial HTMX que filtros e paginação usam."""
+    criar_material(cadpro="000.021.003", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    th_cadpro = _th(resposta.content.decode("utf-8"), "Código (CADPRO)")
+    assert 'hx-target="#resultados-consulta"' in th_cadpro
+    assert 'hx-push-url="true"' in th_cadpro
+    assert 'hx-indicator="#resultados-indicador"' in th_cadpro
+
+
+# ---------------------------------------------------------------------------
+# Campo oculto de ordem (frontend, FR-042a): preserva a ordem numa nova busca
+# ---------------------------------------------------------------------------
+
+
+def test_pagina_inteira_tem_campo_oculto_com_a_ordem_atual(
+    client, requisitante, criar_material
+):
+    criar_material(cadpro="000.022.001", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "-saldo"})
+
+    conteudo = resposta.content.decode("utf-8")
+    assert '<input type="hidden" name="ordem" id="campo-ordem" value="-saldo">' in conteudo
+
+
+def test_fragmento_htmx_emite_copia_oob_do_campo_de_ordem(
+    client, requisitante, criar_material
+):
+    """O formulário de filtros fica fora de `#resultados-consulta`; uma
+    troca de ordem pelo cabeçalho (dentro dessa região) só chega ao campo
+    oculto do formulário via out-of-band swap."""
+    criar_material(cadpro="000.022.002", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"), {"ordem": "-saldo"}, HTTP_HX_REQUEST="true"
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    assert (
+        '<input type="hidden" name="ordem" id="campo-ordem" value="-saldo" '
+        'hx-swap-oob="true">' in conteudo
+    )
+
+
+def test_buscar_depois_de_reordenar_mantem_a_ordem(client, requisitante, criar_material):
+    """Como o campo oculto `ordem` viaja dentro do `<form>` de filtros
+    (`hx-get` no próprio `<form>`), uma nova busca preservando `ordem` no
+    GET mantém a ordenação escolhida — sem exigir JS além de HTMX."""
+    criar_material(cadpro="000.022.003", descricao="Válvula A", saldo=Decimal("30.000"))
+    criar_material(cadpro="000.022.004", descricao="Válvula B", saldo=Decimal("10.000"))
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"), {"descricao": "valvula", "ordem": "saldo"}
+    )
+
+    assert resposta.context["ordem"] == "saldo"
+    conteudo = resposta.content.decode("utf-8")
+    posicoes = _posicoes(conteudo, ["000.022.004", "000.022.003"])  # 10, 30
+    assert posicoes == sorted(posicoes)
+
+
+# ---------------------------------------------------------------------------
+# Paginação numerada com reticências (frontend, FR-042b, emenda de 2026-09-22)
+# ---------------------------------------------------------------------------
+
+
+def test_paginacao_mostra_numeros_de_pagina(client, requisitante, execucao):
+    _bulk_criar_materiais(execucao, 60, prefixo="800")  # 2 páginas
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    assert 'aria-label="Página 1"' in nav
+    assert 'aria-label="Página 2"' in nav
+
+
+def test_pagina_atual_e_span_nao_clicavel_com_aria_current(
+    client, requisitante, execucao
+):
+    _bulk_criar_materiais(execucao, 60, prefixo="810")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"pagina": "2"})
+
+    conteudo = resposta.content.decode("utf-8")
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    assert (
+        '<span id="pagina-pagina-2-larga" class="pagination-link pagination-link-current" '
+        'aria-current="page" aria-label="Página 2" tabindex="-1">2</span>' in nav
+    )
+    # a página atual não é um link, em nenhuma das duas listas
+    assert not re.search(r'<a\b[^>]*href="\?pagina=2"', nav)
+
+
+def test_numero_de_pagina_e_pagina_atual_compartilham_id_para_restaurar_foco(
+    client, requisitante, execucao
+):
+    """O htmx restaura o foco pelo `id`: o link da página 3 (ativado na página
+    2) precisa ter o mesmo `id` do `<span>` atual da página 3 depois do swap,
+    senão o foco de quem usa teclado cai no `<body>` (re-revisão, achado P3).
+    Os sufixos por lista impedem `id` duplicado entre a larga e a compacta."""
+    _bulk_criar_materiais(execucao, 250, prefixo="811")  # 5 páginas de 50
+
+    client.force_login(requisitante)
+    na_pagina_2 = client.get(reverse("catalogo:consulta"), {"pagina": "2"}).content.decode()
+    na_pagina_3 = client.get(
+        reverse("catalogo:consulta"), {"pagina": "3"}, HTTP_HX_REQUEST="true"
+    ).content.decode()
+
+    for lista in ("larga", "compacta"):
+        assert re.search(rf'<a\s+id="pagina-pagina-3-{lista}"[^>]*href="\?pagina=3"', na_pagina_2)
+        assert re.search(
+            rf'<span id="pagina-pagina-3-{lista}"[^>]*aria-current="page"[^>]*tabindex="-1"',
+            na_pagina_3,
+        )
+    ids = re.findall(r'id="(pagina-pagina-[^"]+)"', na_pagina_2)
+    assert len(ids) == len(set(ids))
+
+
+def test_paginacao_com_muitas_paginas_mostra_reticencia(client, requisitante, execucao):
+    _bulk_criar_materiais(execucao, 550, prefixo="820")  # 11 páginas de 50
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"pagina": "5"})
+
+    conteudo = resposta.content.decode("utf-8")
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    assert '<span class="pagination-ellipsis" aria-hidden="true">…</span>' in nav
+    # primeira e última página continuam acessíveis
+    assert 'aria-label="Página 1"' in nav
+    assert 'aria-label="Página 11"' in nav
+
+
+def test_paginacao_numerada_preserva_filtros_e_ordem(client, requisitante, execucao):
+    _bulk_criar_materiais(execucao, 60, prefixo="830")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "-cadpro"})
+
+    conteudo = resposta.content.decode("utf-8")
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    link_pagina_2 = re.search(r'href="([^"]*pagina=2[^"]*)"', nav)
+    assert link_pagina_2 is not None
+    assert "ordem=-cadpro" in link_pagina_2.group(1)
+
+
+# ---------------------------------------------------------------------------
+# Revisão do gate visual da ordenação + paginação (2026-09-22):
+# `.impeccable/critique/2026-09-22T16-05-45Z__mplates-catalogo-resultados-
+# consulta-html-9b190d1c.md`, correções aprovadas pelo dono do produto.
+# ---------------------------------------------------------------------------
+
+
+def test_resumo_da_paginacao_usa_separador_de_milhar_e_plural_correto(
+    client, requisitante, execucao
+):
+    """Achado "Mundo real": "3408 materials" não lia nem como número nem
+    como português — separador de milhar + substantivo plural explícito
+    (`rotulo_item_plural`), nunca `pluralize:"s"` sobre "material"."""
+    _bulk_criar_muitos_materiais(execucao, 1234, grupo_inicial=700)
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    assert "1.234 materiais no total" in conteudo
+    assert "1234 materials" not in conteudo
+    assert "1234 materiais" not in conteudo
+
+
+def test_resumo_da_paginacao_usa_singular_com_um_unico_resultado(
+    client, requisitante, criar_material
+):
+    criar_material(cadpro="000.040.001", descricao="ItemUnicoDoResumo")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"descricao": "ItemUnicoDoResumo"})
+
+    conteudo = resposta.content.decode("utf-8")
+    assert "1 material no total" in conteudo
+    assert "1 materiais" not in conteudo
+
+
+def test_resumo_da_paginacao_diz_a_ordem_vigente(client, requisitante, criar_material):
+    """Achado P1: a ordem vigente também aparece em texto no resumo — a
+    coluna/seta do cabeçalho pode estar fora da tela (celular)."""
+    criar_material(cadpro="000.040.002", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "-saldo"})
+
+    assert "· ordenado por saldo, decrescente" in resposta.content.decode("utf-8")
+
+
+def test_resumo_da_paginacao_diz_a_ordem_padrao_sem_parametro(
+    client, requisitante, criar_material
+):
+    criar_material(cadpro="000.040.003", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    assert "· ordenado por código, crescente" in resposta.content.decode("utf-8")
+
+
+def test_paginacao_com_pagina_unica_mostra_so_o_resumo(client, requisitante, criar_material):
+    """Achado P3: com uma página só, "Anterior 1 Próxima" era ruído puro —
+    o parcial passa a emitir só o resumo."""
+    criar_material(cadpro="000.041.001", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    assert "pagination-list" not in nav
+    assert ">Anterior<" not in nav
+    assert ">Próxima<" not in nav
+
+
+def test_paginacao_lista_compacta_usa_apenas_um_vizinho_de_cada_lado(
+    client, requisitante, execucao
+):
+    """Achado P2: a lista compacta de celular (`on_each_side=1`) mostra
+    menos páginas que a larga (`on_each_side=2`) — só um vizinho de cada
+    lado da atual, para caber numa linha a 375px. As duas listas convivem no
+    HTML (alternadas por media query, `static/css/components.css`); este
+    teste garante que a compacta de fato tem menos itens, não que uma delas
+    está com `display: none` (CSS não é exercitado por este teste)."""
+    _bulk_criar_materiais(execucao, 550, prefixo="850")  # 11 páginas de 50
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"pagina": "5"})
+
+    conteudo = resposta.content.decode("utf-8")
+    assert "pagination-item-wide" in conteudo
+    assert "pagination-item-compact" in conteudo
+
+    blocos_compactos = re.findall(
+        r'<li class="pagination-item-compact">.*?</li>', conteudo, re.S
+    )
+    texto_compacto = "".join(blocos_compactos)
+    # on_each_side=1: só a página 4 e a 6 ao lado da 5ª — a 3 e a 7 (que a
+    # lista larga, on_each_side=2, mostra) ficam de fora da compacta.
+    assert 'aria-label="Página 4"' in texto_compacto
+    assert 'aria-label="Página 6"' in texto_compacto
+    assert 'aria-label="Página 3"' not in texto_compacto
+    assert 'aria-label="Página 7"' not in texto_compacto
+
+
+def test_indicador_de_ordenacao_marca_a_direcao_vigente(client, requisitante, criar_material):
+    """Achado (glifos desalinhados): o indicador passa a ser um único SVG
+    com classe de estado (`table-sort-indicator-asc`/`-desc`), nunca troca
+    de glifo — este teste garante que a classe de estado corresponde à
+    direção vigente, e que uma coluna não vigente não recebe nenhuma delas."""
+    criar_material(cadpro="000.042.001", descricao="X")
+    client.force_login(requisitante)
+
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "saldo"})
+    conteudo = resposta.content.decode("utf-8")
+    th_saldo = _th(conteudo, "Saldo")
+    assert "table-sort-indicator-asc" in th_saldo
+    assert "table-sort-indicator-desc" not in th_saldo
+    th_cadpro = _th(conteudo, "Código (CADPRO)")
+    assert "table-sort-indicator-asc" not in th_cadpro
+    assert "table-sort-indicator-desc" not in th_cadpro
+
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "-saldo"})
+    th_saldo = _th(resposta.content.decode("utf-8"), "Saldo")
+    assert "table-sort-indicator-desc" in th_saldo
+    assert "table-sort-indicator-asc" not in th_saldo
+
+
+def test_pagina_inteira_tem_anuncio_da_ordem_vigente_para_leitor_de_tela(
+    client, requisitante, criar_material
+):
+    """Achado P1: um anúncio estável (`role="status"`), fora de
+    `#resultados-consulta`, diz a ordem vigente a quem usa leitor de tela."""
+    criar_material(cadpro="000.043.001", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"ordem": "-saldo"})
+
+    conteudo = resposta.content.decode("utf-8")
+    assert (
+        '<p id="resultados-anuncio" class="visually-hidden" role="status">'
+        "Ordenado por saldo, decrescente.</p>" in conteudo
+    )
+
+
+def test_fragmento_htmx_emite_copia_oob_do_anuncio_de_ordem(
+    client, requisitante, criar_material
+):
+    """O anúncio fica fora de `#resultados-consulta` (região trocada por
+    inteiro via HTMX) — por isso, como `#campo-ordem`, precisa de uma cópia
+    out-of-band para acompanhar uma troca de ordem pelo cabeçalho."""
+    criar_material(cadpro="000.043.002", descricao="X")
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"), {"ordem": "-saldo"}, HTTP_HX_REQUEST="true"
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    assert (
+        '<p id="resultados-anuncio" hx-swap-oob="innerHTML">'
+        "Ordenado por saldo, decrescente.</p>" in conteudo
+    )

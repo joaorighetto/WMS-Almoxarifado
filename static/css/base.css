@@ -67,3 +67,22 @@ textarea {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
+
+/* Oculto só visualmente — permanece no fluxo do documento e acessível a
+   tecnologia assistiva (técnica "visually hidden" padrão, mesmo recurso já
+   usado inline em `.file-upload-input`, `components.css`; extraído para
+   utilitário compartilhado com a introdução do anúncio de ordenação da
+   consulta do catálogo — `#resultados-anuncio`, `catalogo/consulta.html`,
+   revisão do gate visual, achado P1, 2026-09-22). Nunca `display: none`, que
+   removeria o elemento também de leitores de tela. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
