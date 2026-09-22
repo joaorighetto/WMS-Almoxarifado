@@ -11,6 +11,7 @@ normativa para `catalogo/leitura_scpi.py` e para os testes do parser. As justifi
 | `ARQUIVO_NAO_ENVIADO` | nenhum arquivo no envio |
 | `ARQUIVO_TAMANHO_EXCEDIDO` | mais de 10 MB |
 | `ARQUIVO_CODIFICACAO_INVALIDA` | bytes que não são UTF-8 válido (BOM opcional) |
+| `ARQUIVO_CARACTERE_NULO` | o texto decodificado contém U+0000 em qualquer posição, inclusive fora das colunas em escopo (FR-007b). A mensagem informa as linhas físicas (cabeçalho = linha 1) em que ele aparece, até 10 |
 | `ARQUIVO_COLUNA_OBRIGATORIA_AUSENTE` | cabeçalho sem alguma de `CADPRO`, `DISC1`, `UNID1`, `QUAN3`, `DISCR1`, `GRUPO`, `SUBGRUPO`, `NOMEGRUPO`, `NOMESUBGRUPO` (FR-008). A mensagem lista quais faltam |
 | `ARQUIVO_COLUNA_DUPLICADA` | coluna obrigatória repetida no cabeçalho (coluna fora de escopo repetida não tem efeito: é contada na estrutura e ignorada) |
 | `ARQUIVO_CADPRO_NAO_E_PRIMEIRA_COLUNA` | `CADPRO` existe, mas não é a primeira coluna (I-1) |

@@ -56,7 +56,12 @@ agora seria generalização especulativa — Constitution I).
 
 1. **Decodificação**: `bytes.decode("utf-8-sig")` estrito. Remove a BOM se presente (FR-007) e
    aceita também arquivo sem BOM. Byte inválido em UTF-8 recusa o **arquivo inteiro** antes de
-   qualquer registro.
+   qualquer registro. O caractere nulo (U+0000) também recusa o arquivo inteiro (FR-007b): é
+   UTF-8 válido, mas o PostgreSQL não o aceita em coluna de texto, e deixá-lo passar faria a
+   prévia aceitar um arquivo cuja confirmação falha por inteiro. Recusar só o registro foi
+   descartado: o `CADPRO` bruto também é gravado nas exceções, então o caractere precisaria ser
+   tratado em mais de um caminho, e um NUL indica arquivo corrompido, não dado de negócio
+   inválido.
 2. **Linhas físicas**: `texto.split("\n")`, removendo um `\r` final de cada linha. **Não** se usa
    `str.splitlines()`, que também quebra em `\x0b`, `\x0c`, `\x1c`–`\x1e`, `\x85`, `\u2028` e
    `\u2029` — caracteres que podem aparecer em texto livre e que não são fim de linha no arquivo.

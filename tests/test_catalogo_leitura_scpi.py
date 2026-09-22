@@ -96,6 +96,56 @@ def test_decodificar_bytes_invalidos_recusa_arquivo_inteiro():
     assert exc_info.value.codigo == "ARQUIVO_CODIFICACAO_INVALIDA"
 
 
+def test_caractere_nulo_recusa_arquivo_inteiro_informando_a_linha():
+    """FR-007b: U+0000 é UTF-8 válido, mas o PostgreSQL não o grava em
+    coluna de texto — recusado já na leitura, com a linha física
+    (cabeçalho = linha 1), para a prévia não aceitar o que a confirmação
+    não consegue gravar."""
+    conteudo = _arquivo(
+        _linha(cadpro="000.000.001", disc1="OK", unid1="UN", quan3="1"),
+        _linha(cadpro="000.000.002", disc1="PARA\x00FUSO", unid1="UN", quan3="1"),
+    )
+
+    for funcao in (leitura_scpi.verificar_arquivo, leitura_scpi.ler_registros):
+        with pytest.raises(leitura_scpi.ArquivoRecusado) as exc_info:
+            funcao(conteudo)
+        assert exc_info.value.codigo == "ARQUIVO_CARACTERE_NULO"
+        assert "na linha 3." in exc_info.value.mensagem
+
+
+def test_caractere_nulo_no_cadpro_ou_em_coluna_fora_de_escopo_tambem_recusa():
+    """O `CADPRO` bruto de uma exceção também é gravado, e colunas fora de
+    escopo não passam pela validação por registro: a recusa vale para
+    qualquer posição do arquivo."""
+    cabecalho = CABECALHO_MINIMO + "VAUN1;"
+    conteudo = _montar(
+        cabecalho,
+        [
+            "000.000.0\x001;A;UN;1;;;;;;1,00;",
+            "000.000.002;A;UN;1;;;;;;1,\x0000;",
+        ],
+    )
+
+    with pytest.raises(leitura_scpi.ArquivoRecusado) as exc_info:
+        leitura_scpi.ler_registros(conteudo)
+
+    assert exc_info.value.codigo == "ARQUIVO_CARACTERE_NULO"
+    assert "nas linhas 2, 3." in exc_info.value.mensagem
+
+
+def test_mensagem_de_caractere_nulo_limita_as_linhas_listadas():
+    linhas = [
+        _linha(cadpro=f"000.000.{n:03d}", disc1="A\x00", unid1="UN", quan3="1")
+        for n in range(12)
+    ]
+    conteudo = _arquivo(*linhas)
+
+    with pytest.raises(leitura_scpi.ArquivoRecusado) as exc_info:
+        leitura_scpi.ler_registros(conteudo)
+
+    assert "nas linhas 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 e mais 2." in exc_info.value.mensagem
+
+
 def test_bom_nao_contamina_cabecalho_nem_o_primeiro_cadpro():
     """Edge case da spec: a marca BOM não pode contaminar o nome da 1ª
     coluna nem o primeiro código lido."""

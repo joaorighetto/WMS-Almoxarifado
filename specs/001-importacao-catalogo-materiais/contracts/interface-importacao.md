@@ -48,7 +48,7 @@ class ResultadoLeitura:
     recusas: tuple[Recusa, ...]            # na ordem do arquivo
     total_recebidos: int                   # len(aceitos) + len(recusas)
 
-def decodificar(conteudo: bytes) -> str                 # ArquivoRecusado(ARQUIVO_CODIFICACAO_INVALIDA)
+def decodificar(conteudo: bytes) -> str                 # ArquivoRecusado(ARQUIVO_CODIFICACAO_INVALIDA | ARQUIVO_CARACTERE_NULO)
 def verificar_arquivo(conteudo: bytes) -> None          # decodificação + cabeçalho; levanta ArquivoRecusado
 def ler_registros(conteudo: bytes) -> ResultadoLeitura  # levanta ArquivoRecusado nos casos da §1
 def interpretar_quantidade(texto: str) -> Decimal       # levanta QuantidadeInvalida

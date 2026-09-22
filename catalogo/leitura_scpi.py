@@ -102,14 +102,46 @@ class ResultadoLeitura:
 
 def decodificar(conteudo: bytes) -> str:
     """`utf-8-sig` estrito: remove a BOM se presente e aceita arquivo sem
-    BOM. Byte inválido recusa o arquivo inteiro (FR-007)."""
+    BOM. Byte inválido recusa o arquivo inteiro (FR-007).
+
+    O caractere nulo (U+0000) é UTF-8 válido, mas o PostgreSQL não o aceita
+    em coluna de texto: também recusa o arquivo inteiro, informando as
+    linhas físicas em que aparece (FR-007b), em vez de a prévia aceitar um
+    arquivo que a confirmação não consegue gravar."""
     try:
-        return conteudo.decode("utf-8-sig")
+        texto = conteudo.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
         raise ArquivoRecusado(
             "ARQUIVO_CODIFICACAO_INVALIDA",
             "O arquivo não está em uma codificação UTF-8 válida.",
         ) from exc
+
+    if "\x00" in texto:
+        linhas = [
+            numero for numero, linha in enumerate(texto.split("\n"), start=1) if "\x00" in linha
+        ]
+        raise ArquivoRecusado(
+            "ARQUIVO_CARACTERE_NULO",
+            _mensagem_caractere_nulo(linhas),
+        )
+    return texto
+
+
+_LIMITE_LINHAS_CARACTERE_NULO = 10
+
+
+def _mensagem_caractere_nulo(linhas: list[int]) -> str:
+    """Mensagem com as linhas físicas (cabeçalho = linha 1) que contêm
+    U+0000, listando no máximo `_LIMITE_LINHAS_CARACTERE_NULO`."""
+    listadas = ", ".join(str(n) for n in linhas[:_LIMITE_LINHAS_CARACTERE_NULO])
+    restantes = len(linhas) - _LIMITE_LINHAS_CARACTERE_NULO
+    if restantes > 0:
+        listadas += f" e mais {restantes}"
+    rotulo = "na linha" if len(linhas) == 1 else "nas linhas"
+    return (
+        f"O arquivo contém caractere nulo (U+0000) {rotulo} {listadas}. "
+        "Gere o arquivo novamente no SCPI ou remova o caractere antes de enviar."
+    )
 
 
 def _dividir_linhas_fisicas(texto: str) -> list[str]:

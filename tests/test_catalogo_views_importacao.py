@@ -199,6 +199,27 @@ def test_recusa_de_arquivo_no_envio_rerenderiza_com_erro_sem_gravar_sessao(
     assert _contagem_das_cinco_tabelas() == 0
 
 
+def test_caractere_nulo_no_envio_e_recusado_com_a_linha_sem_gravar_sessao(chefe_almoxarifado):
+    """FR-007b: o arquivo com U+0000 é recusado já no envio, com a linha
+    na mensagem — antes, a prévia o aceitava e a confirmação falhava com
+    erro genérico, desfazendo a importação inteira."""
+    client_autenticado = _cliente_autenticado(chefe_almoxarifado)
+    conteudo = (
+        b"CADPRO;DISC1;UNID1;QUAN3;DISCR1;GRUPO;SUBGRUPO;NOMEGRUPO;NOMESUBGRUPO;\r\n"
+        b"000.000.002;PARA\x00FUSO;UN;1;;;;;;\r\n"
+    )
+
+    resposta = _enviar(client_autenticado, conteudo, nome="nulo.csv")
+
+    assert resposta.status_code == 200
+    assert "caractere nulo (U+0000) na linha 2" in resposta.content.decode("utf-8")
+
+    from catalogo import importacao
+
+    assert importacao.obter_pedido(client_autenticado.session) is None
+    assert _contagem_das_cinco_tabelas() == 0
+
+
 def test_arquivo_de_0_bytes_nao_e_recusado_e_gera_previa_com_zero_recebidos(
     chefe_almoxarifado,
 ):

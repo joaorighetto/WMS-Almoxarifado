@@ -263,6 +263,9 @@ sobrescrito e que a divergência aparece listada.
 - **FR-007**: O sistema DEVE ler arquivo CSV em UTF-8 com BOM, com `;` como separador e com
   delimitador ao final da linha, sem que a marca BOM ou a coluna vazia final contaminem qualquer
   valor.
+- **FR-007b**: O sistema DEVE recusar o arquivo inteiro, sem importar nada, se o conteúdo
+  decodificado contiver o caractere nulo (U+0000), informando ao usuário as linhas do arquivo em
+  que ele aparece.
 - **FR-007a**: O sistema DEVE tratar aspas duplas como caractere literal do conteúdo e NÃO DEVE
   interpretá-las como delimitação de campo. O arquivo usa `"` para indicar polegadas — como em
   `Adaptador PVC RS 3"` — sem nunca delimitar campos com aspas; interpretá-las como delimitador
