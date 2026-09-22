@@ -159,7 +159,7 @@ escopos completos das matrizes:
   rastreável. Não é dependência obrigatória: a importação já estabelece saldo utilizável.
 - Entregar `HIS` cedo facilita conferir operações e preparar o lançamento manual externo.
   Sua ausência não dispensa cada operação de registrar e tornar verificáveis os próprios efeitos.
-- Com `002` entregue, `ORG` pode evoluir paralelamente à `001`. Após `001`, `ENT` e `REQ` podem evoluir
+- Com `002` e `001` entregues, `ORG` pode evoluir sem esperar outra feature; `ENT` e `REQ` podem evoluir
   em paralelo; `SAE`, `INV` e `MAT` não dependem do ciclo completo de requisição.
 - A independência acima não autoriza decisões contraditórias sobre reserva, disponibilidade ou
   material inativo. Se afetarem dois recortes, essas decisões devem ser esclarecidas em conjunto.
@@ -172,7 +172,7 @@ escopos completos das matrizes:
 
 1. ~~Entregar `001-importacao-catalogo-materiais`.~~ Concluída: catálogo e saldo inicial estão
    disponíveis a todas as operações.
-2. **Especificar `ORG` e `ENT`**, permitindo que ORG evolua junto da 001. A primeira organiza a
+2. **Especificar `ORG` e `ENT`**, agora que a 001 está entregue. A primeira organiza a
    administração cotidiana; a segunda entrega o primeiro fluxo de estoque após a carga.
 3. **Especificar `REQ` e `HIS`**, com suas dependências satisfeitas para implementação. A primeira
    fecha solicitação/autorização; a segunda permite investigar os movimentos já produzidos.
