@@ -21,8 +21,11 @@ para verificar o estado atual. Os documentos de [reconciliação](docs/domain/re
 são históricos: candidatos pendentes não foram promovidos a requisitos.
 
 - **001 é `001-importacao-catalogo-materiais`**, não uma spec genérica de infraestrutura.
-  Contém importação inicial, consulta, auditoria e reimportação do catálogo. Implementada no
-  working tree (US1 a US4 e testes), em revisão final; ainda não mesclada em `main`.
+  Contém importação inicial, consulta, auditoria e reimportação do catálogo.
+- **001 — `001-importacao-catalogo-materiais`: concluída e entregue em `main`** pelo merge do
+  [PR #8](https://github.com/joaorighetto/WMS-Almoxarifado/pull/8) (commit `7dafa30`). A entrega inclui US1 a US4 e foi validada contra o CSV real do SCPI
+  (1588 materiais). A dependência de catálogo e saldo inicial de `ENT`, `REQ`, `SAE`, `INV` e
+  `MAT` está satisfeita.
 - **002 — `002-autenticacao-login`: concluída e entregue em `main`** pelo merge do
   [PR #5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5)
   (commit `24b8c44`). A entrega inclui a fundação de acesso e as correções de integridade
@@ -101,7 +104,7 @@ features estão na seção 6.
 
 | ID | Feature | Objetivo / resultado verificável | Inclui | Não inclui | Dependências | Status |
 |---|---|---|---|---|---|---|
-| 001 | Importação e consulta do catálogo | Do CSV à consulta de materiais e conferência auditável da carga | Prévia e confirmação; saldo inicial; busca; histórico de importações; reimportação cadastral e divergências informativas | Cadastro manual; manutenção local; correção de saldo; movimentações; integração automática | O: 002 | Implementada; em revisão final, aguardando merge |
+| 001 | Importação e consulta do catálogo | Do CSV à consulta de materiais e conferência auditável da carga | Prévia e confirmação; saldo inicial; busca; histórico de importações; reimportação cadastral e divergências informativas | Cadastro manual; manutenção local; correção de saldo; movimentações; integração automática | O: 002 | Concluída — entregue em `main` pelo [PR #8](https://github.com/joaorighetto/WMS-Almoxarifado/pull/8) |
 | 002 | Autenticação e acesso inicial | Da matrícula e senha à sessão identificada, acesso protegido e logout | Home mínima; retorno seguro; papéis/setor consultáveis; salvaguardas do provisionamento inicial já especificadas | Gestão de produto de usuários/setores; recuperação de senha; painel; autorização das operações de negócio | Nenhuma feature funcional anterior | Concluída — entregue em `main` pelo [PR #5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5) |
 | ORG | Administração de usuários, papéis e setores | Manter identidades e sua organização com chefia válida e atribuições explícitas | Gestão pelo administrador de sistema; vínculo setorial; atribuição dos papéis canônicos; manutenção das invariantes organizacionais | Redefinir papéis; conceder poderes operacionais implícitos; gestão de estoque; redefinir login | O: 002; R: antes do uso amplo de REQ | Planejada |
 | ENT | Entrada de materiais | Registrar recebimento e conferir seu efeito no saldo e no registro da operação | Entrada nos motivos canônicos, com referência; rastreabilidade da operação | Criar materiais; compras/licitações; devolução de requisição; ajuste de inventário; importar movimentações do SCPI | O: 001; R: primeira movimentação após catálogo | Planejada |
@@ -141,6 +144,7 @@ escopos completos das matrizes:
 - `002 → 001`; `002 →` todas as demais superfícies protegidas. Dependência de autenticação
   satisfeita com a entrega da 002.
 - `001 → ENT, REQ, SAE, INV, MAT`: materiais e saldos iniciais vêm do catálogo importado.
+  Dependência satisfeita com a entrega da 001.
 - `REQ → ATE → DEV`: atendimento exige autorização; devolução exige atendimento de origem.
   `ATE → REL` fornece o consumo por requisição; outras dependências de `REL` serão definidas
   pelas métricas escolhidas.
@@ -155,7 +159,7 @@ escopos completos das matrizes:
   rastreável. Não é dependência obrigatória: a importação já estabelece saldo utilizável.
 - Entregar `HIS` cedo facilita conferir operações e preparar o lançamento manual externo.
   Sua ausência não dispensa cada operação de registrar e tornar verificáveis os próprios efeitos.
-- Com `002` entregue, `ORG` pode evoluir paralelamente à `001`. Após `001`, `ENT` e `REQ` podem evoluir
+- Com `002` e `001` entregues, `ORG` pode evoluir sem esperar outra feature; `ENT` e `REQ` podem evoluir
   em paralelo; `SAE`, `INV` e `MAT` não dependem do ciclo completo de requisição.
 - A independência acima não autoriza decisões contraditórias sobre reserva, disponibilidade ou
   material inativo. Se afetarem dois recortes, essas decisões devem ser esclarecidas em conjunto.
@@ -166,10 +170,9 @@ escopos completos das matrizes:
 
 ## 5. Ordem recomendada
 
-1. **Retomar `001-importacao-catalogo-materiais` no fluxo do Spec Kit.** A fundação de acesso
-   da 002 já está entregue em `main`; a 001 está implementada e em revisão final, aguardando
-   merge, e fornece catálogo e saldo inicial a todas as operações.
-2. **Especificar `ORG` e `ENT`**, permitindo que ORG evolua junto da 001. A primeira organiza a
+1. ~~Entregar `001-importacao-catalogo-materiais`.~~ Concluída: catálogo e saldo inicial estão
+   disponíveis a todas as operações.
+2. **Especificar `ORG` e `ENT`**, agora que a 001 está entregue. A primeira organiza a
    administração cotidiana; a segunda entrega o primeiro fluxo de estoque após a carga.
 3. **Especificar `REQ` e `HIS`**, com suas dependências satisfeitas para implementação. A primeira
    fecha solicitação/autorização; a segunda permite investigar os movimentos já produzidos.
@@ -200,7 +203,7 @@ prioridade: a 002 precede funcionalmente a 001 sem renumeração de nenhuma dela
 | 001 / futuras | **A definir:** como o responsável leva as exceções de uma importação para fora do WMS a fim de corrigir o CSV na origem — exportação, filtro por motivo ou ordenação da lista de exceções. Hoje a 001 só exibe a lista paginada, e o trabalho de correção acontece fora do sistema; levantado pela revisão visual de 2026-09-22. Decidir o recorte (dentro da 001 ou capacidade própria) antes de implementar. |
 | HIS | **A definir:** filtros e apresentação necessários à investigação. Os escopos por papel já são canônicos; não presumir que todo usuário vê todo o histórico. |
 | REL / PAI | **A definir:** perguntas de gestão, métricas, períodos, tratamento de devoluções/estornos e fontes. Não inferir indicadores financeiros, alertas ou visões de pendências no SCPI. |
-| Evidências de importação | `PRODUCT.md` referencia CSVs e scripts em `domain/Scripts/`, ausentes nesta árvore; a 001 registra a análise do CSV real, mas o arquivo não foi localizado. **A definir:** disponibilização de amostra representativa para validar a implementação da 001. Isso não cria nova feature. |
+| Evidências de importação | `PRODUCT.md` referencia CSVs e scripts em `domain/Scripts/`, ausentes nesta árvore. O CSV real do catálogo está disponível só localmente (`docs/domain-legacy/`, ignorado pelo Git) e validou a 001 em 2026-09-22 por `tests/test_catalogo_arquivo_real.py` com `SCPI_CSV_REAL` (1588 recebidos e inseridos, 0 rejeitados). Como não é versionado, esse teste fica pulado no CI. **A definir:** se e como disponibilizar amostras dos demais CSVs (movimentações) para as próximas features. Isso não cria nova feature. |
 
 Não entram como features confirmadas: múltiplos locais/endereçamento, lotes, validade como controle
 próprio, leitura de códigos de barras, compras/licitações, notificações, integração automática,
