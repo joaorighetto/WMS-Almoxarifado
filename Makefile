@@ -34,7 +34,10 @@ endif
 
 VENV_DIR ?= .venv
 UV ?= uv
-DOCKER_COMPOSE ?= docker compose
+# Compose recebe o mesmo ENV_FILE do reset e dos comandos Django (sem isso ele
+# leria sempre o .env padrão). Só quando o arquivo existe: sem .env, o compose
+# usa os defaults do compose.yml.
+DOCKER_COMPOSE ?= docker compose $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE))
 
 # Settings dos alvos Django deste Makefile, passadas pelo ambiente: vencem um
 # DJANGO_SETTINGS_MODULE que o .env venha a definir. O reset só as aceita em
