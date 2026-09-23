@@ -13,15 +13,13 @@
 # Ambiente
 # ------------------------------------------------------------------------------
 
-# O .env é lido aqui para as guardas do reset e para a conexão do psql.
-# Comandos Django/pytest recebem o arquivo via `uv run --env-file`, como em
-# scripts/verify.sh; o make exporta só as DATABASE_* (ver abaixo).
+# O make não lê o .env (um `include` guardaria aspas e interpretaria `$` e `#`
+# de outro jeito que o dotenv). Todo comando recebe o arquivo via
+# `uv run --env-file`, como em scripts/verify.sh, então psql e Django leem os
+# mesmos valores. Overrides na linha de comando (make resetdb DATABASE_NAME=x)
+# chegam ao ambiente da receita e vencem o .env.
 ENV_FILE ?= .env
 ENV_EXAMPLE_FILE ?= .env.example
-
-ifneq (,$(wildcard $(ENV_FILE)))
-include $(ENV_FILE)
-endif
 
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
@@ -36,29 +34,14 @@ endif
 
 VENV_DIR ?= .venv
 UV ?= uv
-PSQL ?= psql
 DOCKER_COMPOSE ?= docker compose
 
-# Settings dos alvos Django deste Makefile. Um DJANGO_SETTINGS_MODULE vindo do
-# .env ganha desta atribuição (o include acima vem antes); a guarda de
-# resetpostgres existe justamente para esse caso.
+# Settings dos alvos Django deste Makefile, passadas pelo ambiente: vencem um
+# DJANGO_SETTINGS_MODULE que o .env venha a definir. O reset só as aceita em
+# lista permitida (scripts/resetpostgres.sh).
 DJANGO_SETTINGS_MODULE ?= config.settings.development
-MANAGE := $(UV) run --env-file $(ENV_FILE) python manage.py
-DJANGO := DJANGO_SETTINGS_MODULE=$(DJANGO_SETTINGS_MODULE) $(MANAGE)
-
-DATABASE_HOST ?= localhost
-DATABASE_PORT ?= 5432
-
-# Exportadas para psql e Django enxergarem o mesmo banco, inclusive com
-# override na linha de comando (make resetdb DATABASE_NAME=outro): variável de
-# ambiente vence o `uv run --env-file`.
-export DATABASE_NAME DATABASE_USER DATABASE_PASSWORD DATABASE_HOST DATABASE_PORT
-
-# Conexão do psql pelas variáveis PG* (sem montar URL: senha com caractere
-# especial não quebra). Referências do shell ($$), para a senha não ir ao log.
-PSQL_CONN := PGHOST="$$DATABASE_HOST" PGPORT="$$DATABASE_PORT" \
-	PGUSER="$$DATABASE_USER" PGPASSWORD="$$DATABASE_PASSWORD" \
-	PGDATABASE="$$DATABASE_NAME"
+UV_RUN := DJANGO_SETTINGS_MODULE=$(DJANGO_SETTINGS_MODULE) $(UV) run --env-file $(ENV_FILE)
+DJANGO := $(UV_RUN) python manage.py
 
 PYTEST_ARGS ?=
 
@@ -78,9 +61,9 @@ help: ## Mostrar rotinas disponíveis
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(firstword $(MAKEFILE_LIST)) \
 		| awk 'BEGIN {FS = ":.*## "}; {printf "  \033[37;1m%-16s\033[0m %s\n", $$1, $$2}'
 
-# Sem estas regras vazias, o make tentaria "refazer" o Makefile e o .env
-# incluído usando o fallback abaixo.
-Makefile $(ENV_FILE): ;
+# Sem esta regra vazia, o make tentaria "refazer" o Makefile usando o fallback
+# abaixo.
+Makefile: ;
 
 %:
 	@printf "\033[31;1mRotina não reconhecida: '%s'\033[0m\n" "$@"
@@ -120,39 +103,12 @@ db-destroy: ## Parar o PostgreSQL e APAGAR o volume de dados
 # Schema efêmero
 # ------------------------------------------------------------------------------
 
-# Reset agressivo, equivalente a apagar um db.sqlite3. Guardas, na ordem:
-# - settings em lista permitida (não proibida): um settings novo, como
-#   production, já nasce protegido;
-# - host local: este alvo nunca apaga schema de banco remoto;
-# - variáveis de conexão presentes;
-# - banco do projeto: DATABASE_NAME precisa ser wms_almoxarifado ou
-#   wms_almoxarifado_<sufixo>. Outro nome só com confirmação digitada
-#   (RESETDB_CONFIRMA=<nome>), porque o mesmo servidor local tem outros bancos;
-#   os de sistema (postgres, template0, template1) são recusados sempre;
-# - psql instalado.
-# DROP e CREATE vão num único -c, que o psql executa numa transação só.
+# As guardas (settings, PGHOSTADDR/PGSERVICE, host local, nome do banco com
+# confirmação para fora do padrão) estão no script, que roda sob
+# `uv run --env-file` para ler o .env como o Django lê.
 resetpostgres: ## Apagar o schema public do banco local e recriá-lo vazio
-	@case "$(DJANGO_SETTINGS_MODULE)" in \
-		config.settings.development|config.settings.test) ;; \
-		*) echo "resetpostgres: DJANGO_SETTINGS_MODULE='$(DJANGO_SETTINGS_MODULE)' fora da lista permitida (config.settings.development, config.settings.test) -- abortando." >&2; exit 1 ;; \
-	esac
-	@case "$(DATABASE_HOST)" in \
-		localhost|127.0.0.1|::1) ;; \
-		*) echo "resetpostgres: DATABASE_HOST='$(DATABASE_HOST)' não é local -- abortando." >&2; exit 1 ;; \
-	esac
-	@test -n "$(DATABASE_NAME)" -a -n "$(DATABASE_USER)" \
-		|| { echo "resetpostgres: DATABASE_NAME/DATABASE_USER ausentes em $(ENV_FILE) (rode 'make prepare')." >&2; exit 1; }
-	@case "$(DATABASE_NAME)" in \
-		postgres|template0|template1) \
-			echo "resetpostgres: DATABASE_NAME='$(DATABASE_NAME)' é banco de sistema -- abortando." >&2; exit 1 ;; \
-		wms_almoxarifado|wms_almoxarifado_*) ;; \
-		*) test "$(RESETDB_CONFIRMA)" = "$(DATABASE_NAME)" \
-			|| { echo "resetpostgres: DATABASE_NAME='$(DATABASE_NAME)' não é banco do projeto (wms_almoxarifado[_*]) -- abortando. Para apagar o schema dele mesmo assim: make $(MAKECMDGOALS) RESETDB_CONFIRMA=$(DATABASE_NAME)" >&2; exit 1; } ;; \
-	esac
-	@command -v $(PSQL) >/dev/null 2>&1 || { echo "resetpostgres: psql não encontrado." >&2; exit 1; }
-	@echo "==> recriando schema public de '$(DATABASE_NAME)' em $(DATABASE_HOST):$(DATABASE_PORT)"
-	@$(PSQL_CONN) $(PSQL) -X -q -v ON_ERROR_STOP=1 \
-		-c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+	@test -f $(ENV_FILE) || { echo "resetpostgres: $(ENV_FILE) não encontrado (rode 'make prepare')." >&2; exit 1; }
+	@$(UV_RUN) ./scripts/resetpostgres.sh
 
 # --run-syncdb cria as tabelas de todos os apps direto dos models (nenhum app
 # tem migrations). Em schema vazio é uma materialização completa; em schema já
