@@ -17,7 +17,8 @@ backend; não use HTML, JavaScript ou campos ocultos como mecanismo de integrida
 Para operações de estoque, avalie atomicidade, concorrência, locking, constraints, saldo insuficiente,
 duplicidade, idempotência, rollback, histórico e autorização. Use transações e recursos do banco quando
 a propriedade depender deles. Nesta fase não há migrations (ver "Schema efêmero" em AGENTS.md):
-mudanças de schema são feitas só nos models e materializadas com `make resetdb`.
+mudanças de schema são feitas só nos models e materializadas com `make resetdb`. Quando as migrations
+voltarem (primeiro ambiente com dados duráveis), elas preservam dados existentes.
 
 Prefira Django idiomático, views enxutas e operações de negócio explícitas. Evite abstrações
 especulativas e alterações cosméticas fora do escopo. Pode fazer frontend pequeno e inseparável; se a

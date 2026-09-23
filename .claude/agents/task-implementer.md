@@ -233,8 +233,9 @@ Nesta fase o projeto não mantém migrations (ver "Schema efêmero" em
 `CLAUDE.md`): mudanças de schema são feitas só nos models e materializadas com
 `make resetdb`. Não gere nem versione arquivos de migration.
 
-Migrações devem preservar dados existentes. Mudanças destrutivas ou
-irreversíveis não devem ser introduzidas silenciosamente.
+Quando as migrations voltarem (primeiro ambiente com dados duráveis), elas
+devem preservar dados existentes; mudanças destrutivas ou irreversíveis não
+devem ser introduzidas silenciosamente.
 
 Adicione índices somente quando houver motivo baseado em padrão de consulta,
 constraint ou evidência de performance.
