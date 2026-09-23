@@ -47,9 +47,14 @@
   --color-disabled: #B7BCC4;
   /* Preenchimento e rótulo de controle desabilitado. O par anterior (fundo `disabled`
      + texto `surface`) dava 1,91:1 — o rótulo "Enviando…" ficava ilegível justamente
-     no estado em que o usuário espera resposta. */
+     no estado em que o usuário espera resposta.
+     Correção (2026-09-23): a primeira tentativa de correção (#6E7480) media só
+     3,54:1 contra `disabled-surface` — abaixo do alvo de ≥4,9:1 documentado em
+     DESIGN.md/.impeccable/design.json para o rótulo de qualquer controle inativo.
+     `#575D68`, um passo mais escuro na mesma família de `text-muted` (#5B6270, que
+     sozinho mede 4,62:1 aqui — insuficiente), mede 4,99:1. */
   --color-disabled-surface: #DCE0E5;
-  --color-disabled-text: #6E7480;
+  --color-disabled-text: #575D68;
 
   /* ---------------------------------------------------------------------
    * Cor — Estados semânticos (DESIGN.md → Colors → Estados semânticos)

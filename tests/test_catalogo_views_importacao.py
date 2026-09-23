@@ -100,6 +100,20 @@ def _secao_html(conteudo_html, nome_secao):
     return correspondencia.group(1)
 
 
+def _linha_html(conteudo_html, cadpro):
+    """Recorta o HTML da `<tr>` que contém o CADPRO informado, para escopar
+    asserções de célula (saldo, diferença) à linha correta — um valor
+    numérico coincidente em outra linha ou seção poderia satisfazer o regex
+    sem a linha certa estar correta (achado do gate de revisão)."""
+    correspondencia = re.search(
+        rf'<tr>(?:(?!</tr>).)*?{re.escape(cadpro)}(?:(?!</tr>).)*?</tr>',
+        conteudo_html,
+        re.DOTALL,
+    )
+    assert correspondencia, f"linha com CADPRO {cadpro!r} não encontrada no HTML"
+    return correspondencia.group(0)
+
+
 # ---------------------------------------------------------------------------
 # FR-044a: nada é gravado antes da confirmação — nem contagem, nem escrita.
 # ---------------------------------------------------------------------------
@@ -561,21 +575,21 @@ def test_previa_de_reimportacao_mostra_divergencias_atualizados_e_ausentes_sem_g
     # inteiro — 15 dos 3.408 materiais reais têm saldo fracionário —, então o
     # filtro trunca zeros à direita em vez de sempre exibir 3 casas fixas).
     assert "010.020.031" in conteudo_html
-    # Escopados à célula numérica: "10"/"15" soltos casariam com qualquer
-    # trecho do HTML (data, CSS, outro CADPRO) e não provariam nada.
+    # Escopadas à própria linha (`_linha_html`, achado do gate de revisão):
+    # "10"/"15"/"5" soltos casariam com qualquer trecho do HTML (data, CSS,
+    # outro CADPRO) e não provariam que É esta linha que está certa.
+    html_da_linha = _linha_html(conteudo_html, "010.020.031")
     for saldo_esperado in ("10", "15"):
         assert re.search(
             rf'<td class="table-cell-numeric[^"]*">\s*{saldo_esperado}\s*</td>',
-            conteudo_html,
+            html_da_linha,
         ), f"saldo {saldo_esperado!r} deveria aparecer numa célula numérica da divergência"
-    # "5" solto é substring de "15", já verificado acima — escopado à célula
-    # de diferença (com o sinal "+", que só a diferença positiva exibe), como
-    # no comentário acima. A classe da célula ganhou `catalogo-diferenca`
-    # (revisão do gate visual, achado P2: peso tipográfico como
-    # diferenciador não-cromático da diferença) — o regex casa
-    # `class="table-cell-numeric ..."` em vez do valor exato da classe.
+    # A célula de diferença ganhou a classe `catalogo-diferenca` (revisão do
+    # gate visual, achado P2: peso tipográfico como diferenciador
+    # não-cromático da diferença) — o regex casa `class="table-cell-numeric
+    # ..."` em vez do valor exato da classe.
     assert re.search(
-        r'<td class="table-cell-numeric[^"]*">\s*\+5\s*</td>', conteudo_html
+        r'<td class="table-cell-numeric[^"]*">\s*\+5\s*</td>', html_da_linha
     ), (
         "diferença +5 (WMS 10 → arquivo 15) deveria aparecer na célula de "
         "diferença da tabela de divergências"
@@ -685,10 +699,11 @@ def test_execucao_detalhe_de_reimportacao_mostra_divergencias_e_alteracoes_cadas
     # decimais (`floatformat:"-3"`, revisão do gate visual): os dois saldos
     # são inteiros aqui.
     assert "010.020.031" in conteudo_html
+    html_da_linha = _linha_html(conteudo_html, "010.020.031")
     for saldo_esperado in ("10", "15"):
         assert re.search(
             rf'<td class="table-cell-numeric[^"]*">\s*{saldo_esperado}\s*</td>',
-            conteudo_html,
+            html_da_linha,
         ), f"saldo {saldo_esperado!r} deveria aparecer numa célula numérica da divergência"
 
     # Alteração cadastral de 000.000.002 (descricao): CADPRO, campo, valor

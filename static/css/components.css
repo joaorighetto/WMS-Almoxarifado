@@ -59,10 +59,11 @@
   border-color: var(--color-primary-hover);
 }
 
-/* Desabilitado (revisão de presença visual, 2026-09-22): o par anterior — fundo
-   `disabled` com rótulo em `surface` — dava 1,91:1 e apagava justamente o rótulo de
-   "Enviando…"/"Confirmando…", o estado em que o usuário mais precisa ler o botão.
-   Superfície clara + rótulo escuro sobe para 4,9:1 e continua obviamente inativo. */
+/* Desabilitado (revisão de presença visual, 2026-09-22; contraste corrigido em
+   2026-09-23): o par anterior — fundo `disabled` com rótulo em `surface` — dava
+   1,91:1 e apagava justamente o rótulo de "Enviando…"/"Confirmando…", o estado em
+   que o usuário mais precisa ler o botão. Superfície clara + rótulo escuro sobe
+   para 4,99:1 (tokens.css) e continua obviamente inativo. */
 .btn-primary:disabled {
   background-color: var(--color-disabled-surface);
   border-color: var(--color-disabled-surface);

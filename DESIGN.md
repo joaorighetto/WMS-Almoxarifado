@@ -14,7 +14,7 @@ colors:
   text-muted: "#5B6270"
   disabled: "#B7BCC4"
   disabled-surface: "#DCE0E5"
-  disabled-text: "#6E7480"
+  disabled-text: "#575D68"
   success: "#236B3A"
   success-surface: "#E7F3EB"
   success-border: "#5E9B76"
@@ -443,7 +443,7 @@ Regra normativa, nesta ordem de preferência: (1) preservar toda coluna operacio
 
 ### Touch
 
-Ações necessárias nunca dependem de hover. Controles interativos são confortáveis ao toque nos contextos touch (tablet, celular): botões e campos têm altura mínima de 44px em qualquer dispositivo; controles mais compactos no desktop (link de paginação, 32px) e o padding vertical das células de tabela crescem só sob `pointer: coarse` (paginação para 44px, célula de 8px para 12px). Densidade do desktop não é reduzida globalmente só para acomodar toque — tablet e celular variam spacing e dimensão de controle preservando os mesmos papéis semânticos.
+Ações necessárias nunca dependem de hover. Controles interativos são confortáveis ao toque nos contextos touch (tablet, celular): botões e campos têm altura mínima de 44px em qualquer dispositivo; controles mais compactos no desktop (link de paginação, 36px) e o padding vertical das células de tabela crescem só sob `pointer: coarse` (paginação para 44px, célula de 8px para 12px). Densidade do desktop não é reduzida globalmente só para acomodar toque — tablet e celular variam spacing e dimensão de controle preservando os mesmos papéis semânticos.
 
 ## Elevation & Depth
 
@@ -521,7 +521,7 @@ Conjunto mínimo necessário para a vertical slice de referência (catálogo + i
 
 ### Pagination
 - Navegação de lista grande sem carregar tudo de uma vez; em uso na consulta do catálogo (FR-042), no histórico de execuções e em cada seção paginada da prévia e do resultado da execução.
-- **Anterior / páginas numeradas / Próxima**, com reticências (`…`) no lugar dos intervalos distantes da página atual — primeira e última página sempre acessíveis, para continuar utilizável com milhares de itens (decisão do dono do produto, 2026-09-22; substitui a regra anterior de só Anterior/Próxima). À esquerda, um resumo em metadado ("Página X de Y — N no total"); à direita, os controles com borda fina, raio `sm`, mínimo de 32px (44px sob `pointer: coarse`). A página atual não é clicável e se marca por peso semibold + borda e texto em `primary`; o controle indisponível usa o rótulo em `disabled-text`, sem ação — o mesmo token de qualquer controle desabilitado do sistema (`disabled` sozinho media 1,57:1 contra o canvas); a reticência é texto, não controle, e mais estreita que um alvo de toque. Em tela estreita (≤640px), mostra só um vizinho de cada lado da página atual, com os números numa linha e Anterior/Próxima juntos na linha de baixo, dividindo a largura. Com uma página só, aparece apenas o resumo, sem controles. O total usa separador de milhar e o substantivo no plural correto ("3.408 materiais").
+- **Anterior / páginas numeradas / Próxima**, com reticências (`…`) no lugar dos intervalos distantes da página atual — primeira e última página sempre acessíveis, para continuar utilizável com milhares de itens (decisão do dono do produto, 2026-09-22; substitui a regra anterior de só Anterior/Próxima). À esquerda, um resumo em metadado ("Página X de Y — N no total"); à direita, os controles com borda fina, raio `sm`, mínimo de 36px (44px sob `pointer: coarse`). A página atual não é clicável e se marca por peso semibold + borda e texto em `primary`; o controle indisponível usa o rótulo em `disabled-text`, sem ação — o mesmo token de qualquer controle desabilitado do sistema (`disabled` sozinho media 1,57:1 contra o canvas); a reticência é texto, não controle, e mais estreita que um alvo de toque. Em tela estreita (≤640px), mostra só um vizinho de cada lado da página atual, com os números numa linha e Anterior/Próxima juntos na linha de baixo, dividindo a largura. Com uma página só, aparece apenas o resumo, sem controles. O total usa separador de milhar e o substantivo no plural correto ("3.408 materiais").
 - Um único parcial de template (`_paginacao.html`) atende todas as listas. Os links preservam todos os demais parâmetros da URL — filtros e a página de outras seções paginadas na mesma tela —, trocando só o parâmetro da própria seção. Com âncora opcional, a navegação volta à própria seção em vez do topo da página; em região atualizada por HTMX, a troca é parcial.
 
 ### Page Header
