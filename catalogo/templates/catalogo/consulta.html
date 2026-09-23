@@ -7,6 +7,45 @@
 <link rel="stylesheet" href="{% static 'catalogo/css/catalogo.css' %}">
 {% endblock %}
 
+{% comment %}
+`defaultSettleDelay: 0` desliga a fase de "settle" do HTMX 4.0.0. Com ela
+ativa, num swap `innerHTML`/`outerHTML` (inclusive OOB) o HTMX copia todos os
+atributos de cada descendente antigo para o novo de mesmo id e mesma tag —
+incluindo `value`, que também é atribuído a `.value` — e depois só restaura
+os atributos: um `<input>` novo sem atributo `value` fica, de forma
+permanente, com o `.value` do antigo (confirmado no browser: código inválido
+"123", limpar o campo e buscar de novo fazia "123" voltar). O projeto não usa
+as classes/transições que dependem do settle, então desligá-lo não tem custo.
+
+`noSwap` fica no padrão do HTMX 4 (só 204/304) de propósito: a proteção de
+`#resultados-consulta` contra respostas 4xx/5xx é do handler
+`hx-on::response:error` da `<section>` abaixo. Pôr 4xx/5xx aqui só alcançaria
+a restauração de histórico (disparada no `<body>`, fora da `<section>`) e a
+deixaria incoerente — conteúdo antigo com o título da página de erro e sem
+alerta; sem isso, um voltar/avançar que receba 403/500 mostra a página de
+erro, como uma navegação normal.
+
+O `<script>` do HTMX fica aqui, no `<head>`, e não em `extra_js`: no
+voltar/avançar o HTMX 4 troca o `<body>` inteiro pelo da resposta e
+re-executa os `<script>` que estejam nele — um `<script>` de `extra_js`
+criaria uma nova instância do HTMX a cada navegação de histórico. O HTMX
+descarta o `<head>` da resposta na restauração, então um `<script>` aqui
+carrega só uma vez.
+{% endcomment %}
+{% block extra_head %}
+<meta name="htmx-config" content='{"defaultSettleDelay":0}'>
+<script src="{% static 'vendor/htmx/htmx-4.0.0.min.js' %}" defer></script>
+{% endblock %}
+
+{% comment %}
+Na restauração de histórico o HTMX 4 faz o GET a partir do `<body>`, fora
+da seção da consulta. O erro de rede precisa ser tratado no `<body>` para
+alcançar também esse caso; o mesmo evento das buscas e da paginação sobe
+até aqui por bubbling. Ao restaurar outra página, o novo `<body>` substitui
+este atributo junto com o restante do conteúdo.
+{% endcomment %}
+{% block body_attrs %} hx-on::error="document.getElementById('resultados-erro-rede').hidden = false"{% endblock %}
+
 {% block content %}
 <main class="catalogo-page">
   <p class="catalogo-back-link"><a href="{% url 'home' %}">&larr; Início</a></p>
@@ -23,18 +62,27 @@
   </header>
 
   {% comment %}
-  `hx-on` cobre falha de rede/5xx sem arquivo JS próprio (contrato de T035): os
-  eventos `htmx:sendError`/`htmx:responseError` disparados pelo formulário ou por
-  qualquer link de paginação (dentro de `#resultados-consulta`, descendente desta
-  seção) sobem por bubbling até aqui. Em erro, o HTMX não troca `#resultados-consulta`
-  (só troca em 2xx) — os resultados anteriores continuam visíveis e o alerta aparece
-  junto deles.
+  `hx-on` cobre falha HTTP sem arquivo JS próprio (contrato de T035):
+  `htmx:response:error` (4xx/5xx, renomeado de `htmx:responseError`)
+  disparado pelo formulário ou por qualquer link de paginação (dentro de
+  `#resultados-consulta`, descendente desta seção) sobe por bubbling até aqui.
+  Falha de rede/timeout dispara `htmx:error`, tratado no `<body>` acima para
+  incluir também voltar/avançar.
+
+  No HTMX 4 uma resposta 4xx/5xx é tratada como qualquer outra: troca o alvo,
+  empurra a URL no histórico (`hx-push-url`), troca `document.title` pelo
+  `<title>` da página de erro e processa seus `hx-swap-oob` — e um `swap:none`
+  só suprime a troca do alvo, não o resto. O handler `hx-on::response:error`
+  abaixo roda antes de o HTMX decidir o swap (`ctx` está no escopo dos
+  handlers `hx-on`) e neutraliza tudo, confirmado no browser: `ctx.swap =
+  'none'` mantém os resultados anteriores visíveis, `ctx.push = false` evita a
+  entrada no histórico e `ctx.text = ''` descarta título e OOB do corpo de
+  erro. O alerta aparece junto dos resultados anteriores, como no HTMX 2.
   {% endcomment %}
   <section
     class="catalogo-section"
-    hx-on::before-request="document.getElementById('resultados-erro-rede').hidden = true"
-    hx-on::send-error="document.getElementById('resultados-erro-rede').hidden = false"
-    hx-on::response-error="document.getElementById('resultados-erro-rede').hidden = false"
+    hx-on::before:request="document.getElementById('resultados-erro-rede').hidden = true"
+    hx-on::response:error="ctx.swap = 'none'; ctx.push = false; ctx.text = ''; document.getElementById('resultados-erro-rede').hidden = false"
   >
     <form
       method="get"
@@ -291,8 +339,4 @@
     </div>
   </section>
 </main>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'vendor/htmx/htmx-2.0.10.min.js' %}" defer></script>
 {% endblock %}
