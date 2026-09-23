@@ -195,13 +195,22 @@ não puder ser entendido nessa situação não poderá ser corrigido com seguran
 
 ### XIII. Migrações Seguras
 
-Alterações de banco de dados DEVEM preservar dados existentes. Migrações destrutivas ou
-irreversíveis DEVEM ser justificadas explicitamente na mudança que as introduz. Quando uma
-alteração estrutural representar risco significativo, DEVEM ser planejadas a migração de dados e a
-estratégia de recuperação antes da execução.
+Alterações de banco de dados que contenha dados duráveis DEVEM preservar dados existentes.
+Migrações destrutivas ou irreversíveis DEVEM ser justificadas explicitamente na mudança que as
+introduz. Quando uma alteração estrutural representar risco significativo, DEVEM ser planejadas a
+migração de dados e a estratégia de recuperação antes da execução.
+
+Dados duráveis são os de qualquer ambiente cujos dados não possam ser recriados a partir do código,
+de seed ou de fixtures de teste — em especial, dados reais de operação. Enquanto nenhum ambiente
+com dados duráveis existir, o projeto PODE não manter migrations: bancos locais de desenvolvimento
+e bancos de teste são descartáveis, e o schema PODE ser recriado diretamente a partir dos models,
+descartando os dados que contiverem. Antes de o primeiro ambiente com dados duráveis entrar em uso,
+as migrations DEVEM voltar a ser geradas e versionadas, e este princípio passa a se aplicar
+integralmente a elas.
 
 **Racional**: os dados históricos de estoque não são reproduzíveis; perdê-los invalida a
-rastreabilidade exigida pelo Princípio IV.
+rastreabilidade exigida pelo Princípio IV. Bancos descartáveis não guardam esse histórico, e manter
+migrations antes de existir dado a preservar acumula custo de manutenção sem proteger nada.
 
 ### XIV. Observabilidade
 
@@ -270,4 +279,4 @@ provisório, com registro do que precisa ser corrigido. Complexidade adicional D
 `CLAUDE.md` na raiz do repositório, quando existir — NÃO DEVEM contradizer esta constituição. Em
 caso de divergência, esta constituição prevalece e o arquivo de orientação DEVE ser corrigido.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-18 | **Last Amended**: 2026-09-18
+**Version**: 1.2.0 | **Ratified**: 2026-09-18 | **Last Amended**: 2026-09-23

@@ -109,9 +109,9 @@ desliga todas, e o schema é criado direto dos models com `migrate --run-syncdb`
 banco local; o pytest-django faz o mesmo no banco de testes). Mudança de schema é feita só nos
 models: não gere, versione nem revise arquivos de migration. Depois de alterar model, rode
 `make resetdb` — o banco local é descartável. O que antes dependia de migration manual fica fora
-dela (a extensão `pg_trgm` é criada no `pre_migrate` de `catalogo/apps.py`). A política vale até o
-primeiro ambiente com dados duráveis, quando as migrations voltam a ser geradas e versionadas
-(Constitution XIII).
+dela (a extensão `pg_trgm` é criada no `pre_migrate` de `catalogo/apps.py`). A base normativa é o
+Princípio XIII da Constitution (v1.2.0): enquanto nenhum ambiente com dados duráveis existir, o
+projeto pode não manter migrations; antes do primeiro, elas voltam a ser geradas e versionadas.
 
 ## Serena MCP
 
