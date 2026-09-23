@@ -192,6 +192,17 @@ Priorize:
 Não introduza SPA, framework frontend, biblioteca relevante ou nova camada arquitetural sem
 necessidade concreta e decisão compatível com a Constitution.
 
+### Schema efêmero (fase atual)
+
+O projeto não mantém migrations nesta fase: `MIGRATION_MODULES` em `config/settings/base.py`
+desliga todas, e o schema é criado direto dos models com `migrate --run-syncdb` (`make resetdb` no
+banco local; o pytest-django faz o mesmo no banco de testes). Mudança de schema é feita só nos
+models: não gere, versione nem revise arquivos de migration. Depois de alterar model, rode
+`make resetdb` — o banco local é descartável. O que antes dependia de migration manual fica fora
+dela (a extensão `pg_trgm` é criada no `pre_migrate` de `catalogo/apps.py`). A política vale até o
+primeiro ambiente com dados duráveis, quando as migrations voltam a ser geradas e versionadas
+(Constitution XIII).
+
 ## Documentação canônica de domínio
 
 Consulte `docs/domain/permissions-matrix.md` antes de especificar, desenhar testes,

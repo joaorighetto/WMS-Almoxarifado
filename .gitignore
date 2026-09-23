@@ -19,6 +19,10 @@ db.sqlite3-journal
 /media/
 /staticfiles/
 
+# Schema efêmero: sem migrations nesta fase (ver MIGRATION_MODULES em
+# config/settings/base.py). Evita versionar migrations geradas por engano.
+*/migrations/
+
 # Configuração sensível (Princípio VI da constituição)
 .env
 .env.*

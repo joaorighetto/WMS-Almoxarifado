@@ -277,12 +277,13 @@ Ao diagnosticar problemas de banco:
 - diferencie bug da aplicação de dado histórico inválido;
 - verifique constraints;
 - considere isolamento transacional;
-- verifique migrations relevantes;
+- confirme que o banco local reflete os models atuais (`make resetdb`; o
+  projeto não mantém migrations nesta fase — ver "Schema efêmero" em
+  `CLAUDE.md`);
 - evite "corrigir" inconsistência apenas com script manual sem tratar sua
   causa.
 
-Não altere migrations antigas aplicadas apenas para solucionar um bug atual.
-Mudanças de schema devem seguir o fluxo normal de migrations Django.
+Mudanças de schema são feitas só nos models, sem gerar migrations.
 
 ## Django
 

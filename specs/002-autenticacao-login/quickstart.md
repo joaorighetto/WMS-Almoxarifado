@@ -7,7 +7,9 @@ comprovar que o comportamento da spec funciona.
 ## Pré-requisitos
 
 - Ambiente local configurado conforme `.env.example` (PostgreSQL acessível).
-- Migrations aplicadas: `python manage.py migrate`.
+- Schema criado a partir dos models: `make resetdb` (equivale a
+  `python manage.py migrate --run-syncdb` sobre um schema vazio). O projeto não mantém migrations
+  nesta fase ("Schema efêmero" em `CLAUDE.md`).
 
 ## 1. Provisionar dados mínimos de desenvolvimento
 
