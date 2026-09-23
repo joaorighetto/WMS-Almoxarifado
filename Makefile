@@ -46,6 +46,10 @@ DJANGO_SETTINGS_MODULE ?= config.settings.development
 UV_RUN := DJANGO_SETTINGS_MODULE=$(DJANGO_SETTINGS_MODULE) $(UV) run --env-file $(ENV_FILE)
 DJANGO := $(UV_RUN) python manage.py
 
+# Settings dos testes, fixadas com --ds: sem isso um DJANGO_SETTINGS_MODULE
+# vindo do .env, do shell ou da linha de comando do make vence o pyproject.toml
+# e a suíte roda com as settings de outro ambiente.
+TEST_SETTINGS_MODULE ?= config.settings.test
 PYTEST_ARGS ?=
 
 # Diretórios/artefatos locais que podem ser removidos sem medo
@@ -138,10 +142,10 @@ shell: ## Abrir o shell do Django
 # ------------------------------------------------------------------------------
 
 # O pytest-django cria um banco de testes novo a cada execução, também via
-# syncdb, então os testes acompanham os models sem passo extra. As settings
-# vêm do pyproject.toml (config.settings.test). Ex.: make test PYTEST_ARGS="-k catalogo"
+# syncdb, então os testes acompanham os models sem passo extra.
+# Ex.: make test PYTEST_ARGS="-k catalogo"
 test: ## Rodar a suíte de testes
-	$(UV) run --env-file $(ENV_FILE) pytest $(PYTEST_ARGS)
+	$(UV) run --env-file $(ENV_FILE) pytest --ds=$(TEST_SETTINGS_MODULE) $(PYTEST_ARGS)
 
 lint: ## Rodar o ruff
 	$(UV) run ruff check .

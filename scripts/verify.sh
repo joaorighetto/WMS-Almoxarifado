@@ -26,5 +26,7 @@ DJANGO_ALLOWED_HOSTS="verify.invalid" \
 # (MIGRATION_MODULES em config/settings/base.py). O pytest abaixo cria o banco
 # de testes direto dos models, então um model que não materializa falha ali.
 
+# --ds fixa as settings de teste: sem ele, um DJANGO_SETTINGS_MODULE no .env ou
+# no shell venceria o pyproject.toml.
 echo "==> pytest"
-uv run --frozen --env-file .env pytest
+uv run --frozen --env-file .env pytest --ds=config.settings.test
