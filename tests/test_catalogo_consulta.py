@@ -30,6 +30,7 @@ exatamente como a produção grava (`catalogo/importacao.py`), para que a
 busca por descrição exercite a mesma normalização usada em produção.
 """
 
+import json
 import re
 from decimal import Decimal
 
@@ -744,6 +745,206 @@ def test_com_hx_request_a_resposta_e_so_o_fragmento(client, requisitante, criar_
     nomes_templates = [template.name for template in resposta.templates if template.name]
     assert "resultados_consulta" in nomes_templates
     assert "catalogo/consulta.html" not in nomes_templates
+
+
+def test_vary_inclui_hx_request_no_fragmento(client, requisitante, criar_material):
+    """A escolha de template (fragmento x página inteira) depende de
+    `HX-Request`/`HX-History-Restore-Request` — uma resposta cacheada por um
+    não pode ser reaproveitada para o outro (`patch_vary_headers`)."""
+    criar_material(cadpro="000.006.002", descricao="Vary do fragmento")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), HTTP_HX_REQUEST="true")
+
+    assert resposta.status_code == 200
+    valores_vary = [valor.strip() for valor in resposta.headers.get("Vary", "").split(",")]
+    assert "HX-Request" in valores_vary
+    assert "HX-History-Restore-Request" in valores_vary
+
+
+def test_vary_inclui_hx_request_na_pagina_inteira(client, requisitante, criar_material):
+    criar_material(cadpro="000.006.003", descricao="Vary da página inteira")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    assert resposta.status_code == 200
+    valores_vary = [valor.strip() for valor in resposta.headers.get("Vary", "").split(",")]
+    assert "HX-Request" in valores_vary
+    assert "HX-History-Restore-Request" in valores_vary
+
+
+def test_restauracao_de_historico_sem_hx_request_recebe_a_pagina_inteira(
+    client, requisitante, criar_material
+):
+    """Cenário real do HTMX 4.0.0 (confirmado no browser): voltar/avançar
+    refaz o GET com `HX-History-Restore-Request` e `HX-Request-Type: full`,
+    mas SEM `HX-Request` — e o HTMX troca o `<body>` inteiro nesse caso, não
+    o alvo original do request original. A view precisa devolver a página
+    inteira (com `<form>`), não só o partial de resultados, e sem nenhuma
+    cópia OOB (essas só fazem sentido dentro do fragmento, quando o alvo
+    trocado é `#resultados-consulta`)."""
+    criar_material(cadpro="000.006.007", descricao="Restauração de histórico sem HX-Request")
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"),
+        HTTP_HX_HISTORY_RESTORE_REQUEST="true",
+        HTTP_HX_REQUEST_TYPE="full",
+    )
+
+    assert resposta.status_code == 200
+    nomes_templates = [template.name for template in resposta.templates if template.name]
+    assert "catalogo/consulta.html" in nomes_templates
+    conteudo = resposta.content.decode("utf-8")
+    assert "<form" in conteudo
+    assert "hx-swap-oob" not in conteudo
+
+
+def test_restauracao_de_historico_com_hx_request_recebe_a_pagina_inteira(
+    client, requisitante, criar_material
+):
+    """Guarda defensiva (ver comentário em `ConsultaCatalogoView.get`,
+    `catalogo/views.py`): mesmo se um cliente HTMX enviasse `HX-Request`
+    junto de `HX-History-Restore-Request` — o que o HTMX 4.0.0 não faz na
+    restauração real, ver o teste sem `HX-Request` acima —, a view continua
+    devolvendo a página inteira, não o fragmento."""
+    criar_material(cadpro="000.006.004", descricao="Restauração de histórico")
+
+    client.force_login(requisitante)
+    resposta = client.get(
+        reverse("catalogo:consulta"),
+        HTTP_HX_REQUEST="true",
+        HTTP_HX_HISTORY_RESTORE_REQUEST="true",
+    )
+
+    assert resposta.status_code == 200
+    nomes_templates = [template.name for template in resposta.templates if template.name]
+    assert "catalogo/consulta.html" in nomes_templates
+    conteudo = resposta.content.decode("utf-8")
+    assert "<form" in conteudo
+    assert "hx-swap-oob" not in conteudo
+
+
+def test_restauracao_de_historico_com_codigo_invalido_nao_define_hx_reswap(
+    client, requisitante
+):
+    """Página inteira: `HX-Reswap`/`HX-Push-Url` só fazem sentido para o
+    fragmento (ver `test_codigo_invalido_em_pagina_inteira_nao_emite_bloco_oob`),
+    inclusive quando a página inteira vem de uma restauração de histórico."""
+    client.force_login(requisitante)
+
+    resposta = client.get(
+        reverse("catalogo:consulta"),
+        {"codigo": "abc"},
+        HTTP_HX_REQUEST="true",
+        HTTP_HX_HISTORY_RESTORE_REQUEST="true",
+    )
+
+    assert resposta.status_code == 200
+    assert "HX-Reswap" not in resposta.headers
+    assert "HX-Push-Url" not in resposta.headers
+
+
+def test_pagina_inteira_referencia_o_htmx_4_e_desliga_o_settle(
+    client, requisitante, criar_material
+):
+    """A meta `htmx-config` (HTMX 4) define `defaultSettleDelay: 0`, que evita
+    um bug de settle do HTMX 4.0.0 (um `<input>` novo sem atributo `value`
+    fica com o `.value` do elemento antigo de mesmo id, confirmado no
+    browser). `noSwap` fica no padrão: pôr 4xx/5xx nele deixaria incoerente
+    a restauração de histórico que recebe 403/500 — a proteção dos
+    resultados contra erro é do handler `hx-on::response:error`."""
+    criar_material(cadpro="000.006.005", descricao="Script HTMX 4")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    assert resposta.status_code == 200
+    conteudo = resposta.content.decode("utf-8")
+    assert "vendor/htmx/htmx-4.0.0.min.js" in conteudo
+
+    match_meta = re.search(r'<meta name="htmx-config" content=\'([^\']*)\'>', conteudo)
+    assert match_meta is not None, "meta htmx-config não encontrada"
+    config = json.loads(match_meta.group(1))
+    assert config["defaultSettleDelay"] == 0
+    assert "noSwap" not in config
+
+
+def test_script_htmx_fica_no_head_nao_no_body(client, requisitante, criar_material):
+    """O `<script>` do HTMX precisa ficar no `<head>` (`extra_head`), não no
+    `<body>` (`extra_js`): no voltar/avançar o HTMX 4 troca o `<body>`
+    inteiro pela resposta e re-executa os `<script>` que estejam nele — um
+    `<script>` no `<body>` criaria uma nova instância do HTMX a cada
+    navegação de histórico (confirmado no browser: as folhas de estilo do
+    indicador de carregamento dobravam a cada volta)."""
+    criar_material(cadpro="000.006.008", descricao="Script no head")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    posicao_script = conteudo.index("vendor/htmx/htmx-4.0.0.min.js")
+    posicao_head_fim = conteudo.index("</head>")
+    posicao_body_inicio = conteudo.index("<body")
+    assert posicao_script < posicao_head_fim
+    assert posicao_script < posicao_body_inicio
+
+
+def test_hx_on_usa_os_nomes_de_evento_do_htmx_4(client, requisitante, criar_material):
+    """`htmx:sendError`/`htmx:responseError` foram renomeados no HTMX 4 para
+    `htmx:error`/`htmx:response:error` — o atalho `hx-on::x` correspondente
+    também muda (`hx-on::error`/`hx-on::response:error`)."""
+    criar_material(cadpro="000.006.006", descricao="Eventos HTMX 4")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    assert resposta.status_code == 200
+    conteudo = resposta.content.decode("utf-8")
+    assert "hx-on::before:request=" in conteudo
+    assert "hx-on::error=" in conteudo
+    assert "hx-on::response:error=" in conteudo
+    assert "send-error" not in conteudo
+    assert "response-error" not in conteudo
+
+
+def test_erro_de_rede_na_restauracao_de_historico_e_tratado_no_body(
+    client, requisitante, criar_material
+):
+    """A restauração do HTMX 4 inicia o GET no body, fora da seção da
+    consulta. O handler no body também recebe os erros da busca e paginação
+    por bubbling."""
+    criar_material(cadpro="000.006.010", descricao="Erro de rede no histórico")
+    client.force_login(requisitante)
+
+    conteudo = client.get(reverse("catalogo:consulta")).content.decode("utf-8")
+    match_body = re.search(r"<body\b[^>]*>", conteudo, re.S)
+    assert match_body is not None
+    assert "hx-on::error=" in match_body.group()
+
+
+def test_hx_on_response_error_neutraliza_swap_historico_titulo_e_oob(
+    client, requisitante, criar_material
+):
+    """No HTMX 4 uma resposta 4xx/5xx troca o alvo, empurra a URL no
+    histórico, troca `document.title` e processa `hx-swap-oob` do corpo de
+    erro — e `swap:none` só suprime a troca do alvo. O handler
+    `hx-on::response:error` é o único mecanismo que protege os resultados:
+    `ctx.swap`, `ctx.push` e `ctx.text` neutralizam cada efeito (confirmado
+    no browser)."""
+    criar_material(cadpro="000.006.009", descricao="Neutraliza swap de erro")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    match_section = re.search(r"<section\b[^>]*>", conteudo, re.S)
+    assert match_section is not None
+    tag_section = match_section.group()
+    assert "ctx.swap = 'none'" in tag_section
+    assert "ctx.push = false" in tag_section
+    assert "ctx.text = ''" in tag_section
 
 
 # ---------------------------------------------------------------------------

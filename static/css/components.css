@@ -1000,7 +1000,7 @@
 /* ---------------------------------------------------------------------
  * Loading Indicator (DESIGN.md → Components → Loading Indicator)
  * Local à região atualizada por HTMX — nunca bloqueio de página inteira. Usa o
- * mecanismo padrão do HTMX (`htmx.config.includeIndicatorStyles`, ativo por padrão):
+ * mecanismo padrão do HTMX (`htmx.config.includeIndicatorCSS`, ativo por padrão):
  * o elemento referenciado por `hx-indicator` recebe a classe `htmx-indicator` (opacidade
  * 0 em repouso) e o próprio HTMX alterna a visibilidade durante a requisição — sem JS
  * de projeto. `role="status"` substitui um `aria-live` manual.

@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
+from django.utils.cache import patch_vary_headers
 from django.views.generic import DetailView, ListView, View
 
 from catalogo import importacao
@@ -95,9 +96,14 @@ class ConsultaCatalogoView(OrdenacaoMixin, ExigePapelMixin, View):
     pelo valor bruto do usuário — e cai na ordem padrão (`cadpro` crescente)
     quando o parâmetro está ausente ou é desconhecido; a ordenação se combina
     com os filtros e não altera o conjunto de materiais retornado, só a
-    ordem. Com o cabeçalho `HX-Request`, a resposta é só o partial de
-    resultados (research R16), renderizado via `"catalogo/consulta.html#resultados_consulta"`
-    (template partials, Django 6) — não mais um template separado.
+    ordem. Com o cabeçalho `HX-Request` — e sem `HX-History-Restore-Request`,
+    ver `get` — a resposta é só o partial de resultados (research R16),
+    renderizado via `"catalogo/consulta.html#resultados_consulta"` (template
+    partials, Django 6) — não mais um template separado. Ao restaurar uma
+    entrada do histórico do navegador (voltar/avançar), o HTMX 4 refaz o GET
+    com `HX-History-Restore-Request` (sem `HX-Request`, confirmado no
+    browser) e substitui o `<body>` inteiro — por isso a página inteira é
+    servida também nesse caso.
     """
 
     papel_exigido = Papel.REQUISITANTE
@@ -124,7 +130,20 @@ class ConsultaCatalogoView(OrdenacaoMixin, ExigePapelMixin, View):
         # comentário do partial `resultados_consulta`, em
         # `catalogo/templates/catalogo/consulta.html`, revisão do gate
         # visual, achado P2).
-        veio_de_htmx = bool(request.headers.get("HX-Request"))
+        # No HTMX 4, restaurar uma entrada do histórico (voltar/avançar)
+        # refaz o GET com `HX-History-Restore-Request` — e sem `HX-Request`
+        # (confirmado no browser; o 4.0.0 também manda
+        # `HX-Request-Type: full` nesse caso, que a view não precisa ler) —
+        # e o HTMX troca o `<body>` inteiro nesse caso, não o alvo original.
+        # A checagem abaixo também exclui `HX-History-Restore-Request` do
+        # lado de `HX-Request` presente por segurança defensiva, caso um
+        # cliente HTMX envie os dois cabeçalhos juntos: só contar como
+        # fragmento quando o segundo cabeçalho estiver ausente evita
+        # devolver o partial (sem `<html>`/`<body>`) para substituir a
+        # página inteira.
+        veio_de_htmx = bool(request.headers.get("HX-Request")) and not request.headers.get(
+            "HX-History-Restore-Request"
+        )
 
         # FR-042a: resolvida mesmo com `codigo_invalido`, para o cabeçalho da
         # tabela continuar indicando a coluna/direção vigentes.
@@ -173,6 +192,10 @@ class ConsultaCatalogoView(OrdenacaoMixin, ExigePapelMixin, View):
             # Sem trocar os resultados, a URL também não deve passar a mostrar o
             # filtro inválido (o `hx-push-url="true"` do formulário a empurraria).
             resposta["HX-Push-Url"] = "false"
+        # A escolha de template depende de `HX-Request`/`HX-History-Restore-Request`
+        # (fragmento x página inteira), então uma resposta cacheada por um
+        # desses cabeçalhos não pode ser reaproveitada para o outro.
+        patch_vary_headers(resposta, ["HX-Request", "HX-History-Restore-Request"])
         return resposta
 
 
