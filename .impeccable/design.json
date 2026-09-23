@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-22T13:43:43Z",
+  "generatedAt": "2026-09-22T19:50:10Z",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -23,17 +23,17 @@
       "background": {
         "role": "neutral",
         "displayName": "Fundo",
-        "canonical": "#F7F8FA",
-        "purpose": "Fundo geral da página.",
+        "canonical": "#E6E9ED",
+        "purpose": "Canvas da página, deliberadamente mais escuro que a superfície de trabalho (1,22:1) — é o degrau que faz tabela e formulário assentarem sem sombra.",
         "tonalRamp": [
-          "#1D232F",
-          "#343E53",
-          "#4A5977",
-          "#61749B",
-          "#8493B2",
-          "#A8B2C8",
-          "#CBD2DF",
-          "#EFF1F5"
+          "#1A1E24",
+          "#333C47",
+          "#4D5A6B",
+          "#66788E",
+          "#8E9CAE",
+          "#B2BBC7",
+          "#D3D8DF",
+          "#F0F2F4"
         ]
       },
       "surface": {
@@ -55,33 +55,33 @@
       "surface-subtle": {
         "role": "neutral",
         "displayName": "Superfície sutil",
-        "canonical": "#EEF0F3",
+        "canonical": "#EFF1F4",
         "purpose": "Hover funcional, cabeçalho de tabela, fundo de alert e badge; realce leve sem função de estado.",
         "tonalRamp": [
-          "#20252D",
-          "#38414F",
-          "#505D71",
-          "#687993",
-          "#8A97AC",
-          "#ACB6C4",
-          "#CED4DC",
-          "#F0F2F4"
+          "#191D24",
+          "#323B49",
+          "#4B586D",
+          "#647691",
+          "#8C9BB0",
+          "#B0BAC9",
+          "#D2D7E0",
+          "#F0F2F5"
         ]
       },
       "border": {
         "role": "neutral",
         "displayName": "Borda",
-        "canonical": "#D7DBE0",
-        "purpose": "Divisores padrão entre linhas, campos e seções.",
+        "canonical": "#D6DAE0",
+        "purpose": "Divisor interno: entre linhas de tabela, campos e seções.",
         "tonalRamp": [
-          "#21262B",
-          "#3B424C",
-          "#545F6D",
-          "#6E7C8E",
-          "#8E99A8",
-          "#AFB7C1",
-          "#D0D5DA",
-          "#F1F2F4"
+          "#1A1E23",
+          "#353B46",
+          "#4F5969",
+          "#69778B",
+          "#919BAC",
+          "#B3BBC6",
+          "#D3D8DE",
+          "#F0F2F4"
         ]
       },
       "border-strong": {
@@ -136,7 +136,7 @@
         "role": "neutral",
         "displayName": "Desabilitado",
         "canonical": "#B7BCC4",
-        "purpose": "Controle inativo; sempre com cursor: not-allowed.",
+        "purpose": "Borda de controle inativo. O rótulo usa disabled-text; o preenchimento, disabled-surface.",
         "tonalRamp": [
           "#22252A",
           "#3D424A",
@@ -151,65 +151,65 @@
       "success": {
         "role": "tertiary",
         "displayName": "Sucesso",
-        "canonical": "#2E7D46",
+        "canonical": "#236B3A",
         "purpose": "Confirmação de operação concluída (alert de sucesso, selo \"Concluída\").",
         "tonalRamp": [
-          "#15381F",
-          "#246337",
-          "#348D4F",
-          "#44B867",
-          "#6DC989",
-          "#97D9AB",
-          "#C2E8CE",
-          "#ECF8F0"
+          "#0F2E19",
+          "#1E5C32",
+          "#2D8A4B",
+          "#3CB864",
+          "#6DCF8C",
+          "#9BDEB1",
+          "#C5ECD2",
+          "#ECF9F0"
         ]
       },
       "warning": {
         "role": "tertiary",
         "displayName": "Alerta",
-        "canonical": "#A66A00",
+        "canonical": "#8A5700",
         "purpose": "Condição que merece atenção mas não bloqueia. Divergência de saldo não usa este tom.",
         "tonalRamp": [
-          "#4C3100",
-          "#875600",
-          "#C17B00",
-          "#FBA100",
-          "#FFB737",
-          "#FFCC71",
-          "#FFE1AB",
+          "#3D2700",
+          "#7A4D00",
+          "#B87400",
+          "#F59A00",
+          "#FFB73D",
+          "#FFCE7A",
+          "#FFE3B2",
           "#FFF6E5"
         ]
       },
       "danger": {
         "role": "tertiary",
         "displayName": "Perigo",
-        "canonical": "#B3261E",
+        "canonical": "#9E2019",
         "purpose": "Erro, recusa ou ação destrutiva/irreversível.",
         "tonalRamp": [
-          "#420E0B",
-          "#731913",
-          "#A5231C",
-          "#D72E24",
-          "#E25B53",
-          "#EB8B85",
-          "#F3BAB7",
-          "#FBEAE9"
+          "#350B08",
+          "#6A1511",
+          "#9F2019",
+          "#D32B21",
+          "#E55F58",
+          "#ED928D",
+          "#F5C0BD",
+          "#FCEAE9"
         ]
       },
       "info": {
         "role": "tertiary",
-        "displayName": "Informação",
-        "canonical": "#3B6EA5",
-        "purpose": "Mensagem neutra de contexto (ex.: prévia ainda não gravada), distinta do accent de ação.",
+        "displayName": "Azul-Petróleo",
+        "canonical": "#1F6572",
+        "purpose": "Contexto neutro (ex.: 'esta é só uma prévia'). Fora do eixo do azul de propósito: o valor anterior (#3B6EA5) estava a 1,30:1 do primary e competia com a ação.",
         "tonalRamp": [
-          "#142638",
-          "#244263",
-          "#335F8E",
-          "#427BB9",
-          "#6B99CA",
-          "#96B7DA",
-          "#C1D4E9",
-          "#ECF2F8"
+          "#0D2B30",
+          "#1A5560",
+          "#278090",
+          "#34ABC0",
+          "#67C4D6",
+          "#97D7E3",
+          "#C3E8EF",
+          "#EBF7FA"
         ]
       },
       "selected": {
@@ -243,12 +243,300 @@
           "#C1D5EA",
           "#ECF2F9"
         ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Azul-Operação Pressionado",
+        "canonical": "#274E74",
+        "purpose": "Hover/active da ação primária.",
+        "tonalRamp": [
+          "#0F1F2E",
+          "#1F3E5C",
+          "#2E5C89",
+          "#3E7BB7",
+          "#6E9FCE",
+          "#9CBDDE",
+          "#C6D9EC",
+          "#ECF2F9"
+        ]
+      },
+      "border-frame": {
+        "role": "neutral",
+        "displayName": "Moldura",
+        "canonical": "#C2C8D0",
+        "purpose": "Contorno externo de tabela, formulário isolado, barra de confirmação e page header, e borda do botão secundário — um passo mais firme que o divisor interno.",
+        "tonalRamp": [
+          "#1B1E23",
+          "#353C45",
+          "#505A68",
+          "#6B788A",
+          "#929CAB",
+          "#B4BBC5",
+          "#D4D8DE",
+          "#F1F2F4"
+        ]
+      },
+      "disabled-surface": {
+        "role": "neutral",
+        "displayName": "Superfície Desabilitada",
+        "canonical": "#DCE0E5",
+        "purpose": "Preenchimento de controle inativo.",
+        "tonalRamp": [
+          "#1A1E23",
+          "#343C46",
+          "#4E5A69",
+          "#68788C",
+          "#909DAC",
+          "#B3BCC6",
+          "#D3D8DE",
+          "#F0F2F4"
+        ]
+      },
+      "disabled-text": {
+        "role": "neutral",
+        "displayName": "Rótulo Desabilitado",
+        "canonical": "#575D68",
+        "purpose": "Rótulo de qualquer controle inativo (botão, link de paginação) — 4,99:1 sobre disabled-surface.",
+        "tonalRamp": [
+          "#1C1E21",
+          "#393C42",
+          "#555963",
+          "#717784",
+          "#979CA5",
+          "#B8BBC2",
+          "#D6D8DC",
+          "#F1F2F3"
+        ]
+      },
+      "success-surface": {
+        "role": "success",
+        "displayName": "Verde Claro",
+        "canonical": "#E7F3EB",
+        "purpose": "Superfície de alert e badge de sucesso.",
+        "tonalRamp": [
+          "#14291B",
+          "#295236",
+          "#3D7A52",
+          "#52A36D",
+          "#7EBE93",
+          "#A7D3B5",
+          "#CCE5D4",
+          "#EEF6F1"
+        ]
+      },
+      "success-border": {
+        "role": "success",
+        "displayName": "Verde Médio",
+        "canonical": "#5E9B76",
+        "purpose": "Borda de alert e badge de sucesso.",
+        "tonalRamp": [
+          "#17261D",
+          "#2E4C3A",
+          "#457257",
+          "#5C9874",
+          "#86B699",
+          "#ACCDB9",
+          "#CFE2D7",
+          "#EFF5F2"
+        ]
+      },
+      "warning-surface": {
+        "role": "warning",
+        "displayName": "Âmbar Claro",
+        "canonical": "#FCF3E1",
+        "purpose": "Superfície de alert e badge de alerta.",
+        "tonalRamp": [
+          "#382706",
+          "#6F4E0B",
+          "#A77511",
+          "#DF9C16",
+          "#EDB94F",
+          "#F3CF86",
+          "#F8E3B9",
+          "#FDF6E8"
+        ]
+      },
+      "warning-border": {
+        "role": "warning",
+        "displayName": "Âmbar Médio",
+        "canonical": "#BC8B3C",
+        "purpose": "Borda de alert e badge de alerta.",
+        "tonalRamp": [
+          "#2E220F",
+          "#5D451E",
+          "#8B672C",
+          "#BA893B",
+          "#D0AA6C",
+          "#DFC59A",
+          "#ECDDC5",
+          "#F9F4EC"
+        ]
+      },
+      "danger-surface": {
+        "role": "danger",
+        "displayName": "Vermelho Claro",
+        "canonical": "#FBEAE8",
+        "purpose": "Superfície de alert e badge de erro.",
+        "tonalRamp": [
+          "#340E09",
+          "#681B12",
+          "#9C291B",
+          "#D13624",
+          "#E2685A",
+          "#EB988E",
+          "#F4C3BE",
+          "#FBEBE9"
+        ]
+      },
+      "danger-border": {
+        "role": "danger",
+        "displayName": "Vermelho Médio",
+        "canonical": "#C9756C",
+        "purpose": "Borda de alert e badge de erro.",
+        "tonalRamp": [
+          "#2D1310",
+          "#5A2621",
+          "#863A31",
+          "#B34D42",
+          "#CB7A71",
+          "#DBA49E",
+          "#EACAC7",
+          "#F8EDEC"
+        ]
+      },
+      "info-surface": {
+        "role": "info",
+        "displayName": "Petróleo Claro",
+        "canonical": "#E3F1F3",
+        "purpose": "Superfície de alert e badge informativo.",
+        "tonalRamp": [
+          "#12282B",
+          "#255056",
+          "#377781",
+          "#499FAB",
+          "#77BBC5",
+          "#A2D1D7",
+          "#C9E4E8",
+          "#EDF6F7"
+        ]
+      },
+      "info-border": {
+        "role": "info",
+        "displayName": "Petróleo Médio",
+        "canonical": "#56949D",
+        "purpose": "Borda de alert e badge informativo.",
+        "tonalRamp": [
+          "#162528",
+          "#2B4B4F",
+          "#417077",
+          "#57959E",
+          "#82B3BA",
+          "#A9CBD0",
+          "#CEE1E4",
+          "#EFF5F6"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#1E2833",
+        "purpose": "Fundo do app shell de desktop (direção aprovada, ainda não consumida). Neutra, nunca primary.",
+        "tonalRamp": [
+          "#171E27",
+          "#2D3C4D",
+          "#445B74",
+          "#5B799A",
+          "#859DB7",
+          "#ACBCCE",
+          "#CFD8E3",
+          "#EFF2F6"
+        ]
+      },
+      "ink-raised": {
+        "role": "neutral",
+        "displayName": "Tinta Elevada",
+        "canonical": "#29343F",
+        "purpose": "Item ativo/hover dentro do app shell.",
+        "tonalRamp": [
+          "#181F25",
+          "#303D4A",
+          "#485C6F",
+          "#617A94",
+          "#8A9EB3",
+          "#AFBDCB",
+          "#D1D9E1",
+          "#F0F2F5"
+        ]
+      },
+      "ink-border": {
+        "role": "neutral",
+        "displayName": "Divisor da Tinta",
+        "canonical": "#374250",
+        "purpose": "Divisor interno do app shell.",
+        "tonalRamp": [
+          "#191E24",
+          "#323C49",
+          "#4B5A6D",
+          "#647891",
+          "#8C9CB0",
+          "#B0BBC9",
+          "#D2D8E0",
+          "#F0F2F5"
+        ]
+      },
+      "on-ink": {
+        "role": "neutral",
+        "displayName": "Sobre Tinta",
+        "canonical": "#FFFFFF",
+        "purpose": "Item ativo do app shell (14,9:1).",
+        "tonalRamp": [
+          "#1F1F1F",
+          "#3D3D3D",
+          "#5C5C5C",
+          "#7A7A7A",
+          "#9E9E9E",
+          "#BDBDBD",
+          "#D9D9D9",
+          "#F2F2F2"
+        ]
+      },
+      "on-ink-muted": {
+        "role": "neutral",
+        "displayName": "Sobre Tinta Atenuado",
+        "canonical": "#C9D2DC",
+        "purpose": "Item em repouso do app shell (9,8:1).",
+        "tonalRamp": [
+          "#181E25",
+          "#303D4A",
+          "#485B6F",
+          "#607995",
+          "#899DB3",
+          "#AFBCCB",
+          "#D1D8E1",
+          "#F0F2F5"
+        ]
+      },
+      "on-ink-accent": {
+        "role": "neutral",
+        "displayName": "Accent Sobre Tinta",
+        "canonical": "#9CC3E6",
+        "purpose": "Indicador de item ativo e anel de foco dentro do app shell (8,1:1) — focus não sobrevive sobre a tinta.",
+        "tonalRamp": [
+          "#0C2031",
+          "#193F62",
+          "#255F93",
+          "#317EC3",
+          "#64A1D8",
+          "#95BFE4",
+          "#C2DAF0",
+          "#EBF3FA"
+        ]
       }
     },
     "typographyMeta": {
       "page-title": {
         "displayName": "Título de página",
-        "purpose": "Título no page header; também o valor de cada total no resumo de uma execução."
+        "purpose": "Título do page header. 24px/700 com tracking negativo — a 20px/600 empatava com o título de seção."
       },
       "section-title": {
         "displayName": "Título de seção",
@@ -277,6 +565,14 @@
       "code": {
         "displayName": "Código / identificador",
         "purpose": "CADPRO e identificadores técnicos opacos do domínio, em monoespaçada."
+      },
+      "metric": {
+        "displayName": "Valor de total",
+        "purpose": "Número de um total de operação (resumo da prévia e do resultado da importação) — o elemento de maior peso da seção, por tipografia."
+      },
+      "table-header": {
+        "displayName": "Cabeçalho de tabela",
+        "purpose": "Rótulo de coluna em caixa-alta e text-muted: a ênfase é invertida de propósito para o dado ser o elemento mais escuro da tabela. Exige rótulo curto (~3 palavras)."
       }
     },
     "shadows": [],
@@ -315,7 +611,8 @@
       "Token selected está definido em tokens.css mas ainda não é consumido: nenhuma seleção de linha nem navegação existe.",
       "Resumo de totais, nota explicativa e barra de confirmação persistente vivem em catalogo/static/catalogo/css/catalogo.css (usados só pelo catálogo); sobem para static/css/components.css quando outra feature os reutilizar.",
       "App shell desktop (largura/colapso de sidebar) e navegação mobile permanecem decisões EM ABERTO em DESIGN.md — não implementadas, não presumir.",
-      "Snippets usam as custom properties de static/css/tokens.css (var(--...)); os valores normativos estão no frontmatter de DESIGN.md."
+      "Snippets usam as custom properties de static/css/tokens.css (var(--...)); os valores normativos estão no frontmatter de DESIGN.md.",
+      "Revisão de presença visual (impeccable colorize + critique, 2026-09-22): rampa neutra com degraus perceptíveis (canvas 1,22:1 contra superfície), moldura própria (border-frame), famílias semânticas de três papéis, info fora do eixo do azul, escala tipográfica aberta nos extremos e densidade por token. Nenhuma sombra foi introduzida."
     ]
   },
   "components": [
@@ -325,7 +622,7 @@
       "refersTo": "button-primary",
       "description": "Ação visualmente dominante do contexto (The One Accent Rule). Ao enviar, fica desabilitado com o rótulo no gerúndio (\"Confirmando…\").",
       "html": "<div style=\"display:flex;gap:8px;flex-wrap:wrap\"><button class=\"ds-btn ds-btn-primary\">Confirmar importação: 12 inseridos, 340 atualizados</button><button class=\"ds-btn ds-btn-primary\" disabled>Confirmando…</button></div>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:disabled { background-color: var(--color-disabled); border-color: var(--color-disabled); color: var(--color-surface); cursor: not-allowed; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:hover:not(:disabled), .ds-btn-primary:active:not(:disabled) { background-color: var(--color-primary-hover); border-color: var(--color-primary-hover); } .ds-btn-primary:disabled { background-color: var(--color-disabled-surface); border-color: var(--color-disabled-surface); color: var(--color-disabled-text); cursor: not-allowed; }"
     },
     {
       "name": "Secondary Button",
@@ -333,7 +630,7 @@
       "refersTo": "button-secondary",
       "description": "Ação secundária/ghost: borda fina, sem preenchimento de primary. Também é a aparência de links de ação (\"Nova importação\", \"Limpar\").",
       "html": "<div style=\"display:flex;gap:8px;flex-wrap:wrap\"><button class=\"ds-btn ds-btn-secondary\">Cancelar</button><a href=\"#\" class=\"ds-btn ds-btn-secondary\">Nova importação</a><button class=\"ds-btn ds-btn-secondary\" disabled>Indisponível</button></div>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; }"
     },
     {
       "name": "Text Field",
@@ -341,7 +638,7 @@
       "refersTo": "input-text",
       "description": "Label acima; dica abaixo em text-muted; erro abaixo em danger com texto, e borda danger no campo — nunca só a borda.",
       "html": "<div style=\"display:flex;gap:16px;flex-wrap:wrap\"><div class=\"ds-field\" style=\"flex:1 1 220px\"><label for=\"ds-f1\">Código (CADPRO)</label><input id=\"ds-f1\" type=\"text\" value=\"001.002.003\"><p class=\"ds-field-hint\">Formato completo XXX.YYY.ZZZ.</p></div><div class=\"ds-field ds-field-has-error\" style=\"flex:1 1 220px\"><label for=\"ds-f2\">Código (CADPRO)</label><input id=\"ds-f2\" type=\"text\" value=\"001.2\"><p class=\"ds-field-error\">Informe o código completo no formato XXX.YYY.ZZZ.</p></div></div>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); }"
+      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); }"
     },
     {
       "name": "Alert",
@@ -349,7 +646,7 @@
       "refersTo": "alert-success",
       "description": "Feedback de página/seção com frase explícita: success (importação efetivada), info (prévia não gravada), warning, danger (erro/falha de rede). Visível até a próxima navegação, nunca toast.",
       "html": "<div class=\"ds-alert ds-alert-success\"><p>Importação confirmada: 12 materiais inseridos e 340 atualizados.</p></div><div class=\"ds-alert ds-alert-info\"><p>Esta é só uma prévia: nada foi gravado ainda.</p></div><div class=\"ds-alert ds-alert-warning\"><p>Aviso que merece atenção mas não bloqueia.</p></div><div class=\"ds-alert ds-alert-danger\"><p>Não foi possível atualizar os resultados agora. Verifique a conexão e tente novamente.</p></div>",
-      "css": ".ds-alert { padding: var(--space-3); border-radius: var(--radius-sm); margin-bottom: var(--space-4); font-family: var(--font-family-base); font-size: var(--font-size-body); background-color: var(--color-surface-subtle); border: 1px solid currentColor; } .ds-alert p { margin: 0; } .ds-alert-success { color: var(--color-success); } .ds-alert-info { color: var(--color-info); } .ds-alert-warning { color: var(--color-warning); } .ds-alert-danger { color: var(--color-danger); }"
+      "css": ".ds-alert { padding: var(--space-3); border-radius: var(--radius-sm); margin-bottom: var(--space-4); font-family: var(--font-family-base); font-size: var(--font-size-body); border: 1px solid currentColor; } .ds-alert p { margin: 0; } .ds-alert-success { background-color: var(--color-success-surface); border-color: var(--color-success-border); color: var(--color-success); } .ds-alert-info { background-color: var(--color-info-surface); border-color: var(--color-info-border); color: var(--color-info); } .ds-alert-warning { background-color: var(--color-warning-surface); border-color: var(--color-warning-border); color: var(--color-warning); } .ds-alert-danger { background-color: var(--color-danger-surface); border-color: var(--color-danger-border); color: var(--color-danger); }"
     },
     {
       "name": "Status Badge",
@@ -357,7 +654,7 @@
       "refersTo": "badge-success",
       "description": "Rótulo curto de estado semântico, sempre com texto. Uso atual: \"Concluída\" ao lado do título do resultado da execução. Nunca por linha de divergência.",
       "html": "<h1 class=\"ds-ph-title\">Resultado da importação #42 <span class=\"ds-badge ds-badge-success\">Concluída</span></h1><div style=\"display:flex;gap:8px;flex-wrap:wrap;margin-top:12px\"><span class=\"ds-badge ds-badge-info\">Informação</span><span class=\"ds-badge ds-badge-warning\">Atenção</span><span class=\"ds-badge ds-badge-danger\">Erro</span><span class=\"ds-badge ds-badge-neutral\">Pendente</span></div>",
-      "css": ".ds-ph-title { margin: 0; font-family: var(--font-family-base); font-size: var(--font-size-page-title); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); color: var(--color-text); } .ds-ph-title .ds-badge { margin-left: var(--space-2); vertical-align: middle; } .ds-badge { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-badge); font-weight: var(--font-weight-medium); line-height: var(--line-height-tight); white-space: nowrap; background-color: var(--color-surface-subtle); border: 1px solid currentColor; } .ds-badge-success { color: var(--color-success); } .ds-badge-info { color: var(--color-info); } .ds-badge-warning { color: var(--color-warning); } .ds-badge-danger { color: var(--color-danger); } .ds-badge-neutral { color: var(--color-text); border-color: var(--color-border-strong); }"
+      "css": ".ds-ph-title { margin: 0; font-family: var(--font-family-base); font-size: var(--font-size-page-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); color: var(--color-text); } .ds-ph-title .ds-badge { margin-left: var(--space-2); vertical-align: middle; } .ds-badge { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-badge); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); white-space: nowrap; border: 1px solid currentColor; } .ds-badge-success { background-color: var(--color-success-surface); border-color: var(--color-success-border); color: var(--color-success); } .ds-badge-info { background-color: var(--color-info-surface); border-color: var(--color-info-border); color: var(--color-info); } .ds-badge-warning { background-color: var(--color-warning-surface); border-color: var(--color-warning-border); color: var(--color-warning); } .ds-badge-danger { background-color: var(--color-danger-surface); border-color: var(--color-danger-border); color: var(--color-danger); } .ds-badge-neutral { background-color: var(--color-surface-subtle); color: var(--color-text); border-color: var(--color-border-strong); }"
     },
     {
       "name": "Table",
@@ -365,7 +662,7 @@
       "refersTo": "table",
       "description": "Superfície de primeira classe: cabeçalho sticky com scrollport vertical, números à direita em tabular-nums, CADPRO em monoespaçada, borda lateral border-strong só na linha de exceção.",
       "html": "<div class=\"ds-table-wrapper ds-table-sticky-header\"><table class=\"ds-table\"><thead><tr><th scope=\"col\">Linha</th><th scope=\"col\">Código (CADPRO)</th><th scope=\"col\">Motivo</th><th scope=\"col\" class=\"ds-num\">Saldo</th></tr></thead><tbody><tr><td>14</td><td class=\"ds-code\">001.002.003</td><td>Aceito</td><td class=\"ds-num\">1.250,000</td></tr><tr class=\"ds-row-error\"><td>15</td><td class=\"ds-code\">001.002.004</td><td>CADPRO duplicado no arquivo</td><td class=\"ds-num\">12,500</td></tr><tr><td>16</td><td class=\"ds-code\">002.010.001</td><td>Aceito</td><td class=\"ds-num\">0,000</td></tr></tbody></table></div>",
-      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-weight: var(--font-weight-semibold); background-color: var(--color-surface-subtle); vertical-align: middle; } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } }"
+      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border-frame); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-size: var(--font-size-table-header); font-weight: var(--font-weight-semibold); letter-spacing: var(--letter-spacing-caps); text-transform: uppercase; color: var(--color-text-muted); background-color: var(--color-surface-subtle); vertical-align: middle; border-bottom: 2px solid var(--color-border-strong); } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } }"
     },
     {
       "name": "Informative Table (divergências)",
@@ -373,7 +670,7 @@
       "refersTo": "table-cell-numeric",
       "description": "Tabela informativa: nenhuma linha marcada como erro nem selo; o sinal da diferença em semibold é o diferenciador, com nota explicativa acima.",
       "html": "<p class=\"ds-note\">Diferença = saldo no arquivo − saldo no WMS. É só informativa — esta importação <strong>não altera o saldo do WMS</strong>.</p><div class=\"ds-table-wrapper\"><table class=\"ds-table\"><thead><tr><th scope=\"col\">Código (CADPRO)</th><th scope=\"col\" class=\"ds-num\">Saldo no WMS</th><th scope=\"col\" class=\"ds-num\">Saldo no arquivo</th><th scope=\"col\" class=\"ds-num\">Diferença</th></tr></thead><tbody><tr><td class=\"ds-code\">001.002.003</td><td class=\"ds-num\">100,000</td><td class=\"ds-num\">112,000</td><td class=\"ds-num ds-diff\">+12,000</td></tr><tr><td class=\"ds-code\">003.001.007</td><td class=\"ds-num\">40,000</td><td class=\"ds-num\">35,500</td><td class=\"ds-num ds-diff\">-4,500</td></tr></tbody></table></div>",
-      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-weight: var(--font-weight-semibold); background-color: var(--color-surface-subtle); vertical-align: middle; } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } } .ds-note { max-width: 72ch; margin: 0 0 var(--space-4); font-family: var(--font-family-base); font-size: var(--font-size-body); color: var(--color-text-muted); }"
+      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border-frame); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-size: var(--font-size-table-header); font-weight: var(--font-weight-semibold); letter-spacing: var(--letter-spacing-caps); text-transform: uppercase; color: var(--color-text-muted); background-color: var(--color-surface-subtle); vertical-align: middle; border-bottom: 2px solid var(--color-border-strong); } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } } .ds-note { max-width: 72ch; margin: 0 0 var(--space-4); font-family: var(--font-family-base); font-size: var(--font-size-body); color: var(--color-text-muted); }"
     },
     {
       "name": "Table Empty Row",
@@ -381,7 +678,7 @@
       "refersTo": "table-empty-row",
       "description": "Sem resultado com filtros ativos: linha única com colspan total, preservando as colunas como referência.",
       "html": "<div class=\"ds-table-wrapper\"><table class=\"ds-table\"><thead><tr><th scope=\"col\">Código (CADPRO)</th><th scope=\"col\">Descrição</th><th scope=\"col\" class=\"ds-num\">Saldo</th></tr></thead><tbody><tr class=\"ds-empty-row\"><td colspan=\"3\"><p class=\"ds-es-title\">Nenhum material encontrado.</p><p class=\"ds-es-desc\">Ajuste o código ou a descrição e tente novamente.</p></td></tr></tbody></table></div>",
-      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-weight: var(--font-weight-semibold); background-color: var(--color-surface-subtle); vertical-align: middle; } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } } .ds-empty-row { color: var(--color-text-muted); } .ds-empty-row td { padding: var(--space-6) var(--space-3); white-space: normal; } .ds-es-title { margin: 0; font-size: var(--font-size-section-title); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-es-desc { margin: var(--space-1) 0 0; font-size: var(--font-size-body); }"
+      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border-frame); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-size: var(--font-size-table-header); font-weight: var(--font-weight-semibold); letter-spacing: var(--letter-spacing-caps); text-transform: uppercase; color: var(--color-text-muted); background-color: var(--color-surface-subtle); vertical-align: middle; border-bottom: 2px solid var(--color-border-strong); } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } } .ds-empty-row { color: var(--color-text-muted); } .ds-empty-row td { padding: var(--space-6) var(--space-3); white-space: normal; } .ds-es-title { margin: 0; font-size: var(--font-size-section-title); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-es-desc { margin: var(--space-1) 0 0; font-size: var(--font-size-body); }"
     },
     {
       "name": "Pagination",
@@ -389,7 +686,7 @@
       "refersTo": "pagination-link",
       "description": "Só Anterior/Próxima + página atual (não clicável, semibold + borda primary). Links preservam os demais parâmetros da URL e voltam à âncora da seção.",
       "html": "<nav class=\"ds-pagination\" aria-label=\"Paginação de materiais\"><p class=\"ds-pagination-summary\">Página 2 de 68 — 1.354 materiais no total</p><ul class=\"ds-pagination-list\"><li><a class=\"ds-pagination-link\" href=\"#\">Anterior</a></li><li><span class=\"ds-pagination-link ds-pagination-current\" aria-current=\"page\">2</span></li><li><a class=\"ds-pagination-link\" href=\"#\">Próxima</a></li></ul></nav><nav class=\"ds-pagination\" aria-label=\"Paginação de exceções\"><p class=\"ds-pagination-summary\">Página 1 de 1 — 3 no total</p><ul class=\"ds-pagination-list\"><li><span class=\"ds-pagination-link ds-pagination-disabled\" aria-disabled=\"true\">Anterior</span></li><li><span class=\"ds-pagination-link ds-pagination-current\" aria-current=\"page\">1</span></li><li><span class=\"ds-pagination-link ds-pagination-disabled\" aria-disabled=\"true\">Próxima</span></li></ul></nav>",
-      "css": ".ds-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-4); font-family: var(--font-family-base); } .ds-pagination-summary { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); } .ds-pagination-list { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); list-style: none; margin: 0; padding: 0; } .ds-pagination-link { display: inline-flex; align-items: center; justify-content: center; min-width: var(--space-8); min-height: var(--space-8); padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); text-decoration: none; font-size: var(--font-size-body); } .ds-pagination-link:hover { background-color: var(--color-surface-subtle); } .ds-pagination-link:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-pagination-current { border-color: var(--color-primary); font-weight: var(--font-weight-semibold); color: var(--color-primary); } .ds-pagination-current:hover { background-color: transparent; } .ds-pagination-disabled { color: var(--color-disabled); cursor: not-allowed; pointer-events: none; } @media (pointer: coarse) { .ds-pagination-link { min-width: calc(var(--space-8) + var(--space-3)); min-height: calc(var(--space-8) + var(--space-3)); } }"
+      "css": ".ds-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-4); font-family: var(--font-family-base); } .ds-pagination-summary { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); } .ds-pagination-list { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); list-style: none; margin: 0; padding: 0; } .ds-pagination-link { display: inline-flex; align-items: center; justify-content: center; min-width: var(--control-height-compact); min-height: var(--control-height-compact); padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); text-decoration: none; font-size: var(--font-size-body); } .ds-pagination-link:hover { background-color: var(--color-surface-subtle); } .ds-pagination-link:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-pagination-current { border-color: var(--color-primary); font-weight: var(--font-weight-semibold); color: var(--color-primary); } .ds-pagination-current:hover { background-color: transparent; } .ds-pagination-disabled { color: var(--color-disabled-text); cursor: not-allowed; pointer-events: none; } @media (pointer: coarse) { .ds-pagination-link { min-width: var(--control-height); min-height: var(--control-height); } }"
     },
     {
       "name": "Filter Bar",
@@ -397,7 +694,7 @@
       "refersTo": "input-text",
       "description": "Filtros antes do conteúdo, alinhados pelo topo (align-items: flex-start); ações compensadas por uma linha de rótulo a partir de 641px; coluna única até 640px.",
       "html": "<form class=\"ds-filter-bar\" onsubmit=\"return false\"><div class=\"ds-field ds-filter-field\"><label for=\"ds-fb1\">Código (CADPRO)</label><input id=\"ds-fb1\" type=\"text\"><p class=\"ds-field-hint\">Formato completo XXX.YYY.ZZZ.</p></div><div class=\"ds-field ds-filter-field\"><label for=\"ds-fb2\">Descrição</label><input id=\"ds-fb2\" type=\"text\"></div><div class=\"ds-filter-actions\"><button type=\"submit\" class=\"ds-btn ds-btn-primary\">Buscar</button><a href=\"#\" class=\"ds-btn ds-btn-secondary\">Limpar</a></div></form>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); } .ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:disabled { background-color: var(--color-disabled); border-color: var(--color-disabled); color: var(--color-surface); cursor: not-allowed; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; } .ds-filter-bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3) var(--space-4); margin-bottom: var(--space-4); } .ds-filter-field { flex: 1 1 220px; min-width: 160px; margin-bottom: 0; } .ds-filter-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); flex: 0 0 auto; } @media (min-width: 641px) { .ds-filter-actions { margin-top: calc(var(--font-size-body) * var(--line-height-base) + var(--space-1)); } } @media (max-width: 640px) { .ds-filter-bar { flex-direction: column; align-items: stretch; } .ds-filter-field { flex: 1 1 auto; min-width: 0; } .ds-filter-actions .ds-btn { flex: 1 1 0; } }"
+      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); } .ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:hover:not(:disabled), .ds-btn-primary:active:not(:disabled) { background-color: var(--color-primary-hover); border-color: var(--color-primary-hover); } .ds-btn-primary:disabled { background-color: var(--color-disabled-surface); border-color: var(--color-disabled-surface); color: var(--color-disabled-text); cursor: not-allowed; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-filter-bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3) var(--space-4); margin-bottom: var(--space-4); } .ds-filter-field { flex: 1 1 220px; min-width: 160px; margin-bottom: 0; } .ds-filter-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); flex: 0 0 auto; } @media (min-width: 641px) { .ds-filter-actions { margin-top: calc(var(--font-size-body) * var(--line-height-base) + var(--space-1)); } } @media (max-width: 640px) { .ds-filter-bar { flex-direction: column; align-items: stretch; } .ds-filter-field { flex: 1 1 auto; min-width: 0; } .ds-filter-actions .ds-btn { flex: 1 1 0; } }"
     },
     {
       "name": "Page Header",
@@ -405,7 +702,7 @@
       "refersTo": "page-header-title",
       "description": "Título + contexto em text-muted + ações à direita; borda inferior fina. Abaixo de 480px as ações ocupam linha própria.",
       "html": "<header class=\"ds-page-header\"><div><h1 class=\"ds-ph-title\">Histórico de importações</h1><p class=\"ds-ph-desc\">Execuções de importação do catálogo confirmadas, da mais recente para a mais antiga.</p></div><div class=\"ds-ph-actions\"><a href=\"#\" class=\"ds-btn ds-btn-secondary\">Importar catálogo</a></div></header>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; } .ds-page-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding-bottom: var(--space-4); margin-bottom: var(--space-6); border-bottom: 1px solid var(--color-border); font-family: var(--font-family-base); } .ds-ph-title { margin: 0; font-size: var(--font-size-page-title); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); color: var(--color-text); } .ds-ph-desc { margin: var(--space-1) 0 0; font-size: var(--font-size-body); color: var(--color-text-muted); } .ds-ph-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); } @media (max-width: 480px) { .ds-ph-actions { width: 100%; } .ds-ph-actions .ds-btn { flex: 1 1 auto; } }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-page-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding-bottom: var(--space-4); margin-bottom: var(--space-6); border-bottom: 1px solid var(--color-border-frame); font-family: var(--font-family-base); } .ds-ph-title { margin: 0; font-size: var(--font-size-page-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); color: var(--color-text); } .ds-ph-desc { margin: var(--space-1) 0 0; font-size: var(--font-size-body); color: var(--color-text-muted); } .ds-ph-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); } @media (max-width: 480px) { .ds-ph-actions { width: 100%; } .ds-ph-actions .ds-btn { flex: 1 1 auto; } }"
     },
     {
       "name": "Empty State",
@@ -429,7 +726,7 @@
       "refersTo": "file-upload-meta",
       "description": "Input nativo oculto só visualmente; <label for> com aparência de botão secundário abre o seletor sem JS; nome e tamanho do arquivo em pt-BR ao lado.",
       "html": "<div class=\"ds-field\"><label for=\"ds-arquivo\">Arquivo CSV</label><div class=\"ds-file-upload\"><input type=\"file\" id=\"ds-arquivo\" accept=\".csv\" class=\"ds-file-input\"><label for=\"ds-arquivo\" class=\"ds-btn ds-btn-secondary ds-file-trigger\">Escolher arquivo</label><span class=\"ds-file-meta\">catalogo_scpi.csv — 2.4 MB</span></div><p class=\"ds-field-hint\">Arquivo CSV exportado do SCPI, até 10&nbsp;MB.</p></div>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); } .ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; } .ds-file-upload { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); } .ds-file-input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; } .ds-file-input:focus-visible { outline: none; } .ds-file-input:focus-visible + .ds-file-trigger { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-file-meta { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); }"
+      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); } .ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-file-upload { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); } .ds-file-input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; } .ds-file-input:focus-visible { outline: none; } .ds-file-input:focus-visible + .ds-file-trigger { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-file-meta { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); }"
     },
     {
       "name": "Totals Summary",
@@ -437,7 +734,7 @@
       "refersTo": "summary-value",
       "description": "Totais de uma operação: valor em tamanho de título, semibold, tabular-nums; item fora da soma separado por espaço e explicado por nota logo abaixo.",
       "html": "<dl class=\"ds-summary\"><div class=\"ds-summary-item\"><dt>Recebidos</dt><dd>1.402</dd></div><div class=\"ds-summary-item\"><dt>Serão inseridos</dt><dd>12</dd></div><div class=\"ds-summary-item\"><dt>Serão atualizados</dt><dd>1.387 <span class=\"ds-summary-detail\">(340 com alteração)</span></dd></div><div class=\"ds-summary-item\"><dt>Rejeitados</dt><dd>3</dd></div><div class=\"ds-summary-item ds-summary-item-separado\"><dt>Ausentes do arquivo</dt><dd>27</dd></div></dl><p class=\"ds-note\">\"Ausentes do arquivo\" não entra na soma Recebidos = Inseridos + Atualizados + Rejeitados. Esta importação <strong>não altera nem remove</strong> esses materiais.</p>",
-      "css": ".ds-summary { display: flex; flex-wrap: wrap; gap: var(--space-6); margin: 0; font-family: var(--font-family-base); } .ds-summary-item { display: flex; flex-direction: column; gap: var(--space-1); padding-right: var(--space-6); border-right: 1px solid var(--color-border); } .ds-summary-item:last-child { padding-right: 0; border-right: none; } .ds-summary-item dt { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); } .ds-summary-item dd { margin: 0; font-size: var(--font-size-page-title); font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; color: var(--color-text); } .ds-summary-detail { margin-left: var(--space-1); font-size: var(--font-size-meta); font-weight: var(--font-weight-regular); color: var(--color-text-muted); } .ds-summary-item-separado { margin-left: var(--space-4); } .ds-note { max-width: 72ch; margin: var(--space-4) 0 0; font-family: var(--font-family-base); font-size: var(--font-size-body); color: var(--color-text-muted); } @media (max-width: 640px) { .ds-summary { gap: var(--space-4) var(--space-6); } .ds-summary-item { flex: 1 1 40%; } }"
+      "css": ".ds-summary { display: flex; flex-wrap: wrap; gap: var(--space-6); margin: 0; font-family: var(--font-family-base); } .ds-summary-item { display: flex; flex-direction: column; gap: var(--space-1); padding-right: var(--space-6); border-right: 1px solid var(--color-border); } .ds-summary-item:last-child { padding-right: 0; border-right: none; } .ds-summary-item dt { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); } .ds-summary-item dd { margin: 0; font-size: var(--font-size-metric); font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; color: var(--color-text); } .ds-summary-detail { margin-left: var(--space-1); font-size: var(--font-size-meta); font-weight: var(--font-weight-regular); color: var(--color-text-muted); } .ds-summary-item-separado { margin-left: var(--space-4); } .ds-note { max-width: 72ch; margin: var(--space-4) 0 0; font-family: var(--font-family-base); font-size: var(--font-size-body); color: var(--color-text-muted); } @media (max-width: 640px) { .ds-summary { gap: var(--space-4) var(--space-6); } .ds-summary-item { flex: 1 1 40%; } }"
     },
     {
       "name": "Confirmation Bar",
@@ -445,7 +742,7 @@
       "refersTo": "confirmation-bar",
       "description": "Par confirmar/cancelar de ação de impacto, persistente com position: sticky; bottom: 0 (nunca fixed), plano: fundo surface + borda superior, sem sombra.",
       "html": "<div class=\"ds-confirm-bar\"><button class=\"ds-btn ds-btn-primary\">Confirmar importação: 12 inseridos, 1.387 atualizados</button><button class=\"ds-btn ds-btn-secondary\">Cancelar</button></div>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: calc(var(--space-8) + var(--space-3)); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:disabled { background-color: var(--color-disabled); border-color: var(--color-disabled); color: var(--color-surface); cursor: not-allowed; } .ds-btn-secondary { background-color: transparent; border-color: var(--color-border); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled); cursor: not-allowed; } .ds-confirm-bar { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-3) 0; background-color: var(--color-surface); border-top: 1px solid var(--color-border); } @media (max-width: 480px) { .ds-confirm-bar { flex-direction: column; align-items: stretch; } .ds-confirm-bar .ds-btn { width: 100%; } }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:hover:not(:disabled), .ds-btn-primary:active:not(:disabled) { background-color: var(--color-primary-hover); border-color: var(--color-primary-hover); } .ds-btn-primary:disabled { background-color: var(--color-disabled-surface); border-color: var(--color-disabled-surface); color: var(--color-disabled-text); cursor: not-allowed; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-confirm-bar { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-3) 0; background-color: var(--color-surface); border-top: 1px solid var(--color-border-frame); } @media (max-width: 480px) { .ds-confirm-bar { flex-direction: column; align-items: stretch; } .ds-confirm-bar .ds-btn { width: 100%; } }"
     },
     {
       "name": "Surface Card",
@@ -453,7 +750,15 @@
       "refersTo": "card-surface",
       "description": "Container isolado das telas de entrada e início (raio md, borda fina, sem sombra). Não é a estrutura universal de conteúdo — listagens e páginas densas não viram card.",
       "html": "<div class=\"ds-card\"><h1 class=\"ds-card-title\">WMS-Almoxarifado</h1><p class=\"ds-card-text\">Sessão autenticada como <strong>12345</strong>.</p></div>",
-      "css": ".ds-card { max-width: 480px; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-6) var(--space-4); font-family: var(--font-family-base); color: var(--color-text); } .ds-card-title { font-size: var(--font-size-page-title); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); margin: 0 0 var(--space-4); } .ds-card-text { margin: 0; font-size: var(--font-size-body); } @media (min-width: 480px) { .ds-card { padding: var(--space-8) var(--space-6); } }"
+      "css": ".ds-card { max-width: 480px; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-6) var(--space-4); font-family: var(--font-family-base); color: var(--color-text); } .ds-card-title { font-size: var(--font-size-metric); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); margin: 0 0 var(--space-4); } .ds-card-text { margin: 0; font-size: var(--font-size-body); } @media (min-width: 480px) { .ds-card { padding: var(--space-8) var(--space-6); } }"
+    },
+    {
+      "name": "Isolated Form Surface",
+      "kind": "card",
+      "refersTo": "form-surface",
+      "description": "Formulário simples que ocupa a tela sozinho (envio do CSV): a única superfície da página, para que os controles não flutuem sobre o canvas. Sem sombra.",
+      "html": "<form class=\"ds-form\"><p style=\"margin:0 0 12px;font-weight:500\">Arquivo CSV</p><div style=\"display:flex;gap:12px;align-items:center;flex-wrap:wrap\"><span class=\"ds-btn ds-btn-secondary\">Escolher arquivo</span><span style=\"font-size:13px;color:var(--color-text-muted)\">Nenhum arquivo selecionado.</span></div></form>",
+      "css": ".ds-form { background-color: var(--color-surface); border: 1px solid var(--color-border-frame); border-radius: var(--radius-md); padding: var(--space-6) var(--space-4); max-width: 640px; }"
     }
   ],
   "narrative": {
@@ -502,7 +807,11 @@
       "Do garantir que nenhuma ação necessária dependa de hover, em qualquer dispositivo.",
       "Do apoiar todo estado ou seleção relevante em ao menos uma pista não cromática (texto, ícone, peso, borda, posição ou indicador estrutural); preferir texto explícito para erro, warning, sucesso e divergência quando o significado não for inequívoco.",
       "Do reservar a marcação de exceção de linha (`border-strong` lateral) às linhas que são de fato exceção; em tabela informativa, deixe o próprio dado (sinal, peso) diferenciar.",
-      "Do reutilizar o parcial de paginação e os primitivos de `components.css` em vez de recriar a composição por tela."
+      "Do reutilizar o parcial de paginação e os primitivos de `components.css` em vez de recriar a composição por tela.",
+      "Dar a cada estado semântico a sua família completa (texto + superfície + borda) — quatro retângulos cinza distinguidos só pela cor do texto não são estado legível numa tela densa.",
+      "Re-derivar contraste de borda e de rótulo desabilitado contra os dois fundos em que o controle aparece (superfície e canvas) sempre que a rampa neutra mudar.",
+      "Promover a primária a ação principal de cada tela quando ela existe e é clara — a One Accent Rule limita o número de acentos, não proíbe usar o accent.",
+      "Suprimir zero decimal irrelevante (722, não 722,000) preservando a parte fracionária quando ela existir de fato."
     ],
     "donts": [
       "Don't transformar cada registro de catálogo (ou qualquer listagem densa) em card por estar em tela mobile/tablet.",
@@ -513,7 +822,10 @@
       "Don't reformatar, truncar de forma destrutiva ou \"limpar\" o `CADPRO` ou qualquer identificador opaco do domínio (viola `INV-CATALOG-001` mesmo só na camada visual).",
       "Don't deixar erro ou exceção de importação desaparecer sozinho — o usuário depende dela para corrigir e reprocessar.",
       "Don't usar toast para informação já visível pela própria mudança de resultado (ex.: aplicar filtro não precisa de toast de confirmação).",
-      "Don't marcar toda linha de uma tabela com selo ou borda de erro — ênfase universal se anula (caso da divergência de saldo)."
+      "Don't marcar toda linha de uma tabela com selo ou borda de erro — ênfase universal se anula (caso da divergência de saldo).",
+      "Usar barra lateral colorida acima de 1px em alert, callout ou item de lista — a border-strong lateral de 3px é exclusiva da linha que é de fato exceção.",
+      "Gastar primary em decoração, moldura permanente ou área grande de fundo; o app shell escuro usa a rampa ink, que é neutra justamente por isso.",
+      "Deixar um rótulo de cabeçalho de tabela crescer além de ~3 palavras mantendo a caixa-alta — encurte o rótulo em vez de abandonar a convenção."
     ]
   }
 }

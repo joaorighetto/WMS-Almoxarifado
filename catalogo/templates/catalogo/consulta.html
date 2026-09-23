@@ -245,7 +245,7 @@
                 <span class="catalogo-classificacao-codigo">{{ material.grupo }}{% if material.grupo and material.subgrupo %}.{% endif %}{{ material.subgrupo }}</span>
                 {% endif %}
               </td>
-              <td class="table-cell-numeric">{{ material.saldo|floatformat:3 }}</td>
+              <td class="table-cell-numeric">{{ material.saldo|floatformat:"-3" }}</td>
               <td>
                 {% if material.detalhamento %}
                 <details class="catalogo-detalhamento">

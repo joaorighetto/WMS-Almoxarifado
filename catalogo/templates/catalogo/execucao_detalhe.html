@@ -21,7 +21,7 @@
       </h1>
     </div>
     <div class="page-header-actions">
-      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-secondary">Nova importação</a>
+      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-primary">Nova importação</a>
     </div>
   </header>
 
@@ -105,9 +105,9 @@
           {% for divergencia in divergencias_pagina %}
           <tr>
             <td class="table-cell-code">{{ divergencia.material.cadpro }}</td>
-            <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:3 }}</td>
-            <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:3 }}</td>
-            <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:3 }}</td>
+            <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:"-3" }}</td>
+            <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:"-3" }}</td>
+            <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:"-3" }}</td>
           </tr>
           {% endfor %}
         </tbody>

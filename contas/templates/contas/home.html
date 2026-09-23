@@ -37,11 +37,16 @@
 
     {% comment %}
     "Sair" é ação secundária desta tela (The One Accent Rule) — sem preenchimento de
-    `primary`, para não competir com nenhuma ação principal do contexto.
+    `primary`, para não competir com nenhuma ação principal do contexto. Correção do
+    gate visual (P2, 2026-09-22): também não tem mais a forma de `.btn`, que a
+    igualava visualmente aos atalhos de trabalho acima — tratamento de link, em
+    linha própria, deixa "Sair" reconhecível como algo diferente de "Catálogo de
+    materiais"/"Importar catálogo" sem deixar de ser um alvo de toque confortável
+    (`.home-logout-action`, `home.css`).
     {% endcomment %}
     <form method="post" action="{% url 'logout' %}" class="home-logout-form">
       {% csrf_token %}
-      <button type="submit" class="btn btn-secondary">Sair</button>
+      <button type="submit" class="home-logout-action">Sair</button>
     </form>
   </div>
 </main>
