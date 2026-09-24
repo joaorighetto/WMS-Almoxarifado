@@ -22,8 +22,11 @@ DJANGO_SECRET_KEY="ci-deploy-check-only-not-a-real-secret-0123456789abcdefghijkl
 DJANGO_ALLOWED_HOSTS="verify.invalid" \
   uv run --frozen python manage.py check --deploy --fail-level WARNING --settings=config.settings.production
 
-echo "==> manage.py makemigrations --check --dry-run"
-uv run --frozen --env-file .env python manage.py makemigrations --check --dry-run
+# Sem check de makemigrations: o projeto não mantém migrations nesta fase
+# (MIGRATION_MODULES em config/settings/base.py). O pytest abaixo cria o banco
+# de testes direto dos models, então um model que não materializa falha ali.
 
+# --ds fixa as settings de teste: sem ele, um DJANGO_SETTINGS_MODULE no .env ou
+# no shell venceria o pyproject.toml.
 echo "==> pytest"
-uv run --frozen --env-file .env pytest
+uv run --frozen --env-file .env pytest --ds=config.settings.test

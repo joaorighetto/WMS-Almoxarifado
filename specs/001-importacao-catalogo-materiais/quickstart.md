@@ -11,7 +11,10 @@ Contratos: [arquivo-scpi.md](./contracts/arquivo-scpi.md),
 - O usuário do banco precisa poder executar `CREATE EXTENSION pg_trgm`. `pg_trgm` é *trusted* no
   PostgreSQL ≥ 13: basta o privilégio `CREATE` no banco. O usuário dono do banco em `compose.yml`
   e na CI já tem esse privilégio.
-- Migrations aplicadas: `uv run --env-file .env python manage.py migrate`.
+- Schema criado a partir dos models: `make resetdb` (equivale a
+  `uv run --env-file .env python manage.py migrate --run-syncdb` sobre um schema vazio). O projeto
+  não mantém migrations nesta fase ("Schema efêmero" em `CLAUDE.md`); a extensão `pg_trgm` é
+  criada no `pre_migrate` de `catalogo/apps.py`.
 
 ## 1. Usuários de validação
 
@@ -30,7 +33,7 @@ catálogo.
 ## 2. Suíte automatizada
 
 ```bash
-./scripts/verify.sh          # lock, ruff, check, check --deploy, makemigrations --check, pytest
+./scripts/verify.sh          # lock, ruff, check, check --deploy, pytest
 ```
 
 Os testes do catálogo usam as fixtures sintéticas de `tests/fixtures/catalogo/`. O teste contra o

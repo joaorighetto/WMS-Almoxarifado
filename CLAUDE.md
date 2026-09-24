@@ -102,6 +102,17 @@ A aplicação é predominantemente server-driven.
 
 Não introduza SPA, framework frontend, biblioteca relevante ou nova camada arquitetural sem necessidade concreta e justificativa compatível com a Constitution.
 
+### Schema efêmero (fase atual)
+
+O projeto não mantém migrations nesta fase: `MIGRATION_MODULES` em `config/settings/base.py`
+desliga todas, e o schema é criado direto dos models com `migrate --run-syncdb` (`make resetdb` no
+banco local; o pytest-django faz o mesmo no banco de testes). Mudança de schema é feita só nos
+models: não gere, versione nem revise arquivos de migration. Depois de alterar model, rode
+`make resetdb` — o banco local é descartável. O que antes dependia de migration manual fica fora
+dela (a extensão `pg_trgm` é criada no `pre_migrate` de `catalogo/apps.py`). A base normativa é o
+Princípio XIII da Constitution (v1.2.0): enquanto nenhum ambiente com dados duráveis existir, o
+projeto pode não manter migrations; antes do primeiro, elas voltam a ser geradas e versionadas.
+
 ## Serena MCP
 
 Use Serena como ferramenta preferencial para exploração e modificação semântica de código existente quando apropriado.

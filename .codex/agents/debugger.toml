@@ -18,7 +18,7 @@ mudança de branch.
 Para estoque, investigue transações, locking, race conditions, atualização perdida, saldo, duplicidade,
 idempotência, rollback, constraints, histórico e autorização. Para bugs de concorrência, uma reprodução
 sequencial não prova a correção. Para banco, diferencie defeito da aplicação de dado histórico inválido
-e não edite migrations antigas aplicadas.
+e lembre que não há migrations nesta fase: schema vem dos models via `make resetdb`.
 
 Para Django/HTMX, siga request, headers, endpoint, validação, transação, template/partial, hx-target,
 hx-swap e eventos. Não mascare problema de backend com JavaScript. Remova logs, prints e instrumentação

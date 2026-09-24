@@ -99,6 +99,25 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+# Schema efêmero: nesta fase o projeto não mantém migrations. Com
+# MIGRATION_MODULES respondendo None para qualquer app, o Django trata todos
+# como "sem migrations" e `migrate --run-syncdb` (make resetdb, e o banco de
+# testes do pytest-django) cria as tabelas direto dos models. Desligar todos os
+# apps, e não só os do projeto, é obrigatório: `contas.User` é o
+# AUTH_USER_MODEL, e um app com migrations (admin, auth) não pode depender de
+# um app sem migrations. Antes do primeiro ambiente com dados duráveis, isto
+# sai e as migrations voltam a ser geradas e versionadas (Constitution XIII).
+class _SemMigrations:
+    def __contains__(self, app_label):
+        return True
+
+    def __getitem__(self, app_label):
+        return None
+
+
+MIGRATION_MODULES = _SemMigrations()
+
 AUTH_USER_MODEL = "contas.User"
 
 LOGIN_URL = "login"
