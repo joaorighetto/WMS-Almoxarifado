@@ -89,9 +89,14 @@ prepare: ## Materializar .env a partir do exemplo (não sobrescreve)
 init: clean-python prepare ## Recriar .venv e instalar dependências (não toca o banco)
 	$(UV) sync
 
-setup: ## Subir o PostgreSQL e recriar o schema do zero
+setup: ## Subir o PostgreSQL, recriar o schema e popular dados de desenvolvimento
+	$(DJANGO) seed_dev --check
 	@$(MAKE) --no-print-directory db-up
 	@$(MAKE) --no-print-directory resetdb
+	@$(MAKE) --no-print-directory seed_dev
+
+seed_dev: ## Popular contas, setores e catálogo de desenvolvimento
+	$(DJANGO) seed_dev
 
 # ------------------------------------------------------------------------------
 # PostgreSQL (compose.yml)
@@ -173,5 +178,5 @@ clean-python: ## Remover .venv e bytecode Python (não toca o banco)
 veryclean: clean ## Voltar o workspace ao estado "do zero" (não toca o banco)
 	@$(MAKE) --no-print-directory clean-python
 
-.PHONY: help prepare init setup db-up db-down db-destroy resetpostgres syncdb resetdb \
+.PHONY: help prepare init setup seed_dev db-up db-down db-destroy resetpostgres syncdb resetdb \
 	run shell test lint verify clean clean-python veryclean
