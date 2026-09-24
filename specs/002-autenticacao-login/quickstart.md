@@ -13,6 +13,13 @@ comprovar que o comportamento da spec funciona.
 
 ## 1. Provisionar dados mínimos de desenvolvimento
 
+Para automatizar o provisionamento, defina `SEED_DEV_PASSWORD` no `.env` e rode
+`make setup`. O comando `seed_dev` cria as contas `admin`, `chefe`, `funcionario`
+e `requisitante`, além de outros setores e perfis, e importa o catálogo local do
+SCPI. Veja [dados de desenvolvimento](../../docs/development/seed-dev.md).
+Nesse caso, as etapas 1.1–1.4 já estão atendidas. O procedimento manual abaixo
+continua disponível para validar o bootstrap sobre um schema vazio.
+
 **Ordem obrigatória.** Duas restrições se combinam aqui:
 
 1. `createsuperuser` exige um `Setor` já existente (`setor` está em `REQUIRED_FIELDS`, é FK

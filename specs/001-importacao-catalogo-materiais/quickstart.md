@@ -18,6 +18,13 @@ Contratos: [arquivo-scpi.md](./contracts/arquivo-scpi.md),
 
 ## 1. Usuários de validação
 
+`make setup` já cria os usuários abaixo por meio de `seed_dev`, usando a senha
+`SEED_DEV_PASSWORD` do `.env`, e carrega o CSV local do SCPI com histórico
+demonstrativo. Veja [dados de desenvolvimento](../../docs/development/seed-dev.md).
+Para executar o roteiro de **carga inicial sobre catálogo vazio** da seção 3,
+use `make resetdb` e o provisionamento manual da 002; o seed completo já deixa
+o catálogo populado.
+
 Seguindo o provisionamento da 002 (`specs/002-autenticacao-login/quickstart.md` §1), crie no setor
 Almoxarifado:
 
