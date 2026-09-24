@@ -109,6 +109,7 @@ def test_seed_cria_organizacao_com_papeis_explicitos_e_credenciais_validas(senha
     assert Setor.objects.filter(ativo=True).exists()
     assert Setor.objects.filter(ativo=False).exists()
     assert set(PapelUsuario.objects.values_list("papel", flat=True)) == set(Papel.values)
+    assert PapelUsuario.objects.count() == 52
 
     for setor in Setor.objects.filter(ativo=True):
         assert User.objects.filter(

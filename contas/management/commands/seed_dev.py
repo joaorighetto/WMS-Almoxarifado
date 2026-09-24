@@ -96,8 +96,13 @@ class Command(BaseCommand):
             "seed_dev concluído: 8 setores, 32 usuários e 3 importações. "
             "Catálogo original preservado; históricos de revisão identificados como simulação."
         ))
+        self.stdout.write("Senha de todas as contas: SEED_DEV_PASSWORD. Principais matrículas:")
+        self.stdout.write("  admin          - superusuário técnico (Django Admin, /admin/)")
+        self.stdout.write("  chefe          - chefe do almoxarifado (/login/)")
+        self.stdout.write("  funcionario    - funcionário do almoxarifado (/login/)")
+        self.stdout.write("  requisitante   - requisitante do almoxarifado (/login/)")
         self.stdout.write(
-            "Acesso: admin, chefe, funcionario ou requisitante; senha de SEED_DEV_PASSWORD."
+            "Demais matrículas e papéis: contas/dev_seed/dados.py ou o Django Admin."
         )
 
     def _validar_entradas(self, caminho):

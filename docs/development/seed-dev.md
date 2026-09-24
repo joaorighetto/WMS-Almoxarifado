@@ -78,7 +78,7 @@ importação; os históricos demonstrativos podem ser explorados pela conta `che
 Com o CSV local validado nesta implementação, a carga resulta em 1.588 materiais,
 3 execuções de importação, 12 exceções cobrindo os 11 motivos de recusa,
 2 divergências de saldo e 14 alterações cadastrais (sete na simulação e sete na
-restauração). Há 51 atribuições explícitas de papéis. As contagens do catálogo e
+restauração). Há 52 atribuições explícitas de papéis. As contagens do catálogo e
 do histórico podem variar quando outro CSV é fornecido.
 
 O seed cobre os oito modelos de negócio existentes: `Setor`, `User`,
