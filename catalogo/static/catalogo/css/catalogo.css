@@ -285,6 +285,21 @@
   }
 }
 
+/* Folga inferior de rolagem enquanto a barra de confirmação está grudada no
+   rodapé: foco por teclado (ex.: links de paginação das exceções) e âncoras não
+   ficam escondidos sob ela — o espelho do `scroll-padding-top` da barra de
+   trabalho (base.css). Altura medida: ~69px no desktop; ~141px no celular, com
+   os botões empilhados e o rótulo em duas linhas. Só nas páginas que têm a barra. */
+html:has(.catalogo-confirmacao-sticky) {
+  scroll-padding-bottom: 5rem;
+}
+
+@media (max-width: 480px) {
+  html:has(.catalogo-confirmacao-sticky) {
+    scroll-padding-bottom: 10rem;
+  }
+}
+
 /* Selo de estado no page header (revisão do gate visual, achado P1): a confirmação
    da importação passou a emitir `messages.success`, mas a mensagem some na próxima
    navegação — o selo "Concluída" no título permanece legível a qualquer momento. */
