@@ -1,11 +1,11 @@
 /*
  * Tokens visuais — WMS-Almoxarifado
  *
- * Fonte normativa: DESIGN.md (raiz do repositório). DESIGN.md ainda descreve a
- * fundação anterior ("Restrained" cinza-azulado) — será re-executado em modo scan
- * (`impeccable document`) depois desta implementação, para extrair os valores REAIS
- * abaixo. Não editado aqui: os nomes das custom properties permanecem estáveis (há
- * consumidores em catalogo.css/login.css/home.css); apenas os VALORES mudam.
+ * Fonte normativa: DESIGN.md (raiz do repositório), registrado a partir destes valores
+ * pelo `impeccable-documenter` ao fim do redesign (fluxo "Redesign da fundação visual",
+ * `.claude/rules/agent-orchestration.md`). Os nomes das custom properties permanecem
+ * estáveis (há consumidores em catalogo.css/login.css/home.css); ajuste os VALORES
+ * aqui e a documentação junto.
  *
  * Revisão "Tubulação e piso industrial" (workflow Impeccable, 2026-09-25,
  * `.impeccable/surfaces/contas-templates-contas-home-html.md`): piso de concreto
