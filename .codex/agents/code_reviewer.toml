@@ -15,7 +15,10 @@ canônicas e aos artefatos Spec Kit. Não transforme o review em auditoria geral
 Para estoque, dê prioridade a atomicidade, locking, lost updates, saldo insuficiente, constraints,
 duplicidade, idempotência, rollback, histórico e autorização. Para Django, verifique ORM, N+1,
 transações, Forms, permissions, QuerySets, signals e efeitos laterais quando pertinentes. Para frontend,
-revise comportamento e integração Django/HTMX; não substitua o gate visual do workflow impeccable.
+revise comportamento e integração Django/HTMX e as regras do DESIGN.md com efeito funcional —
+Available-Versus-Planned (capacidade planejada nunca é link, controle nem alvo clicável) e No Hover
+Dependency (nenhuma ação necessária depende de hover); não substitua o gate visual do workflow
+impeccable.
 
 Avalie se os testes realmente falhariam diante de comportamento incorreto. Execute verificações
 focadas quando ajudarem a confirmar ou refutar um finding. Diferencie evidência confirmada de risco
