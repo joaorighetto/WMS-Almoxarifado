@@ -11,8 +11,8 @@
  * `.impeccable/surfaces/contas-templates-contas-home-html.md`): piso de concreto
  * quente, folhas brancas, texto grafite, código de cores de segurança NR-26 como
  * gramática semântica (azul = ação obrigatória, amarelo = circulação/demarcação,
- * verde/vermelho/âmbar nos estados). Fundação global — consumida hoje pela Home,
- * herdada sem recomposição pelo catálogo/importação/login.
+ * verde/vermelho/âmbar nos estados). Fundação global — consumida pela Home, pelo
+ * catálogo/importação e pelo login, todos já recompostos na direção.
  *
  * Nenhum componente é definido neste arquivo — apenas custom properties.
  */
@@ -102,8 +102,9 @@
 
   /* ---------------------------------------------------------------------
    * Cor — Tinta estrutural do app shell (DESIGN.md → Layout → App shell (desktop))
-   * Passa de azul-acinzentado para GRAFITE nesta revisão: consumida agora pela
-   * barra de trabalho (`.appbar`, components.css). Neutra e escura de propósito —
+   * Passa de azul-acinzentado para GRAFITE nesta revisão: consumida pela barra
+   * de trabalho, pela faixa de identidade do login (`.appbar`, components.css)
+   * e pelo marcador de seção. Neutra e escura de propósito —
    * é a única área grande de cor do sistema e não pode ser `primary`.
    * ------------------------------------------------------------------- */
   --color-ink: #1E1E1C;

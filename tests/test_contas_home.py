@@ -69,11 +69,15 @@ def test_login_renderiza_200_com_campos_de_matricula_e_senha(client):
     assert 'name="username"' in conteudo
     assert 'name="password"' in conteudo
     assert "Entrar no sistema" in conteudo
-    assert "Almoxarifado SAEP" in conteudo
+    # A marca vive na faixa de identidade, fora do `<title>` (que também a
+    # contém): texto puro, nunca link nem item atual de navegação.
+    assert '<span class="appbar-brand">Almoxarifado SAEP</span>' in conteudo
+    assert 'aria-current' not in conteudo
     assert "gestão de materiais" in conteudo
     assert "data-login-form" in conteudo
     assert "data-login-submit" in conteudo
     assert static("contas/js/login.js") in conteudo
+    assert "<title>Entrar — Almoxarifado SAEP</title>" in conteudo
 
     conteudo_sem_acento = _sem_acentos(conteudo).lower()
     assert "atricula" in conteudo_sem_acento
@@ -91,9 +95,12 @@ def test_mensagem_de_erro_generica_aparece_no_html_de_login_invalido(client, usu
 
     assert mensagem_esperada in response.content.decode()
     assert "Confira os dados e tente novamente." in mensagem_esperada
-    assert "Se o problema continuar, procure o responsável pelo sistema." in (
+    assert "Se o problema continuar, procure o Setor de Almoxarifado:" in (
         response.content.decode()
     )
+    assert 'href="mailto:almoxarifado@saep.sp.gov.br"' in response.content.decode()
+    # O título da aba anuncia o erro (leitor de tela lê o título na carga).
+    assert "<title>Erro: Entrar — Almoxarifado SAEP</title>" in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -107,3 +114,4 @@ def test_erros_de_campo_usam_os_ids_referenciados_pelo_django(client):
     assert 'id="id_username_error"' in conteudo
     assert 'aria-describedby="id_password_error"' in conteudo
     assert 'id="id_password_error"' in conteudo
+    assert "<title>Erro: Entrar — Almoxarifado SAEP</title>" in conteudo
