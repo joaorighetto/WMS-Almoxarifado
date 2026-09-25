@@ -9,7 +9,14 @@
 
 {% block content %}
 <main class="catalogo-page">
-  <p class="catalogo-back-link"><a href="{% url 'home' %}">&larr; Início</a></p>
+  <a href="{% url 'catalogo:historico' %}" class="back-link">
+    <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
+         fill="none" aria-hidden="true">
+      <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Histórico de importações</span>
+  </a>
 
   {% include "catalogo/_mensagens.html" %}
 
@@ -26,7 +33,9 @@
   </header>
 
   <section class="catalogo-section">
-    <h2 class="catalogo-section-title">Execução</h2>
+    <h2 class="section-marker">
+      <span class="section-marker-label">Execução</span>
+    </h2>
     <dl class="catalogo-meta">
       <div>
         <dt>Executada por</dt>
@@ -48,7 +57,9 @@
   </section>
 
   <section class="catalogo-section">
-    <h2 class="catalogo-section-title">Resumo</h2>
+    <h2 class="section-marker">
+      <span class="section-marker-label">Resumo</span>
+    </h2>
     <dl class="catalogo-summary">
       <div class="catalogo-summary-item">
         <dt>Recebidos</dt>
@@ -83,7 +94,9 @@
   </section>
 
   <section class="catalogo-section" id="divergencias" data-secao="divergencias">
-    <h2 class="catalogo-section-title">Divergências de saldo ({{ execucao.total_divergencias }})</h2>
+    <h2 class="section-marker">
+      <span class="section-marker-label">Divergências de saldo ({{ execucao.total_divergencias }})</span>
+    </h2>
     <p class="catalogo-divergencia-nota">
       Divergência: diferença entre o saldo no arquivo do SCPI e o saldo atual no WMS
       (diferença = saldo no arquivo − saldo no WMS). É só informativa — esta importação
@@ -125,9 +138,11 @@
   </section>
 
   <section class="catalogo-section" id="alteracoes" data-secao="alteracoes">
-    <h2 class="catalogo-section-title">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</h2>
+    <h2 class="section-marker section-marker-attached">
+      <span class="section-marker-label">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</span>
+    </h2>
     {% if alteracoes_pagina.object_list %}
-    <div class="table-wrapper table-sticky-header">
+    <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
       <table class="table">
         <thead>
           <tr>
@@ -165,9 +180,11 @@
   </section>
 
   <section class="catalogo-section" id="excecoes">
-    <h2 class="catalogo-section-title">Exceções ({{ execucao.total_rejeitados }})</h2>
+    <h2 class="section-marker section-marker-attached">
+      <span class="section-marker-label">Exceções ({{ execucao.total_rejeitados }})</span>
+    </h2>
     {% if excecoes_pagina.object_list %}
-    <div class="table-wrapper table-sticky-header">
+    <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
       <table class="table">
         <thead>
           <tr>

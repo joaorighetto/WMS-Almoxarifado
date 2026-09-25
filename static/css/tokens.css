@@ -185,6 +185,13 @@
   --table-cell-pad-y: var(--space-2); /* linha compacta de ~38px no desktop */
   --table-cell-pad-x: var(--space-3);
 
+  /* Altura de conteúdo da barra de trabalho (DESIGN.md → Layout → App shell;
+     Components → Navigation), sem a linha de corredor de 4px. Extraído para
+     token na propagação ao catálogo/importação: consumido por `.appbar-inner`
+     (components.css) e por `scroll-padding-top` (base.css), para que uma
+     âncora de paginação/seção não fique escondida sob a barra sticky. */
+  --appbar-height: 56px;
+
   /* ---------------------------------------------------------------------
    * Raio — mínimo e funcional (DESIGN.md → Shapes)
    * Revisão "Tubulação e piso industrial": um degrau acima do valor anterior
@@ -202,5 +209,14 @@
   :root {
     --control-height-compact: var(--control-height);
     --table-cell-pad-y: var(--space-3);
+  }
+}
+
+/* Barra de trabalho mais baixa nas telas mais estreitas (DESIGN.md →
+   Components → Navigation: "56px de altura, 48px abaixo de 480px") — mesmo
+   ponto de corte já usado por `.appbar-inner`/`.page-header-actions`. */
+@media (max-width: 480px) {
+  :root {
+    --appbar-height: 48px;
   }
 }

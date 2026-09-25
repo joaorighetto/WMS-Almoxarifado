@@ -23,20 +23,6 @@
   max-width: 640px;
 }
 
-.catalogo-back-link {
-  margin: 0 0 var(--space-4);
-  font-size: var(--font-size-meta);
-}
-
-.catalogo-back-link a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.catalogo-back-link a:hover {
-  text-decoration: underline;
-}
-
 .catalogo-messages {
   margin-bottom: var(--space-2);
 }
@@ -53,13 +39,6 @@
   margin-top: 0;
   padding-top: 0;
   border-top: none;
-}
-
-.catalogo-section-title {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-section-title);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
 }
 
 /* Resumo de totais: números como o elemento de maior peso da seção — hierarquia por

@@ -21,11 +21,11 @@
   margin: 0 auto;
 }
 
+/* Tipografia vem de `.page-header-title` (static/css/components.css, aplicada
+   junto no template) — aqui só o espaçamento próprio da Home, que não usa a
+   faixa/divisor do Page Header (DESIGN.md → Components → Page Header: "A Home
+   usa o mesmo estilo de título sem a faixa do page header"). */
 .home-page-title {
-  font-size: var(--font-size-page-title);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
   margin: 0 0 var(--space-6);
 }
 

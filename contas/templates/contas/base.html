@@ -12,6 +12,15 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body{% block body_attrs %}{% endblock %}>
+  {% comment %}
+  Barra de trabalho em toda tela autenticada (propagação da direção "Tubulação
+  e piso industrial", `.claude/rules/agent-orchestration.md` → "Trabalho
+  frontend"). Declarada uma única vez aqui; páginas com placa de identificação
+  própria (Home) sobrescrevem este bloco só para passar
+  `esconde_matricula_compacta=True` — nunca duplicando o `{% include %}`.
+  Anônimo (login) não vê a barra, pois `user.is_authenticated` é falso ali.
+  {% endcomment %}
+  {% block appbar %}{% if user.is_authenticated %}{% include "contas/_barra_trabalho.html" %}{% endif %}{% endblock %}
   {% block content %}{% endblock %}
   {% block extra_js %}{% endblock %}
 </body>
