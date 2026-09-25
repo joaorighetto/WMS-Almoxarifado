@@ -9,10 +9,10 @@
  * arquivo contém apenas composição/layout específicos da tela de login.
  *
  * Layout mobile-first: coluna única, campo ocupando a largura do container em telas
- * estreitas (DESIGN.md → Layout → Superfícies de Solicitante/Chefe de setor são
- * mobile-first; Inputs/Fields). Nenhuma ação depende de hover. O anel de foco visível é
- * herdado do :focus-visible global definido em static/css/base.css — não é removido nem
- * sobrescrito aqui.
+ * estreitas (DESIGN.md → Layout → Fundamento: contexto operacional por papel e
+ * dispositivo; Components → Inputs / Fields). Nenhuma ação depende de hover. O anel de
+ * foco visível é herdado do :focus-visible global definido em static/css/base.css — não
+ * é removido nem sobrescrito aqui.
  */
 
 .login-page {
