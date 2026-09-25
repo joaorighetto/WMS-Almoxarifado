@@ -201,7 +201,7 @@ def test_historico_lista_da_mais_recente_para_a_mais_antiga_com_dados_essenciais
     linha_recente = conteudo[posicao_recente:posicao_antiga]
     for total_esperado in ("22", "9", "13"):
         # `class="table-cell-numeric"` pode vir seguida de um modificador
-        # (ex.: `catalogo-historico-rejeitados-alerta`, quando o total for
+        # (ex.: `catalogo-rejeitados-emphasis`, quando o total for
         # "Rejeitados" e diferente de zero — revisão do gate visual, achado
         # P1, 2026-09-22) — o teste verifica a classe base, não a ausência de
         # outras.

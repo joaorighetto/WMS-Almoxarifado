@@ -333,6 +333,35 @@ def test_confirmacao_valida_emite_mensagem_de_sucesso_com_os_totais(
     assert 'class="badge badge-success' in resposta.content.decode("utf-8")
 
 
+def test_confirmacao_de_reimportacao_emite_mensagem_no_singular_quando_o_total_e_um(
+    chefe_almoxarifado, csv_fixture
+):
+    """`reimportacao.csv`, sobre o catálogo de `carga_inicial_valida.csv`
+    (README de tests/fixtures/catalogo/): exatamente 1 inserido — a
+    mensagem de sucesso (`catalogo/views.py`, `pluralize`) precisa usar o
+    singular "1 inserido", nunca "1 inseridos" (mesma regra do rótulo do
+    botão de confirmação na prévia, `carga_inicial_valida.csv` sozinho
+    nunca exercitaria o singular: os totais lá são 9/0/0)."""
+    conteudo_inicial = csv_fixture("carga_inicial_valida.csv")
+    _confirmar_diretamente(conteudo_inicial, chefe_almoxarifado, nome_arquivo="inicial.csv")
+
+    client_autenticado = _cliente_autenticado(chefe_almoxarifado)
+    _enviar(client_autenticado, csv_fixture("reimportacao.csv"), nome="reimportacao.csv")
+    pedido, plano = _pedido_e_plano_da_sessao(client_autenticado)
+    assert plano.total_inseridos == 1, "pré-condição da fixture: 1 inserido"
+
+    resposta = client_autenticado.post(
+        reverse("catalogo:importacao_confirmar"),
+        {"token": pedido.token, "impressao_digital": plano.impressao_digital},
+        follow=True,
+    )
+
+    assert resposta.status_code == 200
+    mensagens = [str(m) for m in resposta.context["messages"]]
+    assert any(re.search(r"\b1\s+inserido\b", m) for m in mensagens), mensagens
+    assert not any("1 inseridos" in m for m in mensagens), mensagens
+
+
 def test_confirmacao_com_valores_extraidos_do_html_da_previa_grava_a_execucao(
     chefe_almoxarifado, csv_fixture
 ):
@@ -729,3 +758,102 @@ def _cliente_autenticado(usuario):
     client = Client()
     client.force_login(usuario)
     return client
+
+
+# ---------------------------------------------------------------------------
+# Barra de confirmação da prévia (revisão do gate visual, commit b8bced0):
+# um único par de botões Confirmar/Cancelar — a antiga seção "Confirmação",
+# duplicada perto do resumo, saiu — e o rótulo do botão de confirmação com
+# plural correto e "(N rejeitado(s) fica(m) de fora)" só quando há
+# rejeitados.
+# ---------------------------------------------------------------------------
+
+
+def test_previa_tem_exatamente_um_form_de_confirmar_e_um_de_cancelar(
+    chefe_almoxarifado, csv_fixture
+):
+    """Regressão da duplicação corrigida no commit b8bced0: a prévia tinha
+    uma seção "Confirmação" própria além da barra sticky, cada uma com seu
+    par de forms — risco de duplo submit que uma checagem por texto/rótulo
+    não pegaria."""
+    client_autenticado = _cliente_autenticado(chefe_almoxarifado)
+    _enviar(client_autenticado, csv_fixture("carga_inicial_valida.csv"))
+    resposta = client_autenticado.get(reverse("catalogo:importacao_previa"))
+
+    assert resposta.status_code == 200
+    conteudo_html = resposta.content.decode("utf-8")
+
+    url_confirmar = reverse("catalogo:importacao_confirmar")
+    url_cancelar = reverse("catalogo:importacao_cancelar")
+
+    assert conteudo_html.count(f'action="{url_confirmar}"') == 1
+    assert conteudo_html.count(f'action="{url_cancelar}"') == 1
+
+
+def test_form_de_confirmar_vem_depois_do_resumo_e_das_excecoes_na_previa(
+    chefe_almoxarifado, csv_fixture
+):
+    """A barra de confirmação é o último elemento da coluna (commit
+    b8bced0), não mais uma seção perto do resumo: o form de confirmação
+    precisa vir depois do resumo e da seção de exceções no HTML, nunca
+    antes deles."""
+    client_autenticado = _cliente_autenticado(chefe_almoxarifado)
+    _enviar(client_autenticado, csv_fixture("carga_inicial_casos_spec.csv"))
+    resposta = client_autenticado.get(reverse("catalogo:importacao_previa"))
+
+    assert resposta.status_code == 200
+    conteudo_html = resposta.content.decode("utf-8")
+
+    indice_resumo = conteudo_html.index("Resumo")
+    indice_excecoes = conteudo_html.index('id="excecoes"')
+    indice_confirmar = conteudo_html.index(
+        f'action="{reverse("catalogo:importacao_confirmar")}"'
+    )
+    assert indice_resumo < indice_excecoes < indice_confirmar
+
+
+def test_rotulo_do_botao_de_confirmar_informa_rejeitados_que_ficam_de_fora(
+    chefe_almoxarifado, csv_fixture
+):
+    """`carga_inicial_casos_spec.csv` sobre catálogo vazio: 9 inseridos, 0
+    atualizados, 13 rejeitados (README de tests/fixtures/catalogo/) — o
+    rótulo do botão precisa avisar que os rejeitados não entram na
+    importação."""
+    client_autenticado = _cliente_autenticado(chefe_almoxarifado)
+    _enviar(client_autenticado, csv_fixture("carga_inicial_casos_spec.csv"))
+    pedido, plano = _pedido_e_plano_da_sessao(client_autenticado)
+    assert plano.total_rejeitados == 13, "pré-condição da fixture: 13 rejeitados"
+
+    resposta = client_autenticado.get(reverse("catalogo:importacao_previa"))
+
+    assert resposta.status_code == 200
+    conteudo_html = resposta.content.decode("utf-8")
+
+    assert "13 rejeitados ficam de fora" in conteudo_html
+
+
+def test_rotulo_do_botao_de_confirmar_sem_rejeitados_nao_menciona_fora_e_usa_singular(
+    chefe_almoxarifado, csv_fixture
+):
+    """`reimportacao.csv`, sobre o catálogo de `carga_inicial_valida.csv`
+    (README de tests/fixtures/catalogo/): 1 inserido, 8 atualizados, 0
+    rejeitados — sem a cláusula "ficam de fora", e "inserido" no singular
+    (protege contra sempre pluralizar, mesmo com N=1)."""
+    conteudo_inicial = csv_fixture("carga_inicial_valida.csv")
+    _confirmar_diretamente(conteudo_inicial, chefe_almoxarifado, nome_arquivo="inicial.csv")
+
+    client_autenticado = _cliente_autenticado(chefe_almoxarifado)
+    _enviar(client_autenticado, csv_fixture("reimportacao.csv"), nome="reimportacao.csv")
+    pedido, plano = _pedido_e_plano_da_sessao(client_autenticado)
+    assert plano.total_inseridos == 1, "pré-condição da fixture: 1 inserido"
+    assert plano.total_rejeitados == 0, "pré-condição da fixture: 0 rejeitados"
+
+    resposta = client_autenticado.get(reverse("catalogo:importacao_previa"))
+
+    assert resposta.status_code == 200
+    conteudo_html = resposta.content.decode("utf-8")
+
+    assert "ficam de fora" not in conteudo_html
+    assert re.search(r"\b1\s+inserido\b", conteudo_html), (
+        "com exatamente 1 inserido, o rótulo deveria usar o singular"
+    )

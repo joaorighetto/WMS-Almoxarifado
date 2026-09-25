@@ -101,6 +101,8 @@ ROTAS_CATALOGO_SEM_ESTADO = ["catalogo:consulta", "catalogo:importacao_envio", "
 def test_barra_de_trabalho_aparece_em_tela_do_catalogo(
     client, chefe_almoxarifado, senha_valida, nome_rota
 ):
+    """Sem estado prévio (consulta, envio, histórico): a barra propagada a
+    `base.html` precisa aparecer completa em cada uma dessas telas."""
     _login(client, chefe_almoxarifado, senha_valida)
 
     resposta = client.get(reverse(nome_rota))
@@ -112,6 +114,8 @@ def test_barra_de_trabalho_aparece_em_tela_do_catalogo(
 def test_barra_de_trabalho_aparece_no_detalhe_de_uma_execucao(
     client, chefe_almoxarifado, senha_valida
 ):
+    """`catalogo:execucao_detalhe` exige uma `pk` existente — cenário à
+    parte por precisar de uma `ExecucaoImportacao` pré-criada."""
     _login(client, chefe_almoxarifado, senha_valida)
     execucao = _criar_execucao(executada_por=chefe_almoxarifado)
 
@@ -124,6 +128,8 @@ def test_barra_de_trabalho_aparece_no_detalhe_de_uma_execucao(
 def test_barra_de_trabalho_aparece_na_previa_de_importacao(
     client, chefe_almoxarifado, senha_valida, csv_fixture
 ):
+    """Prévia (estado de sessão pós-envio): mesma barra completa, alcançada
+    pelo fluxo real de envio em vez de sessão montada manualmente."""
     _login(client, chefe_almoxarifado, senha_valida)
     resposta_envio = _enviar(client, csv_fixture("carga_inicial_valida.csv"))
     assert resposta_envio.status_code == 302, "pré-condição: envio válido deveria redirecionar"
@@ -143,6 +149,8 @@ def test_barra_de_trabalho_aparece_na_previa_de_importacao(
 def test_barra_de_trabalho_aparece_na_consulta_para_requisitante(
     client, requisitante, senha_valida
 ):
+    """A barra não pode depender de um papel de importação — um papel só
+    com `ROLE-REQUESTER` também precisa vê-la na consulta."""
     _login(client, requisitante, senha_valida)
 
     resposta = client.get(reverse("catalogo:consulta"))
@@ -159,6 +167,8 @@ def test_barra_de_trabalho_aparece_na_consulta_para_requisitante(
 def test_fragmento_htmx_da_consulta_nao_contem_a_barra_de_trabalho(
     client, requisitante, senha_valida
 ):
+    """Uma troca HTMX parcial (`HX-Request`) só substitui a região de
+    resultados — incluir a barra dentro dela a duplicaria a cada busca."""
     _login(client, requisitante, senha_valida)
 
     resposta = client.get(reverse("catalogo:consulta"), HTTP_HX_REQUEST="true")
@@ -176,6 +186,8 @@ def test_fragmento_htmx_da_consulta_nao_contem_a_barra_de_trabalho(
 
 
 def test_pagina_de_login_anonima_nao_contem_a_barra_de_trabalho(client):
+    """`{% block appbar %}` é condicional a `user.is_authenticated` — um
+    visitante anônimo não deveria ver logout nem o link de volta à Home."""
     resposta = client.get(reverse("login"))
 
     assert resposta.status_code == 200
@@ -197,6 +209,8 @@ def test_pagina_de_login_anonima_nao_contem_a_barra_de_trabalho(client):
 
 
 def test_home_tem_exatamente_um_formulario_de_logout(client, usuario_ativo, senha_valida):
+    """A Home sobrescreve o bloco `appbar` só para esconder a matrícula
+    compacta — não pode acabar incluindo o parcial duas vezes."""
     _login(client, usuario_ativo, senha_valida)
 
     resposta = client.get(reverse("home"))
