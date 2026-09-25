@@ -347,6 +347,9 @@ pendente até aqui.
   existente se necessário. **Não** introduzir sidebar/app-shell completo — decisões de largura de
   sidebar (desktop) e navegação (mobile) permanecem abertas em `DESIGN.md` e não são resolvidas
   aqui.
+  *Nota posterior (2026-09): o limite valia para esta feature. A app shell foi decidida depois,
+  na modernização visual (PRs #15–#17) — barra de trabalho global em
+  `contas/templates/contas/base.html`, sem sidebar; ver `DESIGN.md` → Layout → App shell.*
 
 ---
 

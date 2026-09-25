@@ -71,7 +71,7 @@
 }
 
 /* Placa de identificação: leitura tipo placa de equipamento — rótulo pequeno em
-   metadado acima do valor (DESIGN.md → Typography → Metadado). Grade de 2 colunas
+   metadado acima do valor (DESIGN.md → Typography → Hierarquia, Metadado). Grade de 2 colunas
    também em telas estreitas (repeat(auto-fit) resolve mobile e a coluna lateral do
    desktop com a mesma regra — The Shared Foundation Rule: um layout, não dois). */
 .home-id-plate {

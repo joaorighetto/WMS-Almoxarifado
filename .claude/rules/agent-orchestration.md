@@ -537,6 +537,13 @@ trabalho:
   o Claude principal optar por corrigir dessa forma em vez de encaminhar
   os findings ao `frontend-implementer`.
 
+Execute o `critique` na sessão principal, não dentro de um subagent: o
+contrato dele exige duas avaliações isoladas (revisão de design e evidência
+do detector/navegador), executadas como subagents paralelos, e um subagent
+não tem a ferramenta `Agent` — dentro dele o `critique` cai no modo
+degradado de contexto único. Se o relatório vier marcado como degradado,
+informe o usuário.
+
 Quando o `critique` reportar 3 ou mais Priority Issues, seu próprio
 contrato para na entrega do relatório e exige perguntas direcionadas ao
 usuário antes de qualquer correção. Nesse caso, o Claude principal aguarda
@@ -561,7 +568,9 @@ da fundação (não só uma tela):
 
 1. o Claude principal conduz o `new-work` do Impeccable: classifica o modo da
    superfície, roda o `concept-seed` e apresenta a rodada de direção ao
-   usuário — a escolha estética é dele;
+   usuário — a escolha estética é dele. Se a rodada rodar degradada (por
+   exemplo, sem rede ou sem geração de imagem), diga isso ao usuário ao
+   apresentá-la e registre no contrato, junto da seed key;
 2. registra a direção escolhida como contrato no surface brief
    (`.impeccable/surfaces/`, versionado), antes de qualquer código;
 3. encaminha ao `frontend-implementer` o contrato como instrução explícita.
@@ -578,26 +587,35 @@ fica na superfície-laboratório até uma etapa própria de propagação. As tel
 que só herdam os tokens precisam ser conferidas por captura e testes na mesma
 entrega.
 
-### Promoção do DESIGN.md seed
+A etapa de propagação é frontend significativo sob o mesmo contrato:
+`frontend-implementer` → `code-reviewer` → gate visual por `impeccable
+critique` nas telas propagadas (o `impeccable-finish-reviewer` só quando a
+etapa tiver comp e capturas próprios) → atualização incremental de
+`DESIGN.md` e do sidecar pelo `impeccable-documenter` (ver seção seguinte).
 
-`DESIGN.md` nasce como seed (fundação acordada com o usuário, sem código,
-comp ou geração de imagem) e declara explicitamente que deve ser
-re-executado em modo scan assim que existirem templates, CSS e componentes
-reais implementados, para extrair tokens e o sidecar
-`.impeccable/design.json` a partir do código de fato construído. Essa
-transição não deve depender de alguém perceber a necessidade
-estruturalmente — trate-a como obrigatória:
+### Manutenção incremental do DESIGN.md
 
-- após a primeira implementação visual real de uma feature (quando
-  templates, CSS e componentes deixam de ser hipotéticos), execute
-  `impeccable document` em modo scan — não `impeccable-documenter`, que
-  pressupõe um build Impeccable completo (contrato de direção e artefatos
-  próprios desse workflow) que uma implementação comum do
-  `frontend-implementer` não produz; reserve `impeccable-documenter` para
-  quando esse contrato existir;
-- em implementações frontend posteriores, documente apenas mudanças
-  duráveis do sistema (novo token, novo padrão reutilizável), não cada
-  tela individualmente.
+`DESIGN.md` deixou de ser seed: descreve o sistema construído e é registrado
+a partir do código, nunca de intenções. Mantê-lo fiel ao código é parte da
+entrega frontend, não algo a perceber depois:
+
+- quando uma mudança frontend significativa introduzir algo durável no
+  sistema — token novo ou removido, componente ou padrão reutilizável, regra
+  nomeada, mudança de app shell —, atualize `DESIGN.md` e
+  `.impeccable/design.json` na mesma entrega; não documente cada tela
+  individualmente;
+- quando a entrega for executada sob um contrato de direção de
+  `.impeccable/surfaces/` (redesign, superfície-laboratório ou propagação),
+  use o `impeccable-documenter` — o contrato continuar versionado não torna
+  toda mudança posterior uma entrega sob contrato;
+- sem contrato, use `impeccable document` em modo scan — o
+  `impeccable-documenter` pressupõe um build Impeccable completo (contrato de
+  direção e artefatos próprios desse workflow) que uma implementação comum
+  do `frontend-implementer` não produz;
+- nos dois casos, confira o resultado contra `static/css/tokens.css`,
+  `static/css/components.css`, o CSS das features
+  (`<app>/static/<app>/css/`) e os templates antes de encerrar; o
+  `frontend-implementer` não edita `DESIGN.md` nem o sidecar.
 
 Se o `frontend-implementer` reportar necessidade de mudança backend
 substancial (regra de negócio, autorização, estoque, migration) que exceda
@@ -658,7 +676,8 @@ Respeite a seguinte separação:
   (ex.: `INV-STOCK-004` pode levar a transação, lock ou constraint quando tecnicamente apropriado),
   nunca o contrário;
 - `tasks.md` → unidades de implementação;
-- `DESIGN.md` → design system, quando existir;
+- `DESIGN.md` → design system e direção visual vigentes; o sidecar `.impeccable/design.json` o
+  espelha e os contratos de direção em `.impeccable/surfaces/` registram a direção que o originou;
 - código existente → realidade atual da implementação;
 - relatórios dos subagents e relatórios em `docs/domain/reconciliation/` /
   `docs/domain-legacy/reconciliation/` → evidência, análise e histórico, não novas fontes

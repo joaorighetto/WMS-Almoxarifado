@@ -6,7 +6,8 @@ Django monolith, server-driven (Templates + HTMX + CSS próprio). Código, docs 
 - `config/` — settings split (`settings/base.py` + `development|test|production`), `urls.py` (admin/, catalogo/, "" → contas).
 - `contas/` — identidade, setores, papéis, login/home, middleware pós-login. Detalhes: `mem:contas/core`.
 - `catalogo/` — catálogo de materiais importado do SCPI (CSV), consulta, histórico de importações. Detalhes: `mem:catalogo/core`.
-- `static/` — CSS global (`tokens.css`, `base.css`, `components.css`) e HTMX vendorizado (`static/vendor/htmx/`). CSS/JS por app em `<app>/static/<app>/`.
+- `static/` — CSS global (`fonts.css` com os `@font-face`, `tokens.css`, `base.css`, `components.css`), HTMX vendorizado (`static/vendor/htmx/`) e fontes Atkinson Hyperlegible Next/Mono auto-hospedadas com licença OFL (`static/vendor/fonts/`, sem CDN). CSS/JS por app em `<app>/static/<app>/`.
+- `DESIGN.md` — design system vigente; `.impeccable/design.json` é o sidecar dele e `.impeccable/surfaces/` guarda os contratos de direção. Comentários de CSS/templates citam seções do DESIGN.md.
 - `tests/` — suíte pytest única e plana (`test_<app>_<tema>.py`), fixtures CSV em `tests/fixtures/catalogo/`.
 - `specs/NNN-*/` — artefatos Spec Kit por feature (spec/plan/tasks/research/contracts/data-model). Docstrings citam IDs deles (`FR-*`, `SC-*`, `research.md R*`, `T0**`).
 - `docs/domain/permissions-matrix.md` (`PERM-*`, `ROLE-*`) e `invariants-matrix.md` (`INV-*`) — regras canônicas; código cita os IDs.

@@ -32,7 +32,6 @@ colors:
   signal: "#F2C200"
   ink: "#1E1E1C"
   ink-raised: "#2A2A27"
-  ink-border: "#3A3A36"
   on-ink: "#FFFFFF"
   on-ink-muted: "#C9C7C1"
   on-ink-accent: "#F2C200"
@@ -449,7 +448,7 @@ Estratégia **Restrained** dentro de uma gramática de sinalização industrial:
 - **Desabilitado** (`disabled` só como borda de controle inativo; `disabled-surface` + `disabled-text` para fundo e rótulo, 5,32:1): sempre com `cursor: not-allowed` e, quando aplicável, o gerúndio da ação ("Enviando…").
 
 ### Tinta estrutural
-- **Grafite de Faixa** (`ink`, `ink-raised`, `ink-border`, `on-ink`, `on-ink-muted`): a única área grande de cor do sistema, consumida pela barra de trabalho, pela faixa de identidade do login e pelo marcador de seção disponível. Neutra de propósito: gastar o azul de ação numa faixa permanente o anularia como sinal. `on-ink` (branco) mede 16,7:1 sobre `ink`; `on-ink-muted` mede 9,88:1; `ink-raised` é o hover de controle sobre a faixa. `ink-border` continua em `tokens.css`, mas hoje não tem consumidor: mede só 1,46:1 contra `ink`, insuficiente para contorno de controle, que usa `border-strong`.
+- **Grafite de Faixa** (`ink`, `ink-raised`, `on-ink`, `on-ink-muted`): a única área grande de cor do sistema, consumida pela barra de trabalho, pela faixa de identidade do login e pelo marcador de seção disponível. Neutra de propósito: gastar o azul de ação numa faixa permanente o anularia como sinal. `on-ink` (branco) mede 16,7:1 sobre `ink`; `on-ink-muted` mede 9,88:1; `ink-raised` é o hover de controle sobre a faixa. Contorno de controle sobre a faixa usa `border-strong` (4,85:1 sobre `ink`): uma borda grafite própria mediria só 1,46:1 e não existe como token.
 
 ### Estados semânticos
 Cada estado é uma família de três papéis (texto, superfície, borda), não texto colorido sobre o cinza comum; os pares texto/superfície medem entre 5,53:1 e 6,74:1.

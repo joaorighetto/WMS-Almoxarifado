@@ -2,7 +2,7 @@
  * Componentes compartilhados — WMS-Almoxarifado
  *
  * Primitivos de UI já acordados em DESIGN.md → Components (Buttons, Alert,
- * Inputs/Fields, Table, Status/Badge, File Upload, Pagination, Page Header, Empty
+ * Inputs/Fields, Table, Chips (Badge), File Upload, Pagination, Page Header, Empty
  * State), usados por mais de uma página/feature. Vivem em static/css/ (nível de
  * projeto), ao lado de tokens.css/base.css, para que nenhuma página duplique estes
  * primitivos — Constitution, Princípio VIII: "componentes reutilizáveis DEVEM ser
@@ -13,7 +13,7 @@
  *
  * Carregar sempre depois de tokens.css e base.css.
  *
- * Buttons/Alert/Inputs (contas, feature 002) abrem o arquivo; Table, Status/Badge,
+ * Buttons/Alert/Inputs (contas, feature 002) abrem o arquivo; Table, Chips (Badge),
  * File Upload, Pagination, Page Header e Empty State (catalogo, feature 001, T028)
  * foram anexados ao final para minimizar diff — a ordem no arquivo não segue a ordem
  * de leitura de DESIGN.md → Components, mas cada bloco cita a seção correspondente.
@@ -32,7 +32,7 @@
   border-radius: var(--radius-sm);
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-medium);
-  /* Um link com aparência de botão (DESIGN.md → Buttons → Secundário/Ghost: "Nova
+  /* Um link com aparência de botão (DESIGN.md → Components → Buttons → Secundário: "Nova
      importação", "Limpar", atalhos da página inicial) herdava o sublinhado padrão do
      `<a>` — na página inicial os quatro atalhos ficavam sublinhados dentro da própria
      borda do botão. A forma do botão já é a affordance; o sublinhado pertence a link
@@ -71,9 +71,9 @@
   cursor: not-allowed;
 }
 
-/* Secundário/Ghost (DESIGN.md → Components → Buttons → Secundário/Ghost): borda ou
-   texto em text/border, sem preenchimento de `primary` — nunca compete com a ação
-   primária do mesmo contexto.
+/* Secundário (DESIGN.md → Components → Buttons → Secundário): fundo `surface`,
+   moldura `border-frame` e texto `text`, sem preenchimento de `primary` — nunca
+   compete com a ação primária do mesmo contexto.
    Correção do gate visual (P1, 2026-09-22): contra o canvas mais escuro introduzido
    nesta mesma revisão, a borda `border` media 1,15:1 — praticamente invisível fora de
    uma superfície branca (ex.: /catalogo/importacao/, que não tem nenhuma). Fundo
@@ -130,8 +130,8 @@
   color: var(--color-danger);
 }
 
-/* Variantes de warning/info/success (DESIGN.md → Components → Alert: "informação,
-   sucesso, warning ou erro") — mesma convenção visual de `.alert-danger` acima.
+/* Variantes de warning/info/success (DESIGN.md → Components → Alert) — mesma
+   convenção visual de `.alert-danger` acima.
    Acrescentadas em T029: `django.contrib.messages` já emite os três níveis
    (info/warning/error) nas views de importação, e só `alert-danger` existia até aqui.
 
@@ -217,8 +217,8 @@
   border-color: var(--color-danger);
 }
 
-/* Texto auxiliar abaixo do campo (DESIGN.md → Components → Inputs/Fields: "texto
-   auxiliar abaixo do campo, em text-muted") — já citado na estrutura de exemplo do File
+/* Texto auxiliar abaixo do campo (DESIGN.md → Components → Inputs / Fields: dica
+   abaixo, em metadado `text-muted`) — já citado na estrutura de exemplo do File
    Upload abaixo, mas nunca antes implementado. */
 .field-hint {
   color: var(--color-text-muted);
@@ -527,7 +527,7 @@
 }
 
 /* ---------------------------------------------------------------------
- * Status/Badge (DESIGN.md → Components → Status/Badge)
+ * Chips (Badge) (DESIGN.md → Components → Chips (Badge))
  * Rótulo curto de estado semântico — sempre com texto, nunca só uma pastilha colorida
  * (The No Color-Only State Rule). Mesma convenção das famílias semânticas do Alert
  * acima: superfície, borda e texto do próprio estado.
@@ -581,7 +581,7 @@
 }
 
 /* Capacidade planejada do ROADMAP, ainda sem rota (DESIGN.md → Components →
-   Status/Badge; Home → "Em preparação"). Borda tracejada — distingue do estado
+   Chips (Badge); Em preparação). Borda tracejada — distingue do estado
    neutro real (`.badge-neutral`, ex. "Pendente"/"Sem alteração"): aqui o selo marca
    algo que não existe ainda no sistema, não um valor de dado. */
 .badge-planned {
@@ -1055,9 +1055,9 @@
 }
 
 /* Celular: filtro essencial nunca escondido, mas a barra deixa de ser horizontal —
-   cada campo e ação passam a ocupar a largura do container (DESIGN.md → Layout →
-   Superfícies mobile-first de leitura/toque, aplicado aqui à barra em si, mesmo numa
-   superfície densa de almoxarifado). */
+   cada campo e ação passam a ocupar a largura do container (DESIGN.md → Components →
+   Filter Bar: até 640px, coluna única de largura total), mesmo numa superfície densa
+   de almoxarifado. */
 @media (max-width: 640px) {
   .filter-bar {
     flex-direction: column;
@@ -1158,9 +1158,9 @@
   gap: var(--space-4);
 }
 
-/* Anel de foco dentro da barra: `--color-focus` (Azul-Operação) some sobre o
+/* Anel de foco dentro da barra: `--color-focus` (Azul Ação Obrigatória) some sobre o
    grafite. `on-ink-accent` (amarelo de segurança, 9,93:1 contra `ink`) é o token
-   documentado para este papel (DESIGN.md → Tinta estrutural). Regra estreita —
+   documentado para este papel (DESIGN.md → Colors → Secondary). Regra estreita —
    só troca a cor do anel, não reintroduz `outline` onde `base.css` já não o dá. */
 .appbar :focus-visible {
   outline-color: var(--color-on-ink-accent);
@@ -1187,7 +1187,7 @@ a.appbar-brand:focus-visible {
 }
 
 /* Matrícula: identificador do domínio, mesma convenção de `.table-cell-code`
-   (DESIGN.md → Typography → Fonte de código/identificador). */
+   (DESIGN.md → Typography → Fonte de dado/identificador). */
 .appbar-matricula {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-meta);
@@ -1219,10 +1219,10 @@ a.appbar-brand:focus-visible {
    `primary` (gastaria o único accent de ação numa faixa permanente) nem de
    `on-ink-accent` (reservado a foco/circulação, não a botão). Alvo de toque de
    44px mesmo dentro da faixa de 56px (48px sob 480px, via `--appbar-height`).
-   Contorno em `border-strong` (propagação ao catálogo, gate visual: `ink-border`
-   media só 1,46:1 contra `ink`, abaixo do mínimo não textual de 3:1 — o token
-   permanece disponível para outro uso futuro, sem alteração de valor). Sobre
-   `ink`, `border-strong` mede 4,85:1 (4,18:1 sobre `ink-raised`, o hover). */
+   Contorno em `border-strong` (propagação ao catálogo, gate visual: uma borda
+   grafite (#3A3A36) media só 1,46:1 contra `ink`, abaixo do mínimo não textual
+   de 3:1). Sobre `ink`, `border-strong` mede 4,85:1 (4,18:1 sobre `ink-raised`,
+   o hover). */
 .appbar-logout {
   display: inline-flex;
   align-items: center;

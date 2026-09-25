@@ -172,7 +172,7 @@
 }
 
 /* SHA-256 do arquivo: identificador técnico opaco, mesma convenção visual de
-   `.table-cell-code` (DESIGN.md → Typography → Fonte de código/identificador). */
+   `.table-cell-code` (DESIGN.md → Typography → Fonte de dado/identificador). */
 .catalogo-hash {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-code);
@@ -229,12 +229,9 @@
    inteiro flutuava sobre o canvas, e "Escolher arquivo" (`.btn-secondary`, mesma
    correção acima) lia como desabilitado ao lado do "Enviar arquivo" azul por falta de
    qualquer referência de superfície ao redor. Mesma moldura da tabela (`surface` +
-   1px `border-frame`, sem sombra — Flat-By-Default), com o raio `md` que Shapes já
-   reserva a "containers isolados das telas de entrada e início" — esta é exatamente
-   essa tela. Isto substitui, para este formulário, a frase de Layout → Estrutura de
-   página que hoje diz que o envio do CSV não ganha "borda ou superfície própria":
-   escrita quando canvas e superfície ainda eram indistinguíveis (1,06:1); DESIGN.md
-   será atualizado por `impeccable document` em modo scan, não aqui. */
+   1px `border-frame`, sem sombra — Flat-By-Default), com o raio `md` de container
+   isolado (DESIGN.md → Shapes; Components → Cards / Containers, formulário isolado,
+   padding 24 × 16px). */
 .catalogo-form {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border-frame);

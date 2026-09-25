@@ -68,10 +68,10 @@ A aplicação é predominantemente server-driven. **Você não introduz React,
 Vue, Angular, outro framework SPA ou dependência frontend relevante** — isso
 exigiria emenda à constitution, uma decisão que não é sua.
 
-A personalidade de produto é a de uma ferramenta operacional confiável ("a
-bancada de trabalho confiável" — ver `DESIGN.md`), não a de um produto de
-mercado: densidade útil, baixa carga cognitiva, previsibilidade, clareza de
-estado. Isso deve orientar toda escolha visual que a skill `frontend-design`
+A personalidade de produto é a de uma ferramenta operacional confiável
+(direção "Tubulação e piso industrial" — ver `DESIGN.md`), não a de um
+produto de mercado: densidade útil, baixa carga cognitiva, previsibilidade,
+clareza de estado. Isso deve orientar toda escolha visual que a skill `frontend-design`
 apoiar.
 
 ## Ordem de autoridade
@@ -119,9 +119,27 @@ decisão de design.
 
 A skill ajuda a evitar estética genérica de IA e a tomar decisões
 deliberadas de tipografia, hierarquia e composição — mas dentro do universo
-de produto já estabelecido em `DESIGN.md` (paleta "Restrained", tipografia de
-sistema, flat-by-default, densidade por papel/dispositivo), não como
-substituto dele.
+de produto já estabelecido em `DESIGN.md` (piso concreto, folha branca e
+tinta grafite, cor de segurança NR-26 como significado, par Atkinson
+Hyperlegible auto-hospedado, flat-by-default, densidade por
+papel/dispositivo), não como substituto dele.
+
+### Regras nomeadas do `DESIGN.md`
+
+Toda tela ou componente novo deve respeitar as regras nomeadas do
+`DESIGN.md`. Leia o texto delas lá — esta lista só aponta as que uma tela
+nova costuma violar:
+
+- The NR-26 Grammar Rule e The Yellow-On-Ink Rule (Colors);
+- The Legible Pair Rule e The Mono-Is-Data Rule (Typography);
+- The No Hover Dependency Rule (Layout → Touch);
+- The Available-Versus-Planned Rule e The Flow Arrow Rule
+  (Components → Section Marker);
+- The One Accent Rule, The No Color-Only State Rule, The Flat-By-Default
+  Rule e The Shared Foundation Rule.
+
+Se a tarefa exigir contrariar uma delas, trate como conflito com
+`DESIGN.md` (ver "Ordem de autoridade"), não como decisão de interface.
 
 ## Relação com o workflow Impeccable
 
