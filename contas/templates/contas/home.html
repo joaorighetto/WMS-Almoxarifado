@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-{% include "contas/_barra_trabalho.html" %}
+{% include "contas/_barra_trabalho.html" with esconde_matricula_compacta=True %}
 
 <main class="home-page">
   <div class="home-container">
@@ -30,6 +30,8 @@
             <ul class="home-id-papeis">
               {% for papel in papeis %}
               <li><span class="badge badge-neutral">{{ papel }}</span></li>
+              {% empty %}
+              <li class="home-id-papeis-empty">Nenhum papel de negócio atribuído.</li>
               {% endfor %}
             </ul>
           </dd>
@@ -37,7 +39,7 @@
       </dl>
 
       <section class="home-tasks" aria-labelledby="home-tasks-heading">
-        <h2 id="home-tasks-heading" class="section-marker">
+        <h2 id="home-tasks-heading" class="section-marker section-marker-attached">
           <span class="section-marker-label">Suas tarefas</span>
           <svg class="section-marker-arrow" width="14" height="14" viewBox="0 0 16 16"
                fill="none" aria-hidden="true">
@@ -115,24 +117,20 @@
     <section class="home-planned" aria-labelledby="home-planned-heading">
       <div class="home-planned-tape" aria-hidden="true"></div>
       <div class="home-planned-body">
-        <h2 id="home-planned-heading" class="section-marker">
+        <h2 id="home-planned-heading" class="section-marker section-marker-muted">
           <span class="section-marker-label">Em preparação</span>
-          <svg class="section-marker-arrow" width="14" height="14" viewBox="0 0 16 16"
-               fill="none" aria-hidden="true">
-            <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
         </h2>
         <p class="home-planned-note">
-          Capacidades planejadas do roadmap para os seus papéis — ainda indisponíveis
-          nesta versão.
+          Funções previstas para os seus papéis — ainda indisponíveis nesta versão.
         </p>
         <ul class="home-planned-list">
           {% for item in capacidades_planejadas %}
           <li class="home-planned-item">
-            <p class="home-planned-item-title">{{ item.titulo }}</p>
+            <div class="home-planned-item-row">
+              <span class="home-planned-item-title">{{ item.titulo }}</span>
+              <span class="badge badge-planned">Planejado</span>
+            </div>
             <p class="home-planned-item-desc">{{ item.descricao }}</p>
-            <span class="badge badge-planned">Planejado</span>
           </li>
           {% endfor %}
         </ul>

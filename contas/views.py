@@ -114,8 +114,7 @@ CAPACIDADES_PLANEJADAS = (
         "papeis": (Papel.FUNCIONARIO_ALMOXARIFADO,),
         "titulo": "Saídas excepcionais",
         "descricao": (
-            "Baixas fora de requisição — deterioração, vencimento, doação e outros motivos "
-            "canônicos."
+            "Baixas fora de requisição, por deterioração, vencimento, doação e outros motivos."
         ),
     },
     # DEV — PERM-RETURN-CREATE

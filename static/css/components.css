@@ -1074,8 +1074,13 @@
   border-bottom: 4px solid var(--color-signal);
 }
 
+/* max-width inclui o próprio padding inline (border-box) — `.home-container`
+   soma max-width:1120px de CONTEÚDO ao padding-inline de `.home-page`, um nível
+   acima; para a marca e o título ("Início") começarem no mesmo x, o teto da
+   barra precisa embutir esse mesmo padding (correção do gate visual, disposição
+   FIX: a barra ficava 16px mais recuada que o conteúdo). */
 .appbar-inner {
-  max-width: 1120px;
+  max-width: calc(1120px + 2 * var(--space-4));
   height: 56px;
   margin: 0 auto;
   padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
@@ -1123,6 +1128,20 @@ a.appbar-brand:focus-visible {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Modificador opcional (gate visual, disposição FIX — matrícula duplicada):
+   abaixo de 900px, a página que também renderiza sua própria placa de
+   identificação (ex.: Home → `.home-id-plate`) pode pedir, via
+   `{% include %} with esconde_matricula_compacta=True`, que a barra oculte a
+   matrícula redundante aqui — ela já aparece na placa, mais legível, logo
+   abaixo. O parcial continua genérico: sem o modificador (telas sem placa
+   própria), a matrícula da barra permanece sempre visível. No desktop (≥900px)
+   as duas continuam coexistindo. */
+@media (max-width: 899px) {
+  .appbar-matricula-hide-compact {
+    display: none;
+  }
 }
 
 .appbar-logout-form {
@@ -1179,6 +1198,11 @@ a.appbar-brand:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  /* Elemento inline-level (outer display de `inline-flex`) — sem isto, o gap de
+     "leading" entre linha de texto e o `<ul>` block seguinte (mesmo efeito de
+     `<img>` solto num parágrafo) deixava uma fresta de 1-4px sob o marcador
+     "encostado" (ver `.section-marker-attached`). */
+  vertical-align: bottom;
   margin: 0 0 var(--space-4);
   padding: var(--space-2) var(--space-3);
   background-color: var(--color-ink);
@@ -1194,4 +1218,30 @@ a.appbar-brand:focus-visible {
 .section-marker-arrow {
   flex-shrink: 0;
   color: var(--color-on-ink-accent);
+}
+
+/* Variante atenuada (gate visual, disposição FIX — NR-26: a seta de fluxo e o
+   fundo `ink` cheio ficam reservados ao que está em circulação de verdade).
+   Reservada a seções que descrevem algo que NÃO existe ainda no sistema (ex.:
+   "Em preparação") — mesma família visual de `.badge-planned`: contorno
+   tracejado em `border-strong`, texto `text-muted`, sem fundo. Nunca leva a
+   seta SVG (o template simplesmente não a inclui nesta variante). */
+.section-marker-muted {
+  background-color: transparent;
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+/* Variante "encostada" (gate visual, disposição FIX — "marcador de tubulação":
+   o chip lia como botão solto). Funde o marcador com a superfície viva logo
+   abaixo dele (ex.: `.home-task-list`) — cantos inferiores retos e sem margem,
+   para ler como uma faixa presa ao próprio tubo. A superfície abaixo precisa
+   replicar o canto reto do lado onde o marcador encosta (ver `.home-task-list`,
+   `contas/static/contas/css/home.css`) — o marcador é dimensionado ao conteúdo
+   (`inline-flex`), então só o canto sob ele (não a largura inteira da
+   superfície) precisa ficar reto. */
+.section-marker-attached {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }

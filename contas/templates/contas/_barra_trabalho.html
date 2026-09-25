@@ -18,6 +18,13 @@ sozinho assim que outra tela incluir este parcial.
 
 Logout continua exclusivamente POST + CSRF (Constitution IX) — nunca um link,
 mesmo com aparência de botão.
+
+`esconde_matricula_compacta` (contexto opcional passado via `{% include %} with
+...`): quando a página já mostra a matrícula na própria placa de identificação
+(ex.: `contas/home.html` → `.home-id-plate`), evita a duplicação abaixo de
+900px — ver `.appbar-matricula-hide-compact`, static/css/components.css.
+Páginas sem placa própria não passam a variável e continuam vendo a matrícula
+na barra em qualquer largura.
 {% endcomment %}
 <header class="appbar">
   <div class="appbar-inner">
@@ -28,7 +35,7 @@ mesmo com aparência de botão.
     {% endif %}
 
     <div class="appbar-account">
-      <span class="appbar-matricula">{{ user.matricula }}</span>
+      <span class="appbar-matricula{% if esconde_matricula_compacta %} appbar-matricula-hide-compact{% endif %}">{{ user.matricula }}</span>
       <form method="post" action="{% url 'logout' %}" class="appbar-logout-form">
         {% csrf_token %}
         <button type="submit" class="appbar-logout">Sair</button>

@@ -101,6 +101,13 @@
   padding: 0;
 }
 
+/* Conta técnica (superusuário sem nenhum ROLE-* de negócio, ex. `admin` do seed
+   de desenvolvimento): texto explícito em vez de um rótulo "Papéis" pairando
+   sobre uma lista vazia (achado P3 do code-reviewer). */
+.home-id-papeis-empty {
+  color: var(--color-text-muted);
+}
+
 /* Lista de tarefas: uma única superfície branca com divisores entre linhas — não
    uma grade de cards iguais (recusa deliberada do padrão da categoria, ver
    DIRECTION CONTRACT → THESIS). */
@@ -110,7 +117,12 @@
   padding: 0;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border-frame);
-  border-radius: var(--radius-md);
+  /* Canto superior esquerdo reto: é onde `.section-marker-attached` ("Suas
+     tarefas") encosta por cima (gate visual, disposição FIX) — um raio ali
+     deixaria uma fresta curva sob o marcador, que é retangular. O canto
+     superior direito, fora do alcance do marcador (dimensionado ao conteúdo),
+     continua arredondado. */
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
   /* Sem `overflow: hidden` (recortaria o anel de foco do primeiro/último item —
      `outline-offset` de base.css desenha para FORA da caixa do link, e um
      ancestral com overflow oculto corta exatamente essa borda). O raio da moldura
@@ -118,7 +130,7 @@
 }
 
 .home-task-item:first-child .home-task-link {
-  border-top-left-radius: var(--radius-md);
+  border-top-left-radius: 0;
   border-top-right-radius: var(--radius-md);
 }
 
@@ -142,8 +154,19 @@
   text-decoration: none;
 }
 
-.home-task-link:hover {
-  background-color: var(--color-surface-subtle);
+/* Hover só onde hover é um ponteiro de verdade (gate visual, disposição FIX):
+   sem isto, um toque em celular/tablet deixava o fundo (e a seta deslocada)
+   "presos" no estado de hover até o próximo toque em outro lugar — o
+   dispositivo de toque não tem um evento simétrico de "sair do hover". Foco
+   por teclado continua deslocando a seta fora deste bloco, incondicional. */
+@media (hover: hover) {
+  .home-task-link:hover {
+    background-color: var(--color-surface-subtle);
+  }
+
+  .home-task-link:hover .home-task-arrow {
+    transform: translateX(3px);
+  }
 }
 
 .home-task-title {
@@ -166,7 +189,6 @@
   transition: transform 0.18s ease-out;
 }
 
-.home-task-link:hover .home-task-arrow,
 .home-task-link:focus-visible .home-task-arrow {
   transform: translateX(3px);
 }
@@ -180,7 +202,9 @@
 .home-tasks-empty {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border-frame);
-  border-radius: var(--radius-md);
+  /* Mesmo canto reto de `.home-task-list` acima — o marcador "Suas tarefas"
+     encosta aqui também quando não há nenhuma tarefa disponível. */
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
 }
 
 /* Zona "Em preparação": delimitada por fita de demarcação (zebra amarelo/grafite)
@@ -217,41 +241,54 @@
   color: var(--color-text-muted);
 }
 
+/* Lista compacta e atenuada (gate visual, disposição FIX — craft-floor: "cards
+   de mesmo tamanho" era o padrão genérico da categoria; tirava peso da zona
+   viva "Suas tarefas" em vez de sinalizar "ainda não existe"). Uma só
+   superfície (`.home-planned-body`, `--color-surface-subtle`) com linhas
+   divididas por 1px — nenhum card branco, nenhuma borda por item. Duas colunas
+   de LISTA no desktop (`columns`, não `grid`): cada item é curto o bastante
+   para não precisar alinhar por linha entre colunas, e `break-inside: avoid`
+   evita partir um item ao meio na quebra de coluna. */
 .home-planned-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-3);
   list-style: none;
-  margin: 0;
+  margin: var(--space-1) 0 0;
   padding: 0;
 }
 
 @media (min-width: 640px) {
   .home-planned-list {
-    grid-template-columns: repeat(2, 1fr);
+    columns: 2;
+    column-gap: var(--space-6);
   }
 }
 
 .home-planned-item {
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border);
+  break-inside: avoid;
+}
+
+.home-planned-item-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 
 .home-planned-item-title {
-  margin: 0;
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text);
+  /* Atenuado — não compete com o peso de `.home-task-title` (texto normal,
+     não `text-muted`) da seção viva. */
+  color: var(--color-text-muted);
+}
+
+.home-planned-item-row .badge-planned {
+  flex-shrink: 0;
 }
 
 .home-planned-item-desc {
-  margin: 0;
+  margin: var(--space-1) 0 0;
   font-size: var(--font-size-meta);
   color: var(--color-text-muted);
 }
