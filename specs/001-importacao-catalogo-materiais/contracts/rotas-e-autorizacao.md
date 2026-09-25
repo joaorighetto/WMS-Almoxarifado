@@ -106,7 +106,13 @@ mostra estado vazio explícito.
 
 ## Home (`/`, da 002)
 
-A view acrescenta ao contexto flags calculadas por `tem_papel`: `pode_consultar_catalogo`
-(`ROLE-REQUESTER`) e `pode_importar_catalogo` (`ROLE-WAREHOUSE-HEAD`, cobrindo importação e
-histórico). O template mostra os links correspondentes. A autorização efetiva continua nas rotas
-acima.
+A view acrescenta ao contexto flags calculadas a partir dos papéis explícitos do usuário:
+`pode_consultar_catalogo` (`ROLE-REQUESTER`) e `pode_importar_catalogo` (`ROLE-WAREHOUSE-HEAD`,
+cobrindo importação e histórico). O template mostra os links correspondentes. A autorização
+efetiva continua nas rotas acima.
+
+O contexto também expõe `setor` e `papeis` (rótulos dos papéis do usuário) e
+`capacidades_planejadas`: itens informativos do `ROADMAP.md` sobre capacidades ainda não
+implementadas, filtrados pelos papéis do usuário. Nenhum dos três corresponde a rota, URL ou ação
+real — não concedem autorização; quando uma capacidade planejada for entregue, o item sai daqui e
+vira um atalho real com autorização na própria rota.

@@ -559,6 +559,16 @@
   color: var(--color-text);
 }
 
+/* Capacidade planejada do ROADMAP, ainda sem rota (DESIGN.md → Components →
+   Status/Badge; Home → "Em preparação"). Borda tracejada — distingue do estado
+   neutro real (`.badge-neutral`, ex. "Pendente"/"Sem alteração"): aqui o selo marca
+   algo que não existe ainda no sistema, não um valor de dado. */
+.badge-planned {
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
 /* ---------------------------------------------------------------------
  * File Upload (DESIGN.md → Components → File Upload)
  * Usado no envio do CSV de importação do catálogo. Revisão do gate visual (achado
@@ -1039,4 +1049,149 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ---------------------------------------------------------------------
+ * Barra de trabalho / App bar (direção "Tubulação e piso industrial",
+ * `.impeccable/surfaces/contas-templates-contas-home-html.md`)
+ * Faixa grafite fixa no topo, com a "linha de corredor" amarela de 4px como
+ * separação estrutural (nunca sombra — Flat-By-Default). Hoje incluída só por
+ * contas/templates/contas/_barra_trabalho.html (consumido só pela Home);
+ * destinada a todas as telas quando a direção for propagada — o componente já é
+ * genérico o bastante para isso.
+ *
+ * `position: sticky` (nunca `fixed`): mesma técnica já usada em
+ * `.catalogo-confirmacao-sticky` — permanece no fluxo do documento, sem exigir
+ * `padding-top` compensatório no body.
+ *
+ * Estrutura esperada: ver `_barra_trabalho.html`.
+ * ------------------------------------------------------------------- */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--color-ink);
+  border-bottom: 4px solid var(--color-signal);
+}
+
+.appbar-inner {
+  max-width: 1120px;
+  height: 56px;
+  margin: 0 auto;
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
+    max(var(--space-4), env(safe-area-inset-right, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* Anel de foco dentro da barra: `--color-focus` (Azul-Operação) some sobre o
+   grafite. `on-ink-accent` (amarelo de segurança, 9,93:1 contra `ink`) é o token
+   documentado para este papel (DESIGN.md → Tinta estrutural). Regra estreita —
+   só troca a cor do anel, não reintroduz `outline` onde `base.css` já não o dá. */
+.appbar :focus-visible {
+  outline-color: var(--color-on-ink-accent);
+}
+
+.appbar-brand {
+  color: var(--color-on-ink);
+  font-size: var(--font-size-section-title);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+a.appbar-brand:hover,
+a.appbar-brand:focus-visible {
+  text-decoration: underline;
+}
+
+.appbar-account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Matrícula: identificador do domínio, mesma convenção de `.table-cell-code`
+   (DESIGN.md → Typography → Fonte de código/identificador). */
+.appbar-matricula {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-meta);
+  color: var(--color-on-ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appbar-logout-form {
+  margin: 0;
+}
+
+/* "Sair" como controle secundário sobre fundo escuro — nunca preenchido de
+   `primary` (gastaria o único accent de ação numa faixa permanente) nem de
+   `on-ink-accent` (reservado a foco/circulação, não a botão). Alvo de toque de
+   44px mesmo dentro da faixa de 56px (48px sob 480px, ver abaixo). */
+.appbar-logout {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  background: none;
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-ink);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.appbar-logout:hover {
+  background-color: var(--color-ink-raised);
+}
+
+@media (max-width: 480px) {
+  .appbar-inner {
+    height: 48px;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Marcador de tubulação (título de seção — direção "Tubulação e piso
+ * industrial")
+ * O rótulo da seção como faixa de identificação de tubo: `<h2>` real (é o
+ * título da seção, não um eyebrow decorativo acima de outro título — a distinção
+ * importa, craft-floor proíbe o segundo caso sem exceção), em caixa-alta
+ * semibold com tracking, sobre faixa `ink`, com a seta de fluxo desenhada em SVG
+ * inline (nunca glifo Unicode/emoji). Tamanho de conteúdo (`inline-flex`), não
+ * uma faixa esticada pela largura do container — lê como etiqueta, não como
+ * banner. Reutilizável por qualquer seção futura que precise do mesmo papel.
+ *
+ * Estrutura esperada:
+ *   <h2 class="section-marker">
+ *     <span class="section-marker-label">Suas tarefas</span>
+ *     <svg class="section-marker-arrow" aria-hidden="true" ...>...</svg>
+ *   </h2>
+ * ------------------------------------------------------------------- */
+.section-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-ink);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-ink);
+  font-size: var(--font-size-section-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+}
+
+.section-marker-arrow {
+  flex-shrink: 0;
+  color: var(--color-on-ink-accent);
 }

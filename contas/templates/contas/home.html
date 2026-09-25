@@ -8,46 +8,137 @@
 {% endblock %}
 
 {% block content %}
+{% include "contas/_barra_trabalho.html" %}
+
 <main class="home-page">
-  <div class="home-card">
-    <h1 class="home-title">WMS-Almoxarifado</h1>
-    <p class="home-status">Sessão autenticada como <strong>{{ user.matricula }}</strong>.</p>
+  <div class="home-container">
+    <h1 class="home-page-title">Início</h1>
 
-    {% if pode_consultar_catalogo or pode_importar_catalogo %}
-    {% comment %}
-    Links de conveniência — cada rota já verifica seu papel exigido no
-    servidor (o esconder do link não é a autorização, Constitution VI).
-    {% endcomment %}
-    <p class="home-actions">
-      {% if pode_consultar_catalogo %}
-      <a href="{% url 'catalogo:consulta' %}" class="btn btn-secondary">
-        Catálogo de materiais
-      </a>
-      {% endif %}
-      {% if pode_importar_catalogo %}
-      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-secondary">
-        Importar catálogo
-      </a>
-      <a href="{% url 'catalogo:historico' %}" class="btn btn-secondary">
-        Histórico de importações
-      </a>
-      {% endif %}
-    </p>
+    <div class="home-main">
+      <dl class="home-id-plate" aria-label="Identidade">
+        <div class="home-id-item">
+          <dt>Matrícula</dt>
+          <dd class="home-id-matricula">{{ user.matricula }}</dd>
+        </div>
+        <div class="home-id-item">
+          <dt>Setor</dt>
+          <dd>{{ setor.nome }}</dd>
+        </div>
+        <div class="home-id-item">
+          <dt>Papéis</dt>
+          <dd>
+            <ul class="home-id-papeis">
+              {% for papel in papeis %}
+              <li><span class="badge badge-neutral">{{ papel }}</span></li>
+              {% endfor %}
+            </ul>
+          </dd>
+        </div>
+      </dl>
+
+      <section class="home-tasks" aria-labelledby="home-tasks-heading">
+        <h2 id="home-tasks-heading" class="section-marker">
+          <span class="section-marker-label">Suas tarefas</span>
+          <svg class="section-marker-arrow" width="14" height="14" viewBox="0 0 16 16"
+               fill="none" aria-hidden="true">
+            <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </h2>
+
+        {% if pode_consultar_catalogo or pode_importar_catalogo %}
+        {% comment %}
+        Links de conveniência — cada rota já verifica seu papel exigido no
+        servidor (o esconder do link não é a autorização, Constitution VI).
+        {% endcomment %}
+        <ul class="home-task-list">
+          {% if pode_consultar_catalogo %}
+          <li class="home-task-item">
+            <a href="{% url 'catalogo:consulta' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Consultar catálogo de materiais</span>
+                <span class="home-task-desc">
+                  Localize materiais por CADPRO ou descrição e confira o saldo.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          {% endif %}
+          {% if pode_importar_catalogo %}
+          <li class="home-task-item">
+            <a href="{% url 'catalogo:importacao_envio' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Importar catálogo do SCPI</span>
+                <span class="home-task-desc">
+                  Envie o CSV exportado, confira a prévia e confirme a carga.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          <li class="home-task-item">
+            <a href="{% url 'catalogo:historico' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Histórico de importações</span>
+                <span class="home-task-desc">
+                  Veja quem importou, quando, e as rejeições e divergências de cada carga.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+        {% else %}
+        <div class="empty-state home-tasks-empty">
+          <p class="empty-state-title">Nenhuma tarefa disponível para os seus papéis atuais.</p>
+          <p class="empty-state-description">Procure o responsável pelo sistema.</p>
+        </div>
+        {% endif %}
+      </section>
+    </div>
+
+    {% if capacidades_planejadas %}
+    <section class="home-planned" aria-labelledby="home-planned-heading">
+      <div class="home-planned-tape" aria-hidden="true"></div>
+      <div class="home-planned-body">
+        <h2 id="home-planned-heading" class="section-marker">
+          <span class="section-marker-label">Em preparação</span>
+          <svg class="section-marker-arrow" width="14" height="14" viewBox="0 0 16 16"
+               fill="none" aria-hidden="true">
+            <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </h2>
+        <p class="home-planned-note">
+          Capacidades planejadas do roadmap para os seus papéis — ainda indisponíveis
+          nesta versão.
+        </p>
+        <ul class="home-planned-list">
+          {% for item in capacidades_planejadas %}
+          <li class="home-planned-item">
+            <p class="home-planned-item-title">{{ item.titulo }}</p>
+            <p class="home-planned-item-desc">{{ item.descricao }}</p>
+            <span class="badge badge-planned">Planejado</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
     {% endif %}
-
-    {% comment %}
-    "Sair" é ação secundária desta tela (The One Accent Rule) — sem preenchimento de
-    `primary`, para não competir com nenhuma ação principal do contexto. Correção do
-    gate visual (P2, 2026-09-22): também não tem mais a forma de `.btn`, que a
-    igualava visualmente aos atalhos de trabalho acima — tratamento de link, em
-    linha própria, deixa "Sair" reconhecível como algo diferente de "Catálogo de
-    materiais"/"Importar catálogo" sem deixar de ser um alvo de toque confortável
-    (`.home-logout-action`, `home.css`).
-    {% endcomment %}
-    <form method="post" action="{% url 'logout' %}" class="home-logout-form">
-      {% csrf_token %}
-      <button type="submit" class="home-logout-action">Sair</button>
-    </form>
   </div>
 </main>
 {% endblock %}

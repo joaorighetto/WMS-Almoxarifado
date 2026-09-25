@@ -1,18 +1,18 @@
 /*
  * Tokens visuais — WMS-Almoxarifado
  *
- * Fonte normativa: DESIGN.md (raiz do repositório).
- * Todos os valores de cor abaixo são "initial design value" conforme DESIGN.md → Colors:
- * hipótese de direção para viabilizar implementação, não identidade institucional aprovada.
- * Tamanhos de tipografia e passos de spacing são "valor inicial sugerido" (DESIGN.md → Typography
- * e Layout), sujeitos a validação em implementação futura — não redefina estes valores em outro
- * arquivo; ajuste aqui quando a fundação evoluir.
+ * Fonte normativa: DESIGN.md (raiz do repositório). DESIGN.md ainda descreve a
+ * fundação anterior ("Restrained" cinza-azulado) — será re-executado em modo scan
+ * (`impeccable document`) depois desta implementação, para extrair os valores REAIS
+ * abaixo. Não editado aqui: os nomes das custom properties permanecem estáveis (há
+ * consumidores em catalogo.css/login.css/home.css); apenas os VALORES mudam.
  *
- * Revisão de presença visual (impeccable colorize, 2026-09-22): a fundação anterior apoiava
- * profundidade e estado em diferenças de luminância abaixo do limiar de percepção — canvas x
- * superfície a 1,06:1, todo estado semântico sobre o mesmo cinza, `info` a 1,30:1 do `primary`.
- * Esta revisão mantém a estratégia Restrained e o Azul-Operação como único accent de ação,
- * e devolve presença por relação cromática e estrutural, nunca por decoração.
+ * Revisão "Tubulação e piso industrial" (workflow Impeccable, 2026-09-25,
+ * `.impeccable/surfaces/contas-templates-contas-home-html.md`): piso de concreto
+ * quente, folhas brancas, texto grafite, código de cores de segurança NR-26 como
+ * gramática semântica (azul = ação obrigatória, amarelo = circulação/demarcação,
+ * verde/vermelho/âmbar nos estados). Fundação global — consumida hoje pela Home,
+ * herdada sem recomposição pelo catálogo/importação/login.
  *
  * Nenhum componente é definido neste arquivo — apenas custom properties.
  */
@@ -20,48 +20,51 @@
 :root {
   /* ---------------------------------------------------------------------
    * Cor — Primary (DESIGN.md → Colors → Primary)
-   * Único accent funcional do sistema (The One Accent Rule).
+   * Azul NR-26 "ação obrigatória" — único accent funcional do sistema
+   * (The One Accent Rule).
    * ------------------------------------------------------------------- */
-  --color-primary: #2F5D8A;
+  --color-primary: #1757B8;
   /* Estado pressionado/hover da ação primária — mesma família, um passo mais escuro;
-     texto `surface` sobe de 6,88:1 para 8,65:1 (DESIGN.md → Components → Buttons). */
-  --color-primary-hover: #274E74;
+     texto `surface` sobe de 6,79:1 para 9,14:1 contra o fundo do botão. */
+  --color-primary-hover: #11468F;
 
   /* ---------------------------------------------------------------------
    * Cor — Neutral (DESIGN.md → Colors → Neutral)
-   * Rampa ordenada por luminância: background < surface-subtle < surface. O canvas é
-   * mais escuro que a superfície de trabalho (1,22:1) para que tabela, formulário e
-   * barra de confirmação "assentem" sobre ele sem nenhuma sombra (Flat-By-Default).
+   * Rampa quente (piso de concreto), ordenada por luminância: background <
+   * surface-subtle < surface. Canvas mais escuro que a superfície de trabalho
+   * (1,27:1) para que tabela, formulário e barra de confirmação "assentem" sobre
+   * ele sem nenhuma sombra (Flat-By-Default).
    * ------------------------------------------------------------------- */
-  --color-background: #E6E9ED;
+  --color-background: #E6E4DF;
   --color-surface: #FFFFFF;
-  --color-surface-subtle: #EFF1F4;
+  --color-surface-subtle: #F2F1EE;
   /* Divisor interno: entre linhas de tabela, campos e seções. */
-  --color-border: #D6DAE0;
+  --color-border: #D9D6CF;
   /* Moldura externa: contorno de tabela, barra de confirmação e faixa de page header —
-     mais firme que o divisor interno, para a estrutura aparecer antes do conteúdo. */
-  --color-border-frame: #C2C8D0;
-  --color-border-strong: #9AA1AC;
-  --color-text: #1B1E22;
-  --color-text-muted: #5B6270;
-  --color-disabled: #B7BCC4;
-  /* Preenchimento e rótulo de controle desabilitado. O par anterior (fundo `disabled`
-     + texto `surface`) dava 1,91:1 — o rótulo "Enviando…" ficava ilegível justamente
-     no estado em que o usuário espera resposta.
-     Correção (2026-09-23): a primeira tentativa de correção (#6E7480) media só
-     3,54:1 contra `disabled-surface` — abaixo do alvo de ≥4,9:1 documentado em
-     DESIGN.md/.impeccable/design.json para o rótulo de qualquer controle inativo.
-     `#575D68`, um passo mais escuro na mesma família de `text-muted` (#5B6270, que
-     sozinho mede 4,62:1 aqui — insuficiente), mede 4,99:1. */
-  --color-disabled-surface: #DCE0E5;
-  --color-disabled-text: #575D68;
+     mais firme que o divisor interno (1,91:1 contra a superfície, 1,51:1 contra o
+     canvas), para a estrutura aparecer antes do conteúdo. */
+  --color-border-frame: #BFBBB2;
+  --color-border-strong: #8E8A80;
+  --color-text: #1C1B19;
+  --color-text-muted: #5C5A55;
+  /* Borda de controle inativo (contorno apenas — nunca carrega o rótulo, ver
+     `disabled-text` abaixo). Passo de luminância entre `border-frame` e
+     `border-strong`, mesma rampa quente; sem exigência de contraste de texto
+     porque nenhum texto usa este token diretamente. */
+  --color-disabled: #B0ABA1;
+  /* Preenchimento e rótulo de controle desabilitado. O rótulo usa `disabled-text`,
+     nunca `disabled` nem `surface` — o par fundo claro + texto escuro mede 5,32:1
+     e continua legível justamente no estado ("Enviando…"/"Confirmando…") em que o
+     usuário mais depende de ler o botão. */
+  --color-disabled-surface: #DFDDD8;
+  --color-disabled-text: #595751;
 
   /* ---------------------------------------------------------------------
    * Cor — Estados semânticos (DESIGN.md → Colors → Estados semânticos)
    * Cada estado é uma família de três papéis — texto, superfície e borda —, não um
-   * texto colorido sobre o mesmo cinza. A superfície tingida é o que torna o estado
-   * legível por visão periférica numa tela densa; o texto continua obrigatório
-   * (The No Color-Only State Rule).
+   * texto colorido sobre o mesmo cinza. Mantidos sem alteração de matiz: já ficam
+   * fora do eixo neutro (não são afetados pelo realinhamento quente do fundo) e
+   * continuam ≥4,5:1 texto/superfície (medido: 5,53–6,74:1).
    * ------------------------------------------------------------------- */
   --color-success: #236B3A;
   --color-success-surface: #E7F3EB;
@@ -75,40 +78,55 @@
   --color-danger-surface: #FBEAE8;
   --color-danger-border: #C9756C;
 
-  /* Azul-petróleo, não azul (decisão do dono do produto, 2026-09-22): o `info`
-     anterior (#3B6EA5) estava a 1,30:1 do `primary` e competia com a ação pelo mesmo
-     significado cromático. Fora do eixo do azul, "contexto neutro" e "ação" deixam de
-     se confundir e o Azul-Operação volta a ser o único azul do sistema. */
+  /* Azul-petróleo, não azul: fora do eixo do Azul-Operação, "contexto neutro" e
+     "ação" continuam sem se confundir. */
   --color-info: #1F6572;
   --color-info-surface: #E3F1F3;
   --color-info-border: #56949D;
 
-  --color-selected: #E4ECF4;
-  /* Foco: mesmo tom do Azul-Operação (DESIGN.md → Colors → Estados semânticos → Foco). */
+  /* Tom sutil do novo `primary`, mesma função (linha selecionada, item de
+     navegação ativo). */
+  --color-selected: #E3ECF8;
+  /* Foco: mesmo tom do Azul-Operação (DESIGN.md → Colors → Estados semânticos → Foco).
+     Sobre área `ink`, o foco usa `on-ink-accent` em vez deste token — ver `.appbar`
+     em components.css. */
   --color-focus: var(--color-primary);
+
+  /* Amarelo de segurança NR-26 — "circulação/atual". Só sobre `ink` (texto/ícone,
+     ver `on-ink-accent` abaixo) ou como LINHA de demarcação/circulação sobre
+     qualquer fundo (linha de corredor da barra de trabalho, fita da zona "Em
+     preparação") — nunca como texto sobre fundo claro. Token próprio (distinto de
+     `on-ink-accent`, mesmo valor) porque o papel semântico é outro: aqui é
+     estrutura/linha, não texto sobre tinta. */
+  --color-signal: #F2C200;
 
   /* ---------------------------------------------------------------------
    * Cor — Tinta estrutural do app shell (DESIGN.md → Layout → App shell (desktop))
-   * Direção aprovada para a navegação em desktop, ainda NÃO consumida — nenhum app
-   * shell existe no código (mesma situação de `--color-selected` até aqui). Neutra e
-   * escura de propósito: é a única área grande de cor do sistema e não pode ser
-   * `primary`, sob pena de gastar o accent de ação em decoração de moldura.
+   * Passa de azul-acinzentado para GRAFITE nesta revisão: consumida agora pela
+   * barra de trabalho (`.appbar`, components.css). Neutra e escura de propósito —
+   * é a única área grande de cor do sistema e não pode ser `primary`.
    * ------------------------------------------------------------------- */
-  --color-ink: #1E2833;
-  --color-ink-raised: #29343F;
-  --color-ink-border: #374250;
+  --color-ink: #1E1E1C;
+  --color-ink-raised: #2A2A27;
+  --color-ink-border: #3A3A36;
   --color-on-ink: #FFFFFF;
-  --color-on-ink-muted: #C9D2DC;
-  --color-on-ink-accent: #9CC3E6;
+  --color-on-ink-muted: #C9C7C1;
+  /* Amarelo de segurança sobre grafite (9,93:1) — mesmo valor de `--color-signal`,
+     token próprio para o papel "texto/ícone sobre tinta" (anel de foco dentro da
+     barra de trabalho, indicador ativo sobre `ink`). */
+  --color-on-ink-accent: #F2C200;
 
   /* ---------------------------------------------------------------------
    * Tipografia — famílias (DESIGN.md → Typography)
-   * Par funcional único: sistema para tudo que é dado/interface, monoespaçada só para
-   * identificador opaco do domínio (ex.: CADPRO). Sem fonte de exibição decorativa
-   * (The No Display Font Rule).
+   * Atkinson Hyperlegible Next/Mono, auto-hospedadas (ver static/css/fonts.css) —
+   * substituem a stack de sistema nesta revisão. Par funcional único: legível para
+   * tudo que é dado/interface, monoespaçada só para identificador opaco do domínio
+   * (ex.: CADPRO). `tnum` continua disponível (font-feature "tnum" nas duas).
    * ------------------------------------------------------------------- */
-  --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-family-base: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: "Atkinson Hyperlegible Mono", ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
 
   /* ---------------------------------------------------------------------
    * Tipografia — pesos
@@ -120,9 +138,10 @@
 
   /* ---------------------------------------------------------------------
    * Tipografia — escala (DESIGN.md → Typography → Hierarquia)
-   * Passos com razão perceptível entre si: a escala anterior (20/16/14/13/12) tinha
-   * razões de 1,25 e 1,14 e achatava a hierarquia — título de página empatava com
-   * título de seção, e o número de um total empatava com o título da página.
+   * Passos com razão perceptível entre si — escala de produto mantida (não
+   * recalibrada por tamanho: a Atkinson é mais larga que a stack de sistema, mas a
+   * diferença é absorvida por peso/whitespace nos componentes, não por mudar a
+   * régua de tamanhos).
    * ------------------------------------------------------------------- */
   --font-size-metric: 1.75rem;        /* ~28px — valor de total (semibold, tabular-nums) */
   --font-size-page-title: 1.5rem;     /* ~24px — título de página (peso bold) */
@@ -138,9 +157,11 @@
   --line-height-base: 1.5;
   --line-height-tight: 1.25;
 
-  /* Tracking: negativo só nos tamanhos grandes (o espaçamento padrão da stack de
-     sistema é calibrado para corpo, e fica frouxo a 24–28px); positivo só no
-     cabeçalho de tabela em caixa-alta, que sem ele fecha demais. */
+  /* Tracking: negativo só nos tamanhos grandes (a Atkinson já é mais aberta que a
+     stack de sistema neste peso — o tracking negativo segue necessário para não
+     ficar frouxa a 24–28px); positivo só no cabeçalho de tabela em caixa-alta e no
+     marcador de tubulação (título de seção em caixa-alta), que sem ele fecham
+     demais. */
   --letter-spacing-tight: -0.01em;
   --letter-spacing-caps: 0.04em;
 
@@ -158,9 +179,6 @@
   /* ---------------------------------------------------------------------
    * Densidade — dimensão de controle e de célula por contexto
    * (DESIGN.md → Layout → Densidade por contexto; Touch)
-   * Nomeia o que antes era `calc()` repetido componente a componente, para que a
-   * variação por dispositivo aconteça num lugar só. Todos os valores continuam na
-   * escala de 4px — densidade é decidida por token, não por número solto na regra.
    * ------------------------------------------------------------------- */
   --control-height: 44px;             /* botão e campo, em qualquer dispositivo */
   --control-height-compact: 36px;     /* controle secundário no desktop (ex.: paginação) */
@@ -169,11 +187,12 @@
 
   /* ---------------------------------------------------------------------
    * Raio — mínimo e funcional (DESIGN.md → Shapes)
-   * Sem arredondamento pronunciado; bordas finas continuam o principal recurso
-   * de separação entre linha, campo e seção.
+   * Revisão "Tubulação e piso industrial": um degrau acima do valor anterior
+   * (2px/4px) — ainda sem arredondamento pronunciado; bordas finas continuam o
+   * principal recurso de separação entre linha, campo e seção.
    * ------------------------------------------------------------------- */
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
 }
 
 /* Contexto de toque (tablet do almoxarifado, celular): só a densidade muda — papéis

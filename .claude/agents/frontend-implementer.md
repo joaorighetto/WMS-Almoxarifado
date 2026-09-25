@@ -143,6 +143,13 @@ precisa ser criada, revista ou passar por auditoria estrutural (não apenas
 uma tela específica), não tente fazer isso você mesmo: reporte ao agente
 chamador que o workflow `impeccable` é o caminho apropriado.
 
+Exceção explícita: quando o coordenador já tiver decidido a direção no
+workflow `impeccable` e entregar o contrato de direção (surface brief em
+`.impeccable/surfaces/`) como instrução da tarefa, implementar os tokens e
+componentes compartilhados desse contrato é o seu trabalho. Mantenha-se
+dentro do contrato e não edite `DESIGN.md` nem `.impeccable/design.json`,
+que são documentados depois a partir do código.
+
 ## Escopo
 
 Implemente somente o escopo necessário para concluir a tarefa frontend

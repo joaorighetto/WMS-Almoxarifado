@@ -1,85 +1,257 @@
 /*
- * Home autenticada mínima — WMS-Almoxarifado
+ * Home autenticada — WMS-Almoxarifado
  *
- * Consome exclusivamente os tokens de static/css/tokens.css. Superfície mínima e neutra
- * (User Story 1) — sem sidebar/app-shell, menu, KPI ou qualquer feature de negócio
- * antecipada (DESIGN.md → Layout → App shell segue em aberto).
- *
- * Primitivos compartilhados (`.btn`/`.btn-secondary`) vivem em static/css/components.css
- * (nível de projeto) — este arquivo contém apenas composição/layout específicos desta
- * tela.
+ * Composição da direção "Tubulação e piso industrial"
+ * (`.impeccable/surfaces/contas-templates-contas-home-html.md`): laboratório da
+ * nova fundação visual antes da propagação ao catálogo/importação/login, que só
+ * herdam tokens nesta etapa. Consome exclusivamente os tokens de
+ * static/css/tokens.css e os primitivos de static/css/components.css (`.btn`,
+ * `.badge`, `.empty-state`, `.appbar`, `.section-marker`) — nenhum deles é
+ * redefinido aqui, só composição/layout específicos desta tela.
  */
 
 .home-page {
-  min-height: 100vh;
-  padding: max(var(--space-6), env(safe-area-inset-top, 0px))
-    max(var(--space-4), env(safe-area-inset-right, 0px))
-    max(var(--space-6), env(safe-area-inset-bottom, 0px))
-    max(var(--space-4), env(safe-area-inset-left, 0px));
+  padding-block: var(--space-6) var(--space-8);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
+    max(var(--space-4), env(safe-area-inset-right, 0px));
 }
 
-.home-card {
-  max-width: 480px;
+.home-container {
+  max-width: 1120px;
   margin: 0 auto;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-6) var(--space-4);
 }
 
-.home-title {
+.home-page-title {
   font-size: var(--font-size-page-title);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
-  margin-bottom: var(--space-4);
+  letter-spacing: var(--letter-spacing-tight);
+  margin: 0 0 var(--space-6);
 }
 
-.home-status {
+/* Placa de identificação + tarefas: uma só coluna em telas estreitas (ordem de
+   leitura: título → placa → tarefas); a partir de 900px a placa vira uma coluna
+   estreita ao lado das tarefas, sem mudar a ordem no DOM (`order`, abaixo) — o
+   primeiro viewport de desktop mostra identidade + tarefas sem rolagem (contrato
+   FIRST VIEWPORT do surface brief). */
+.home-main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .home-main {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .home-tasks {
+    order: 1;
+  }
+
+  .home-id-plate {
+    order: 2;
+  }
+}
+
+/* Placa de identificação: leitura tipo placa de equipamento — rótulo pequeno em
+   metadado acima do valor (DESIGN.md → Typography → Metadado). Grade de 2 colunas
+   também em telas estreitas (repeat(auto-fit) resolve mobile e a coluna lateral do
+   desktop com a mesma regra — The Shared Foundation Rule: um layout, não dois). */
+.home-id-plate {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* Papéis pode listar vários rótulos — ocupa a linha inteira da grade em vez de
+   disputar coluna com Matrícula/Setor. */
+.home-id-item:last-child {
+  grid-column: 1 / -1;
+}
+
+.home-id-item dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.home-id-item dd {
+  margin: 0;
   font-size: var(--font-size-body);
   color: var(--color-text);
+}
+
+.home-id-matricula {
+  font-family: var(--font-family-mono);
+}
+
+.home-id-papeis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  list-style: none;
   margin: 0;
+  padding: 0;
 }
 
-/* Links condicionais por papel (ex.: "Importar catálogo", 001) — mesma
-   distância vertical do texto de status que "Sair" já usa. */
-.home-actions {
-  margin-top: var(--space-6);
+/* Lista de tarefas: uma única superfície branca com divisores entre linhas — não
+   uma grade de cards iguais (recusa deliberada do padrão da categoria, ver
+   DIRECTION CONTRACT → THESIS). */
+.home-task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-md);
+  /* Sem `overflow: hidden` (recortaria o anel de foco do primeiro/último item —
+     `outline-offset` de base.css desenha para FORA da caixa do link, e um
+     ancestral com overflow oculto corta exatamente essa borda). O raio da moldura
+     é replicado nos cantos do próprio link de ponta em vez disso. */
 }
 
-/* "Sair" é uma ação secundária desta tela, não a ação primária — mantém distância
-   visual do texto de status para não parecer parte da mesma frase. */
-.home-logout-form {
-  margin-top: var(--space-4);
+.home-task-item:first-child .home-task-link {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
 }
 
-/* Tratamento de link (correção do gate visual, P2, 2026-09-22): antes um
-   `.btn.btn-secondary` idêntico em forma aos atalhos de trabalho acima —
-   "Sair" some do grupo de ações de trabalho mesmo estando na mesma tela.
-   `<button>` continua o elemento real (o logout depende de POST + CSRF), só
-   a aparência muda: sem borda/fundo, peso/tamanho de metadado, sublinhado
-   só como reforço de hover/foco (o próprio texto "Sair" já é a affordance).
-   Padding vertical preserva o alvo de toque de 44px (DESIGN.md → Layout →
-   Touch) sem desenhar caixa nenhuma ao redor do texto. */
-.home-logout-action {
-  display: inline-flex;
+.home-task-item:last-child .home-task-link {
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.home-task-item + .home-task-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.home-task-link {
+  display: flex;
   align-items: center;
-  min-height: var(--control-height);
-  padding: var(--space-2) 0;
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-meta);
-  font-family: inherit;
-  cursor: pointer;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 56px;
+  padding: var(--space-4);
+  color: inherit;
+  text-decoration: none;
 }
 
-.home-logout-action:hover {
+.home-task-link:hover {
+  background-color: var(--color-surface-subtle);
+}
+
+.home-task-title {
+  display: block;
+  font-size: var(--font-size-section-title);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text);
-  text-decoration: underline;
 }
 
-@media (min-width: 480px) {
-  .home-card {
-    padding: var(--space-8) var(--space-6);
+.home-task-desc {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+}
+
+.home-task-arrow {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  transition: transform 0.18s ease-out;
+}
+
+.home-task-link:hover .home-task-arrow,
+.home-task-link:focus-visible .home-task-arrow {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-task-arrow {
+    transition: none;
   }
+}
+
+.home-tasks-empty {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-md);
+}
+
+/* Zona "Em preparação": delimitada por fita de demarcação (zebra amarelo/grafite)
+   como borda SUPERIOR — nunca lateral (craft-floor proíbe border-left/right
+   colorida acima de 1px). Itens sem link, sem seta, sem cursor de clique: não pode
+   parecer clicável nem disponível. */
+.home-planned {
+  margin-top: var(--space-8);
+}
+
+.home-planned-tape {
+  height: 6px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-signal) 0 10px,
+    var(--color-signal) 10px 11px,
+    var(--color-ink) 11px 20px,
+    var(--color-ink) 20px 21px
+  );
+}
+
+.home-planned-body {
+  padding: var(--space-4);
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.home-planned-note {
+  max-width: 72ch;
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.home-planned-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .home-planned-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.home-planned-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.home-planned-item-title {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.home-planned-item-desc {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
 }
