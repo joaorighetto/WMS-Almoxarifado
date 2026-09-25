@@ -8,13 +8,6 @@ e uma lista de capacidades futuras do ROADMAP (`capacidades_planejadas`),
 filtrada por papel — nunca como link, e nunca incluindo os itens ainda "Requer
 clarificação" do roadmap (Painel de Gestão / Relatórios).
 
-TDD parcial: os cenários que dependem só das flags e rotas já existentes
-(visibilidade de link, formulário de logout) já devem passar contra o código
-atual. Os que dependem de `capacidades_planejadas`/`papeis`/`setor` no
-contexto devem falhar até a implementação em paralelo (`task-implementer`)
-adicionar esses valores a `HomeView.get_context_data()` — é o comportamento
-esperado, não erro de escrita do teste.
-
 Fontes: `docs/domain/permissions-matrix.md` (PERM-MATERIAL-VIEW,
 PERM-SCPI-IMPORT-EXECUTE, PERM-SCPI-IMPORT-HISTORY-VIEW),
 `specs/001-importacao-catalogo-materiais/contracts/rotas-e-autorizacao.md`
@@ -26,9 +19,9 @@ import re
 import pytest
 from django.urls import reverse
 
-# Títulos das capacidades planejadas, na ordem canônica definida para a Home
-# (item 10 — "Administração de usuários e setores" — nunca aparece nos
-# cenários abaixo, pois nenhuma fixture usada aqui tem ROLE-SYSTEM-ADMIN).
+from contas.models import Papel
+
+# Títulos das capacidades planejadas, na ordem canônica definida para a Home.
 TITULO_SOLICITAR_MATERIAL = "Solicitar material"
 TITULO_AUTORIZAR_REQUISICOES = "Autorizar requisições do setor"
 TITULO_REGISTRAR_ENTRADA = "Registrar entrada de materiais"
@@ -67,6 +60,22 @@ TITULOS_AUDITOR = [
 ]
 
 TITULOS_REQUISITANTE = [TITULO_SOLICITAR_MATERIAL]
+
+TITULOS_CHEFE_SETOR = [
+    TITULO_SOLICITAR_MATERIAL,
+    TITULO_AUTORIZAR_REQUISICOES,
+    TITULO_HISTORICO_MOVIMENTACOES,
+]
+
+TITULOS_ADMIN_SISTEMA = [
+    TITULO_SOLICITAR_MATERIAL,
+    TITULO_ADMINISTRACAO,
+]
+
+TITULOS_AUXILIAR_SETOR = [
+    TITULO_SOLICITAR_MATERIAL,
+    TITULO_HISTORICO_MOVIMENTACOES,
+]
 
 HREF_RE = re.compile(r'href="([^"]+)"')
 
@@ -227,9 +236,70 @@ def test_capacidades_planejadas_auditor(client, auditor, senha_valida):
 
 
 @pytest.mark.django_db
+def test_capacidades_planejadas_chefe_de_outro_setor(client, chefe_setor, senha_valida):
+    """`chefe_setor` (REQUESTER + SECTOR-HEAD, sem WAREHOUSE-HEAD): confirma
+    que o item 2 ("Autorizar requisições do setor") reage a `ROLE-SECTOR-HEAD`
+    isoladamente, distinto de `chefe_almoxarifado` — troca `CHEFE_SETOR` por
+    `CHEFE_ALMOXARIFADO` no mapeamento de papel → capacidade."""
+    _login(client, chefe_setor, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    titulos = [item["titulo"] for item in response.context["capacidades_planejadas"]]
+    assert titulos == TITULOS_CHEFE_SETOR
+
+
+@pytest.mark.django_db
+def test_capacidades_planejadas_admin_sistema(client, admin_sistema, senha_valida):
+    """`admin_sistema` (REQUESTER + SYSTEM-ADMIN): único papel testado aqui
+    que alcança o item 10 ("Administração de usuários e setores")."""
+    _login(client, admin_sistema, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    titulos = [item["titulo"] for item in response.context["capacidades_planejadas"]]
+    assert titulos == TITULOS_ADMIN_SISTEMA
+
+
+@pytest.mark.django_db
+def test_capacidades_planejadas_auxiliar_setor(client, criar_usuario_com_papeis, senha_valida):
+    """Auxiliar de setor (REQUESTER + SECTOR-ASSISTANT): sem fixture própria
+    em `conftest.py`, criado aqui via `criar_usuario_com_papeis`, que já
+    concede `ROLE-REQUESTER` por `create_user()` e preserva as invariantes de
+    `contas/models.py`."""
+    usuario = criar_usuario_com_papeis(Papel.AUXILIAR_SETOR)
+    _login(client, usuario, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    titulos = [item["titulo"] for item in response.context["capacidades_planejadas"]]
+    assert titulos == TITULOS_AUXILIAR_SETOR
+
+
+@pytest.mark.django_db
+def test_capacidades_planejadas_e_papeis_superusuario_tecnico_sao_vazios(
+    client, superusuario_tecnico, senha_valida
+):
+    """Conta técnica: nenhum `ROLE-*` de negócio (`permissions-matrix.md`,
+    regras 7-8) — nenhuma capacidade planejada e nenhum rótulo de papel."""
+    _login(client, superusuario_tecnico, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["capacidades_planejadas"] == []
+    assert response.context["papeis"] == []
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "fixture_usuario",
-    ["requisitante", "chefe_almoxarifado", "funcionario_almoxarifado", "auditor"],
+    [
+        "requisitante",
+        "chefe_almoxarifado",
+        "funcionario_almoxarifado",
+        "auditor",
+        "admin_sistema",
+    ],
 )
 def test_nenhuma_capacidade_planejada_e_painel_de_gestao_ou_relatorio(
     client, senha_valida, fixture_usuario, request
