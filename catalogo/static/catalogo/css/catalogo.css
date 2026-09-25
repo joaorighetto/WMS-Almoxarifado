@@ -363,25 +363,22 @@
    `white-space: nowrap` do primitivo basta; nenhuma regra própria é necessária. */
 
 /* Coluna "Arquivo" (correção do gate visual, P1, 2026-09-22; ajuste de
-   transbordo, 2026-09-25): o navegador só quebra linha nos hifens do próprio
-   nome — nomes com `_` no lugar de `-` (ex. gerados pelo `seed_dev`, como
-   "seed_dev_03_restauracao_carga_inicial_valida.csv") não têm ponto de quebra
-   e, sem ajuda de CSS, transbordam por cima da coluna seguinte em vez de
-   respeitar o `max-width`. `overflow-wrap: break-word` resolve isso sem o
-   problema que `anywhere` teria: `break-word` só força quebra quando a
-   palavra não cabe na largura disponível, sem reduzir o min-content da
-   célula — nomes que cabem em 15ch (como "MOTHERLODE.CSV") continuam
-   inteiros numa linha. `anywhere` reduz o min-content a zero e deixa o
-   layout `auto` da tabela espremer a coluna, quebrando também nomes curtos
-   em pontos arbitrários (ex. "MOTHE"/"RLODE") — pior do que a rolagem
-   horizontal residual que `.table-wrapper` já resolve estruturalmente
-   (medido a 1440px: tabela cabe de 1221px para 1119px de conteúdo, contra
-   1086px disponíveis — a diferença de 33px permanece na rolagem interna do
-   wrapper, nunca invisível/inacessível, e nunca estica a página). `max-width`
-   (em vez de deixar o layout `auto` da tabela usar o maior nome de arquivo
-   sem quebra como largura mínima) libera parte do espaço que a coluna
-   "Situação" passou a ocupar. */
+   transbordo, 2026-09-25): o navegador só quebra linha em hífen — nomes com
+   `_` (ex. os do `seed_dev`, como
+   "seed_dev_03_restauracao_carga_inicial_valida.csv") não têm ponto de
+   quebra e transbordavam por cima da coluna seguinte. A largura fica presa
+   em 15ch pelos dois lados: `overflow-wrap: anywhere` zera o min-content do
+   nome (quebra quando não cabe, sem transbordar) e `min-width: 15ch` impede
+   que o layout `auto` da tabela aproveite isso para espremer a coluna — nomes
+   que cabem em 15ch continuam inteiros, sem o "MOTHE"/"RLODE" de um
+   `anywhere` sem piso. O `min-width` não depende do `max-width`, cujo efeito
+   em célula de tabela o CSS 2.1 deixa indefinido: sem o teto, só com
+   `break-word`, a coluna voltaria a crescer até o nome inteiro numa linha.
+   A tabela ainda passa da área disponível a 1440px; o excedente fica na
+   rolagem interna de `.table-wrapper`, nunca invisível/inacessível, e nunca
+   estica a página. */
 .catalogo-historico-arquivo {
+  min-width: 15ch;
   max-width: 15ch;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
