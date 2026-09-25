@@ -252,6 +252,10 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.numeric}"
     padding: "8px 12px"
+  table-cell-numeric-attention:
+    textColor: "{colors.warning}"
+    typography: "{typography.numeric}"
+    padding: "8px 12px"
   table-cell-code:
     textColor: "{colors.text}"
     typography: "{typography.code}"
@@ -309,6 +313,9 @@ components:
   summary-value:
     textColor: "{colors.text}"
     typography: "{typography.metric}"
+  summary-value-attention:
+    textColor: "{colors.warning}"
+    typography: "{typography.metric}"
   explanatory-note:
     textColor: "{colors.text-muted}"
     typography: "{typography.body}"
@@ -349,11 +356,23 @@ components:
   section-marker-arrow:
     textColor: "{colors.on-ink-accent}"
     size: "14px"
+  section-marker-attached:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.on-ink}"
+    typography: "{typography.section-marker}"
+    padding: "8px 12px"
   section-marker-muted:
     textColor: "{colors.text-muted}"
     typography: "{typography.section-marker}"
     rounded: "{rounded.sm}"
     padding: "8px 12px"
+  back-link:
+    textColor: "{colors.primary}"
+    typography: "{typography.meta}"
+    height: "44px"
+  back-link-arrow:
+    textColor: "{colors.primary}"
+    size: "14px"
   task-row:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
@@ -397,7 +416,7 @@ components:
 
 O WMS-Almoxarifado é lido como a própria planta do almoxarifado: piso de concreto quente, folhas brancas de trabalho assentadas sobre ele, texto grafite, e o que está em circulação identificado como a indústria identifica tubulações e corredores — faixa de identificação escura com rótulo e seta de fluxo, linha de demarcação amarela, fita zebrada onde há obra. O código de cores de segurança NR-26 não é ornamento importado: é a gramática semântica do sistema. Azul é ação obrigatória, amarelo é circulação e demarcação, verde, vermelho e âmbar são estado. Quem abre a ferramenta já sabe o que veio fazer; a interface existe para que isso aconteça rápido, sem ambiguidade e sem erro.
 
-O mundo substitui a fundação anterior ("A Bancada de Trabalho Confiável", azul-acinzentada, fonte do sistema, raios de 2/4px), mas não as regras operacionais dela: densidade útil, uma só fundação para todos os papéis e dispositivos, estado nunca só por cor, superfícies planas. Hierarquia continua resolvida por tipografia, alinhamento, spacing, borda e tom de superfície. Hoje a composição nova só existe na Home autenticada (a barra de trabalho, os marcadores de tubulação, a lista de tarefas e a zona "Em preparação"). Catálogo, importação e login herdam os tokens novos sem recomposição, e a densidade das telas operacionais densas continua sendo a validada pela fundação anterior. Ver "Estado de validação" em Layout.
+O mundo substitui a fundação anterior ("A Bancada de Trabalho Confiável", azul-acinzentada, fonte do sistema, raios de 2/4px), mas não as regras operacionais dela: densidade útil, uma só fundação para todos os papéis e dispositivos, estado nunca só por cor, superfícies planas. Hierarquia continua resolvida por tipografia, alinhamento, spacing, borda e tom de superfície. A composição nova cobre a Home autenticada e as cinco telas do catálogo (consulta, envio, prévia, histórico e execução): a barra de trabalho em toda tela autenticada, os marcadores de tubulação, o retorno contextual e, na Home, a lista de tarefas e a zona "Em preparação". O login herda só os tokens. Ver "Estado de validação" em Layout.
 
 Rejeições visuais confirmadas: dashboards decorativos, grade de cards iguais como estrutura, eyebrow acima de título, glassmorphism, gradiente de cor suave, sombra decorativa, arredondamento pronunciado, animação chamativa, estética de SaaS genérico, tipografia de marketing, whitespace tratado como hierarquia. Não existe identidade institucional do SAEP (sem logotipo, sem cor oficial); a paleta é a do mundo escolhido, não branding aprovado. Escopo de acessibilidade: as regras de estado não cromático, contraste e foco visível abaixo são decisões deste design system a serviço da leitura operacional, não promessa de conformidade; requisitos específicos entram quando uma feature os exigir (Constitution).
 
@@ -405,7 +424,7 @@ Rejeições visuais confirmadas: dashboards decorativos, grade de cards iguais c
 - Piso concreto quente, folhas brancas, tinta grafite: profundidade por tom e moldura, nunca por sombra.
 - Cor de segurança NR-26 como significado, nunca como decoração.
 - Uma família legível auto-hospedada, igual em Windows, Android e Linux; mono só para dado e identificador.
-- O que está disponível circula (tinta grafite, seta de fluxo); o que está planejado fica atrás da fita, atenuado e sem link.
+- O que está disponível ganha a faixa grafite, e a seta de fluxo só quando leva a algum lugar; o que está planejado fica atrás da fita, atenuado e sem link.
 - Densidade útil como padrão; uma só fundação para celular, tablet e desktop.
 
 ## Colors
@@ -413,7 +432,7 @@ Rejeições visuais confirmadas: dashboards decorativos, grade de cards iguais c
 Estratégia **Restrained** dentro de uma gramática de sinalização industrial: base neutra quente, um único accent de ação (azul), amarelo de segurança restrito a demarcação sobre ou junto da tinta grafite, e famílias semânticas só para estado. `static/css/tokens.css` é a fonte única; o frontmatter espelha seus valores e é normativo.
 
 ### Primary
-- **Azul Ação Obrigatória** (`primary`; hover/pressionado em `primary-hover`): o azul NR-26 de "ação obrigatória". Fundo da ação dominante de um contexto, anel de foco (`focus` é alias dele), página atual da paginação, seta de ordenação vigente, cursor de digitação e o traço da seta desenhada de cada linha de tarefa disponível. Branco sobre ele mede 6,79:1 (9,14:1 no hover). Nunca área grande de fundo, nunca moldura permanente.
+- **Azul Ação Obrigatória** (`primary`; hover/pressionado em `primary-hover`): o azul NR-26 de "ação obrigatória". Fundo da ação dominante de um contexto, anel de foco (`focus` é alias dele), página atual da paginação, seta de ordenação vigente, cursor de digitação, o traço da seta desenhada de cada linha de tarefa disponível e o texto e a seta do retorno contextual. Branco sobre ele mede 6,79:1 (9,14:1 no hover); como texto, 6,79:1 sobre a folha e 5,35:1 sobre o piso. Nunca área grande de fundo, nunca moldura permanente.
 
 ### Secondary
 - **Amarelo Segurança** (`signal` e `on-ink-accent`, mesmo valor, papéis distintos): circulação e demarcação. `signal` é **linha**: a linha de corredor de 4px sob a barra de trabalho e a fita zebrada da zona "Em preparação", sobre qualquer fundo. `on-ink-accent` é **texto/ícone sobre tinta**: a seta de fluxo do marcador de seção e o anel de foco dentro da barra de trabalho (9,93:1 sobre `ink`). Sobre branco mede 1,68:1: nunca é texto, ícone ou preenchimento de controle sobre fundo claro.
@@ -424,19 +443,19 @@ Estratégia **Restrained** dentro de uma gramática de sinalização industrial:
 - **Concreto Claro** (`surface-subtle`): hover funcional, cabeçalho de tabela, badge neutro, corpo da zona "Em preparação".
 - **Divisor** (`border`): entre linhas de tabela, linhas de tarefa, itens planejados e campos.
 - **Moldura** (`border-frame`): contorno externo de tabela, placa, lista de tarefas, formulário isolado, page header, barra de confirmação e botão secundário. Mede 1,91:1 sobre a folha e 1,51:1 sobre o piso: a estrutura aparece antes do conteúdo.
-- **Borda de Ênfase** (`border-strong`): linha de exceção de tabela, cabeçalho de tabela (2px), badge neutro, contorno tracejado de `badge-planned` e do marcador atenuado.
+- **Borda de Ênfase** (`border-strong`): linha de exceção de tabela, cabeçalho de tabela (2px), badge neutro, contorno tracejado de `badge-planned` e do marcador atenuado, e o contorno do "Sair" sobre a faixa grafite (4,85:1 sobre `ink`, 4,18:1 sobre `ink-raised`).
 - **Tinta Grafite** (`text`): texto principal e dado; 17,2:1 sobre a folha, 13,6:1 sobre o piso.
 - **Grafite Atenuado** (`text-muted`): metadado, legenda, descrição, rótulo de cabeçalho; 6,89:1 sobre a folha, 5,42:1 sobre o piso.
 - **Desabilitado** (`disabled` só como borda de controle inativo; `disabled-surface` + `disabled-text` para fundo e rótulo, 5,32:1): sempre com `cursor: not-allowed` e, quando aplicável, o gerúndio da ação ("Enviando…").
 
 ### Tinta estrutural
-- **Grafite de Faixa** (`ink`, `ink-raised`, `ink-border`, `on-ink`, `on-ink-muted`): a única área grande de cor do sistema, consumida pela barra de trabalho e pelo marcador de seção disponível. Neutra de propósito: gastar o azul de ação numa faixa permanente o anularia como sinal. `on-ink` (branco) mede 16,7:1 sobre `ink`; `on-ink-muted` mede 9,88:1; `ink-raised` é o hover de controle sobre a faixa.
+- **Grafite de Faixa** (`ink`, `ink-raised`, `ink-border`, `on-ink`, `on-ink-muted`): a única área grande de cor do sistema, consumida pela barra de trabalho e pelo marcador de seção disponível. Neutra de propósito: gastar o azul de ação numa faixa permanente o anularia como sinal. `on-ink` (branco) mede 16,7:1 sobre `ink`; `on-ink-muted` mede 9,88:1; `ink-raised` é o hover de controle sobre a faixa. `ink-border` continua em `tokens.css`, mas hoje não tem consumidor: mede só 1,46:1 contra `ink`, insuficiente para contorno de controle, que usa `border-strong`.
 
 ### Estados semânticos
 Cada estado é uma família de três papéis (texto, superfície, borda), não texto colorido sobre o cinza comum; os pares texto/superfície medem entre 5,53:1 e 6,74:1.
 - **Verde Condição Segura** (`success`): operação concluída.
-- **Âmbar Atenção** (`warning`): condição que merece atenção sem bloquear.
-- **Vermelho Perigo** (`danger`): erro, recusa, ação destrutiva; também reforça em semibold um número que é em si a notícia ruim.
+- **Âmbar Atenção** (`warning`): condição que merece atenção sem bloquear. Inclui a rejeição de linhas numa importação (decisão do dono do produto: rejeição é atenção, não erro): o total de rejeitados diferente de zero aparece em `warning` semibold no resumo da prévia e da execução e na célula do histórico, ao lado do selo "Com rejeições" (`badge-warning`). Como texto, mede 6,10:1 sobre a folha e 4,80:1 sobre o piso.
+- **Vermelho Perigo** (`danger`): erro, recusa, ação destrutiva.
 - **Petróleo Informação** (`info`): contexto neutro. Petróleo, não azul, para "contexto" e "ação" não se confundirem.
 - **Seleção** (`selected`): hoje só no `::selection` de texto; reservado a linha selecionada e item de navegação ativo quando existirem.
 
@@ -500,32 +519,34 @@ Spacing em base 4px (4/8/12/16/24/32px; `space-N` = N × 4px), sem passos fora d
 
 ### App shell: barra de trabalho
 
-A barra de trabalho grafite no topo (ver Components → Navigation) **substitui a sidebar lateral** prevista pela fundação anterior. Com poucos destinos, uma faixa horizontal não rouba largura das tabelas, que são a superfície de primeira classe do produto. Ela é a mesma em celular e desktop: 56px de altura (48px abaixo de 480px), marca à esquerda, matrícula e "Sair" à direita. Hoje só a Home a consome; catálogo e importação ainda usam o link textual "← Início" acima do page header, que é **provisório** até a composição ser propagada numa etapa posterior. A navegação específica de Solicitante/Chefe de setor, quando houver mais destinos, continua em aberto.
+A barra de trabalho grafite no topo (ver Components → Navigation) **substitui a sidebar lateral** prevista pela fundação anterior. Com poucos destinos, uma faixa horizontal não rouba largura das tabelas, que são a superfície de primeira classe do produto. Ela é a mesma em celular e desktop e aparece em toda tela autenticada: declarada uma única vez no template base, só para usuário autenticado (o login não a tem); a Home sobrescreve o bloco apenas para ocultar a matrícula compacta. A altura de conteúdo é o token `--appbar-height` (56px; 48px abaixo de 480px), sem contar a linha de corredor de 4px; o `html` compensa a barra sticky com `scroll-padding-top` igual a essa altura + 4px, para âncora de seção ou paginação e foco de teclado não ficarem sob ela. Marca à esquerda, matrícula e "Sair" à direita. A marca é o retorno global à Home; não existe mais link textual de volta ao Início nas telas. A navegação específica de Solicitante/Chefe de setor, quando houver mais destinos, continua em aberto.
 
 ### Estrutura de página
 
-Área operacional centralizada com teto de 1120px, respiro lateral de 16px (respeitando `safe-area-inset`) e vertical de 24px (32px no fim da Home); a barra de trabalho embute o mesmo teto para a marca e o título começarem no mesmo x. Formulário simples e isolado usa coluna de 640px. Page header: título/contexto à esquerda e ações à direita no desktop; abaixo de 480px as ações ganham linha própria e dividem a largura. Filtros ficam próximos e antes do conteúdo que afetam, nunca em coluna lateral. Páginas densas se dividem em seções por divisor fino + 24px, nunca por cards empilhados.
+Todas as telas seguem o mesmo modelo de duas caixas (Home e catálogo): a página carrega só o respiro, 16px lateral (respeitando `safe-area-inset`) e 24px no topo / 32px no fim, sem teto; um container filho centraliza o conteúdo com teto de 1120px, ou 640px para formulário simples e isolado (envio do CSV). O teto é do conteúdo, não da caixa com padding: a barra de trabalho embute o mesmo cálculo, e por isso o título de página das telas largas começa exatamente no mesmo x da marca. Page header: título/contexto à esquerda e ações à direita no desktop; abaixo de 480px as ações ganham linha própria e dividem a largura. Filtros ficam próximos e antes do conteúdo que afetam, nunca em coluna lateral.
+
+Páginas densas se dividem em seções separadas só por 24px de espaço; a primeira não recebe nem isso, já separada do page header pela borda dele. Onde a seção abre com marcador de tubulação, a própria faixa grafite é o separador: não há divisor fino entre seções, e nunca cards empilhados. Estado vazio solto numa seção (fora de moldura) perde o padding próprio, lateral e vertical: alinha com o marcador e a tabela, e o ritmo até a próxima seção continua em 24px.
 
 Na Home: título, depois uma grade de uma coluna que a partir de 900px vira `conteúdo | 320px` (tarefas à esquerda, placa de identificação à direita, por posição na grade, sem mudar a ordem do DOM: no celular a placa vem antes das tarefas). Superfícies lado a lado alinham pela borda da superfície, não pelo marcador de seção: a seção de tarefas repassa suas duas linhas (marcador | lista) por `subgrid`, e a placa ocupa só a da lista. A zona "Em preparação" vem abaixo, em largura total, a 32px.
 
 ### Tabelas: responsividade
 
-Nesta ordem: (1) preservar toda coluna operacionalmente relevante; (2) ajustar largura de coluna; (3) scroll horizontal; (4) reorganizar controles externos; (5) ocultar coluna só com evidência de baixa prioridade para aquele fluxo. Tabela nunca vira card por breakpoint.
+Nesta ordem: (1) preservar toda coluna operacionalmente relevante; (2) ajustar largura de coluna; (3) scroll horizontal; (4) reorganizar controles externos; (5) ocultar coluna só com evidência de baixa prioridade para aquele fluxo. Tabela nunca vira card por breakpoint. O passo 2 inclui a ordem das colunas: o dado que decide o fluxo vem cedo, para ficar visível antes do scroll no celular. Na consulta do catálogo a ordem é Código, Descrição, Saldo, Unidade, Classificação, Detalhamento: o Saldo vem logo após a identificação do material porque é o que o requisitante procura no celular.
 
 ### Touch
 
-**The No Hover Dependency Rule.** Nenhuma ação necessária depende de hover. Realce de hover é bônus de ponteiro fino: em componente novo, fica dentro de `@media (hover: hover)` para não "prender" após um toque (como na lista de tarefas da Home). Botões e campos têm 44px em qualquer dispositivo; controles compactos do desktop crescem só sob `pointer: coarse`.
+**The No Hover Dependency Rule.** Nenhuma ação necessária depende de hover. Realce de hover é bônus de ponteiro fino: em componente novo, fica dentro de `@media (hover: hover)` para não "prender" após um toque (como na lista de tarefas da Home e na linha clicável de tabela). Botões e campos têm 44px em qualquer dispositivo; controles compactos do desktop crescem só sob `pointer: coarse`.
 
 ### Estado de validação
 
-- A composição do mundo novo (barra de trabalho, marcadores, lista de tarefas, zona "Em preparação") está implementada e revisada **só na Home**, em desktop e celular, para chefe e requisitante.
-- Catálogo, importação e login herdam cor, fonte e raio novos **sem recomposição**; nenhuma dessas telas foi revista no mundo novo.
-- A densidade das superfícies densas (tabela, filtro, paginação, prévia) vem da fundação anterior e **continua valendo**; não foi revalidada com a Atkinson, mais larga que a stack de sistema.
-- A navegação de Solicitante/Chefe de setor com mais destinos e o app shell de tablet não estão definidos.
+- A composição do mundo novo está implementada e revisada na Home (desktop e celular, chefe e requisitante) e nas cinco telas do catálogo: consulta, envio, prévia, histórico e execução. Todas recebem a barra de trabalho; prévia e execução, os marcadores de tubulação e o retorno contextual.
+- O login continua só com os tokens (cor, fonte, raio), sem barra de trabalho nem recomposição.
+- A densidade das tabelas foi medida com a Atkinson: linha simples de ~38px, linha composta de ~62px, Filter Bar alinhada e cabeçalhos sem quebra a 1440px.
+- Tablet continua em aberto: nem a composição das telas densas nem o app shell foram validados nesse contexto. A navegação de Solicitante/Chefe de setor com mais destinos também não está definida.
 
 ## Elevation & Depth
 
-Nenhuma sombra existe no código. Profundidade é o piso de concreto sob a folha branca (1,27:1), a moldura mais firme que o divisor interno, e a faixa grafite. Elementos que grudam na viewport (barra de trabalho, cabeçalho fixo de tabela, barra de confirmação) usam `position: sticky`, nunca `fixed`, e se separam por fundo opaco e borda: a barra de trabalho pela linha amarela de 4px, as demais por borda fina de 1px. Um dialog genuinamente sobreposto, se vier a existir, pode usar elevação funcional mínima.
+Nenhuma sombra existe no código. Profundidade é o piso de concreto sob a folha branca (1,27:1), a moldura mais firme que o divisor interno, e a faixa grafite. Elementos que grudam na viewport (barra de trabalho no topo, cabeçalho fixo de tabela, barra de confirmação no rodapé) usam `position: sticky`, nunca `fixed`, e se separam por fundo opaco e borda: a barra de trabalho pela linha amarela de 4px, as demais por borda fina de 1px. Um dialog genuinamente sobreposto, se vier a existir, pode usar elevação funcional mínima.
 
 ### Named Rules
 
@@ -533,7 +554,7 @@ Nenhuma sombra existe no código. Profundidade é o piso de concreto sob a folha
 
 ## Shapes
 
-Cantos pequenos e funcionais, um degrau acima da fundação anterior. **4px** (`rounded.sm`) em controles e peças pequenas: botão, campo, alert, badge, link de paginação, contorno de tabela, marcador de seção, "Sair" e o topo da fita zebrada. **8px** (`rounded.md`) em containers isolados: placa de identificação, lista de tarefas, zona "Em preparação", formulário isolado, caixa de login. Quando um marcador de seção encosta numa superfície (`-attached`), os cantos que se tocam ficam retos dos dois lados: o marcador perde os cantos inferiores e a superfície perde só o canto superior esquerdo, para a faixa ler como presa ao tubo. Formas circulares só nos spinners.
+Cantos pequenos e funcionais, um degrau acima da fundação anterior. **4px** (`rounded.sm`) em controles e peças pequenas: botão, campo, alert, badge, link de paginação, contorno de tabela, marcador de seção, "Sair" e o topo da fita zebrada. **8px** (`rounded.md`) em containers isolados: placa de identificação, lista de tarefas, zona "Em preparação", formulário isolado, caixa de login. Quando um marcador de seção encosta numa superfície (`-attached`: a lista de tarefas ou a moldura de uma tabela), os cantos que se tocam ficam retos dos dois lados: o marcador perde os cantos inferiores e a superfície perde só o canto superior esquerdo, para a faixa ler como presa ao tubo. Formas circulares só nos spinners.
 
 Bordas de 1px separam; exceções deliberadas: a borda de 2px do cabeçalho de tabela e da coluna ordenada, a lateral de 3px em `border-strong` da linha de exceção, e a linha de corredor de 4px da barra de trabalho. Tracejado de 1px é exclusivo do que é **planejado** (selo e marcador atenuado). O único preenchimento padronizado é a fita zebrada da zona "Em preparação": listras diagonais a 135°, `signal` e `ink` alternados a cada ~10px, 6px de altura, com paradas duras. É sinal de demarcação, não gradiente.
 
@@ -564,15 +585,20 @@ Não há card como estrutura universal. Há três superfícies isoladas, todas `
 - **Largura:** no desktop reflete o comprimento esperado do dado; no celular ocupa a largura do container.
 
 ### Navigation
-- **Barra de trabalho** (`.appbar`, parcial `contas/_barra_trabalho.html`): faixa `ink` sticky no topo, linha de corredor de 4px em `signal` na borda inferior, conteúdo com o mesmo teto de 1120px da página. Marca "Almoxarifado SAEP" em `on-ink`, título de seção; na Home ela é o item atual (`aria-current`, sem link), em outras telas vira link para a Home, sublinhado no hover/foco. À direita, matrícula em Mono 13px `on-ink-muted` (páginas com placa própria a ocultam abaixo de 900px, via `esconde_matricula_compacta`) e "Sair": botão de formulário POST + CSRF, contorno `ink-border`, texto `on-ink`, 4px, alvo de 44px, hover em `ink-raised`. Nunca preenchido de `primary` nem de amarelo.
+- **Barra de trabalho** (`.appbar`, parcial `contas/_barra_trabalho.html`): faixa `ink` sticky no topo, linha de corredor de 4px em `signal` na borda inferior, conteúdo com o mesmo teto de 1120px da página. Marca "Almoxarifado SAEP" em `on-ink`, título de seção; na Home ela é o item atual (`aria-current`, sem link), em outras telas vira link para a Home, sublinhado no hover/foco. À direita, matrícula em Mono 13px `on-ink-muted` (páginas com placa própria a ocultam abaixo de 900px, via `esconde_matricula_compacta`) e "Sair": botão de formulário POST + CSRF, contorno de 1px em `border-strong`, texto `on-ink`, 4px, alvo de 44px, hover em `ink-raised`. Nunca preenchido de `primary` nem de amarelo. Presente em toda tela autenticada (ver Layout → App shell).
+- **Retorno contextual** (`.back-link`, em `components.css`): link acima do page header para a tela de origem quando ela **não** é a Home (prévia → "Envio"; execução → "Histórico de importações"). Texto em metadado `primary`, seta para a esquerda em SVG desenhado (14px, traço 1.75, o mesmo traço da seta de fluxo espelhado, `aria-hidden`), 4px entre os dois, alvo de 44px de altura sem inflar o texto, 16px abaixo antes do page header, sublinhado no hover e no foco. Não é botão. O retorno à Home é sempre a marca da barra, nunca um back-link.
 - Destinos adicionais na barra, estado ativo por item e comportamento com muitos destinos ainda não existem.
 
 ### Section Marker (marcador de tubulação)
-- O `<h2>` da seção como faixa de identificação de tubo: `ink`, texto `on-ink` em caixa-alta semibold com tracking, padding 8 × 12px, 4px, dimensionado ao conteúdo (etiqueta, não banner). Leva a **seta de fluxo** SVG desenhada (14px, traço 1.75, `on-ink-accent`), `aria-hidden`.
-- **`-attached`:** encosta na superfície viva logo abaixo (lista de tarefas), cantos inferiores retos e sem margem; a superfície replica o canto reto sob ele.
-- **`-muted`:** para o que ainda não existe ("Em preparação"): sem fundo, contorno tracejado em `border-strong`, texto `text-muted`, **nunca** com seta.
+- O `<h2>` da seção como faixa de identificação de tubo: `ink`, texto `on-ink` em caixa-alta semibold com tracking, padding 8 × 12px, 4px, dimensionado ao conteúdo (etiqueta, não banner), 16px antes do conteúdo. Três variantes, três significados:
+  - **Cheio com seta:** a seção leva a algum lugar ("Suas tarefas", uma lista de destinos). Leva a **seta de fluxo** SVG desenhada (14px, traço 1.75, `on-ink-accent`), `aria-hidden`.
+  - **Cheio sem seta:** seção de leitura, disponível mas sem destino (nas telas densas: "Resumo", "Execução", "Divergências de saldo (N)", "Exceções (N)", "Alterações cadastrais (N)"). A contagem entre parênteses faz parte do rótulo.
+  - **`-muted`:** para o que ainda não existe ("Em preparação"): sem fundo, contorno tracejado em `border-strong`, texto `text-muted`, **nunca** com seta.
+- **`-attached`:** encosta na superfície viva renderizada logo abaixo dele (a lista de tarefas, ou a moldura da tabela com `.table-wrapper-marker-attached`): cantos inferiores retos e sem margem; a superfície replica o canto reto sob ele. Só quando a superfície vem imediatamente depois: com uma nota entre o marcador e a tabela, ou no estado vazio (sem tabela), o marcador fica simples.
 
-**The Available-Versus-Planned Rule.** A seta de fluxo e o fundo grafite pertencem só ao que está disponível. O que é planejado fica atenuado, tracejado, sem seta, sem link e sem cursor de clique. Planejado nunca pode parecer clicável nem disponível.
+**The Available-Versus-Planned Rule.** O fundo grafite pertence só ao que está disponível. O que é planejado fica atenuado, tracejado, sem seta, sem link e sem cursor de clique. Planejado nunca pode parecer clicável nem disponível.
+
+**The Flow Arrow Rule.** A seta de fluxo afirma que a seção leva a algum lugar; ela não é decoração do marcador. Faixa cheia com seta = leva a algum lugar; faixa cheia sem seta = seção de leitura; `-muted` = planejado. Seta numa seção de leitura promete um destino que não existe.
 
 ### Lista de tarefas
 - Uma única superfície branca com divisores de 1px entre linhas, não uma grade de cards. Cada linha é um `<a>` que ocupa a linha inteira (mínimo 56px, padding 16px): título com **verbo primeiro** ("Consultar catálogo de materiais") em título de seção semibold, descrição de uma frase em corpo `text-muted`, e à direita a seta SVG desenhada (20px, `primary`).
@@ -594,7 +620,8 @@ Não há card como estrutura universal. Há três superfícies isoladas, todas `
 - `.table-empty-row`: linha única com `colspan` total, padding 24 × 12px, título e descrição do Empty State.
 - Coluna ordenável: rótulo é link real que cobre o `th`; `aria-sort` na vigente; indicador SVG de par de setas (neutras na não vigente; a da direção atual em `primary`, a outra a 40%); borda inferior de 2px em `primary` no `th` vigente; ordem também dita em texto no resumo da paginação.
 - Coluna de estado com `.badge` e texto explícito perto do início da linha. Conteúdo longo truncado só com forma previsível de ver o todo (`<details>` nativo).
-- `.table-row-clickable`: `cursor: pointer`, hover em `surface-subtle`, a navegação é sempre um `<a>` real numa célula.
+- `.table-row-clickable`: `cursor: pointer`, hover em `surface-subtle` só dentro de `@media (hover: hover)`, a navegação é sempre um `<a>` real numa célula.
+- Número de atenção numa célula (rejeitados diferente de zero no histórico): `warning` semibold na própria célula numérica, acompanhado do selo `badge-warning` na coluna de situação; zero fica sem ênfase.
 
 ### Pagination
 - Anterior / números / Próxima, com reticências nos intervalos distantes; primeira e última sempre acessíveis. Resumo em metadado à esquerda ("Página X de Y — N no total", separador de milhar, plural correto).
@@ -607,14 +634,14 @@ Não há card como estrutura universal. Há três superfícies isoladas, todas `
 - Alinhamento pelo topo; a partir de 641px as ações recebem compensação de topo igual a uma linha de rótulo + gap. Nunca coluna lateral, nunca esconder filtro essencial.
 
 ### Alert
-- `.alert` + `-danger`/`-warning`/`-info`/`-success`: superfície, borda de 1px e texto da família, padding 12px, 4px, conteúdo sempre em frase explícita. Sem barra lateral colorida.
+- `.alert` + `-danger`/`-warning`/`-info`/`-success`: superfície, borda de 1px e texto da família, padding 12px, 4px, conteúdo sempre em frase explícita e curta. A faixa ocupa a largura da coluna e o parágrafo acompanha a faixa, sem teto de 72ch (limitar só o texto deixaria faixa tingida vazia). Sem barra lateral colorida.
 - Mensagens de sistema ficam visíveis até a próxima navegação; nunca somem por tempo e nunca viram toast para resultado já visível.
 
 ### Page Header
 - Título, descrição opcional (corpo `text-muted`, até 70ch) e ações. Separado do conteúdo por borda inferior em `border-frame` + 24px. Um badge de estado pode acompanhar o título. A Home usa o mesmo estilo de título sem a faixa do page header.
 
 ### Empty State
-- Nunca uma lista vazia sem explicação. `.empty-state`: padding 32 × 16px, título em tamanho de título de seção (peso médio, `text`) + descrição dizendo por que está vazio ou o que fazer. Dentro de tabela com filtros, `.table-empty-row`.
+- Nunca uma lista vazia sem explicação. `.empty-state`: padding 32 × 16px, título em tamanho de título de seção (peso médio, `text`) + descrição (até 72ch) dizendo por que está vazio ou o que fazer. Dentro de tabela com filtros, `.table-empty-row`.
 
 ### Loading Indicator
 - Local à região atualizada por HTMX, nunca bloqueio de página. Spinner de 14px (borda `border`, arco `primary`, 0,6s linear) + texto em metadado, numa linha de altura reservada; com `prefers-reduced-motion`, o spinner para e o texto fica. Em envio de formulário, o equivalente é o estado Processando do botão.
@@ -623,11 +650,11 @@ Não há card como estrutura universal. Há três superfícies isoladas, todas `
 - Input nativo oculto só visualmente (nunca `display: none`); um `<label for>` com aparência de botão secundário ("Escolher arquivo") abre o seletor sem JS e recebe o anel de foco. Ao lado, metadado com nome e tamanho do arquivo, nascendo com "Nenhum arquivo selecionado.". Dica e erro seguem Inputs / Fields.
 
 ### Confirmação
-- Ação de impacto exige confirmação explícita que reitera o resultado. Hoje sem modal: a prévia é o contexto, e o botão primário repete o resultado ("Confirmar importação: N inseridos, M atualizados") ao lado de "Cancelar".
-- **Barra de confirmação persistente:** o mesmo par numa barra `sticky; bottom: 0` (nunca `fixed`), fundo `surface`, borda superior em `border-frame`, padding 12 × 16px, sem sombra; abaixo de 480px os botões empilham.
+- Ação de impacto exige confirmação explícita que reitera o resultado. Hoje sem modal: a prévia é o contexto, e o botão primário repete o resultado com plural correto ("Confirmar importação: 1 inserido, 12 atualizados"), acrescentando "(N rejeitados ficam de fora)" só quando N > 0, ao lado de "Cancelar".
+- **Barra de confirmação persistente:** o **único** par Confirmar/Cancelar da página, sem seção "Confirmação" separada e sem marcador próprio. É o último elemento da coluna: `sticky; bottom: 0` (nunca `fixed`) a mantém grudada ao rodapé da viewport durante a rolagem, e ela assenta na própria posição no fim da página. Fica dentro da coluna de conteúdo, sem sangrar além dela. Fundo `surface`, borda superior em `border-frame`, padding 12 × 16px, 24px acima, sem sombra; abaixo de 480px os botões empilham em largura total. Enquanto ela está grudada, a página ganha `scroll-padding-bottom` (80px; 160px abaixo de 480px, onde a barra chega a ~141px), o espelho do `scroll-padding-top` da barra de trabalho: foco de teclado e âncora nunca param sob ela.
 
 ### Resumo de totais e nota explicativa
-- Pares rótulo/valor lado a lado: rótulo em metadado acima do valor em `metric`, separados por divisor vertical fino e 24px. Detalhe secundário em metadado; valor que não entra na soma fica separado por espaço **e** explicado por extenso.
+- Pares rótulo/valor lado a lado: rótulo em metadado acima do valor em `metric`, separados por divisor vertical fino e 24px; até 640px os pares quebram em duas colunas e perdem o divisor vertical (o gap separa). Detalhe secundário em metadado; valor que não entra na soma fica separado por espaço **e** explicado por extenso. Rejeitados diferente de zero: rótulo e valor em `warning` semibold (ver Colors → Estados semânticos).
 - Nota explicativa: corpo `text-muted`, até 72ch, antes do conteúdo que explica; não é alert.
 
 ## Do's and Don'ts
@@ -641,7 +668,8 @@ Não há card como estrutura universal. Há três superfícies isoladas, todas `
 - **Do** desenhar setas e ícones em SVG inline com `currentColor`, marcados `aria-hidden` quando o texto já diz a ação.
 - **Do** escrever o título de tarefa com o verbo primeiro e tornar a linha inteira o alvo.
 - **Do** colocar realce de hover novo dentro de `@media (hover: hover)`; nenhuma ação depende dele.
-- **Do** separar o disponível do planejado por forma, não só por cor: seta e grafite para o primeiro, tracejado, atenuação e ausência de link para o segundo.
+- **Do** separar o disponível do planejado por forma, não só por cor: grafite para o primeiro (com seta só quando leva a algum lugar), tracejado, atenuação e ausência de link para o segundo.
+- **Do** deixar o retorno à Home com a marca da barra de trabalho e usar o retorno contextual só quando a origem é outra tela.
 - **Do** usar a Mono para CADPRO, matrícula e hash, e `tabular-nums` para número comparável.
 - **Do** preservar coluna de tabela e usar scroll horizontal antes de ocultar dado.
 - **Do** dar a cada estado semântico a família completa (texto + superfície + borda) e texto explícito.
@@ -656,6 +684,8 @@ Não há card como estrutura universal. Há três superfícies isoladas, todas `
 - **Don't** preencher faixa, moldura ou área grande com `primary`, nem colocar mais de uma ação preenchida em `primary` no mesmo contexto.
 - **Don't** introduzir sombra, glassmorphism, gradiente de cor suave ou arredondamento acima de 8px; a fita zebrada de paradas duras é o único preenchimento padronizado.
 - **Don't** dar seta de fluxo, fundo grafite, link ou cursor de clique a algo planejado, nem transformar "Em preparação" em métrica, contagem ou alerta.
+- **Don't** dar seta de fluxo a uma seção de leitura; a seta promete um destino.
+- **Don't** duplicar a ação de confirmação numa seção final quando a barra persistente já a oferece.
 - **Don't** acrescentar fonte de CDN, fonte de exibição ou terceira família; nem usar a Mono em título, rótulo ou prosa.
 - **Don't** reformatar, truncar de forma destrutiva ou "limpar" o CADPRO ou outro identificador opaco (viola `INV-CATALOG-001` mesmo na camada visual).
 - **Don't** transformar listagem densa em card por estar em tablet ou celular, nem reduzir permanentemente a densidade do desktop para acomodar toque.

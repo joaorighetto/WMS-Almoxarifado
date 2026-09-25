@@ -47,9 +47,10 @@ de `total_rejeitados`, já anotado em `execucoes` (sem campo de modelo
 novo). O par de rótulos não diz "Concluída" porque esta tela só lista
 execuções confirmadas: a palavra não distinguiria nenhuma linha das outras
 e custava a largura que quebrava o próprio selo em três linhas dentro da
-borda. O número em si (célula "Rejeitados") continua a pista primária: quando diferente de zero, ganha peso semibold + `danger`
-(`.catalogo-historico-rejeitados-alerta`, `catalogo.css`) — nunca só a cor,
-nunca a linha inteira. Colunas numéricas passam pelo filtro
+borda. O número em si (célula "Rejeitados") continua a pista primária: quando diferente de zero, ganha peso semibold + âmbar/warning
+(`.catalogo-rejeitados-emphasis`, `catalogo.css` — "rejeição é atenção, não
+erro", decisão do dono do produto; compartilhada com o Resumo da
+prévia/execução) — nunca só a cor, nunca a linha inteira. Colunas numéricas passam pelo filtro
 `separador_milhar` (mesmo usado no resumo da paginação), para "8536" e
 "3.408 materiais" pararem de divergir na mesma tela.
 
@@ -85,74 +86,74 @@ sem truncamento.
 
 {% block content %}
 <main class="catalogo-page">
-  <p class="catalogo-back-link"><a href="{% url 'home' %}">&larr; Início</a></p>
+  <div class="catalogo-container">
+    {% include "catalogo/_mensagens.html" %}
 
-  {% include "catalogo/_mensagens.html" %}
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Histórico de importações</h1>
+        <p class="page-header-description">
+          Execuções de importação do catálogo confirmadas.
+        </p>
+      </div>
+      <div class="page-header-actions">
+        <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-primary">Importar catálogo</a>
+      </div>
+    </header>
 
-  <header class="page-header">
-    <div>
-      <h1 class="page-header-title">Histórico de importações</h1>
-      <p class="page-header-description">
-        Execuções de importação do catálogo confirmadas.
-      </p>
-    </div>
-    <div class="page-header-actions">
-      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-primary">Importar catálogo</a>
-    </div>
-  </header>
-
-  <section class="catalogo-section">
-    {% if execucoes %}
-    <div class="table-wrapper table-sticky-header">
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Execução</th>
-            <th scope="col">Situação</th>
-            {% include "catalogo/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
-            {% include "catalogo/_th_ordenavel.html" with coluna="executor" rotulo="Executada por" rotulo_acao="executor" %}
-            <th scope="col" class="catalogo-historico-arquivo">Arquivo</th>
-            {% include "catalogo/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
-            <th scope="col" class="table-cell-numeric">Inseridos</th>
-            <th scope="col" class="table-cell-numeric">Atualizados</th>
-            {% include "catalogo/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
-            {% include "catalogo/_th_ordenavel.html" with coluna="divergencias" rotulo="Divergências" rotulo_acao="divergências" extra_class="table-cell-numeric" %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in execucoes %}
-          <tr class="table-row-clickable catalogo-historico-row">
-            <td>
-              <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="catalogo-historico-link">#{{ e.pk }}</a>
-            </td>
-            <td class="catalogo-historico-situacao">
-              {% if e.total_rejeitados %}
-              <span class="badge badge-warning">Com rejeições</span>
-              {% else %}
-              <span class="badge badge-success">Sem rejeições</span>
-              {% endif %}
-            </td>
-            <td>{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
-            <td>{{ e.executada_por.matricula }}</td>
-            <td class="catalogo-historico-arquivo">{{ e.nome_arquivo }}</td>
-            <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
-            <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
-            <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
-            <td class="table-cell-numeric{% if e.total_rejeitados %} catalogo-historico-rejeitados-alerta{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
-            <td class="table-cell-numeric">{{ e.total_divergencias|separador_milhar }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
-    {% else %}
-    <div class="empty-state" data-estado="vazio">
-      <p class="empty-state-title">Nenhuma importação registrada.</p>
-      <p class="empty-state-description">As execuções confirmadas de importação do catálogo aparecerão aqui.</p>
-    </div>
-    {% endif %}
-  </section>
+    <section class="catalogo-section">
+      {% if execucoes %}
+      <div class="table-wrapper table-sticky-header">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Execução</th>
+              <th scope="col">Situação</th>
+              {% include "catalogo/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="executor" rotulo="Executada por" rotulo_acao="executor" %}
+              <th scope="col" class="catalogo-historico-arquivo">Arquivo</th>
+              {% include "catalogo/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
+              <th scope="col" class="table-cell-numeric">Inseridos</th>
+              <th scope="col" class="table-cell-numeric">Atualizados</th>
+              {% include "catalogo/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="divergencias" rotulo="Divergências" rotulo_acao="divergências" extra_class="table-cell-numeric" %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in execucoes %}
+            <tr class="table-row-clickable catalogo-historico-row">
+              <td>
+                <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="catalogo-historico-link">#{{ e.pk }}</a>
+              </td>
+              <td class="catalogo-historico-situacao">
+                {% if e.total_rejeitados %}
+                <span class="badge badge-warning">Com rejeições</span>
+                {% else %}
+                <span class="badge badge-success">Sem rejeições</span>
+                {% endif %}
+              </td>
+              <td>{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
+              <td>{{ e.executada_por.matricula }}</td>
+              <td class="catalogo-historico-arquivo">{{ e.nome_arquivo }}</td>
+              <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
+              <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
+              <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
+              <td class="table-cell-numeric{% if e.total_rejeitados %} catalogo-rejeitados-emphasis{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
+              <td class="table-cell-numeric">{{ e.total_divergencias|separador_milhar }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">Nenhuma importação registrada.</p>
+        <p class="empty-state-description">As execuções confirmadas de importação do catálogo aparecerão aqui.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
 </main>
 {% endblock %}
 

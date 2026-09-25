@@ -48,8 +48,7 @@ este atributo junto com o restante do conteúdo.
 
 {% block content %}
 <main class="catalogo-page">
-  <p class="catalogo-back-link"><a href="{% url 'home' %}">&larr; Início</a></p>
-
+  <div class="catalogo-container">
   {% include "catalogo/_mensagens.html" %}
 
   <header class="page-header">
@@ -210,7 +209,9 @@ este atributo junto com o restante do conteúdo.
       `codigo`/`descricao`.
 
       Ordenação (FR-042a, emenda de 2026-09-22): os cabeçalhos de Código,
-      Descrição, Unidade, Classificação e Saldo são inclusões de
+      Descrição, Saldo, Unidade e Classificação (ordem das colunas revisada no
+      gate visual P2 da propagação ao catálogo — Saldo sobe para logo depois
+      de Descrição, mais perto do que se busca primeiro no celular) são inclusões de
       `catalogo/_th_ordenavel.html` (um link real por coluna, `aria-sort` na
       coluna vigente, `htmx_alvo`/`htmx_indicador` apontando para esta mesma
       região); Detalhamento não é ordenável e continua um `<th>` simples. A
@@ -271,9 +272,9 @@ este atributo junto com o restante do conteúdo.
             <tr>
               {% include "catalogo/_th_ordenavel.html" with coluna="cadpro" rotulo="Código (CADPRO)" rotulo_acao="código (CADPRO)" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
               {% include "catalogo/_th_ordenavel.html" with coluna="descricao" rotulo="Descrição" rotulo_acao="descrição" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="saldo" rotulo="Saldo" rotulo_acao="saldo" extra_class="table-cell-numeric" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
               {% include "catalogo/_th_ordenavel.html" with coluna="unidade" rotulo="Unidade" rotulo_acao="unidade" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
               {% include "catalogo/_th_ordenavel.html" with coluna="classificacao" rotulo="Classificação (SCPI)" rotulo_acao="classificação" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="saldo" rotulo="Saldo" rotulo_acao="saldo" extra_class="table-cell-numeric" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
               <th scope="col">Detalhamento</th>
             </tr>
           </thead>
@@ -282,6 +283,7 @@ este atributo junto com o restante do conteúdo.
             <tr>
               <td class="table-cell-code">{{ material.cadpro }}</td>
               <td class="catalogo-descricao-cell">{{ material.descricao }}</td>
+              <td class="table-cell-numeric">{{ material.saldo|floatformat:"-3" }}</td>
               <td>{{ material.unidade }}</td>
               <td>
                 {% if material.nome_grupo or material.nome_subgrupo %}
@@ -293,7 +295,6 @@ este atributo junto com o restante do conteúdo.
                 <span class="catalogo-classificacao-codigo">{{ material.grupo }}{% if material.grupo and material.subgrupo %}.{% endif %}{{ material.subgrupo }}</span>
                 {% endif %}
               </td>
-              <td class="table-cell-numeric">{{ material.saldo|floatformat:"-3" }}</td>
               <td>
                 {% if material.detalhamento %}
                 <details class="catalogo-detalhamento">
@@ -318,9 +319,9 @@ este atributo junto com o restante do conteúdo.
             <tr>
               <th scope="col">Código (CADPRO)</th>
               <th scope="col">Descrição</th>
+              <th scope="col" class="table-cell-numeric">Saldo</th>
               <th scope="col">Unidade</th>
               <th scope="col">Classificação (SCPI)</th>
-              <th scope="col" class="table-cell-numeric">Saldo</th>
               <th scope="col">Detalhamento</th>
             </tr>
           </thead>
@@ -338,5 +339,6 @@ este atributo junto com o restante do conteúdo.
       {% endpartialdef %}
     </div>
   </section>
+  </div>
 </main>
 {% endblock %}

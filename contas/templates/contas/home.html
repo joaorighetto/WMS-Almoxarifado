@@ -7,12 +7,12 @@
 <link rel="stylesheet" href="{% static 'contas/css/home.css' %}">
 {% endblock %}
 
-{% block content %}
-{% include "contas/_barra_trabalho.html" with esconde_matricula_compacta=True %}
+{% block appbar %}{% include "contas/_barra_trabalho.html" with esconde_matricula_compacta=True %}{% endblock %}
 
+{% block content %}
 <main class="home-page">
   <div class="home-container">
-    <h1 class="home-page-title">Início</h1>
+    <h1 class="page-header-title home-page-title">Início</h1>
 
     <div class="home-main">
       <dl class="home-id-plate" aria-label="Identidade">

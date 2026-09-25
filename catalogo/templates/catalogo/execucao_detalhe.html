@@ -9,201 +9,220 @@
 
 {% block content %}
 <main class="catalogo-page">
-  <p class="catalogo-back-link"><a href="{% url 'home' %}">&larr; Início</a></p>
+  <div class="catalogo-container">
+    <a href="{% url 'catalogo:historico' %}" class="back-link">
+      <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
+           fill="none" aria-hidden="true">
+        <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Histórico de importações</span>
+    </a>
 
-  {% include "catalogo/_mensagens.html" %}
+    {% include "catalogo/_mensagens.html" %}
 
-  <header class="page-header">
-    <div>
-      <h1 class="page-header-title">
-        Resultado da importação #{{ execucao.pk }}
-        <span class="badge badge-success catalogo-page-header-badge">Concluída</span>
-      </h1>
-    </div>
-    <div class="page-header-actions">
-      <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-primary">Nova importação</a>
-    </div>
-  </header>
-
-  <section class="catalogo-section">
-    <h2 class="catalogo-section-title">Execução</h2>
-    <dl class="catalogo-meta">
+    <header class="page-header">
       <div>
-        <dt>Executada por</dt>
-        <dd>{{ execucao.executada_por.matricula }}</dd>
+        <h1 class="page-header-title">
+          Resultado da importação #{{ execucao.pk }}
+          <span class="badge badge-success catalogo-page-header-badge">Concluída</span>
+        </h1>
       </div>
-      <div>
-        <dt>Concluída em</dt>
-        <dd>{{ execucao.concluida_em }}</dd>
+      <div class="page-header-actions">
+        <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-primary">Nova importação</a>
       </div>
-      <div>
-        <dt>Arquivo</dt>
-        <dd>{{ execucao.nome_arquivo }} ({{ execucao.tamanho_arquivo|filesizeformat }})</dd>
-      </div>
-      <div>
-        <dt>SHA-256 do arquivo</dt>
-        <dd class="catalogo-hash">{{ execucao.sha256_arquivo }}</dd>
-      </div>
-    </dl>
-  </section>
+    </header>
 
-  <section class="catalogo-section">
-    <h2 class="catalogo-section-title">Resumo</h2>
-    <dl class="catalogo-summary">
-      <div class="catalogo-summary-item">
-        <dt>Recebidos</dt>
-        <dd>{{ execucao.total_recebidos }}</dd>
-      </div>
-      <div class="catalogo-summary-item">
-        <dt>Inseridos</dt>
-        <dd>{{ execucao.total_inseridos }}</dd>
-      </div>
-      <div class="catalogo-summary-item">
-        <dt>Atualizados</dt>
-        <dd>
-          {{ execucao.total_atualizados }}
-          <span class="catalogo-summary-detail">({{ execucao.total_atualizados_com_alteracao }} com alteração)</span>
-        </dd>
-      </div>
-      <div class="catalogo-summary-item">
-        <dt>Rejeitados</dt>
-        <dd>{{ execucao.total_rejeitados }}</dd>
-      </div>
-      <div class="catalogo-summary-item catalogo-summary-item-separado">
-        <dt>Ausentes do arquivo</dt>
-        <dd>{{ execucao.total_ausentes_no_arquivo }}</dd>
-      </div>
-    </dl>
-    <p class="catalogo-divergencia-nota">
-      "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
-      Rejeitados: são materiais já cadastrados no WMS que não vieram neste CSV. Esta
-      importação <strong>não alterou nem removeu</strong> esses materiais — eles
-      permanecem como estavam (FR-031).
-    </p>
-  </section>
+    <section class="catalogo-section">
+      <h2 class="section-marker">
+        <span class="section-marker-label">Execução</span>
+      </h2>
+      <dl class="catalogo-meta">
+        <div>
+          <dt>Executada por</dt>
+          <dd>{{ execucao.executada_por.matricula }}</dd>
+        </div>
+        <div>
+          <dt>Concluída em</dt>
+          <dd>{{ execucao.concluida_em }}</dd>
+        </div>
+        <div>
+          <dt>Arquivo</dt>
+          <dd>{{ execucao.nome_arquivo }} ({{ execucao.tamanho_arquivo|filesizeformat }})</dd>
+        </div>
+        <div>
+          <dt>SHA-256 do arquivo</dt>
+          <dd class="catalogo-hash">{{ execucao.sha256_arquivo }}</dd>
+        </div>
+      </dl>
+    </section>
 
-  <section class="catalogo-section" id="divergencias" data-secao="divergencias">
-    <h2 class="catalogo-section-title">Divergências de saldo ({{ execucao.total_divergencias }})</h2>
-    <p class="catalogo-divergencia-nota">
-      Divergência: diferença entre o saldo no arquivo do SCPI e o saldo atual no WMS
-      (diferença = saldo no arquivo − saldo no WMS). É só informativa — esta importação
-      <strong>não alterou o saldo do WMS</strong>; o ajuste, quando necessário, é feito pelo
-      inventário (funcionalidade futura), nunca por aqui.
-    </p>
-    {% if divergencias_pagina.object_list %}
-    <div class="table-wrapper table-sticky-header">
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Código (CADPRO)</th>
-            <th scope="col" class="table-cell-numeric">Saldo no WMS</th>
-            <th scope="col" class="table-cell-numeric">Saldo no arquivo</th>
-            <th scope="col" class="table-cell-numeric">Diferença</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for divergencia in divergencias_pagina %}
-          <tr>
-            <td class="table-cell-code">{{ divergencia.material.cadpro }}</td>
-            <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:"-3" }}</td>
-            <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:"-3" }}</td>
-            <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:"-3" }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% include "catalogo/_paginacao.html" with pagina=divergencias_pagina parametro="pagina_divergencias" rotulo="Paginação de divergências" ancora="divergencias" %}
-    {% else %}
-    <div class="empty-state" data-estado="vazio">
-      <p class="empty-state-title">Nenhuma divergência de saldo.</p>
-      <p class="empty-state-description">
-        O saldo do WMS coincide com o saldo do arquivo para todos os materiais atualizados.
+    <section class="catalogo-section">
+      <h2 class="section-marker">
+        <span class="section-marker-label">Resumo</span>
+      </h2>
+      <dl class="catalogo-summary">
+        <div class="catalogo-summary-item">
+          <dt>Recebidos</dt>
+          <dd>{{ execucao.total_recebidos }}</dd>
+        </div>
+        <div class="catalogo-summary-item">
+          <dt>Inseridos</dt>
+          <dd>{{ execucao.total_inseridos }}</dd>
+        </div>
+        <div class="catalogo-summary-item">
+          <dt>Atualizados</dt>
+          <dd>
+            {{ execucao.total_atualizados }}
+            <span class="catalogo-summary-detail">({{ execucao.total_atualizados_com_alteracao }} com alteração)</span>
+          </dd>
+        </div>
+        <div class="catalogo-summary-item{% if execucao.total_rejeitados %} catalogo-rejeitados-emphasis{% endif %}">
+          <dt>Rejeitados</dt>
+          <dd>{{ execucao.total_rejeitados }}</dd>
+        </div>
+        <div class="catalogo-summary-item catalogo-summary-item-separado">
+          <dt>Ausentes do arquivo</dt>
+          <dd>{{ execucao.total_ausentes_no_arquivo }}</dd>
+        </div>
+      </dl>
+      <p class="catalogo-divergencia-nota catalogo-resumo-nota">
+        "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
+        Rejeitados: são materiais já cadastrados no WMS que não vieram neste CSV. Esta
+        importação <strong>não alterou nem removeu</strong> esses materiais — eles
+        permanecem como estavam.
       </p>
-    </div>
-    {% endif %}
-  </section>
+    </section>
 
-  <section class="catalogo-section" id="alteracoes" data-secao="alteracoes">
-    <h2 class="catalogo-section-title">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</h2>
-    {% if alteracoes_pagina.object_list %}
-    <div class="table-wrapper table-sticky-header">
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Código (CADPRO)</th>
-            <th scope="col">Campo</th>
-            <th scope="col">Valor anterior</th>
-            <th scope="col">Valor novo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for alteracao in alteracoes_pagina %}
-          <tr>
-            <td class="table-cell-code">{{ alteracao.material.cadpro }}</td>
-            <td>{{ alteracao.get_campo_display }}</td>
-            <td>
-              {% if alteracao.valor_anterior %}{{ alteracao.valor_anterior|linebreaksbr }}{% else %}<span class="catalogo-muted">(vazio)</span>{% endif %}
-            </td>
-            <td>
-              {% if alteracao.valor_novo %}{{ alteracao.valor_novo|linebreaksbr }}{% else %}<span class="catalogo-muted">(vazio)</span>{% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% include "catalogo/_paginacao.html" with pagina=alteracoes_pagina parametro="pagina_alteracoes" rotulo="Paginação de alterações cadastrais" ancora="alteracoes" %}
-    {% else %}
-    <div class="empty-state" data-estado="vazio">
-      <p class="empty-state-title">Nenhuma alteração cadastral nesta execução.</p>
-      <p class="empty-state-description">
-        Os dados cadastrais do arquivo coincidiram com os já registrados no WMS.
+    <section class="catalogo-section" id="divergencias" data-secao="divergencias">
+      <h2 class="section-marker">
+        <span class="section-marker-label">Divergências de saldo ({{ execucao.total_divergencias }})</span>
+      </h2>
+      <p class="catalogo-divergencia-nota">
+        Divergência: diferença entre o saldo no arquivo do SCPI e o saldo atual no WMS
+        (diferença = saldo no arquivo − saldo no WMS). É só informativa — esta importação
+        <strong>não alterou o saldo do WMS</strong>; o ajuste, quando necessário, é feito pelo
+        inventário (funcionalidade futura), nunca por aqui.
       </p>
-    </div>
-    {% endif %}
-  </section>
+      {% if divergencias_pagina.object_list %}
+      <div class="table-wrapper table-sticky-header">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Código (CADPRO)</th>
+              <th scope="col" class="table-cell-numeric">Saldo no WMS</th>
+              <th scope="col" class="table-cell-numeric">Saldo no arquivo</th>
+              <th scope="col" class="table-cell-numeric">Diferença</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for divergencia in divergencias_pagina %}
+            <tr>
+              <td class="table-cell-code">{{ divergencia.material.cadpro }}</td>
+              <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:"-3" }}</td>
+              <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:"-3" }}</td>
+              <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:"-3" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "catalogo/_paginacao.html" with pagina=divergencias_pagina parametro="pagina_divergencias" rotulo="Paginação de divergências" ancora="divergencias" %}
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">Nenhuma divergência de saldo.</p>
+        <p class="empty-state-description">
+          O saldo do WMS coincide com o saldo do arquivo para todos os materiais atualizados.
+        </p>
+      </div>
+      {% endif %}
+    </section>
 
-  <section class="catalogo-section" id="excecoes">
-    <h2 class="catalogo-section-title">Exceções ({{ execucao.total_rejeitados }})</h2>
-    {% if excecoes_pagina.object_list %}
-    <div class="table-wrapper table-sticky-header">
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Linha</th>
-            <th scope="col">Código (CADPRO)</th>
-            <th scope="col">Motivo</th>
-            <th scope="col">Detalhe</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for excecao in excecoes_pagina %}
-          <tr class="table-row-error">
-            <td>
-              {% if excecao.linha_inicial == excecao.linha_final %}
-              {{ excecao.linha_inicial }}
-              {% else %}
-              {{ excecao.linha_inicial }}–{{ excecao.linha_final }}
-              {% endif %}
-            </td>
-            <td class="table-cell-code">
-              {% if excecao.cadpro %}{{ excecao.cadpro }}{% else %}<span class="catalogo-muted">—</span>{% endif %}
-            </td>
-            <td>{{ excecao.get_motivo_display }}</td>
-            <td>{{ excecao.detalhe|default:""|linebreaksbr }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% include "catalogo/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" ancora="excecoes" %}
-    {% else %}
-    <div class="empty-state">
-      <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
-      <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
-    </div>
-    {% endif %}
-  </section>
+    <section class="catalogo-section" id="alteracoes" data-secao="alteracoes">
+      <h2 class="section-marker{% if alteracoes_pagina.object_list %} section-marker-attached{% endif %}">
+        <span class="section-marker-label">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</span>
+      </h2>
+      {% if alteracoes_pagina.object_list %}
+      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Código (CADPRO)</th>
+              <th scope="col">Campo</th>
+              <th scope="col">Valor anterior</th>
+              <th scope="col">Valor novo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for alteracao in alteracoes_pagina %}
+            <tr>
+              <td class="table-cell-code">{{ alteracao.material.cadpro }}</td>
+              <td>{{ alteracao.get_campo_display }}</td>
+              <td>
+                {% if alteracao.valor_anterior %}{{ alteracao.valor_anterior|linebreaksbr }}{% else %}<span class="catalogo-muted">(vazio)</span>{% endif %}
+              </td>
+              <td>
+                {% if alteracao.valor_novo %}{{ alteracao.valor_novo|linebreaksbr }}{% else %}<span class="catalogo-muted">(vazio)</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "catalogo/_paginacao.html" with pagina=alteracoes_pagina parametro="pagina_alteracoes" rotulo="Paginação de alterações cadastrais" ancora="alteracoes" %}
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">Nenhuma alteração cadastral nesta execução.</p>
+        <p class="empty-state-description">
+          Os dados cadastrais do arquivo coincidiram com os já registrados no WMS.
+        </p>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="catalogo-section" id="excecoes">
+      <h2 class="section-marker{% if excecoes_pagina.object_list %} section-marker-attached{% endif %}">
+        <span class="section-marker-label">Exceções ({{ execucao.total_rejeitados }})</span>
+      </h2>
+      {% if excecoes_pagina.object_list %}
+      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Linha</th>
+              <th scope="col">Código (CADPRO)</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Detalhe</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for excecao in excecoes_pagina %}
+            <tr class="table-row-error">
+              <td>
+                {% if excecao.linha_inicial == excecao.linha_final %}
+                {{ excecao.linha_inicial }}
+                {% else %}
+                {{ excecao.linha_inicial }}–{{ excecao.linha_final }}
+                {% endif %}
+              </td>
+              <td class="table-cell-code">
+                {% if excecao.cadpro %}{{ excecao.cadpro }}{% else %}<span class="catalogo-muted">—</span>{% endif %}
+              </td>
+              <td>{{ excecao.get_motivo_display }}</td>
+              <td>{{ excecao.detalhe|default:""|linebreaksbr }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "catalogo/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" ancora="excecoes" %}
+      {% else %}
+      <div class="empty-state">
+        <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
+        <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
 </main>
 {% endblock %}

@@ -11,55 +11,48 @@
  * empilhados (DESIGN.md → Layout → Estrutura de página; Do's and Don'ts).
  */
 
+/* Mesmo modelo de `.home-page`/`.home-container` (contas/static/contas/css/home.css,
+   gate visual P2): o teto de 1120px é do CONTEÚDO, não da caixa que também carrega o
+   padding lateral — a caixa em si (`.catalogo-page`) fica sem max-width, só com
+   padding-inline, e quem centraliza a 1120px é `.catalogo-container`, filha dela. Isso
+   é o que faz o título de página começar exatamente no mesmo x da marca "Almoxarifado
+   SAEP" (`.appbar-inner`, static/css/components.css, mesmo cálculo de padding): antes,
+   `.catalogo-page` incluía o padding DENTRO do max-width (border-box), deslocando o
+   conteúdo 16px além do x da barra. */
 .catalogo-page {
+  padding-block: var(--space-6) var(--space-8);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
+    max(var(--space-4), env(safe-area-inset-right, 0px));
+}
+
+.catalogo-container {
   max-width: 1120px;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
 }
 
 /* Envio é um formulário simples, não uma superfície densa de comparação — largura
-   mais contida favorece leitura, sem virar "card" (sem borda/superfície própria). */
-.catalogo-page-narrow {
+   mais contida favorece leitura, sem virar "card" (sem borda/superfície própria).
+   Modificador do CONTAINER (não mais de `.catalogo-page`), mesma lógica acima. */
+.catalogo-container-narrow {
   max-width: 640px;
-}
-
-.catalogo-back-link {
-  margin: 0 0 var(--space-4);
-  font-size: var(--font-size-meta);
-}
-
-.catalogo-back-link a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.catalogo-back-link a:hover {
-  text-decoration: underline;
 }
 
 .catalogo-messages {
   margin-bottom: var(--space-2);
 }
 
-/* Seções separadas por divisor + spacing (nunca card empilhado) — a primeira não
-   recebe o divisor superior, já separada do page header por sua própria borda. */
+/* Seções separadas por espaçamento (gate visual P2, propagação ao catálogo): o
+   divisor fino + padding-top que existia aqui era redundante com o próprio
+   marcador de tubulação (`.section-marker`, faixa `ink` cheia) que agora abre
+   toda seção destas telas — a faixa já é o separador. Sobra só o espaço entre
+   seções; a primeira não recebe nem isso, já separada do page header pela borda
+   dele. */
 .catalogo-section {
   margin-top: var(--space-6);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--color-border);
 }
 
 .catalogo-section:first-of-type {
   margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
-.catalogo-section-title {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-section-title);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
 }
 
 /* Resumo de totais: números como o elemento de maior peso da seção — hierarquia por
@@ -114,6 +107,11 @@
   color: var(--color-text-muted);
 }
 
+/* Celular (gate visual P2, propagação ao catálogo): os itens do resumo deixam de
+   caber numa linha só e quebram por `flex-wrap` — um `border-right` sobrevivendo no
+   item que agora fecha uma linha "quebrada" lia como divisor solto, sem nada à
+   direita para separar. Sem divisor vertical nenhum abaixo de 640px; o gap entre
+   linhas/colunas já separa. */
 @media (max-width: 640px) {
   .catalogo-summary {
     gap: var(--space-4) var(--space-6);
@@ -121,6 +119,8 @@
 
   .catalogo-summary-item {
     flex: 1 1 40%;
+    padding-right: 0;
+    border-right: none;
   }
 }
 
@@ -131,6 +131,22 @@
    declara a relação por extenso, sem depender só do espaçamento. */
 .catalogo-summary-item-separado {
   margin-left: var(--space-4);
+}
+
+/* Família âmbar/warning (gate visual P2, decisão do dono do produto: rejeição é
+   atenção, não erro). Aplicado ao elemento PAI do par `<dt>Rejeitados</dt><dd>N</dd>`
+   no Resumo da prévia/execução (`.catalogo-summary-item`, nunca no próprio `<dt>`/
+   `<dd>` — `tests/test_catalogo_views_importacao.py` casa esse par pelo HTML literal,
+   sem atributos), e direto na célula numérica do histórico (`<td class="table-cell-
+   numeric ...">`, onde adicionar uma classe é seguro — o teste correspondente,
+   `tests/test_catalogo_historico.py`, tolera qualquer sufixo depois de
+   "table-cell-numeric"). Substitui `--color-danger` (revisão anterior, 2026-09-22):
+   mede 6,10:1 sobre a folha e 4,80:1 sobre o piso, acima do mínimo de 4,5:1. */
+.catalogo-rejeitados-emphasis,
+.catalogo-rejeitados-emphasis dt,
+.catalogo-rejeitados-emphasis dd {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* Metadados textuais da execução (quem, quando, arquivo) — mesma convenção de
@@ -175,6 +191,28 @@
   color: var(--color-text-muted);
 }
 
+/* Nota "Ausentes do arquivo" sob o Resumo (minor do gate visual): sem respiro
+   próprio, ela colava direto na régua de números — `margin: 0 0 space-4` do
+   seletor acima só afasta o que vem DEPOIS dela. Seletor composto (não uma
+   classe isolada) para vencer por especificidade, não por ordem no arquivo —
+   `.catalogo-divergencia-nota` sozinha já zera `margin-top` via shorthand. */
+.catalogo-divergencia-nota.catalogo-resumo-nota {
+  margin-top: var(--space-3);
+}
+
+/* Estado vazio alinhado à coluna (gate visual P2): `.empty-state` (components.css)
+   carrega padding-inline próprio para quando é usada como card isolado (ex.: Home,
+   dentro de uma superfície com moldura) — aqui ela é filha direta de `.catalogo-
+   section`, sem moldura nenhuma, e esse padding só empurrava o texto ~16-32px para
+   dentro da coluna, fora do alinhamento do marcador/tabela acima dela. */
+.catalogo-section > .empty-state {
+  padding-inline: 0;
+  /* Dentro de uma seção, o marcador acima já dá a separação: sem os 32px
+     verticais do primitivo, o ritmo até a próxima seção fica igual ao das
+     demais (24px), em vez de ~60px depois de um estado vazio. */
+  padding-block: 0;
+}
+
 /* Diferença de saldo (revisão do gate visual, achado P2): a tabela de divergências
    deixou de marcar toda linha com `table-row-error` + selo "Divergência" — ênfase
    universal que se anulava e contradizia a própria nota acima, que já diz que isto
@@ -208,32 +246,21 @@
   margin-top: var(--space-2);
 }
 
-.catalogo-confirmacao {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-@media (max-width: 480px) {
-  .catalogo-confirmacao {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .catalogo-confirmacao .btn {
-    width: 100%;
-  }
-}
-
-/* Barra de confirmação persistente (revisão do gate visual, achado P1): a ação de
-   confirmar/cancelar a importação (impacto real, FR-044a) ficava só no fim de uma
-   página potencialmente longa (divergências + exceções). `position: sticky` (nunca
-   `fixed`) mantém a barra dentro do fluxo normal da página — plana, sem sombra
-   decorativa (DESIGN.md → Elevation & Depth) — mas grudada ao fim da viewport
-   enquanto o usuário rola pelas seções acima. A seção "Confirmação" no fim da página
-   permanece como estava; esta barra é o mesmo par de formulários, disponível mais
-   cedo, e não a substitui. */
+/* Barra de confirmação persistente (gate visual P1, revisado na propagação ao
+   catálogo): antes existiam DOIS pares de formulários idênticos — esta barra logo
+   depois do alerta "só uma prévia" e uma seção "Confirmação" solta no fim da página.
+   Como a barra vinha antes de todo o conteúdo rolável, `position: sticky; bottom: 0`
+   nunca tinha nada abaixo dela para grudar: aparecia na carga, sumia ao rolar e só
+   voltava colada sob o primeiro marcador. Ela agora é o ÚLTIMO elemento de `<main>`,
+   no lugar exato de onde a seção "Confirmação" estava — um único par de botões, que
+   passa a colar no rodapé da viewport durante toda a rolagem e assenta no fim da
+   página (sua própria posição no fluxo) quando o usuário chega lá. Sem a seção
+   "Confirmação"/marcador próprio: o rótulo do botão primário já diz o que a ação faz.
+   `position: sticky` (nunca `fixed`) mantém a barra dentro do fluxo normal da página —
+   plana, sem sombra decorativa (DESIGN.md → Elevation & Depth). Sem `margin-inline`
+   negativo (removido): como filha de `.catalogo-container`, ela já respeita a mesma
+   coluna de 1120px de todo o resto da página, sem precisar sangrar até a borda da
+   viewport. */
 .catalogo-confirmacao-sticky {
   position: sticky;
   bottom: 0;
@@ -244,7 +271,6 @@
   align-items: center;
   margin-top: var(--space-6);
   padding: var(--space-3) var(--space-4);
-  margin-inline: calc(var(--space-4) * -1);
   background-color: var(--color-surface);
   border-top: 1px solid var(--color-border-frame);
 }
@@ -257,6 +283,21 @@
 
   .catalogo-confirmacao-sticky .btn {
     width: 100%;
+  }
+}
+
+/* Folga inferior de rolagem enquanto a barra de confirmação está grudada no
+   rodapé: foco por teclado (ex.: links de paginação das exceções) e âncoras não
+   ficam escondidos sob ela — o espelho do `scroll-padding-top` da barra de
+   trabalho (base.css). Altura medida: ~69px no desktop; ~141px no celular, com
+   os botões empilhados e o rótulo em duas linhas. Só nas páginas que têm a barra. */
+html:has(.catalogo-confirmacao-sticky) {
+  scroll-padding-bottom: 5rem;
+}
+
+@media (max-width: 480px) {
+  html:has(.catalogo-confirmacao-sticky) {
+    scroll-padding-bottom: 10rem;
   }
 }
 
@@ -343,15 +384,14 @@
   text-decoration: underline;
 }
 
-/* Rejeitados > 0 (correção do gate visual, P1, 2026-09-22): a execução #6 (5370 de
-   8536 rejeitados) era tipograficamente idêntica à #5 (0 rejeitados) — mesma família
-   `danger` do resto do sistema, aplicada ao próprio número, que continua sendo a
-   pista primária da célula. A coluna "Situação" (badge + texto) é o resumo em
-   palavras; isto é o reforço no dado. */
-.catalogo-historico-rejeitados-alerta {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-danger);
-}
+/* Rejeitados > 0 (correção do gate visual, P1, 2026-09-22; recor em âmbar no gate
+   visual P2 da propagação ao catálogo): a execução #6 (5370 de 8536 rejeitados) era
+   tipograficamente idêntica à #5 (0 rejeitados) — o número, que continua sendo a
+   pista primária da célula, ganha a mesma classe compartilhada
+   `.catalogo-rejeitados-emphasis` (âmbar/warning, definida acima, junto do Resumo da
+   prévia/execução — "rejeição é atenção, não erro", não mais a família `danger`). A
+   coluna "Situação" (badge + texto) já usa `badge-warning` para "Com rejeições" desde
+   sempre; agora os dois lêem a mesma família. */
 
 /* Coluna "Situação" (correção do gate visual, P1, 2026-09-22): o par de rótulos é
    "Sem rejeições"/"Com rejeições", não "Concluída"/"Concluída com rejeições" — o

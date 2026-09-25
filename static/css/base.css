@@ -39,6 +39,11 @@ fieldset {
 html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
+  /* Compensa a barra de trabalho sticky (propagação ao catálogo): sem isto, uma
+     âncora de paginação (`#divergencias`, `#excecoes`...) ou um foco de teclado
+     perto do topo da página ficava coberto pela faixa `ink` de 56/48px + a linha
+     de corredor de 4px (`.appbar`, components.css). */
+  scroll-padding-top: calc(var(--appbar-height) + 4px);
 }
 
 body {

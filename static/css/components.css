@@ -112,6 +112,10 @@
   font-size: var(--font-size-body);
 }
 
+/* Sem limite de medida no texto: o alert é uma faixa da largura da coluna, e
+   limitar só o parágrafo a 72ch deixava ~460px de faixa tingida vazia à
+   direita (verificação do gate visual, 2026-09-25). Mensagens de alert são
+   curtas; a medida de 72ch fica nas notas explicativas e no empty state. */
 .alert p {
   margin: 0;
 }
@@ -252,6 +256,17 @@
   border-radius: var(--radius-sm);
 }
 
+/* Canto superior esquerdo reto quando um `.section-marker-attached` encosta
+   diretamente no wrapper (propagação ao catálogo — prévia/execução: seções que
+   abrem direto com uma tabela, sem parágrafo entre o marcador e ela, ex.
+   "Exceções", "Alterações cadastrais"). Mesma técnica de `.home-task-list`
+   (contas/static/contas/css/home.css) — um raio ali deixaria uma fresta curva
+   sob o marcador, que é retangular; só este canto muda, o resto da moldura
+   continua igual. */
+.table-wrapper-marker-attached {
+  border-top-left-radius: 0;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -319,13 +334,19 @@
   border-left: 3px solid var(--color-border-strong);
 }
 
-/* Linha clicável: hover só quando a linha tiver ação própria (DESIGN.md → Table). */
+/* Linha clicável: hover só quando a linha tiver ação própria (DESIGN.md → Table).
+   Realce dentro de `@media (hover: hover)` (propagação ao catálogo — The No Hover
+   Dependency Rule): sem isto, um toque no histórico deixava a linha "presa" no
+   estado de hover até o próximo toque em outro lugar, mesma correção já aplicada
+   à lista de tarefas da Home (`.home-task-link:hover`, home.css). */
 .table-row-clickable {
   cursor: pointer;
 }
 
-.table-row-clickable:hover {
-  background-color: var(--color-surface-subtle);
+@media (hover: hover) {
+  .table-row-clickable:hover {
+    background-color: var(--color-surface-subtle);
+  }
 }
 
 /* Empty state como linha única ocupando a largura da tabela (DESIGN.md → Table;
@@ -890,6 +911,49 @@
 }
 
 /* ---------------------------------------------------------------------
+ * Back Link (DESIGN.md → Components → Navigation)
+ * Retorno CONTEXTUAL, acima do Page Header — não o retorno genérico à Home,
+ * que a marca da barra de trabalho já cobre (propagação ao catálogo:
+ * `.catalogo-back-link` "← Início" foi removido de toda tela cujo destino
+ * era a Home). Usado só onde o destino não é a Home: da prévia de volta ao
+ * envio, do detalhe de uma execução de volta ao histórico. Seta desenhada em
+ * SVG inline, nunca glifo Unicode (Do's and Don'ts) — mesmo traço da seta de
+ * fluxo do marcador de seção, espelhada para a esquerda. `min-height: 44px`
+ * no próprio link (não um botão — texto sublinhável no hover/foco, mesma
+ * convenção de `.appbar-brand`) dá um alvo de toque de altura efetiva ≥44px
+ * sem inflar o texto visível.
+ *
+ * Estrutura esperada:
+ *   <a href="{% url '...' %}" class="back-link">
+ *     <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
+ *          fill="none" aria-hidden="true">
+ *       <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
+ *             stroke-linecap="round" stroke-linejoin="round"/>
+ *     </svg>
+ *     <span>Envio</span>
+ *   </a>
+ * ------------------------------------------------------------------- */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  margin-bottom: var(--space-4);
+  color: var(--color-primary);
+  font-size: var(--font-size-meta);
+  text-decoration: none;
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  text-decoration: underline;
+}
+
+.back-link-arrow {
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------
  * Empty State (DESIGN.md → Components → Empty State)
  * Ausência de resultado explícita fora de uma tabela (ex.: página/seção inteira sem
  * conteúdo) — nunca uma lista vazia sem explicação (FR-043). Dentro de uma tabela, use
@@ -914,7 +978,10 @@
   color: var(--color-text);
 }
 
+/* Medida de leitura (gate visual P2, propagação ao catálogo — mesma correção de
+   `.alert p` acima). */
 .empty-state-description {
+  max-width: 72ch;
   margin: var(--space-1) 0 0;
   font-size: var(--font-size-body);
 }
@@ -1081,7 +1148,7 @@
    FIX: a barra ficava 16px mais recuada que o conteúdo). */
 .appbar-inner {
   max-width: calc(1120px + 2 * var(--space-4));
-  height: 56px;
+  height: var(--appbar-height);
   margin: 0 auto;
   padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
     max(var(--space-4), env(safe-area-inset-right, 0px));
@@ -1151,14 +1218,18 @@ a.appbar-brand:focus-visible {
 /* "Sair" como controle secundário sobre fundo escuro — nunca preenchido de
    `primary` (gastaria o único accent de ação numa faixa permanente) nem de
    `on-ink-accent` (reservado a foco/circulação, não a botão). Alvo de toque de
-   44px mesmo dentro da faixa de 56px (48px sob 480px, ver abaixo). */
+   44px mesmo dentro da faixa de 56px (48px sob 480px, via `--appbar-height`).
+   Contorno em `border-strong` (propagação ao catálogo, gate visual: `ink-border`
+   media só 1,46:1 contra `ink`, abaixo do mínimo não textual de 3:1 — o token
+   permanece disponível para outro uso futuro, sem alteração de valor). Sobre
+   `ink`, `border-strong` mede 4,85:1 (4,18:1 sobre `ink-raised`, o hover). */
 .appbar-logout {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   padding: var(--space-1) var(--space-3);
   background: none;
-  border: 1px solid var(--color-ink-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   color: var(--color-on-ink);
   font: inherit;
@@ -1169,12 +1240,6 @@ a.appbar-brand:focus-visible {
 
 .appbar-logout:hover {
   background-color: var(--color-ink-raised);
-}
-
-@media (max-width: 480px) {
-  .appbar-inner {
-    height: 48px;
-  }
 }
 
 /* ---------------------------------------------------------------------
