@@ -477,7 +477,9 @@ de palavras e exigiriam configuração de idioma sem ganho no porte do catálogo
   JavaScript e cumpre o "Confirmation / Dialog" do `DESIGN.md`.
 - Pontos de entrada: links condicionais na Home mínima da 002 ("Catálogo de materiais"; "Importar
   catálogo" e "Histórico de importações" para o chefe do almoxarifado). O app shell/sidebar continua
-  **em aberto** no `DESIGN.md` e não é decidido aqui.
+  **em aberto** no `DESIGN.md` e não é decidido aqui. *(Nota posterior, 2026-09: decidido depois,
+  na modernização visual — barra de trabalho global, sem sidebar, e sem o link "← Início"; ver
+  `DESIGN.md` → Layout → App shell.)*
 
 ---
 

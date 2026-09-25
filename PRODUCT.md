@@ -130,8 +130,10 @@ fluxo próprio de requisição e autorização hierárquica por setor que o SCPI
   `domain/Scripts/saidas/` e gerados pelos scripts de `domain/Scripts/extrair-relatorio/` —
   evidência de formato e volume reais de dados de movimentação, hoje fora do escopo de qualquer
   feature especificada.
-- Nenhuma identidade visual, marca, depoimento ou material de marketing confirmado até o momento;
-  trabalho visual futuro não deve presumir nenhum desses.
+- Nenhuma identidade institucional, marca, depoimento ou material de marketing confirmado até o
+  momento; trabalho visual futuro não deve presumir nenhum desses. A direção visual adotada na
+  interface ("Tubulação e piso industrial", ver `DESIGN.md`) é decisão de design do produto, não
+  identidade institucional aprovada do SAEP: não há logotipo nem cor oficial.
 
 ## Product Principles
 

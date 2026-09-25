@@ -254,6 +254,13 @@ logout — sem sidebar completa, sem menu de features futuras, sem KPI, sem cat�
 Decisões de app-shell (largura de sidebar desktop, navegação mobile) permanecem **abertas em
 `DESIGN.md`** e não são antecipadas aqui.
 
+> **Nota posterior (2026-09):** a decisão de app shell foi tomada depois desta feature, na
+> modernização visual "Tubulação e piso industrial" (PRs #15–#17): barra de trabalho global
+> declarada em `contas/templates/contas/base.html`, sem sidebar. Ver `DESIGN.md` → Layout → App
+> shell. O conteúdo da Home também cresceu depois: os atalhos por papel da 001 e, no PR #15, a
+> zona "Em preparação" (capacidades planejadas, sem link). O texto desta seção registra o estado
+> da época e não proíbe o que veio depois.
+
 ### Logout
 
 ```text
@@ -383,7 +390,8 @@ Preferência por "nenhuma nova dependência" satisfeita integralmente (ver `rese
 - **`DESIGN.md`**: login e Home usam os tokens de cor/tipografia/espaçamento definidos; nenhum
   padrão visual novo é inventado. Decisões de app-shell (sidebar desktop, navegação mobile) que o
   próprio `DESIGN.md` deixa em aberto **não são resolvidas por esta feature** — a Home permanece
-  deliberadamente mínima até essas decisões existirem.
+  deliberadamente mínima até essas decisões existirem. *(Nota posterior: decididas depois desta
+  feature — ver a nota da seção Home acima e `DESIGN.md` → Layout → App shell.)*
 - **Nenhum conflito material** foi identificado entre `spec.md`, as matrizes canônicas, `PRODUCT.md`
   e `DESIGN.md` para o que esta feature precisa implementar.
 

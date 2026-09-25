@@ -21,7 +21,8 @@ Ao trabalhar neste projeto, respeite a seguinte ordem de contexto:
 4. `spec.md` — requisitos e comportamento esperado da feature;
 5. `plan.md` — solução técnica planejada;
 6. `tasks.md` — unidades de implementação;
-7. `DESIGN.md` — design system, quando existir;
+7. `DESIGN.md` — design system e direção visual vigentes; o sidecar `.impeccable/design.json` o
+   espelha e os contratos de direção em `.impeccable/surfaces/` registram a direção que o originou;
 8. código existente — realidade atual da implementação.
 
 Essa ordem não é uma regra simples de "arquivo de cima sempre sobrescreve arquivo de baixo". Uma

@@ -54,7 +54,8 @@ Respeite, de forma combinada, as seguintes fontes:
 6. `spec.md` — comportamento e requisitos da feature;
 7. `plan.md` — solução técnica planejada;
 8. `tasks.md` — unidades de implementação;
-9. `DESIGN.md` — design system e direção visual;
+9. `DESIGN.md` — design system e direção visual vigentes; o sidecar `.impeccable/design.json` o
+   espelha e os contratos de direção em `.impeccable/surfaces/` registram a direção que o originou;
 10. código existente — realidade atual da implementação.
 
 Essa ordem não é uma regra simples de "fonte de cima sempre sobrescreve a de baixo". Uma
@@ -462,6 +463,11 @@ lugar do `critique`. `impeccable polish` não faz parte do gate: ele modifica a 
 só cabe como alternativa explícita de correção quando o coordenador optar por corrigir assim em
 vez de encaminhar os findings ao `frontend_implementer`.
 
+O `critique` é executado pelo coordenador, que pode delegar: o contrato dele exige duas
+avaliações isoladas (revisão de design e evidência do detector/navegador), executadas como
+subagents paralelos. Executado por um agente que não delega, ele cai no modo degradado de
+contexto único. Se o relatório vier marcado como degradado, informe o usuário.
+
 Quando o `critique` reportar três ou mais Priority Issues, o próprio contrato dele para na
 entrega do relatório e exige perguntas direcionadas ao usuário antes de qualquer correção.
 Nesse caso, aguarde a seleção do usuário e encaminhe ao `frontend_implementer` somente os
@@ -469,15 +475,18 @@ findings aprovados — não repasse o relatório inteiro automaticamente. Com me
 Priority Issues, quando o próprio `critique` permitir seguir sem perguntas, os findings podem
 ir direto ao `frontend_implementer`.
 
-Após a primeira implementação visual real — quando templates, CSS e componentes deixam de ser
-hipotéticos — execute o comando `impeccable document` em modo scan para promover o seed de
-`DESIGN.md` a uma representação do código construído e extrair o sidecar
-`.impeccable/design.json`. Trate essa transição como obrigatória, não como algo a perceber
-depois. Não delegue esse passo ao agente `impeccable_documenter`: ele pressupõe um build
-Impeccable completo — contrato de direção e artefatos próprios desse workflow — que uma
-implementação comum do `frontend_implementer` não produz; reserve-o para quando esse contrato
-existir. Em implementações posteriores, documente apenas mudanças duráveis do sistema (novo
-token, novo padrão reutilizável), não cada tela individualmente.
+`DESIGN.md` deixou de ser seed: descreve o sistema construído e é registrado a partir do código,
+nunca de intenções. Mantê-lo fiel ao código é parte da entrega frontend. Quando uma mudança
+significativa introduzir algo durável no sistema — token novo ou removido, componente ou padrão
+reutilizável, regra nomeada, mudança de app shell —, atualize `DESIGN.md` e
+`.impeccable/design.json` na mesma entrega, sem documentar cada tela individualmente. Quando a
+entrega for executada sob um contrato de direção de `.impeccable/surfaces/` (redesign,
+superfície-laboratório ou propagação), use o `impeccable_documenter` — o contrato continuar
+versionado não torna toda mudança posterior uma entrega sob contrato; sem contrato, use `impeccable document` em modo scan — o
+`impeccable_documenter` pressupõe um build Impeccable completo (contrato de direção e artefatos
+próprios desse workflow) que uma implementação comum do `frontend_implementer` não produz. Nos
+dois casos, confira o resultado contra `static/css/tokens.css`, `static/css/components.css`, o
+CSS das features (`<app>/static/<app>/css/`) e os templates; o `frontend_implementer` não edita `DESIGN.md` nem o sidecar.
 
 Se ficar evidente que a fundação do design system precisa ser criada, revista ou auditada
 estruturalmente — e não apenas uma tela específica — direcione esse trabalho ao workflow
@@ -490,7 +499,9 @@ coordenador; o código continua com o `frontend_implementer`. Num pedido de rede
 estrutural da fundação (não só uma tela):
 
 1. o coordenador conduz o `new-work` do Impeccable: classifica o modo da superfície, roda o
-   `concept-seed` e apresenta a rodada de direção ao usuário — a escolha estética é dele;
+   `concept-seed` e apresenta a rodada de direção ao usuário — a escolha estética é dele. Se a
+   rodada rodar degradada (por exemplo, sem rede ou sem geração de imagem), diga isso ao usuário
+   ao apresentá-la e registre no contrato, junto da seed key;
 2. registra a direção escolhida como contrato no surface brief (`.impeccable/surfaces/`,
    versionado), antes de qualquer código;
 3. encaminha ao `frontend_implementer` o contrato como instrução explícita. Nesse caso, alterar
@@ -505,6 +516,11 @@ Prefira uma superfície-laboratório antes de propagar: os tokens mudam globalme
 Foundation Rule, `DESIGN.md`), mas a composição nova fica na superfície-laboratório até uma
 etapa própria de propagação. As telas que só herdam os tokens precisam ser conferidas por captura
 e testes na mesma entrega.
+
+A etapa de propagação é frontend significativo sob o mesmo contrato: `frontend_implementer` →
+`code_reviewer` → gate visual por `impeccable critique` nas telas propagadas (o
+`impeccable_finish_reviewer` só quando a etapa tiver comp e capturas próprios) → atualização
+incremental de `DESIGN.md` e do sidecar pelo `impeccable_documenter`, como descrito acima.
 
 ## Tarefas triviais
 

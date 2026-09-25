@@ -324,7 +324,10 @@ Para mudanças frontend, revise principalmente:
 - quebra de componentes existentes;
 - JavaScript desnecessário;
 - regras críticas movidas para o cliente;
-- violações claras do `DESIGN.md` quando aplicável.
+- violações claras do `DESIGN.md` quando aplicável — em especial as que
+  têm efeito funcional: The Available-Versus-Planned Rule (capacidade
+  planejada nunca é link, controle nem alvo clicável) e The No Hover
+  Dependency Rule (nenhuma ação necessária depende de hover).
 
 Não faça auditoria estética completa. Não introduza requisitos específicos
 de acessibilidade que não façam parte da specification ou da Constitution.
