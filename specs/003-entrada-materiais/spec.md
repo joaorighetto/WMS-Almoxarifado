@@ -49,6 +49,8 @@ almoxarifado físico, sem locais, lotes ou validade."
   `ENT`. Esta spec só consome fornecedores; a implementação e o aceite da `ENT` esperam `FOR`.
 - Q: Em quais motivos o emitente é obrigatório? → A: em compra e em devolução de
   fornecedor/garantia; em doação recebida e empréstimo devolvido é opcional (FR-007).
+- Fornecedor bloqueado no SCPI, conforme a última importação, não pode ser escolhido como emitente
+  (decisão de 2026-09-25, canonizada em `INV-SUPPLIER-005`; FR-007).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -187,6 +189,8 @@ como estornada, e que o estorno exibe autor, momento e justificativa.
   indicando a entrada existente (FR-007a).
 - **Mesmo número de nota de emitentes diferentes**: aceito; são documentos distintos.
 - **Compra ou devolução de fornecedor/garantia sem emitente**: recusada.
+- **Emitente bloqueado no SCPI**: não pode ser escolhido; se for bloqueado por uma reimportação
+  entre o preenchimento e a confirmação, a confirmação é recusada.
 - **Emitente ausente do cadastro de fornecedores**: não pode ser escolhido; a entrada não cadastra
   fornecedor. O cadastro é atualizado pela importação de `FOR`, fora desta feature.
 - **Motivo fora da lista fechada**, inclusive enviado diretamente sem passar pela tela: recusado.
@@ -231,7 +235,9 @@ como estornada, e que o estorno exibe autor, momento e justificativa.
   e emitente, escolhido do cadastro de fornecedores importado do SCPI (`FOR`). O emitente é
   obrigatório nos motivos compra e devolução de fornecedor/garantia e opcional nos motivos doação
   recebida e empréstimo devolvido. O tipo de documento é independente do motivo. Tipo fora da lista
-  ou emitente inexistente no cadastro são recusados. A entrada não cria nem altera fornecedor.
+  ou emitente inexistente no cadastro são recusados, assim como emitente bloqueado no SCPI conforme
+  a última importação (`INV-SUPPLIER-005`). A entrada não cria nem altera fornecedor
+  (`INV-SUPPLIER-003`).
 - **FR-007a**: Uma entrada NÃO DEVE ser registrada se já existir outra entrada não estornada com a
   mesma referência — mesmo tipo de documento, mesmo número (comparado após remover espaços das
   pontas, sem outra normalização) e mesmo emitente, ou ambas sem emitente. A recusa indica a
@@ -347,6 +353,7 @@ como estornada, e que o estorno exibe autor, momento e justificativa.
   matriz em 2026-09-25 por decisão do dono do produto.
 - `PERM-STOCK-HISTORY-VIEW` — consulta e detalhe das entradas registradas (FR-020, FR-021).
 - `PERM-MATERIAL-VIEW` — localização do material ao compor a entrada (FR-003).
+- `PERM-SUPPLIER-VIEW` — escolha do emitente entre os fornecedores importados (FR-007).
 
 ### Invariantes
 
@@ -363,6 +370,9 @@ como estornada, e que o estorno exibe autor, momento e justificativa.
 - `INV-MOV-002` — toda alteração de saldo com movimentação correspondente na mesma operação (FR-016,
   FR-017, FR-025).
 - `INV-SCPI-001` — sem integração automática com o SCPI (FR-029).
+- `INV-ENT-001` — estorno sempre total e no máximo uma vez (FR-023, FR-027).
+- `INV-SUPPLIER-003` — entrada não cria nem altera fornecedor (FR-007).
+- `INV-SUPPLIER-005` — fornecedor bloqueado não é emitente de nova entrada (FR-007).
 
 ## Success Criteria *(mandatory)*
 

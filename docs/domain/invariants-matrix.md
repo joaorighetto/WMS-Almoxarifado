@@ -3,8 +3,9 @@
 ```text
 Status: VALIDADO
 Autoridade: CANÔNICA PARA INVARIANTES DE DOMÍNIO
-Versão: 1.0
+Versão: 1.1
 Última validação: 2026-09-18
+Última alteração: 2026-09-25 (INV-ENT-001, INV-SUPPLIER-001 a 005)
 
 Escopo:
 propriedades transversais atualmente confirmadas que devem permanecer
@@ -19,6 +20,8 @@ verdadeiras nos estados e operações relevantes do WMS.
 - `PRODUCT.md`
 - `.specify/memory/constitution.md`
 - `specs/001-importacao-catalogo-materiais/spec.md`
+- decisões do dono do produto de 2026-09-25, na especificação de `specs/003-entrada-materiais` e
+  da importação de fornecedores (`FOR`)
 - `docs/domain/permissions-matrix.md` (condições de capability usadas como evidência, nunca
   duplicadas sem necessidade)
 - `docs/domain/reconciliation/invariants-reconciliation.md` (histórico do raciocínio completo,
@@ -132,6 +135,33 @@ A atomicidade interna do registro de uma saída excepcional (falha em um item de
 inteiro) é instância de `INV-STOCK-004`, não uma invariante própria — evita duplicar a mesma
 propriedade sob dois IDs.
 
+### Entrada
+
+| ID | Domínio | Invariante | Severidade | Verificação recomendada |
+|---|---|---|---|---|
+| `INV-ENT-001` | Entrada | Estorno de entrada é sempre total — todos os itens, na quantidade integral — e ocorre no máximo uma vez por entrada; não existe estorno parcial. | CRÍTICA | domínio; transacional |
+
+**Evidência**: `docs/domain/permissions-matrix.md`, condição de `PERM-STOCK-ENTRY-REVERSE`; decisão
+do dono do produto de 2026-09-25 (spec 003), no mesmo modelo de `INV-SAE-001`. A atomicidade do
+registro e do estorno é instância de `INV-STOCK-004`, e o bloqueio por saldo negativo, de
+`INV-STOCK-001`.
+
+### Fornecedor
+
+| ID | Domínio | Invariante | Severidade | Verificação recomendada |
+|---|---|---|---|---|
+| `INV-SUPPLIER-001` | Fornecedor | O código do fornecedor no SCPI (`CODIF`) é identificador opaco. O WMS não o gera, altera, reformata, completa ou infere. | CRÍTICA | domínio; integração |
+| `INV-SUPPLIER-002` | Fornecedor | Não podem existir dois fornecedores com o mesmo `CODIF`. Nome e CNPJ/CPF não identificam o fornecedor. | CRÍTICA | domínio; banco/constraint |
+| `INV-SUPPLIER-003` | Fornecedor | Fornecedor só entra no WMS pela importação do SCPI, e seus dados só mudam por nova importação; não existe criação ou edição manual por nenhum papel. | CRÍTICA | domínio; integração |
+| `INV-SUPPLIER-004` | Fornecedor | O WMS guarda do fornecedor apenas os dados de identificação — código, nome, nome fantasia, CNPJ/CPF, tipo de pessoa e situação de bloqueio no SCPI. Dados bancários, PIS, endereço, contato e demais dados do arquivo não são armazenados. | ALTA | integração; segurança |
+| `INV-SUPPLIER-005` | Fornecedor | Fornecedor bloqueado no SCPI, conforme a última importação, não pode ser emitente de nova entrada. | ALTA | domínio |
+
+**Evidência**: decisões do dono do produto de 2026-09-25 — cadastro de fornecedores só pela
+importação do SCPI, dados mínimos, bloqueado não pode ser emitente — e análise do CSV real
+(10.035 registros: `CODIF` único e sempre preenchido; 1.690 nomes repetidos; CNPJ/CPF vazio em
+3.310 e repetido em 37). Mesmo modelo de `INV-CATALOG-001` a `INV-CATALOG-004`; `PRODUCT.md`,
+Product Principles (SCPI como fonte de verdade do cadastro oficial); Constitution, Princípio VI.
+
 ### SCPI
 
 | ID | Domínio | Invariante | Severidade | Verificação recomendada |
@@ -144,7 +174,7 @@ almoxarifado).
 
 ## 3. Total
 
-19 invariantes canonizadas.
+25 invariantes canonizadas.
 
 ## 4. Fora desta matriz (deliberadamente, não por esquecimento)
 

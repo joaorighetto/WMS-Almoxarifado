@@ -5,7 +5,7 @@ Status: VALIDADO
 Autoridade: CANÔNICA PARA AUTORIZAÇÃO DE DOMÍNIO
 Versão: 1.1
 Última validação: 2026-09-18
-Última alteração: 2026-09-25 (PERM-STOCK-ENTRY-REVERSE)
+Última alteração: 2026-09-25 (PERM-STOCK-ENTRY-REVERSE; capabilities de fornecedores)
 ```
 
 **Escopo**: capacidades de negócio atualmente definidas para o WMS-Almoxarifado.
@@ -15,7 +15,7 @@ Versão: 1.1
 - `docs/domain-legacy/reconciliation/permissions-reconciliation.md`
 - `specs/001-importacao-catalogo-materiais/spec.md`
 - decisão do dono do produto de 2026-09-25, na especificação de `specs/003-entrada-materiais`
-  (`PERM-STOCK-ENTRY-REVERSE`)
+  (`PERM-STOCK-ENTRY-REVERSE`) e da importação de fornecedores (`PERM-SUPPLIER-*`)
 
 > A ausência de uma capability para uma feature ainda não especificada não significa proibição
 > permanente da feature; significa apenas que nenhuma autorização correspondente foi definida
@@ -145,6 +145,14 @@ Versão: 1.1
 | `PERM-SCPI-IMPORT-EXECUTE` | Executar importação do catálogo SCPI | `ROLE-WAREHOUSE-HEAD` | — | Duas etapas obrigatórias — prévia sem persistência, depois confirmação explícita — antes de qualquer gravação (spec 001, FR-044a). |
 | `PERM-SCPI-IMPORT-HISTORY-VIEW` | Consultar histórico de execuções de importação | `ROLE-WAREHOUSE-HEAD` | — | — |
 
+### Fornecedores
+
+| ID | Capacidade | Papéis autorizados | Escopo | Condições |
+|---|---|---|---|---|
+| `PERM-SUPPLIER-IMPORT-EXECUTE` | Executar importação do cadastro de fornecedores do SCPI | `ROLE-WAREHOUSE-HEAD` | — | Prévia sem persistência, depois confirmação explícita, antes de qualquer gravação. |
+| `PERM-SUPPLIER-IMPORT-HISTORY-VIEW` | Consultar histórico de execuções da importação de fornecedores | `ROLE-WAREHOUSE-HEAD` | — | — |
+| `PERM-SUPPLIER-VIEW` | Consultar fornecedores | `ROLE-WAREHOUSE-STAFF` | — | Somente os dados mantidos por `INV-SUPPLIER-004`. |
+
 ### Relatórios e painéis
 
 | ID | Capacidade | Papéis autorizados | Escopo | Condições |
@@ -162,6 +170,7 @@ papel, vivem em suas fontes apropriadas — Constitution, spec vigente ou
 
 - usuário inativo não acessa nem opera (`INV-AUTH-001`);
 - material não pode ser criado manualmente, por nenhum papel (`INV-CATALOG-003`; spec 001, FR-006);
+- fornecedor não pode ser criado nem editado manualmente, por nenhum papel (`INV-SUPPLIER-003`);
 - ninguém autoriza requisição de setor alheio ao seu (regra negativa confirmada);
 - liberação de reserva não entregue é efeito automático de outras transições, não uma ação
   solicitada por um papel;
