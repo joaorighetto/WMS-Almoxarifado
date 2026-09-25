@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T18:00:00Z",
+  "generatedAt": "2026-09-25T21:00:00Z",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -482,22 +482,6 @@
           "#A5A5A1",
           "#C9C9C5",
           "#EFEFEB"
-        ]
-      },
-      "ink-border": {
-        "role": "neutral",
-        "displayName": "Grafite de Faixa, borda",
-        "canonical": "#3A3A36",
-        "purpose": "Sem consumidor hoje: 1,46:1 contra ink, insuficiente para contorno de controle (o Sair usa border-strong).",
-        "tonalRamp": [
-          "#0B0B08",
-          "#252522",
-          "#42423E",
-          "#61615D",
-          "#83837E",
-          "#A5A5A1",
-          "#C9C9C4",
-          "#EFEFEA"
         ]
       },
       "on-ink": {

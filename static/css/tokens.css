@@ -78,7 +78,7 @@
   --color-danger-surface: #FBEAE8;
   --color-danger-border: #C9756C;
 
-  /* Azul-petróleo, não azul: fora do eixo do Azul-Operação, "contexto neutro" e
+  /* Azul-petróleo, não azul: fora do eixo do Azul Ação Obrigatória, "contexto neutro" e
      "ação" continuam sem se confundir. */
   --color-info: #1F6572;
   --color-info-surface: #E3F1F3;
@@ -87,7 +87,7 @@
   /* Tom sutil do novo `primary`, mesma função (linha selecionada, item de
      navegação ativo). */
   --color-selected: #E3ECF8;
-  /* Foco: mesmo tom do Azul-Operação (DESIGN.md → Colors → Estados semânticos → Foco).
+  /* Foco: alias do Azul Ação Obrigatória (DESIGN.md → Colors → Primary).
      Sobre área `ink`, o foco usa `on-ink-accent` em vez deste token — ver `.appbar`
      em components.css. */
   --color-focus: var(--color-primary);
@@ -101,14 +101,14 @@
   --color-signal: #F2C200;
 
   /* ---------------------------------------------------------------------
-   * Cor — Tinta estrutural do app shell (DESIGN.md → Layout → App shell (desktop))
+   * Cor — Tinta estrutural do app shell (DESIGN.md → Colors → Tinta estrutural;
+   * Layout → App shell: barra de trabalho)
    * Passa de azul-acinzentado para GRAFITE nesta revisão: consumida agora pela
    * barra de trabalho (`.appbar`, components.css). Neutra e escura de propósito —
    * é a única área grande de cor do sistema e não pode ser `primary`.
    * ------------------------------------------------------------------- */
   --color-ink: #1E1E1C;
   --color-ink-raised: #2A2A27;
-  --color-ink-border: #3A3A36;
   --color-on-ink: #FFFFFF;
   --color-on-ink-muted: #C9C7C1;
   /* Amarelo de segurança sobre grafite (9,93:1) — mesmo valor de `--color-signal`,
@@ -212,8 +212,8 @@
   }
 }
 
-/* Barra de trabalho mais baixa nas telas mais estreitas (DESIGN.md →
-   Components → Navigation: "56px de altura, 48px abaixo de 480px") — mesmo
+/* Barra de trabalho mais baixa nas telas mais estreitas (DESIGN.md → Layout →
+   App shell: barra de trabalho — 56px, 48px abaixo de 480px) — mesmo
    ponto de corte já usado por `.appbar-inner`/`.page-header-actions`. */
 @media (max-width: 480px) {
   :root {
