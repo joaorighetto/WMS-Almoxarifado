@@ -3,8 +3,9 @@
 ```text
 Status: VALIDADO
 Autoridade: CANÔNICA PARA AUTORIZAÇÃO DE DOMÍNIO
-Versão: 1.0
+Versão: 1.1
 Última validação: 2026-09-18
+Última alteração: 2026-09-25 (PERM-STOCK-ENTRY-REVERSE)
 ```
 
 **Escopo**: capacidades de negócio atualmente definidas para o WMS-Almoxarifado.
@@ -13,6 +14,8 @@ Versão: 1.0
 - `PRODUCT.md`
 - `docs/domain-legacy/reconciliation/permissions-reconciliation.md`
 - `specs/001-importacao-catalogo-materiais/spec.md`
+- decisão do dono do produto de 2026-09-25, na especificação de `specs/003-entrada-materiais`
+  (`PERM-STOCK-ENTRY-REVERSE`)
 
 > A ausência de uma capability para uma feature ainda não especificada não significa proibição
 > permanente da feature; significa apenas que nenhuma autorização correspondente foi definida
@@ -115,6 +118,7 @@ Versão: 1.0
 | ID | Capacidade | Papéis autorizados | Escopo | Condições |
 |---|---|---|---|---|
 | `PERM-STOCK-ENTRY-CREATE` | Registrar entrada de estoque | `ROLE-WAREHOUSE-STAFF` | — | Motivo fechado (compra, doação recebida, devolução de fornecedor/garantia, empréstimo devolvido) + referência obrigatória. |
+| `PERM-STOCK-ENTRY-REVERSE` | Estornar entrada de estoque | `ROLE-WAREHOUSE-HEAD` | — | Estorno é total (a entrada inteira, uma única vez); justificativa obrigatória; bloqueado se deixar saldo negativo (`INV-STOCK-001`). |
 | `PERM-INVENTORY-ADJUST` | Ajustar saldo por inventário | `ROLE-WAREHOUSE-HEAD` | — | Corrige divergência de saldo apontada pela reimportação do catálogo SCPI. |
 | `PERM-STOCK-HISTORY-VIEW` | Consultar histórico de movimentações de estoque | `ROLE-SECTOR-ASSISTANT` (o que criou); `ROLE-SECTOR-HEAD` (setor que chefia + o que criou); `ROLE-WAREHOUSE-STAFF`, `ROLE-AUDITOR` (tudo) | Variável por papel | — |
 

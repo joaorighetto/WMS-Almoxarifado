@@ -85,7 +85,8 @@ e a eventual reserva exigem contrato coerente entre ambas antes da implementaç�
 **Saídas e correções seguem sua origem.** A saída ordinária pertence ao atendimento; não há
 evidência para uma feature de saída livre paralela a ele. A saída excepcional (`SAE`) tem motivos,
 autoridade e ciclo próprios, independentes de requisição. Estorno de saída excepcional fica em
-`SAE`; estorno de requisição finalizada fica em `ATE`; devolução física vinculada ao atendimento
+`SAE`; estorno de entrada fica em `ENT` (decisão de 2026-09-25, `PERM-STOCK-ENTRY-REVERSE`);
+estorno de requisição finalizada fica em `ATE`; devolução física vinculada ao atendimento
 é `DEV`, incluindo seu próprio estorno. Não se cria uma feature genérica de estornos.
 
 **Consulta histórica e análise têm resultados distintos.** `HIS` permite investigar movimentos
@@ -107,7 +108,8 @@ features estão na seção 6.
 | 001 | Importação e consulta do catálogo | Do CSV à consulta de materiais e conferência auditável da carga | Prévia e confirmação; saldo inicial; busca; histórico de importações; reimportação cadastral e divergências informativas | Cadastro manual; manutenção local; correção de saldo; movimentações; integração automática | O: 002 | Concluída — entregue em `main` pelo [PR #8](https://github.com/joaorighetto/WMS-Almoxarifado/pull/8) |
 | 002 | Autenticação e acesso inicial | Da matrícula e senha à sessão identificada, acesso protegido e logout | Home mínima; retorno seguro; papéis/setor consultáveis; salvaguardas do provisionamento inicial já especificadas | Gestão de produto de usuários/setores; recuperação de senha; painel; autorização das operações de negócio | Nenhuma feature funcional anterior | Concluída — entregue em `main` pelo [PR #5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5) |
 | ORG | Administração de usuários, papéis e setores | Manter identidades e sua organização com chefia válida e atribuições explícitas | Gestão pelo administrador de sistema; vínculo setorial; atribuição dos papéis canônicos; manutenção das invariantes organizacionais | Redefinir papéis; conceder poderes operacionais implícitos; gestão de estoque; redefinir login | O: 002; R: antes do uso amplo de REQ | Planejada |
-| ENT | Entrada de materiais | Registrar recebimento e conferir seu efeito no saldo e no registro da operação | Entrada nos motivos canônicos, com referência; rastreabilidade da operação | Criar materiais; compras/licitações; devolução de requisição; ajuste de inventário; importar movimentações do SCPI | O: 001; R: primeira movimentação após catálogo | Planejada |
+| FOR | Importação do cadastro de fornecedores do SCPI | Do CSV do SCPI à consulta de fornecedores e conferência auditável da carga, para servirem de emitente nas entradas | Carga por CSV com prévia e confirmação; consulta; reimportação; resultado auditável | Cadastro manual de fornecedores; compras/licitações; contratos; dados financeiros ou fiscais além da identificação; integração automática | O: 002; R: antes de ENT | Planejada — incluída por decisão do dono do produto em 2026-09-25; CSV real disponível localmente |
+| ENT | Entrada de materiais | Registrar recebimento e conferir seu efeito no saldo e no registro da operação | Entrada nos motivos canônicos, com referência e emitente do cadastro de fornecedores; rastreabilidade da operação; estorno total da entrada pelo chefe, com justificativa | Criar materiais; cadastrar ou importar fornecedores; compras/licitações; devolução de requisição; ajuste de inventário; importar movimentações do SCPI; estorno parcial | O: 001 e FOR; R: primeira movimentação após catálogo | Em especificação — [spec 003](specs/003-entrada-materiais/spec.md), sem plano/tarefas |
 | REQ | Solicitação e autorização de materiais | Criar solicitação para si ou para terceiro permitido e levá-la à decisão do chefe do setor | Criação; consulta conforme escopo; fila e autorização setorial; definição dos estados desta etapa | Atendimento; baixa física; saída excepcional; notificações; pressupor reserva ou autorização parcial | O: 001 e identidades/setores/chefias válidos; R: ORG | Planejada |
 | ATE | Atendimento e conclusão de requisições | Da requisição autorizada à entrega, saída e conclusão consultável | Fila; atendimento por qualquer funcionário do almoxarifado; histórico de concluídas; estorno de requisição finalizada pelo chefe | Autorizar requisição; saída avulsa; devolução física; lançamento no SCPI; pressupor atendimento parcial | O: REQ; R: ENT e HIS | Planejada |
 | HIS | Consulta do histórico de movimentações | Localizar movimento e conferir origem, ator, quantidade e momento no escopo permitido | Consulta transversal por permissões; rastreabilidade útil à conferência e ao lançamento manual externo no SCPI | Criar/alterar movimentos; histórico de cargas da 001; relatórios consolidados; controle de pendências no SCPI | O: ao menos uma operação de estoque entregue; R: iniciar após ENT | Planejada |
@@ -126,7 +128,8 @@ escopos completos das matrizes:
 | Recorte | Evidência canônica principal |
 |---|---|
 | ORG | `PERM-USER-MANAGE`, `PERM-SECTOR-MANAGE`; `INV-ORG-001` a `INV-ORG-003` |
-| ENT | `PERM-STOCK-ENTRY-CREATE`; `INV-STOCK-001`, `INV-STOCK-004`, `INV-MOV-001/002` |
+| FOR | Nenhuma capability ou invariante canônica ainda: quem importa e as regras de identidade do fornecedor devem entrar nas matrizes antes da spec usá-las |
+| ENT | `PERM-STOCK-ENTRY-CREATE`, `PERM-STOCK-ENTRY-REVERSE`; `INV-STOCK-001`, `INV-STOCK-004`, `INV-MOV-001/002` |
 | REQ | `PERM-REQ-CREATE-SELF`, `PERM-REQ-CREATE-FOR-OTHER`, permissões de consulta e `PERM-REQ-AUTHORIZE` |
 | ATE | `PERM-REQ-FULFILLMENT-QUEUE-VIEW`, `PERM-REQUEST-FULFILL`, `PERM-REQ-REVERSE`; fluxo confirmado em `PRODUCT.md` |
 | HIS | `PERM-STOCK-HISTORY-VIEW`; `INV-MOV-001/002` |
@@ -145,6 +148,9 @@ escopos completos das matrizes:
   satisfeita com a entrega da 002.
 - `001 → ENT, REQ, SAE, INV, MAT`: materiais e saldos iniciais vêm do catálogo importado.
   Dependência satisfeita com a entrega da 001.
+- `FOR → ENT`: o emitente obrigatório das entradas por compra e por devolução de
+  fornecedor/garantia vem do cadastro de fornecedores importado do SCPI (decisão de 2026-09-25).
+  A spec da ENT pode avançar antes; sua implementação e seu aceite esperam a entrega de `FOR`.
 - `REQ → ATE → DEV`: atendimento exige autorização; devolução exige atendimento de origem.
   `ATE → REL` fornece o consumo por requisição; outras dependências de `REL` serão definidas
   pelas métricas escolhidas.
@@ -174,6 +180,7 @@ escopos completos das matrizes:
    disponíveis a todas as operações.
 2. **Especificar `ORG` e `ENT`**, agora que a 001 está entregue. A primeira organiza a
    administração cotidiana; a segunda entrega o primeiro fluxo de estoque após a carga.
+   **Especificar e implementar `FOR` antes da implementação de `ENT`**, que depende dela.
 3. **Especificar `REQ` e `HIS`**, com suas dependências satisfeitas para implementação. A primeira
    fecha solicitação/autorização; a segunda permite investigar os movimentos já produzidos.
 4. **Especificar e implementar `ATE`**, fechando catálogo → solicitação → autorização → entrega
@@ -196,18 +203,21 @@ prioridade: a 002 precede funcionalmente a 001 sem renumeração de nenhuma dela
 | ORG | **A definir:** fluxos de manutenção, troca de chefia e desativação de setor; relação com requisições em andamento; entrega/recuperação de credenciais. O provisionamento da 002 não resolve esses fluxos de produto. |
 | REQ / ATE | **Requer clarificação futura:** máquina de estados, envio/rascunho, recusa/retorno, cancelamentos, autorização parcial, atendimento parcial e eventual separação para retirada. Não tratar candidatos do legado como decisões vigentes. |
 | REQ / ATE e demais operações | **A definir:** existência e mecanismo de reserva, momentos de reservar/consumir/liberar e conceito de saldo disponível. Preservar desde já as condições canônicas de inativação e estorno de devolução; reservado inexistente vale zero para inativação, conforme a matriz, sem obrigar a criar reserva antes de MAT. |
-| ENT / SAE | **A definir:** composição do registro operacional, informações de referência e fluxo de confirmação. Motivos e autoridades já estão confirmados; não ampliar essas operações para módulos de compras, empréstimos ou doações. |
+| ENT / SAE | **ENT:** composição do registro (vários itens por entrada), referência (tipo de documento de lista fechada + número) e estorno (total, pelo chefe) decididos em 2026-09-25 na [spec 003](specs/003-entrada-materiais/spec.md); fluxo de confirmação (resumo + confirmação, sem rascunho), bloqueio de documento repetido e emitente do cadastro `FOR` decididos no `clarify` da 003. **SAE — a definir:** composição do registro operacional, informações de referência e fluxo de confirmação. Motivos e autoridades já estão confirmados; não ampliar essas operações para módulos de compras, empréstimos ou doações. |
 | ATE / DEV | **Requer clarificação futura:** limites quantitativos de devolução, possibilidade de parcialidade, relação entre devoluções e estorno da requisição, efeitos no consumo. Estorno de requisição exige justificativa e a encerra definitivamente; estorno de devolução exige saldo disponível suficiente, como já definido. |
 | INV | **A definir:** apuração da quantidade correta, evidência do ajuste e fluxo de validação. Há confirmação de ajuste por inventário, não de um processo completo de campanhas e contagens. |
 | MAT | **Requer clarificação futura:** operações permitidas sobre material inativo, eventual reativação e efeito da reimportação sobre atributos locais. A redação ampla de SC-005 da 001 deve ser conciliada explicitamente, na futura spec, com as capacidades canônicas de observação interna/inativação, sem liberar edição dos dados oficiais. |
+| FOR | **A definir:** recorte do CSV real de fornecedores do SCPI (disponível só localmente em `docs/CSVs/`, ignorado pelo Git: 10.035 registros, 132 colunas, `CODIF` único; contém dados pessoais como CPF e conta bancária, que não devem ser importados sem necessidade); quem executa a importação e consulta os fornecedores; efeito da reimportação sobre fornecedor ausente do arquivo; se doadores e quem devolve empréstimo também constam desse cadastro. Capabilities e invariantes correspondentes devem entrar nas matrizes canônicas antes da spec. |
 | 001 / futuras | **A definir:** como o responsável leva as exceções de uma importação para fora do WMS a fim de corrigir o CSV na origem — exportação, filtro por motivo ou ordenação da lista de exceções. Hoje a 001 só exibe a lista paginada, e o trabalho de correção acontece fora do sistema; levantado pela revisão visual de 2026-09-22. Decidir o recorte (dentro da 001 ou capacidade própria) antes de implementar. |
 | HIS | **A definir:** filtros e apresentação necessários à investigação. Os escopos por papel já são canônicos; não presumir que todo usuário vê todo o histórico. |
 | REL / PAI | **A definir:** perguntas de gestão, métricas, períodos, tratamento de devoluções/estornos e fontes. Não inferir indicadores financeiros, alertas ou visões de pendências no SCPI. |
-| Evidências de importação | `PRODUCT.md` referencia CSVs e scripts em `domain/Scripts/`, ausentes nesta árvore. O CSV real do catálogo está disponível só localmente (`docs/domain-legacy/`, ignorado pelo Git) e validou a 001 em 2026-09-22 por `tests/test_catalogo_arquivo_real.py` com `SCPI_CSV_REAL` (1588 recebidos e inseridos, 0 rejeitados). Como não é versionado, esse teste fica pulado no CI. **A definir:** se e como disponibilizar amostras dos demais CSVs (movimentações) para as próximas features. Isso não cria nova feature. |
+| Evidências de importação | `PRODUCT.md` referencia CSVs e scripts em `domain/Scripts/`, ausentes nesta árvore. O CSV real do catálogo está disponível só localmente (`docs/domain-legacy/`, ignorado pelo Git) e validou a 001 em 2026-09-22 por `tests/test_catalogo_arquivo_real.py` com `SCPI_CSV_REAL` (1588 recebidos e inseridos, 0 rejeitados). Como não é versionado, esse teste fica pulado no CI. **A definir:** se e como disponibilizar amostras dos demais CSVs (movimentações) para as próximas features. O CSV de fornecedores foi disponibilizado localmente em `docs/CSVs/` (ignorado pelo Git) para `FOR`. Isso não cria nova feature. |
 
 Não entram como features confirmadas: múltiplos locais/endereçamento, lotes, validade como controle
 próprio, leitura de códigos de barras, compras/licitações, notificações, integração automática,
 importação de movimentos do SCPI ou controle de lançamentos pendentes no sistema oficial.
+O cadastro de fornecedores (`FOR`) é apenas a referência de emitente das entradas; não abre
+compras, licitações, contratos nem gestão de fornecedores.
 Nem a existência de colunas no CSV nem um motivo de saída autorizam inferir esses módulos.
 Só uma necessidade de produto explicitamente confirmada poderá incluí-los neste mapa.
 
