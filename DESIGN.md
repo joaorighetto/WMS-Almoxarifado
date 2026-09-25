@@ -506,7 +506,7 @@ A barra de trabalho grafite no topo (ver Components → Navigation) **substitui 
 
 Área operacional centralizada com teto de 1120px, respiro lateral de 16px (respeitando `safe-area-inset`) e vertical de 24px (32px no fim da Home); a barra de trabalho embute o mesmo teto para a marca e o título começarem no mesmo x. Formulário simples e isolado usa coluna de 640px. Page header: título/contexto à esquerda e ações à direita no desktop; abaixo de 480px as ações ganham linha própria e dividem a largura. Filtros ficam próximos e antes do conteúdo que afetam, nunca em coluna lateral. Páginas densas se dividem em seções por divisor fino + 24px, nunca por cards empilhados.
 
-Na Home: título, depois uma grade de uma coluna que a partir de 900px vira `conteúdo | 320px` (tarefas à esquerda, placa de identificação à direita, via `order`, sem mudar a ordem do DOM: no celular a placa vem antes das tarefas). A zona "Em preparação" vem abaixo, em largura total, a 32px.
+Na Home: título, depois uma grade de uma coluna que a partir de 900px vira `conteúdo | 320px` (tarefas à esquerda, placa de identificação à direita, por posição na grade, sem mudar a ordem do DOM: no celular a placa vem antes das tarefas). Superfícies lado a lado alinham pela borda da superfície, não pelo marcador de seção: a seção de tarefas repassa suas duas linhas (marcador | lista) por `subgrid`, e a placa ocupa só a da lista. A zona "Em preparação" vem abaixo, em largura total, a 32px.
 
 ### Tabelas: responsividade
 

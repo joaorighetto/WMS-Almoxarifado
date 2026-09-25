@@ -31,7 +31,7 @@
 
 /* Placa de identificação + tarefas: uma só coluna em telas estreitas (ordem de
    leitura: título → placa → tarefas); a partir de 900px a placa vira uma coluna
-   estreita ao lado das tarefas, sem mudar a ordem no DOM (`order`, abaixo) — o
+   estreita ao lado das tarefas, sem mudar a ordem no DOM (posição na grade, abaixo) — o
    primeiro viewport de desktop mostra identidade + tarefas sem rolagem (contrato
    FIRST VIEWPORT do surface brief). */
 .home-main {
@@ -41,17 +41,33 @@
   align-items: start;
 }
 
+/* Alinhamento das duas superfícies brancas: a placa começa na borda da lista de
+   tarefas, não no marcador "Suas tarefas" que fica acima dela. A seção de tarefas
+   ocupa as duas linhas da grade (marcador | lista) e as repassa aos filhos por
+   `subgrid`; a placa entra só na segunda. Vale para qualquer altura de marcador,
+   sem compensação numérica. O espaço entre linhas é zerado para o marcador
+   continuar assentado sobre a lista (`.section-marker-attached`). */
 @media (min-width: 900px) {
   .home-main {
     grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto auto;
+    row-gap: 0;
   }
 
   .home-tasks {
-    order: 1;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: grid;
+    grid-template-rows: subgrid;
+  }
+
+  .home-tasks > .section-marker {
+    justify-self: start;
   }
 
   .home-id-plate {
-    order: 2;
+    grid-column: 2;
+    grid-row: 2;
   }
 }
 
