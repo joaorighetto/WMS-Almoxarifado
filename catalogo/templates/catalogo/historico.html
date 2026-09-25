@@ -63,11 +63,18 @@ Atualizados/Rejeitados logo depois — fiquem visíveis sem rolagem; só
 existente do `.table-wrapper`, nunca conteúdo inacessível). É o nível 3 da
 regra de responsividade de tabela (DESIGN.md → Tabelas), preferível a
 ocultar coluna (nível 5) ou a espremer o selo de estado em três linhas. "Arquivo"
-ganhou `.catalogo-historico-arquivo` (`max-width: 15ch`, `catalogo.css`)
-para não ser o fiel-da-balança que a tabela toda usa como largura mínima —
-sem `overflow-wrap: anywhere`, de propósito: quebrar um nome de arquivo em
-qualquer ponto (ex. "MOTHERLODE.CSV" → "MOTHE"/"RLODE") era pior do que a
-rolagem residual que sobrou.
+ganhou `.catalogo-historico-arquivo` (largura fixa em 15ch, `catalogo.css`)
+para não ser o fiel-da-balança que a tabela toda usa como largura mínima.
+Sublinhado não é ponto de quebra do navegador (só hífen é): nomes gerados
+pelo `seed_dev` como "seed_dev_03_restauracao_carga_inicial_valida.csv"
+transbordavam por cima da coluna seguinte. A correção quebra o nome dentro da
+célula (`overflow-wrap: anywhere`) e segura a coluna em 15ch com `width`,
+`min-width` e `max-width`: o piso impede que a tabela esprema a coluna e
+quebre nomes curtos em qualquer ponto (ex. "MOTHERLODE.CSV" →
+"MOTHE"/"RLODE.CSV"), e o `width` impede que ela receba a sobra quando a
+tabela é mais estreita que o wrapper, o que o `max-width` em célula de tabela
+(efeito indefinido no CSS 2.1) não garante. O nome completo continua visível,
+sem truncamento.
 {% endcomment %}
 
 {% block title %}Histórico de importações — WMS-Almoxarifado{% endblock %}

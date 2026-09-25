@@ -362,18 +362,26 @@
    explícito — a cor nunca é a única pista (The No Color-Only State Rule). O
    `white-space: nowrap` do primitivo basta; nenhuma regra própria é necessária. */
 
-/* Coluna "Arquivo" (correção do gate visual, P1, 2026-09-22): nome de arquivo já
-   quebra linha nos hifens do próprio nome (comportamento padrão do navegador,
-   sem `word-break`) — a coluna não precisa do espaço para caber o nome inteiro
-   numa linha só. `max-width` (em vez de deixar o layout `auto` da tabela usar o
-   maior nome de arquivo sem quebra como largura mínima) libera parte do espaço
-   que a nova coluna "Situação" passou a ocupar. Deliberadamente sem
-   `overflow-wrap: anywhere`: quebrar um nome de arquivo em qualquer ponto (ex.
-   "MOTHERLODE.CSV" → "MOTHE"/"RLODE") fica ilegível — pior do que a rolagem
-   horizontal residual que `.table-wrapper` já resolve estruturalmente (medido a
-   1440px: tabela cabe de 1221px para 1119px de conteúdo, contra 1086px
-   disponíveis — a diferença de 33px permanece na rolagem interna do wrapper,
-   nunca invisível/inacessível, e nunca estica a página). */
+/* Coluna "Arquivo" (correção do gate visual, P1, 2026-09-22; ajuste de
+   transbordo, 2026-09-25): o navegador só quebra linha em hífen — nomes com
+   `_` (ex. os do `seed_dev`, como
+   "seed_dev_03_restauracao_carga_inicial_valida.csv") não têm ponto de
+   quebra e transbordavam por cima da coluna seguinte. A largura fica presa
+   em 15ch: `overflow-wrap: anywhere` zera o min-content do nome (quebra
+   quando não cabe, sem transbordar); `min-width: 15ch` impede que o layout
+   `auto` da tabela aproveite isso para espremer a coluna — nomes que cabem
+   em 15ch continuam inteiros, sem o "MOTHE"/"RLODE.CSV" de um `anywhere` sem
+   piso; `width: 15ch` impede o inverso, a coluna receber a sobra quando a
+   `.table` (`width: 100%`) é mais estreita que o wrapper — o `max-width`
+   sozinho não segura isso no Chromium (medido com container alargado: 293px
+   só com `max-width`, 136px com `width`), e o efeito dele em célula de
+   tabela é indefinido no CSS 2.1.
+   A tabela ainda passa da área disponível a 1440px; o excedente fica na
+   rolagem interna de `.table-wrapper`, nunca invisível/inacessível, e nunca
+   estica a página. */
 .catalogo-historico-arquivo {
+  width: 15ch;
+  min-width: 15ch;
   max-width: 15ch;
+  overflow-wrap: anywhere;
 }
