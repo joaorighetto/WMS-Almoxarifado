@@ -63,6 +63,87 @@ class WMSLoginView(LoginView):
         return resposta
 
 
+# Capacidades futuras do ROADMAP.md, ainda sem rota implementada. Cada item cita a feature do
+# roadmap e a capability canônica de `docs/domain/permissions-matrix.md` que a fundamenta. É
+# conteúdo puramente informativo da Home: quando a feature correspondente for entregue, o item
+# sai daqui e vira um atalho real, com autorização verificada na própria rota (não aqui).
+CAPACIDADES_PLANEJADAS = (
+    # REQ — PERM-REQ-CREATE-SELF
+    {
+        "papeis": (Papel.REQUISITANTE,),
+        "titulo": "Solicitar material",
+        "descricao": (
+            "Peça material ao almoxarifado; a solicitação segue para a autorização do chefe "
+            "do seu setor."
+        ),
+    },
+    # REQ — PERM-REQ-AUTHORIZE
+    {
+        "papeis": (Papel.CHEFE_SETOR,),
+        "titulo": "Autorizar requisições do setor",
+        "descricao": "Decida as solicitações criadas pela equipe do setor que você chefia.",
+    },
+    # ENT — PERM-STOCK-ENTRY-CREATE
+    {
+        "papeis": (Papel.FUNCIONARIO_ALMOXARIFADO,),
+        "titulo": "Registrar entrada de materiais",
+        "descricao": "Lance recebimentos com motivo e referência, com efeito no saldo.",
+    },
+    # ATE — PERM-REQUEST-FULFILL
+    {
+        "papeis": (Papel.FUNCIONARIO_ALMOXARIFADO,),
+        "titulo": "Atender requisições autorizadas",
+        "descricao": "Entregue o material solicitado e conclua a requisição.",
+    },
+    # HIS — PERM-STOCK-HISTORY-VIEW
+    {
+        "papeis": (
+            Papel.AUXILIAR_SETOR,
+            Papel.CHEFE_SETOR,
+            Papel.FUNCIONARIO_ALMOXARIFADO,
+            Papel.AUDITOR,
+        ),
+        "titulo": "Histórico de movimentações",
+        "descricao": (
+            "Confira origem, responsável, quantidade e momento de cada movimento no seu "
+            "escopo."
+        ),
+    },
+    # SAE — PERM-SAE-VIEW
+    {
+        "papeis": (Papel.FUNCIONARIO_ALMOXARIFADO,),
+        "titulo": "Saídas excepcionais",
+        "descricao": (
+            "Baixas fora de requisição, por deterioração, vencimento, doação e outros motivos."
+        ),
+    },
+    # DEV — PERM-RETURN-CREATE
+    {
+        "papeis": (Papel.CHEFE_ALMOXARIFADO,),
+        "titulo": "Devoluções",
+        "descricao": "Retorno ao estoque de material atendido, vinculado à requisição de origem.",
+    },
+    # INV — PERM-INVENTORY-ADJUST
+    {
+        "papeis": (Papel.CHEFE_ALMOXARIFADO,),
+        "titulo": "Ajuste de saldo por inventário",
+        "descricao": "Correção rastreável de uma divergência de saldo apurada.",
+    },
+    # MAT — PERM-MATERIAL-EDIT-NOTE
+    {
+        "papeis": (Papel.FUNCIONARIO_ALMOXARIFADO,),
+        "titulo": "Observações internas de materiais",
+        "descricao": "Anotações da equipe sobre um material, sem alterar o cadastro do SCPI.",
+    },
+    # ORG — PERM-USER-MANAGE, PERM-SECTOR-MANAGE
+    {
+        "papeis": (Papel.ADMINISTRADOR_SISTEMA,),
+        "titulo": "Administração de usuários e setores",
+        "descricao": "Manutenção de contas, papéis, setores e chefias.",
+    },
+)
+
+
 class HomeView(LoginRequiredMixin, TemplateView):
     """Home autenticada mínima (User Story 1).
 
@@ -75,18 +156,35 @@ class HomeView(LoginRequiredMixin, TemplateView):
     template_name = "contas/home.html"
 
     def get_context_data(self, **kwargs):
-        """`pode_importar_catalogo` cobre a capability `PERM-SCPI-IMPORT-EXECUTE`
-        (importação) e `PERM-SCPI-IMPORT-HISTORY-VIEW` (histórico), ambas
-        exigindo `ROLE-WAREHOUSE-HEAD` (`contracts/rotas-e-autorizacao.md`,
-        001). `pode_consultar_catalogo` cobre `PERM-MATERIAL-VIEW`
-        (`ROLE-REQUESTER`, concedido a toda identidade de negócio). Os links
-        são conveniência de navegação — a autorização efetiva continua nas
-        próprias rotas (Constitution VI)."""
+        """Monta o contexto de apresentação da Home (Constitution V: a decisão fica na view,
+        o template só apresenta). `pode_importar_catalogo` cobre a capability
+        `PERM-SCPI-IMPORT-EXECUTE` (importação) e `PERM-SCPI-IMPORT-HISTORY-VIEW` (histórico),
+        ambas exigindo `ROLE-WAREHOUSE-HEAD` (`contracts/rotas-e-autorizacao.md`, 001).
+        `pode_consultar_catalogo` cobre `PERM-MATERIAL-VIEW` (`ROLE-REQUESTER`, concedido a
+        toda identidade de negócio). Os links são conveniência de navegação — a autorização
+        efetiva continua nas próprias rotas (Constitution VI).
+
+        `setor` e `papeis` são só apresentação. `capacidades_planejadas` filtra
+        `CAPACIDADES_PLANEJADAS` pelos papéis do usuário e é puramente informativo: nenhum item
+        corresponde a rota, URL, contagem ou ação real — nenhum deles concede autorização.
+
+        Os códigos de papel são lidos do banco uma única vez (`set`), e tanto as flags quanto
+        `papeis`/`capacidades_planejadas` são derivados dele — sem N+1 (Constitution X). A
+        checagem de posse é a mesma de `tem_papel`: só papel explicitamente atribuído, sem
+        herança."""
         contexto = super().get_context_data(**kwargs)
-        contexto["pode_importar_catalogo"] = self.request.user.tem_papel(
-            Papel.CHEFE_ALMOXARIFADO
-        )
-        contexto["pode_consultar_catalogo"] = self.request.user.tem_papel(
-            Papel.REQUISITANTE
-        )
+        usuario = self.request.user
+        codigos_papeis = set(usuario.papeis.values_list("papel", flat=True))
+
+        contexto["pode_importar_catalogo"] = Papel.CHEFE_ALMOXARIFADO in codigos_papeis
+        contexto["pode_consultar_catalogo"] = Papel.REQUISITANTE in codigos_papeis
+        contexto["setor"] = usuario.setor
+        contexto["papeis"] = [
+            Papel(codigo).label for codigo in Papel.values if codigo in codigos_papeis
+        ]
+        contexto["capacidades_planejadas"] = [
+            {"titulo": item["titulo"], "descricao": item["descricao"]}
+            for item in CAPACIDADES_PLANEJADAS
+            if codigos_papeis & {papel.value for papel in item["papeis"]}
+        ]
         return contexto

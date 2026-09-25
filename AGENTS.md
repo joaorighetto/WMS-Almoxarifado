@@ -483,6 +483,29 @@ Se ficar evidente que a fundação do design system precisa ser criada, revista 
 estruturalmente — e não apenas uma tela específica — direcione esse trabalho ao workflow
 `impeccable`, não ao `frontend_implementer`.
 
+### Redesign da fundação visual
+
+Direcionar ao workflow `impeccable` significa que a decisão e a documentação da fundação são do
+coordenador; o código continua com o `frontend_implementer`. Num pedido de redesign ou revisão
+estrutural da fundação (não só uma tela):
+
+1. o coordenador conduz o `new-work` do Impeccable: classifica o modo da superfície, roda o
+   `concept-seed` e apresenta a rodada de direção ao usuário — a escolha estética é dele;
+2. registra a direção escolhida como contrato no surface brief (`.impeccable/surfaces/`,
+   versionado), antes de qualquer código;
+3. encaminha ao `frontend_implementer` o contrato como instrução explícita. Nesse caso, alterar
+   `tokens.css` e componentes compartilhados está dentro do escopo dele, limitado ao contrato;
+   `DESIGN.md` e o sidecar continuam fora;
+4. o gate visual é o `impeccable_finish_reviewer` (build com contrato de direção e capturas),
+   além do `code_reviewer`;
+5. ao fim, o `impeccable_documenter` reescreve `DESIGN.md` e `.impeccable/design.json` a partir
+   do código construído.
+
+Prefira uma superfície-laboratório antes de propagar: os tokens mudam globalmente (The Shared
+Foundation Rule, `DESIGN.md`), mas a composição nova fica na superfície-laboratório até uma
+etapa própria de propagação. As telas que só herdam os tokens precisam ser conferidas por captura
+e testes na mesma entrega.
+
 ## Tarefas triviais
 
 Não use pipelines complexos para typo, documentação simples, configuração pequena, consulta

@@ -1,0 +1,45 @@
+{% comment %}
+Barra de trabalho (app bar) — WMS-Almoxarifado.
+
+Faixa grafite fixa no topo com a linha de corredor amarela (`.appbar`,
+static/css/components.css → "Barra de trabalho"). Hoje incluída só por
+contas/home.html (laboratório da direção "Tubulação e piso industrial");
+destinada a todas as telas quando a direção for propagada — nenhuma outra
+página precisa mudar para reutilizar este parcial, só incluí-lo.
+
+A marca ("Almoxarifado SAEP") só vira link quando a página atual NÃO for a
+Home: convenção padrão de navegação (o item ativo/atual não se auto-referencia
+como link) que hoje também é a única forma de satisfazer, ao mesmo tempo, o
+brief ("marca com link para home") e o contrato de hrefs de negócio já
+travado em tests/test_contas_home_papeis.py (cada papel expõe exatamente os
+hrefs de catálogo permitidos, nada além deles) — a Home é, por ora, a única
+consumidora deste parcial, então o link nunca é emitido hoje; passa a existir
+sozinho assim que outra tela incluir este parcial.
+
+Logout continua exclusivamente POST + CSRF (Constitution IX) — nunca um link,
+mesmo com aparência de botão.
+
+`esconde_matricula_compacta` (contexto opcional passado via `{% include %} with
+...`): quando a página já mostra a matrícula na própria placa de identificação
+(ex.: `contas/home.html` → `.home-id-plate`), evita a duplicação abaixo de
+900px — ver `.appbar-matricula-hide-compact`, static/css/components.css.
+Páginas sem placa própria não passam a variável e continuam vendo a matrícula
+na barra em qualquer largura.
+{% endcomment %}
+<header class="appbar">
+  <div class="appbar-inner">
+    {% if request.resolver_match.url_name == "home" %}
+    <span class="appbar-brand" aria-current="page">Almoxarifado SAEP</span>
+    {% else %}
+    <a href="{% url 'home' %}" class="appbar-brand">Almoxarifado SAEP</a>
+    {% endif %}
+
+    <div class="appbar-account">
+      <span class="appbar-matricula{% if esconde_matricula_compacta %} appbar-matricula-hide-compact{% endif %}">{{ user.matricula }}</span>
+      <form method="post" action="{% url 'logout' %}" class="appbar-logout-form">
+        {% csrf_token %}
+        <button type="submit" class="appbar-logout">Sair</button>
+      </form>
+    </div>
+  </div>
+</header>

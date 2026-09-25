@@ -1,0 +1,52 @@
+/*
+ * Fontes auto-hospedadas — WMS-Almoxarifado
+ *
+ * Atkinson Hyperlegible Next (UI: display/corpo/label) e Atkinson Hyperlegible Mono
+ * (identificador opaco do domínio — CADPRO, matrícula, SHA-256), vendorizadas em
+ * static/vendor/fonts/ como fontes variáveis (eixo wght 200–800; licença OFL ao
+ * lado de cada arquivo, ver static/vendor/fonts/OFL-*.txt). Escolhidas pela direção
+ * "Tubulação e piso industrial" (craft-floor: "um sistema display face... como a
+ * voz de exibição de uma página de mundo próprio é uma falha, não um fallback" —
+ * a stack `system-ui` anterior não carregava o caráter que a direção pede).
+ *
+ * Arquivo isolado de base.css de propósito: base.css se declara "reset mínimo...
+ * nenhum valor literal de cor/tipografia/spacing redefinido aqui" — aqui só
+ * declaramos o RECURSO de fonte (o @font-face). tokens.css continua sendo quem
+ * referencia o nome da família em `--font-family-base`/`--font-family-mono`, único
+ * lugar normativo dos tokens (contrato do cabeçalho de tokens.css).
+ *
+ * Carregado por contas/templates/contas/base.html, antes de tokens.css — ordem só
+ * documental para @font-face (não afeta o resultado), mantém a leitura "fontes →
+ * tokens → reset → componentes" no <head>.
+ *
+ * `format("woff2-variations")`: sintaxe do arquivo único variável, suportada pelos
+ * navegadores correntes (a forma `format("woff2") tech(variations)` do spec mais
+ * recente ainda não tem cobertura uniforme o bastante para ser a única via aqui).
+ * `unicode-range` restrito ao conjunto latino (pt-BR cabe em Basic Latin + Latin-1
+ * Supplement + pontuação/símbolos comuns) — mesmo subset "latin" publicado pelo
+ * projeto Fontsource para as duas famílias.
+ */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("../vendor/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("../vendor/fonts/atkinson-hyperlegible-mono-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}

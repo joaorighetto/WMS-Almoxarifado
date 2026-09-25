@@ -1,831 +1,842 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-22T19:50:10Z",
+  "generatedAt": "2026-09-25T14:27:17Z",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
       "primary": {
         "role": "primary",
-        "displayName": "Azul-Operação",
-        "canonical": "#2F5D8A",
-        "purpose": "Cor de ação primária, anel de foco, página atual da paginação e link de retorno; único accent funcional do sistema.",
+        "displayName": "Azul Ação Obrigatória",
+        "canonical": "#1757B8",
+        "purpose": "Ação dominante de um contexto, foco, página atual, seta de ordenação vigente e seta de tarefa disponível.",
         "tonalRamp": [
-          "#132639",
-          "#224465",
-          "#316190",
-          "#407EBB",
-          "#6A9BCC",
-          "#95B8DB",
-          "#C1D5EA",
-          "#ECF2F9"
-        ]
-      },
-      "background": {
-        "role": "neutral",
-        "displayName": "Fundo",
-        "canonical": "#E6E9ED",
-        "purpose": "Canvas da página, deliberadamente mais escuro que a superfície de trabalho (1,22:1) — é o degrau que faz tabela e formulário assentarem sem sombra.",
-        "tonalRamp": [
-          "#1A1E24",
-          "#333C47",
-          "#4D5A6B",
-          "#66788E",
-          "#8E9CAE",
-          "#B2BBC7",
-          "#D3D8DF",
-          "#F0F2F4"
-        ]
-      },
-      "surface": {
-        "role": "neutral",
-        "displayName": "Superfície",
-        "canonical": "#FFFFFF",
-        "purpose": "Fundo de tabela, formulário, barra de confirmação persistente e demais blocos de conteúdo.",
-        "tonalRamp": [
-          "#262626",
-          "#434343",
-          "#616161",
-          "#7E7E7E",
-          "#9B9B9B",
-          "#B8B8B8",
-          "#D5D5D5",
-          "#F2F2F2"
-        ]
-      },
-      "surface-subtle": {
-        "role": "neutral",
-        "displayName": "Superfície sutil",
-        "canonical": "#EFF1F4",
-        "purpose": "Hover funcional, cabeçalho de tabela, fundo de alert e badge; realce leve sem função de estado.",
-        "tonalRamp": [
-          "#191D24",
-          "#323B49",
-          "#4B586D",
-          "#647691",
-          "#8C9BB0",
-          "#B0BAC9",
-          "#D2D7E0",
-          "#F0F2F5"
-        ]
-      },
-      "border": {
-        "role": "neutral",
-        "displayName": "Borda",
-        "canonical": "#D6DAE0",
-        "purpose": "Divisor interno: entre linhas de tabela, campos e seções.",
-        "tonalRamp": [
-          "#1A1E23",
-          "#353B46",
-          "#4F5969",
-          "#69778B",
-          "#919BAC",
-          "#B3BBC6",
-          "#D3D8DE",
-          "#F0F2F4"
-        ]
-      },
-      "border-strong": {
-        "role": "neutral",
-        "displayName": "Borda de ênfase",
-        "canonical": "#9AA1AC",
-        "purpose": "Borda lateral da linha de exceção (sempre com o motivo em texto) e borda do badge neutro.",
-        "tonalRamp": [
-          "#23252A",
-          "#3D424A",
-          "#575E6A",
-          "#717B8A",
-          "#9199A5",
-          "#B1B6BF",
-          "#D1D4D9",
-          "#F1F2F3"
-        ]
-      },
-      "text": {
-        "role": "neutral",
-        "displayName": "Texto",
-        "canonical": "#1B1E22",
-        "purpose": "Texto principal, dado tabular, título.",
-        "tonalRamp": [
-          "#22262B",
-          "#3C424B",
-          "#555F6C",
-          "#6F7C8C",
-          "#8F99A6",
-          "#B0B7C0",
-          "#D0D4DA",
-          "#F1F2F4"
-        ]
-      },
-      "text-muted": {
-        "role": "neutral",
-        "displayName": "Texto secundário",
-        "canonical": "#5B6270",
-        "purpose": "Metadado, legenda, texto auxiliar, nota explicativa.",
-        "tonalRamp": [
-          "#22252A",
-          "#3C414A",
-          "#575D6B",
-          "#71798B",
-          "#9097A5",
-          "#B1B6BF",
-          "#D1D4D9",
-          "#F1F2F4"
-        ]
-      },
-      "disabled": {
-        "role": "neutral",
-        "displayName": "Desabilitado",
-        "canonical": "#B7BCC4",
-        "purpose": "Borda de controle inativo. O rótulo usa disabled-text; o preenchimento, disabled-surface.",
-        "tonalRamp": [
-          "#22252A",
-          "#3D424A",
-          "#575E6A",
-          "#717B8A",
-          "#9199A5",
-          "#B1B6BF",
-          "#D1D4D9",
-          "#F1F2F4"
-        ]
-      },
-      "success": {
-        "role": "tertiary",
-        "displayName": "Sucesso",
-        "canonical": "#236B3A",
-        "purpose": "Confirmação de operação concluída (alert de sucesso, selo \"Concluída\").",
-        "tonalRamp": [
-          "#0F2E19",
-          "#1E5C32",
-          "#2D8A4B",
-          "#3CB864",
-          "#6DCF8C",
-          "#9BDEB1",
-          "#C5ECD2",
-          "#ECF9F0"
-        ]
-      },
-      "warning": {
-        "role": "tertiary",
-        "displayName": "Alerta",
-        "canonical": "#8A5700",
-        "purpose": "Condição que merece atenção mas não bloqueia. Divergência de saldo não usa este tom.",
-        "tonalRamp": [
-          "#3D2700",
-          "#7A4D00",
-          "#B87400",
-          "#F59A00",
-          "#FFB73D",
-          "#FFCE7A",
-          "#FFE3B2",
-          "#FFF6E5"
-        ]
-      },
-      "danger": {
-        "role": "tertiary",
-        "displayName": "Perigo",
-        "canonical": "#9E2019",
-        "purpose": "Erro, recusa ou ação destrutiva/irreversível.",
-        "tonalRamp": [
-          "#350B08",
-          "#6A1511",
-          "#9F2019",
-          "#D32B21",
-          "#E55F58",
-          "#ED928D",
-          "#F5C0BD",
-          "#FCEAE9"
-        ]
-      },
-      "info": {
-        "role": "tertiary",
-        "displayName": "Azul-Petróleo",
-        "canonical": "#1F6572",
-        "purpose": "Contexto neutro (ex.: 'esta é só uma prévia'). Fora do eixo do azul de propósito: o valor anterior (#3B6EA5) estava a 1,30:1 do primary e competia com a ação.",
-        "tonalRamp": [
-          "#0D2B30",
-          "#1A5560",
-          "#278090",
-          "#34ABC0",
-          "#67C4D6",
-          "#97D7E3",
-          "#C3E8EF",
-          "#EBF7FA"
-        ]
-      },
-      "selected": {
-        "role": "secondary",
-        "displayName": "Selecionado",
-        "canonical": "#E4ECF4",
-        "purpose": "Reservado para linha selecionada e item de navegação ativo; definido, ainda não consumido.",
-        "tonalRamp": [
-          "#162636",
-          "#274360",
-          "#386189",
-          "#497EB3",
-          "#719BC5",
-          "#9AB8D6",
-          "#C3D5E7",
-          "#EDF2F8"
-        ]
-      },
-      "focus": {
-        "role": "primary",
-        "displayName": "Foco",
-        "canonical": "#2F5D8A",
-        "purpose": "Alias de primary em tokens.css; anel de foco visível em todo controle interativo.",
-        "tonalRamp": [
-          "#132639",
-          "#224465",
-          "#316190",
-          "#407EBB",
-          "#6A9BCC",
-          "#95B8DB",
-          "#C1D5EA",
-          "#ECF2F9"
+          "#000924",
+          "#002156",
+          "#053C8C",
+          "#1C5CBD",
+          "#407FE4",
+          "#6DA5FD",
+          "#AACBFE",
+          "#E5EFFF"
         ]
       },
       "primary-hover": {
         "role": "primary",
-        "displayName": "Azul-Operação Pressionado",
-        "canonical": "#274E74",
-        "purpose": "Hover/active da ação primária.",
+        "displayName": "Azul Ação Pressionado",
+        "canonical": "#11468F",
+        "purpose": "Hover/pressionado da ação primária (9,14:1 com branco).",
         "tonalRamp": [
-          "#0F1F2E",
-          "#1F3E5C",
-          "#2E5C89",
-          "#3E7BB7",
-          "#6E9FCE",
-          "#9CBDDE",
-          "#C6D9EC",
-          "#ECF2F9"
+          "#000A22",
+          "#002253",
+          "#073E86",
+          "#2C60AB",
+          "#4D82D1",
+          "#6FA6F7",
+          "#A9CBFD",
+          "#E5EFFF"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Piso Concreto",
+        "canonical": "#E6E4DF",
+        "purpose": "Canvas da página; 1,27:1 contra a folha para assentar sem sombra.",
+        "tonalRamp": [
+          "#0C0B08",
+          "#262521",
+          "#43423E",
+          "#63615D",
+          "#84827E",
+          "#A7A5A0",
+          "#CBC9C4",
+          "#F0EEE9"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Folha Branca",
+        "canonical": "#FFFFFF",
+        "purpose": "Tabela, formulário, placa, lista de tarefas, barra de confirmação.",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "surface-subtle": {
+        "role": "neutral",
+        "displayName": "Concreto Claro",
+        "canonical": "#F2F1EE",
+        "purpose": "Hover funcional, cabeçalho de tabela, badge neutro, corpo de 'Em preparação'.",
+        "tonalRamp": [
+          "#0C0B09",
+          "#262523",
+          "#43423F",
+          "#62615F",
+          "#83827F",
+          "#A6A5A2",
+          "#CAC9C6",
+          "#EFEEEB"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Divisor",
+        "canonical": "#D9D6CF",
+        "purpose": "Divisor interno entre linhas, itens e campos.",
+        "tonalRamp": [
+          "#0D0B07",
+          "#272520",
+          "#44423C",
+          "#64615B",
+          "#85827C",
+          "#A8A59E",
+          "#CCC9C2",
+          "#F1EEE7"
         ]
       },
       "border-frame": {
         "role": "neutral",
         "displayName": "Moldura",
-        "canonical": "#C2C8D0",
-        "purpose": "Contorno externo de tabela, formulário isolado, barra de confirmação e page header, e borda do botão secundário — um passo mais firme que o divisor interno.",
+        "canonical": "#BFBBB2",
+        "purpose": "Contorno externo de superfícies e botão secundário (1,91:1 folha, 1,51:1 piso).",
         "tonalRamp": [
-          "#1B1E23",
-          "#353C45",
-          "#505A68",
-          "#6B788A",
-          "#929CAB",
-          "#B4BBC5",
-          "#D4D8DE",
-          "#F1F2F4"
+          "#0E0B05",
+          "#28251E",
+          "#45423A",
+          "#646159",
+          "#86827A",
+          "#A9A59C",
+          "#CDC9C0",
+          "#F2EEE5"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Borda de Ênfase",
+        "canonical": "#8E8A80",
+        "purpose": "Linha de exceção, cabeçalho de tabela, badge neutro, tracejado do planejado.",
+        "tonalRamp": [
+          "#0E0B05",
+          "#28251D",
+          "#454239",
+          "#656157",
+          "#868278",
+          "#A9A59A",
+          "#CDC9BE",
+          "#F3EEE3"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Tinta Grafite",
+        "canonical": "#1C1B19",
+        "purpose": "Texto principal e dado (17,2:1 folha, 13,6:1 piso).",
+        "tonalRamp": [
+          "#0C0B09",
+          "#262523",
+          "#434240",
+          "#62615F",
+          "#838280",
+          "#A6A5A2",
+          "#CAC9C6",
+          "#F0EEEB"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Grafite Atenuado",
+        "canonical": "#5C5A55",
+        "purpose": "Metadado, descrição, rótulo (6,89:1 folha, 5,42:1 piso).",
+        "tonalRamp": [
+          "#0D0B07",
+          "#272521",
+          "#44423D",
+          "#63615C",
+          "#84827D",
+          "#A7A59F",
+          "#CBC9C3",
+          "#F1EEE8"
+        ]
+      },
+      "disabled": {
+        "role": "neutral",
+        "displayName": "Borda Inativa",
+        "canonical": "#B0ABA1",
+        "purpose": "Só borda de controle inativo.",
+        "tonalRamp": [
+          "#0E0B05",
+          "#28251D",
+          "#464139",
+          "#656158",
+          "#878278",
+          "#A9A49B",
+          "#CEC9BE",
+          "#F3EEE3"
         ]
       },
       "disabled-surface": {
         "role": "neutral",
-        "displayName": "Superfície Desabilitada",
-        "canonical": "#DCE0E5",
-        "purpose": "Preenchimento de controle inativo.",
+        "displayName": "Fundo Inativo",
+        "canonical": "#DFDDD8",
+        "purpose": "Fundo de controle desabilitado.",
         "tonalRamp": [
-          "#1A1E23",
-          "#343C46",
-          "#4E5A69",
-          "#68788C",
-          "#909DAC",
-          "#B3BCC6",
-          "#D3D8DE",
-          "#F0F2F4"
+          "#0C0B08",
+          "#262521",
+          "#43423E",
+          "#63615D",
+          "#84827E",
+          "#A7A5A0",
+          "#CBC9C4",
+          "#F0EEE9"
         ]
       },
       "disabled-text": {
         "role": "neutral",
-        "displayName": "Rótulo Desabilitado",
-        "canonical": "#575D68",
-        "purpose": "Rótulo de qualquer controle inativo (botão, link de paginação) — 4,99:1 sobre disabled-surface.",
+        "displayName": "Rótulo Inativo",
+        "canonical": "#595751",
+        "purpose": "Rótulo de controle desabilitado (5,32:1 sobre o fundo inativo).",
         "tonalRamp": [
-          "#1C1E21",
-          "#393C42",
-          "#555963",
-          "#717784",
-          "#979CA5",
-          "#B8BBC2",
-          "#D6D8DC",
-          "#F1F2F3"
+          "#0D0B07",
+          "#272520",
+          "#44423C",
+          "#63615B",
+          "#84827C",
+          "#A7A59E",
+          "#CBC9C2",
+          "#F1EEE7"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Verde Condição Segura",
+        "canonical": "#236B3A",
+        "purpose": "Texto de sucesso.",
+        "tonalRamp": [
+          "#001004",
+          "#012E12",
+          "#045023",
+          "#2B7240",
+          "#4E9460",
+          "#72B882",
+          "#95DDA5",
+          "#C7FFD2"
         ]
       },
       "success-surface": {
-        "role": "success",
-        "displayName": "Verde Claro",
+        "role": "semantic",
+        "displayName": "Verde Condição Segura, superfície",
         "canonical": "#E7F3EB",
-        "purpose": "Superfície de alert e badge de sucesso.",
+        "purpose": "Superfície de alert/badge de sucesso.",
         "tonalRamp": [
-          "#14291B",
-          "#295236",
-          "#3D7A52",
-          "#52A36D",
-          "#7EBE93",
-          "#A7D3B5",
-          "#CCE5D4",
-          "#EEF6F1"
+          "#060D08",
+          "#1F2822",
+          "#3B453E",
+          "#5A645D",
+          "#7B857E",
+          "#9DA8A1",
+          "#C1CDC5",
+          "#E6F2EA"
         ]
       },
       "success-border": {
-        "role": "success",
-        "displayName": "Verde Médio",
+        "role": "semantic",
+        "displayName": "Verde Condição Segura, borda",
         "canonical": "#5E9B76",
-        "purpose": "Borda de alert e badge de sucesso.",
+        "purpose": "Borda de alert/badge de sucesso.",
         "tonalRamp": [
-          "#17261D",
-          "#2E4C3A",
-          "#457257",
-          "#5C9874",
-          "#86B699",
-          "#ACCDB9",
-          "#CFE2D7",
-          "#EFF5F2"
+          "#000F05",
+          "#012E18",
+          "#0B4F2E",
+          "#33704D",
+          "#55926D",
+          "#78B58F",
+          "#9BDAB3",
+          "#C5FFDA"
+        ]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Âmbar Atenção",
+        "canonical": "#8A5700",
+        "purpose": "Texto de atenção.",
+        "tonalRamp": [
+          "#140800",
+          "#362001",
+          "#5C3903",
+          "#855509",
+          "#AB762F",
+          "#D09954",
+          "#F6BD78",
+          "#FFEBD4"
         ]
       },
       "warning-surface": {
-        "role": "warning",
-        "displayName": "Âmbar Claro",
+        "role": "semantic",
+        "displayName": "Âmbar Atenção, superfície",
         "canonical": "#FCF3E1",
-        "purpose": "Superfície de alert e badge de alerta.",
+        "purpose": "Superfície de atenção.",
         "tonalRamp": [
-          "#382706",
-          "#6F4E0B",
-          "#A77511",
-          "#DF9C16",
-          "#EDB94F",
-          "#F3CF86",
-          "#F8E3B9",
-          "#FDF6E8"
+          "#100A01",
+          "#2B2417",
+          "#484133",
+          "#686051",
+          "#898171",
+          "#ADA493",
+          "#D1C8B7",
+          "#F7EEDC"
         ]
       },
       "warning-border": {
-        "role": "warning",
-        "displayName": "Âmbar Médio",
+        "role": "semantic",
+        "displayName": "Âmbar Atenção, borda",
         "canonical": "#BC8B3C",
-        "purpose": "Borda de alert e badge de alerta.",
+        "purpose": "Borda de atenção.",
         "tonalRamp": [
-          "#2E220F",
-          "#5D451E",
-          "#8B672C",
-          "#BA893B",
-          "#D0AA6C",
-          "#DFC59A",
-          "#ECDDC5",
-          "#F9F4EC"
+          "#130900",
+          "#342100",
+          "#593B01",
+          "#815805",
+          "#A87826",
+          "#CD9B4D",
+          "#F3BF72",
+          "#FEECD1"
+        ]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Vermelho Perigo",
+        "canonical": "#9E2019",
+        "purpose": "Erro, recusa, ação destrutiva.",
+        "tonalRamp": [
+          "#1F0000",
+          "#4D0001",
+          "#810002",
+          "#AA2D24",
+          "#D25346",
+          "#FA7868",
+          "#FDB4A9",
+          "#FFE9E5"
         ]
       },
       "danger-surface": {
-        "role": "danger",
-        "displayName": "Vermelho Claro",
+        "role": "semantic",
+        "displayName": "Vermelho Perigo, superfície",
         "canonical": "#FBEAE8",
-        "purpose": "Superfície de alert e badge de erro.",
+        "purpose": "Superfície de erro.",
         "tonalRamp": [
-          "#340E09",
-          "#681B12",
-          "#9C291B",
-          "#D13624",
-          "#E2685A",
-          "#EB988E",
-          "#F4C3BE",
-          "#FBEBE9"
+          "#120807",
+          "#2E2220",
+          "#4C3E3D",
+          "#6C5D5C",
+          "#8D7E7D",
+          "#B1A19F",
+          "#D5C5C3",
+          "#FBEAE8"
         ]
       },
       "danger-border": {
-        "role": "danger",
-        "displayName": "Vermelho Médio",
+        "role": "semantic",
+        "displayName": "Vermelho Perigo, borda",
         "canonical": "#C9756C",
-        "purpose": "Borda de alert e badge de erro.",
+        "purpose": "Borda de erro e de campo inválido.",
         "tonalRamp": [
-          "#2D1310",
-          "#5A2621",
-          "#863A31",
-          "#B34D42",
-          "#CB7A71",
-          "#DBA49E",
-          "#EACAC7",
-          "#F8EDEC"
+          "#1F0001",
+          "#4D0003",
+          "#702521",
+          "#95463F",
+          "#BA675F",
+          "#E08A80",
+          "#FDB4AB",
+          "#FFE9E6"
+        ]
+      },
+      "info": {
+        "role": "semantic",
+        "displayName": "Petróleo Informação",
+        "canonical": "#1F6572",
+        "purpose": "Contexto neutro; petróleo para não competir com o azul de ação.",
+        "tonalRamp": [
+          "#000E12",
+          "#022B32",
+          "#064B56",
+          "#276C79",
+          "#4B8E9B",
+          "#6FB1BF",
+          "#93D6E4",
+          "#D1F6FE"
         ]
       },
       "info-surface": {
-        "role": "info",
-        "displayName": "Petróleo Claro",
+        "role": "semantic",
+        "displayName": "Petróleo Informação, superfície",
         "canonical": "#E3F1F3",
-        "purpose": "Superfície de alert e badge informativo.",
+        "purpose": "Superfície de informação.",
         "tonalRamp": [
-          "#12282B",
-          "#255056",
-          "#377781",
-          "#499FAB",
-          "#77BBC5",
-          "#A2D1D7",
-          "#C9E4E8",
-          "#EDF6F7"
+          "#040D0E",
+          "#1D2729",
+          "#394446",
+          "#586466",
+          "#788587",
+          "#9BA8AA",
+          "#BFCCCE",
+          "#E4F2F4"
         ]
       },
       "info-border": {
-        "role": "info",
-        "displayName": "Petróleo Médio",
+        "role": "semantic",
+        "displayName": "Petróleo Informação, borda",
         "canonical": "#56949D",
-        "purpose": "Borda de alert e badge informativo.",
+        "purpose": "Borda de informação.",
         "tonalRamp": [
-          "#162528",
-          "#2B4B4F",
-          "#417077",
-          "#57959E",
-          "#82B3BA",
-          "#A9CBD0",
-          "#CEE1E4",
-          "#EFF5F6"
+          "#000E11",
+          "#022B30",
+          "#074B53",
+          "#2C6C74",
+          "#508E97",
+          "#73B1BA",
+          "#96D6DF",
+          "#CCF8FE"
+        ]
+      },
+      "selected": {
+        "role": "semantic",
+        "displayName": "Seleção",
+        "canonical": "#E3ECF8",
+        "purpose": "::selection hoje; linha selecionada e item ativo quando existirem.",
+        "tonalRamp": [
+          "#060B13",
+          "#1F262E",
+          "#3B434C",
+          "#5A626C",
+          "#7B838E",
+          "#9DA6B1",
+          "#C1CAD6",
+          "#E6EFFB"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Foco",
+        "canonical": "#1757B8",
+        "purpose": "Alias de primary: anel de foco de 2px afastado 2px.",
+        "tonalRamp": [
+          "#000924",
+          "#002156",
+          "#053C8C",
+          "#1C5CBD",
+          "#407FE4",
+          "#6DA5FD",
+          "#AACBFE",
+          "#E5EFFF"
+        ]
+      },
+      "signal": {
+        "role": "secondary",
+        "displayName": "Amarelo Segurança (linha)",
+        "canonical": "#F2C200",
+        "purpose": "Linha de corredor da barra de trabalho e fita zebrada; nunca texto sobre claro.",
+        "tonalRamp": [
+          "#100A00",
+          "#2F2401",
+          "#514004",
+          "#765E0B",
+          "#9D7E14",
+          "#C8A009",
+          "#F3C305",
+          "#FFEEBE"
         ]
       },
       "ink": {
         "role": "neutral",
-        "displayName": "Tinta",
-        "canonical": "#1E2833",
-        "purpose": "Fundo do app shell de desktop (direção aprovada, ainda não consumida). Neutra, nunca primary.",
+        "displayName": "Grafite de Faixa",
+        "canonical": "#1E1E1C",
+        "purpose": "Barra de trabalho e marcador de seção disponível.",
         "tonalRamp": [
-          "#171E27",
-          "#2D3C4D",
-          "#445B74",
-          "#5B799A",
-          "#859DB7",
-          "#ACBCCE",
-          "#CFD8E3",
-          "#EFF2F6"
+          "#0B0B09",
+          "#252523",
+          "#424240",
+          "#61615F",
+          "#828280",
+          "#A5A5A2",
+          "#C9C9C6",
+          "#EFEFEC"
         ]
       },
       "ink-raised": {
         "role": "neutral",
-        "displayName": "Tinta Elevada",
-        "canonical": "#29343F",
-        "purpose": "Item ativo/hover dentro do app shell.",
+        "displayName": "Grafite de Faixa, elevado",
+        "canonical": "#2A2A27",
+        "purpose": "Hover de controle sobre a faixa.",
         "tonalRamp": [
-          "#181F25",
-          "#303D4A",
-          "#485C6F",
-          "#617A94",
-          "#8A9EB3",
-          "#AFBDCB",
-          "#D1D9E1",
-          "#F0F2F5"
+          "#0B0B09",
+          "#252522",
+          "#42423F",
+          "#61615E",
+          "#82827F",
+          "#A5A5A1",
+          "#C9C9C5",
+          "#EFEFEB"
         ]
       },
       "ink-border": {
         "role": "neutral",
-        "displayName": "Divisor da Tinta",
-        "canonical": "#374250",
-        "purpose": "Divisor interno do app shell.",
+        "displayName": "Grafite de Faixa, borda",
+        "canonical": "#3A3A36",
+        "purpose": "Contorno de controle sobre a faixa.",
         "tonalRamp": [
-          "#191E24",
-          "#323C49",
-          "#4B5A6D",
-          "#647891",
-          "#8C9CB0",
-          "#B0BBC9",
-          "#D2D8E0",
-          "#F0F2F5"
+          "#0B0B08",
+          "#252522",
+          "#42423E",
+          "#61615D",
+          "#83837E",
+          "#A5A5A1",
+          "#C9C9C4",
+          "#EFEFEA"
         ]
       },
       "on-ink": {
         "role": "neutral",
-        "displayName": "Sobre Tinta",
+        "displayName": "Branco sobre Grafite",
         "canonical": "#FFFFFF",
-        "purpose": "Item ativo do app shell (14,9:1).",
+        "purpose": "Texto sobre a faixa (16,7:1).",
         "tonalRamp": [
-          "#1F1F1F",
-          "#3D3D3D",
-          "#5C5C5C",
-          "#7A7A7A",
-          "#9E9E9E",
-          "#BDBDBD",
-          "#D9D9D9",
-          "#F2F2F2"
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
         ]
       },
       "on-ink-muted": {
         "role": "neutral",
-        "displayName": "Sobre Tinta Atenuado",
-        "canonical": "#C9D2DC",
-        "purpose": "Item em repouso do app shell (9,8:1).",
+        "displayName": "Branco Atenuado sobre Grafite",
+        "canonical": "#C9C7C1",
+        "purpose": "Matrícula na barra (9,88:1).",
         "tonalRamp": [
-          "#181E25",
-          "#303D4A",
-          "#485B6F",
-          "#607995",
-          "#899DB3",
-          "#AFBCCB",
-          "#D1D8E1",
-          "#F0F2F5"
+          "#0C0B07",
+          "#262520",
+          "#44423D",
+          "#63615C",
+          "#84827D",
+          "#A7A59F",
+          "#CBC9C3",
+          "#F0EEE8"
         ]
       },
       "on-ink-accent": {
-        "role": "neutral",
-        "displayName": "Accent Sobre Tinta",
-        "canonical": "#9CC3E6",
-        "purpose": "Indicador de item ativo e anel de foco dentro do app shell (8,1:1) — focus não sobrevive sobre a tinta.",
+        "role": "secondary",
+        "displayName": "Amarelo Segurança (sobre tinta)",
+        "canonical": "#F2C200",
+        "purpose": "Seta de fluxo e anel de foco sobre grafite (9,93:1).",
         "tonalRamp": [
-          "#0C2031",
-          "#193F62",
-          "#255F93",
-          "#317EC3",
-          "#64A1D8",
-          "#95BFE4",
-          "#C2DAF0",
-          "#EBF3FA"
+          "#100A00",
+          "#2F2401",
+          "#514004",
+          "#765E0B",
+          "#9D7E14",
+          "#C8A009",
+          "#F3C305",
+          "#FFEEBE"
         ]
       }
     },
     "typographyMeta": {
+      "metric": {
+        "displayName": "Valor de total",
+        "purpose": "Número de total de operação, maior peso da seção."
+      },
       "page-title": {
         "displayName": "Título de página",
-        "purpose": "Título do page header. 24px/700 com tracking negativo — a 20px/600 empatava com o título de seção."
+        "purpose": "Título de cada superfície."
       },
       "section-title": {
         "displayName": "Título de seção",
-        "purpose": "Divide blocos dentro de uma página densa; em peso médio, título de empty state."
+        "purpose": "Blocos de página densa, título de linha de tarefa, marca da barra."
+      },
+      "section-marker": {
+        "displayName": "Marcador de seção",
+        "purpose": "Rótulo em caixa-alta da faixa de identificação (o próprio h2)."
       },
       "body": {
-        "displayName": "Corpo / dado tabular",
-        "purpose": "Texto de tabela, formulário, conteúdo padrão. Números comparáveis usam tabular-nums."
+        "displayName": "Corpo",
+        "purpose": "Tabela, formulário, descrição."
       },
       "label": {
         "displayName": "Rótulo",
-        "purpose": "Rótulo de campo e texto de botão (peso médio). Cabeçalho de tabela usa o mesmo tamanho em semibold."
+        "purpose": "Rótulo de campo, botão, título de item planejado."
       },
       "numeric": {
-        "displayName": "Número comparável",
-        "purpose": "Corpo com tabular-nums (font-variant-numeric) para saldo, quantidade e totais alinhados entre linhas."
+        "displayName": "Numérico",
+        "purpose": "Número comparável com tabular-nums."
       },
       "meta": {
-        "displayName": "Metadado / legenda",
-        "purpose": "Informação auxiliar: dica/erro de campo, resumo da paginação, rótulo de total, timestamp. Usa text-muted."
-      },
-      "badge": {
-        "displayName": "Estado / badge",
-        "purpose": "Rótulo curto de estado semântico."
-      },
-      "code": {
-        "displayName": "Código / identificador",
-        "purpose": "CADPRO e identificadores técnicos opacos do domínio, em monoespaçada."
-      },
-      "metric": {
-        "displayName": "Valor de total",
-        "purpose": "Número de um total de operação (resumo da prévia e do resultado da importação) — o elemento de maior peso da seção, por tipografia."
+        "displayName": "Metadado",
+        "purpose": "Dica, erro de campo, resumo de paginação, rótulo da placa."
       },
       "table-header": {
         "displayName": "Cabeçalho de tabela",
-        "purpose": "Rótulo de coluna em caixa-alta e text-muted: a ênfase é invertida de propósito para o dado ser o elemento mais escuro da tabela. Exige rótulo curto (~3 palavras)."
+        "purpose": "Rótulo em caixa-alta, text-muted."
+      },
+      "badge": {
+        "displayName": "Badge",
+        "purpose": "Rótulo curto de estado."
+      },
+      "code": {
+        "displayName": "Código",
+        "purpose": "CADPRO, hash, matrícula na placa (Mono)."
+      },
+      "code-meta": {
+        "displayName": "Código compacto",
+        "purpose": "Matrícula na barra de trabalho (Mono 13px)."
       }
     },
     "shadows": [],
     "motion": [
       {
-        "name": "spin-loading",
-        "value": "rotate 360deg, 0.6s linear infinite",
-        "purpose": "Giro do spinner do Loading Indicator e do botão de login em processamento; desligado sob prefers-reduced-motion (o texto de estado permanece)."
+        "name": "task-arrow-nudge",
+        "value": "transform 0.18s ease-out; translateX(3px)",
+        "purpose": "Seta da linha de tarefa desliza no hover (só em @media (hover: hover)) e no foco por teclado; desligada com prefers-reduced-motion."
+      },
+      {
+        "name": "spinner",
+        "value": "rotate 0.6s linear infinite",
+        "purpose": "Spinner do indicador de carregamento local; para com prefers-reduced-motion."
       }
     ],
     "breakpoints": [
       {
-        "name": "sm",
+        "name": "compact",
         "value": "480px",
-        "purpose": "max-width: ações do page header e da confirmação ocupam a largura/empilham; min-width: containers de entrada/início ganham mais padding."
+        "purpose": "Barra de trabalho a 48px; ações do page header e da confirmação ocupam a largura."
       },
       {
-        "name": "md",
+        "name": "narrow",
         "value": "640px",
-        "purpose": "max-width: filter bar vira coluna única e o resumo de totais passa a dois por linha; a partir de 641px as ações da filter bar recebem a compensação de topo."
+        "purpose": "Filter Bar e paginação em coluna; 'Em preparação' em duas colunas acima disto."
       },
       {
-        "name": "touch",
-        "value": "(pointer: coarse)",
-        "purpose": "Não é largura: aumenta alvo de toque (paginação 44px, padding de célula 12px) e sobe o texto dos campos para 1rem, sem mudar a densidade do desktop."
+        "name": "tablet",
+        "value": "768px",
+        "purpose": "Desliga o scrollport vertical do cabeçalho fixo de tabela (junto de pointer: coarse)."
       },
       {
-        "name": "short-viewport",
-        "value": "(min-height: 32rem)",
-        "purpose": "Só na tela de entrada: centraliza verticalmente quando há altura; abaixo disso alinha ao topo para o teclado virtual não esconder o formulário."
+        "name": "home-split",
+        "value": "900px",
+        "purpose": "Home vira conteúdo | 320px; matrícula da barra reaparece em páginas com placa própria."
+      },
+      {
+        "name": "container",
+        "value": "1120px",
+        "purpose": "Teto da área operacional e do conteúdo da barra de trabalho."
       }
     ],
-    "notes": [
-      "Sistema flat: nenhum shadow token nem box-shadow existe, por decisão (The Flat-By-Default Rule). Elementos sticky (cabeçalho de tabela, barra de confirmação) separam-se por fundo opaco e borda.",
-      "Único movimento: o spinner de carregamento. Nenhuma transição ou animação decorativa.",
-      "Token selected está definido em tokens.css mas ainda não é consumido: nenhuma seleção de linha nem navegação existe.",
-      "Resumo de totais, nota explicativa e barra de confirmação persistente vivem em catalogo/static/catalogo/css/catalogo.css (usados só pelo catálogo); sobem para static/css/components.css quando outra feature os reutilizar.",
-      "App shell desktop (largura/colapso de sidebar) e navegação mobile permanecem decisões EM ABERTO em DESIGN.md — não implementadas, não presumir.",
-      "Snippets usam as custom properties de static/css/tokens.css (var(--...)); os valores normativos estão no frontmatter de DESIGN.md.",
-      "Revisão de presença visual (impeccable colorize + critique, 2026-09-22): rampa neutra com degraus perceptíveis (canvas 1,22:1 contra superfície), moldura própria (border-frame), famílias semânticas de três papéis, info fora do eixo do azul, escala tipográfica aberta nos extremos e densidade por token. Nenhuma sombra foi introduzida."
-    ]
+    "fonts": [
+      {
+        "family": "Atkinson Hyperlegible Next",
+        "file": "static/vendor/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2",
+        "license": "OFL-1.1",
+        "axes": "wght 200-800"
+      },
+      {
+        "family": "Atkinson Hyperlegible Mono",
+        "file": "static/vendor/fonts/atkinson-hyperlegible-mono-latin-wght-normal.woff2",
+        "license": "OFL-1.1",
+        "axes": "wght 200-800"
+      }
+    ],
+    "touch": {
+      "query": "(pointer: coarse)",
+      "overrides": {
+        "--control-height-compact": "44px",
+        "--table-cell-pad-y": "12px"
+      },
+      "inputFontSize": "1rem"
+    }
   },
   "components": [
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Ação visualmente dominante do contexto (The One Accent Rule). Ao enviar, fica desabilitado com o rótulo no gerúndio (\"Confirmando…\").",
-      "html": "<div style=\"display:flex;gap:8px;flex-wrap:wrap\"><button class=\"ds-btn ds-btn-primary\">Confirmar importação: 12 inseridos, 340 atualizados</button><button class=\"ds-btn ds-btn-primary\" disabled>Confirmando…</button></div>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:hover:not(:disabled), .ds-btn-primary:active:not(:disabled) { background-color: var(--color-primary-hover); border-color: var(--color-primary-hover); } .ds-btn-primary:disabled { background-color: var(--color-disabled-surface); border-color: var(--color-disabled-surface); color: var(--color-disabled-text); cursor: not-allowed; }"
+      "description": "Única ação preenchida de um contexto; azul NR-26 de ação obrigatória.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Confirmar importação</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height,44px);padding:var(--space-2) var(--space-4);border:1px solid transparent;border-radius:var(--radius-sm);font-family: var(--font-family-base);font-size:var(--font-size-body);font-weight:var(--font-weight-medium);text-decoration:none;cursor:pointer}.ds-btn-primary{background:var(--color-primary);border-color:var(--color-primary);color:var(--color-surface)}.ds-btn-primary:hover,.ds-btn-primary:active{background:var(--color-primary-hover);border-color:var(--color-primary-hover)}.ds-btn-primary:disabled{background:var(--color-disabled-surface);border-color:var(--color-disabled-surface);color:var(--color-disabled-text);cursor:not-allowed}.ds-btn:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Ação secundária/ghost: borda fina, sem preenchimento de primary. Também é a aparência de links de ação (\"Nova importação\", \"Limpar\").",
-      "html": "<div style=\"display:flex;gap:8px;flex-wrap:wrap\"><button class=\"ds-btn ds-btn-secondary\">Cancelar</button><a href=\"#\" class=\"ds-btn ds-btn-secondary\">Nova importação</a><button class=\"ds-btn ds-btn-secondary\" disabled>Indisponível</button></div>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; }"
+      "description": "Folha branca com moldura; legível sobre folha e piso.",
+      "html": "<button class=\"ds-btn-secondary\">Limpar</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height,44px);padding:var(--space-2) var(--space-4);background:var(--color-surface);border:1px solid var(--color-border-frame);border-radius:var(--radius-sm);color:var(--color-text);font-family: var(--font-family-base);font-size:var(--font-size-body);font-weight:var(--font-weight-medium);cursor:pointer}.ds-btn-secondary:hover{background:var(--color-surface-subtle)}.ds-btn-secondary:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
     },
     {
       "name": "Text Field",
       "kind": "input",
       "refersTo": "input-text",
-      "description": "Label acima; dica abaixo em text-muted; erro abaixo em danger com texto, e borda danger no campo — nunca só a borda.",
-      "html": "<div style=\"display:flex;gap:16px;flex-wrap:wrap\"><div class=\"ds-field\" style=\"flex:1 1 220px\"><label for=\"ds-f1\">Código (CADPRO)</label><input id=\"ds-f1\" type=\"text\" value=\"001.002.003\"><p class=\"ds-field-hint\">Formato completo XXX.YYY.ZZZ.</p></div><div class=\"ds-field ds-field-has-error\" style=\"flex:1 1 220px\"><label for=\"ds-f2\">Código (CADPRO)</label><input id=\"ds-f2\" type=\"text\" value=\"001.2\"><p class=\"ds-field-error\">Informe o código completo no formato XXX.YYY.ZZZ.</p></div></div>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); }"
+      "description": "Label acima, campo de 44px, erro em texto abaixo.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-cod\">Código (CADPRO)</label><input id=\"ds-cod\" type=\"text\" value=\"0012345\"><p class=\"ds-hint\">Busca exata ou parcial.</p></div>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:var(--space-1);font-family: var(--font-family-base);}.ds-field label{font-size:var(--font-size-body);font-weight:var(--font-weight-medium);color:var(--color-text)}.ds-field input{min-height:var(--control-height,44px);padding:var(--space-2) var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);color:var(--color-text);font:inherit;font-size:var(--font-size-body)}.ds-field input:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-hint{margin:0;font-size:var(--font-size-meta);color:var(--color-text-muted)}"
+    },
+    {
+      "name": "Barra de trabalho",
+      "kind": "nav",
+      "refersTo": "appbar",
+      "description": "Faixa grafite sticky com linha de corredor amarela de 4px; marca, matrícula e Sair.",
+      "html": "<header class=\"ds-appbar\"><div class=\"ds-appbar-inner\"><span class=\"ds-appbar-brand\">Almoxarifado SAEP</span><div class=\"ds-appbar-account\"><span class=\"ds-appbar-mat\">chefe</span><button class=\"ds-appbar-logout\">Sair</button></div></div></header>",
+      "css": ".ds-appbar{background:var(--color-ink);border-bottom:4px solid var(--color-signal);font-family: var(--font-family-base);}.ds-appbar-inner{height:56px;padding-inline:var(--space-4);display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)}.ds-appbar-brand{color:var(--color-on-ink);font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold)}.ds-appbar-account{display:flex;align-items:center;gap:var(--space-3)}.ds-appbar-mat{font-family:var(--font-family-mono);font-size:var(--font-size-meta);color:var(--color-on-ink-muted)}.ds-appbar-logout{min-height:44px;padding:var(--space-1) var(--space-3);background:none;border:1px solid var(--color-ink-border);border-radius:var(--radius-sm);color:var(--color-on-ink);font:inherit;font-weight:var(--font-weight-medium);cursor:pointer}.ds-appbar-logout:hover{background:var(--color-ink-raised)}.ds-appbar-logout:focus-visible{outline:2px solid var(--color-on-ink-accent);outline-offset:2px}"
+    },
+    {
+      "name": "Marcador de seção + lista de tarefas",
+      "kind": "custom",
+      "refersTo": "section-marker",
+      "description": "H2 em faixa grafite com seta de fluxo, encostado numa lista de linhas inteiras clicáveis com verbo primeiro.",
+      "html": "<section class=\"ds-tasks\"><h2 class=\"ds-marker\">Suas tarefas <svg class=\"ds-marker-arrow\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M2 8H13M13 8L9 4M13 8L9 12\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></h2><ul class=\"ds-task-list\"><li><a class=\"ds-task\" href=\"#\"><span><span class=\"ds-task-title\">Consultar catálogo de materiais</span><span class=\"ds-task-desc\">Localize materiais por CADPRO ou descrição e confira o saldo.</span></span><svg class=\"ds-task-arrow\" width=\"20\" height=\"20\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M2 8H13M13 8L9 4M13 8L9 12\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></a></li><li><a class=\"ds-task\" href=\"#\"><span><span class=\"ds-task-title\">Importar catálogo do SCPI</span><span class=\"ds-task-desc\">Envie o CSV exportado, confira a prévia e confirme a carga.</span></span><svg class=\"ds-task-arrow\" width=\"20\" height=\"20\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M2 8H13M13 8L9 4M13 8L9 12\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></a></li></ul></section>",
+      "css": ".ds-tasks{font-family: var(--font-family-base);}.ds-marker{display:inline-flex;align-items:center;gap:var(--space-2);vertical-align:bottom;margin:0;padding:var(--space-2) var(--space-3);background:var(--color-ink);border-radius:var(--radius-sm) var(--radius-sm) 0 0;color:var(--color-on-ink);font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold);line-height:var(--line-height-tight);text-transform:uppercase;letter-spacing:var(--letter-spacing-caps)}.ds-marker-arrow{color:var(--color-on-ink-accent)}.ds-task-list{list-style:none;margin:0;padding:0;background:var(--color-surface);border:1px solid var(--color-border-frame);border-radius:0 var(--radius-md) var(--radius-md) var(--radius-md)}.ds-task-list li+li{border-top:1px solid var(--color-border)}.ds-task{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);min-height:56px;padding:var(--space-4);color:inherit;text-decoration:none}.ds-task-title{display:block;font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold);color:var(--color-text)}.ds-task-desc{display:block;margin-top:var(--space-1);font-size:var(--font-size-body);color:var(--color-text-muted)}.ds-task-arrow{flex-shrink:0;color:var(--color-primary);transition:transform .18s ease-out}@media (hover:hover){.ds-task:hover{background:var(--color-surface-subtle)}.ds-task:hover .ds-task-arrow{transform:translateX(3px)}}.ds-task:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-task:focus-visible .ds-task-arrow{transform:translateX(3px)}@media (prefers-reduced-motion:reduce){.ds-task-arrow{transition:none}}"
+    },
+    {
+      "name": "Zona Em preparação",
+      "kind": "custom",
+      "refersTo": "planned-zone",
+      "description": "Fita zebrada superior como única demarcação; marcador atenuado sem seta, itens sem link com selo Planejado.",
+      "html": "<section class=\"ds-planned\"><div class=\"ds-tape\" aria-hidden=\"true\"></div><div class=\"ds-planned-body\"><h2 class=\"ds-marker-muted\">Em preparação</h2><p class=\"ds-planned-note\">Funções previstas para os seus papéis — ainda indisponíveis nesta versão.</p><ul class=\"ds-planned-list\"><li><div class=\"ds-planned-row\"><span class=\"ds-planned-title\">Solicitar material</span><span class=\"ds-badge-planned\">Planejado</span></div><p class=\"ds-planned-desc\">Peça material ao almoxarifado.</p></li></ul></div></section>",
+      "css": ".ds-planned{font-family: var(--font-family-base);}.ds-tape{height:6px;border-radius:var(--radius-sm) var(--radius-sm) 0 0;background-image:repeating-linear-gradient(135deg,var(--color-signal) 0 10px,var(--color-signal) 10px 11px,var(--color-ink) 11px 20px,var(--color-ink) 20px 21px)}.ds-planned-body{padding:var(--space-4);background:var(--color-surface-subtle);border:1px solid var(--color-border);border-top:none;border-radius:0 0 var(--radius-md) var(--radius-md)}.ds-marker-muted{display:inline-flex;margin:0 0 var(--space-4);padding:var(--space-2) var(--space-3);border:1px dashed var(--color-border-strong);border-radius:var(--radius-sm);color:var(--color-text-muted);font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold);line-height:var(--line-height-tight);text-transform:uppercase;letter-spacing:var(--letter-spacing-caps)}.ds-planned-note{margin:0 0 var(--space-4);color:var(--color-text-muted);font-size:var(--font-size-body)}.ds-planned-list{list-style:none;margin:0;padding:0}.ds-planned-list li{padding:var(--space-2) 0;border-top:1px solid var(--color-border)}.ds-planned-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2)}.ds-planned-title{font-size:var(--font-size-body);font-weight:var(--font-weight-medium);color:var(--color-text-muted)}.ds-planned-desc{margin:var(--space-1) 0 0;font-size:var(--font-size-meta);color:var(--color-text-muted)}.ds-badge-planned{display:inline-flex;padding:var(--space-1) var(--space-2);background:var(--color-surface);border:1px dashed var(--color-border-strong);border-radius:var(--radius-sm);color:var(--color-text-muted);font-size:var(--font-size-badge);font-weight:var(--font-weight-semibold);line-height:var(--line-height-tight);white-space:nowrap}"
+    },
+    {
+      "name": "Placa de identificação",
+      "kind": "card",
+      "refersTo": "id-plate",
+      "description": "Folha isolada com pares rótulo/valor; matrícula em Mono, papéis em badge neutro.",
+      "html": "<dl class=\"ds-plate\"><div><dt>Matrícula</dt><dd class=\"ds-mono\">chefe</dd></div><div><dt>Setor</dt><dd>Almoxarifado</dd></div><div class=\"ds-plate-wide\"><dt>Papéis</dt><dd><span class=\"ds-badge-neutral\">Chefe do almoxarifado</span></dd></div></dl>",
+      "css": ".ds-plate{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:var(--space-4);padding:var(--space-4);background:var(--color-surface);border:1px solid var(--color-border-frame);border-radius:var(--radius-md);font-family: var(--font-family-base);}.ds-plate-wide{grid-column:1/-1}.ds-plate dt{margin:0 0 var(--space-1);font-size:var(--font-size-meta);color:var(--color-text-muted)}.ds-plate dd{margin:0;font-size:var(--font-size-body);color:var(--color-text)}.ds-mono{font-family:var(--font-family-mono)}.ds-badge-neutral{display:inline-flex;padding:var(--space-1) var(--space-2);background:var(--color-surface-subtle);border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);color:var(--color-text);font-size:var(--font-size-badge);font-weight:var(--font-weight-semibold);line-height:var(--line-height-tight)}"
+    },
+    {
+      "name": "Status Badges",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Famílias semânticas com texto explícito.",
+      "html": "<span class=\"ds-badge ds-b-success\">Concluída</span> <span class=\"ds-badge ds-b-warning\">Com rejeições</span> <span class=\"ds-badge ds-b-danger\">Falhou</span> <span class=\"ds-badge ds-b-info\">Prévia</span>",
+      "css": ".ds-badge{display:inline-flex;padding:var(--space-1) var(--space-2);border-radius:var(--radius-sm);font-family: var(--font-family-base);font-size:var(--font-size-badge);font-weight:var(--font-weight-semibold);line-height:var(--line-height-tight);white-space:nowrap}.ds-b-success{background:var(--color-success-surface);border:1px solid var(--color-success-border);color:var(--color-success)}.ds-b-warning{background:var(--color-warning-surface);border:1px solid var(--color-warning-border);color:var(--color-warning)}.ds-b-danger{background:var(--color-danger-surface);border:1px solid var(--color-danger-border);color:var(--color-danger)}.ds-b-info{background:var(--color-info-surface);border:1px solid var(--color-info-border);color:var(--color-info)}"
+    },
+    {
+      "name": "Tabela operacional",
+      "kind": "custom",
+      "refersTo": "table",
+      "description": "Moldura em border-frame, cabeçalho como rótulo, CADPRO em Mono, números tabulares.",
+      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th>CADPRO</th><th>Descrição</th><th class=\"ds-num\">Saldo</th></tr></thead><tbody><tr><td class=\"ds-code\">0012345</td><td>Papel A4 75g, resma</td><td class=\"ds-num\">1.240</td></tr><tr><td class=\"ds-code\">0010O1l</td><td>Caneta esferográfica azul</td><td class=\"ds-num\">722</td></tr></tbody></table></div>",
+      "css": ".ds-table-wrap{overflow-x:auto;border:1px solid var(--color-border-frame);border-radius:var(--radius-sm)}.ds-table{width:100%;border-collapse:collapse;background:var(--color-surface);font-family: var(--font-family-base);font-size:var(--font-size-body);color:var(--color-text)}.ds-table th,.ds-table td{padding:var(--table-cell-pad-y,8px) var(--table-cell-pad-x,12px);text-align:left;vertical-align:top;border-bottom:1px solid var(--color-border)}.ds-table thead th{font-size:var(--font-size-table-header);font-weight:var(--font-weight-semibold);letter-spacing:var(--letter-spacing-caps);text-transform:uppercase;color:var(--color-text-muted);background:var(--color-surface-subtle);border-bottom:2px solid var(--color-border-strong)}.ds-table tbody tr:last-child td{border-bottom:none}.ds-table .ds-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ds-code{font-family:var(--font-family-mono);white-space:nowrap}"
     },
     {
       "name": "Alert",
       "kind": "custom",
-      "refersTo": "alert-success",
-      "description": "Feedback de página/seção com frase explícita: success (importação efetivada), info (prévia não gravada), warning, danger (erro/falha de rede). Visível até a próxima navegação, nunca toast.",
-      "html": "<div class=\"ds-alert ds-alert-success\"><p>Importação confirmada: 12 materiais inseridos e 340 atualizados.</p></div><div class=\"ds-alert ds-alert-info\"><p>Esta é só uma prévia: nada foi gravado ainda.</p></div><div class=\"ds-alert ds-alert-warning\"><p>Aviso que merece atenção mas não bloqueia.</p></div><div class=\"ds-alert ds-alert-danger\"><p>Não foi possível atualizar os resultados agora. Verifique a conexão e tente novamente.</p></div>",
-      "css": ".ds-alert { padding: var(--space-3); border-radius: var(--radius-sm); margin-bottom: var(--space-4); font-family: var(--font-family-base); font-size: var(--font-size-body); border: 1px solid currentColor; } .ds-alert p { margin: 0; } .ds-alert-success { background-color: var(--color-success-surface); border-color: var(--color-success-border); color: var(--color-success); } .ds-alert-info { background-color: var(--color-info-surface); border-color: var(--color-info-border); color: var(--color-info); } .ds-alert-warning { background-color: var(--color-warning-surface); border-color: var(--color-warning-border); color: var(--color-warning); } .ds-alert-danger { background-color: var(--color-danger-surface); border-color: var(--color-danger-border); color: var(--color-danger); }"
-    },
-    {
-      "name": "Status Badge",
-      "kind": "chip",
-      "refersTo": "badge-success",
-      "description": "Rótulo curto de estado semântico, sempre com texto. Uso atual: \"Concluída\" ao lado do título do resultado da execução. Nunca por linha de divergência.",
-      "html": "<h1 class=\"ds-ph-title\">Resultado da importação #42 <span class=\"ds-badge ds-badge-success\">Concluída</span></h1><div style=\"display:flex;gap:8px;flex-wrap:wrap;margin-top:12px\"><span class=\"ds-badge ds-badge-info\">Informação</span><span class=\"ds-badge ds-badge-warning\">Atenção</span><span class=\"ds-badge ds-badge-danger\">Erro</span><span class=\"ds-badge ds-badge-neutral\">Pendente</span></div>",
-      "css": ".ds-ph-title { margin: 0; font-family: var(--font-family-base); font-size: var(--font-size-page-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); color: var(--color-text); } .ds-ph-title .ds-badge { margin-left: var(--space-2); vertical-align: middle; } .ds-badge { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-badge); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); white-space: nowrap; border: 1px solid currentColor; } .ds-badge-success { background-color: var(--color-success-surface); border-color: var(--color-success-border); color: var(--color-success); } .ds-badge-info { background-color: var(--color-info-surface); border-color: var(--color-info-border); color: var(--color-info); } .ds-badge-warning { background-color: var(--color-warning-surface); border-color: var(--color-warning-border); color: var(--color-warning); } .ds-badge-danger { background-color: var(--color-danger-surface); border-color: var(--color-danger-border); color: var(--color-danger); } .ds-badge-neutral { background-color: var(--color-surface-subtle); color: var(--color-text); border-color: var(--color-border-strong); }"
-    },
-    {
-      "name": "Table",
-      "kind": "custom",
-      "refersTo": "table",
-      "description": "Superfície de primeira classe: cabeçalho sticky com scrollport vertical, números à direita em tabular-nums, CADPRO em monoespaçada, borda lateral border-strong só na linha de exceção.",
-      "html": "<div class=\"ds-table-wrapper ds-table-sticky-header\"><table class=\"ds-table\"><thead><tr><th scope=\"col\">Linha</th><th scope=\"col\">Código (CADPRO)</th><th scope=\"col\">Motivo</th><th scope=\"col\" class=\"ds-num\">Saldo</th></tr></thead><tbody><tr><td>14</td><td class=\"ds-code\">001.002.003</td><td>Aceito</td><td class=\"ds-num\">1.250,000</td></tr><tr class=\"ds-row-error\"><td>15</td><td class=\"ds-code\">001.002.004</td><td>CADPRO duplicado no arquivo</td><td class=\"ds-num\">12,500</td></tr><tr><td>16</td><td class=\"ds-code\">002.010.001</td><td>Aceito</td><td class=\"ds-num\">0,000</td></tr></tbody></table></div>",
-      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border-frame); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-size: var(--font-size-table-header); font-weight: var(--font-weight-semibold); letter-spacing: var(--letter-spacing-caps); text-transform: uppercase; color: var(--color-text-muted); background-color: var(--color-surface-subtle); vertical-align: middle; border-bottom: 2px solid var(--color-border-strong); } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } }"
-    },
-    {
-      "name": "Informative Table (divergências)",
-      "kind": "custom",
-      "refersTo": "table-cell-numeric",
-      "description": "Tabela informativa: nenhuma linha marcada como erro nem selo; o sinal da diferença em semibold é o diferenciador, com nota explicativa acima.",
-      "html": "<p class=\"ds-note\">Diferença = saldo no arquivo − saldo no WMS. É só informativa — esta importação <strong>não altera o saldo do WMS</strong>.</p><div class=\"ds-table-wrapper\"><table class=\"ds-table\"><thead><tr><th scope=\"col\">Código (CADPRO)</th><th scope=\"col\" class=\"ds-num\">Saldo no WMS</th><th scope=\"col\" class=\"ds-num\">Saldo no arquivo</th><th scope=\"col\" class=\"ds-num\">Diferença</th></tr></thead><tbody><tr><td class=\"ds-code\">001.002.003</td><td class=\"ds-num\">100,000</td><td class=\"ds-num\">112,000</td><td class=\"ds-num ds-diff\">+12,000</td></tr><tr><td class=\"ds-code\">003.001.007</td><td class=\"ds-num\">40,000</td><td class=\"ds-num\">35,500</td><td class=\"ds-num ds-diff\">-4,500</td></tr></tbody></table></div>",
-      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border-frame); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-size: var(--font-size-table-header); font-weight: var(--font-weight-semibold); letter-spacing: var(--letter-spacing-caps); text-transform: uppercase; color: var(--color-text-muted); background-color: var(--color-surface-subtle); vertical-align: middle; border-bottom: 2px solid var(--color-border-strong); } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } } .ds-note { max-width: 72ch; margin: 0 0 var(--space-4); font-family: var(--font-family-base); font-size: var(--font-size-body); color: var(--color-text-muted); }"
-    },
-    {
-      "name": "Table Empty Row",
-      "kind": "custom",
-      "refersTo": "table-empty-row",
-      "description": "Sem resultado com filtros ativos: linha única com colspan total, preservando as colunas como referência.",
-      "html": "<div class=\"ds-table-wrapper\"><table class=\"ds-table\"><thead><tr><th scope=\"col\">Código (CADPRO)</th><th scope=\"col\">Descrição</th><th scope=\"col\" class=\"ds-num\">Saldo</th></tr></thead><tbody><tr class=\"ds-empty-row\"><td colspan=\"3\"><p class=\"ds-es-title\">Nenhum material encontrado.</p><p class=\"ds-es-desc\">Ajuste o código ou a descrição e tente novamente.</p></td></tr></tbody></table></div>",
-      "css": ".ds-table-wrapper { overflow-x: auto; border: 1px solid var(--color-border-frame); border-radius: var(--radius-sm); font-family: var(--font-family-base); } .ds-table-sticky-header { max-height: 60vh; overflow-y: auto; } .ds-table-sticky-header thead th { position: sticky; top: 0; z-index: 1; } .ds-table { width: 100%; border-collapse: collapse; background-color: var(--color-surface); font-size: var(--font-size-body); color: var(--color-text); } .ds-table th, .ds-table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border); } .ds-table thead th { font-size: var(--font-size-table-header); font-weight: var(--font-weight-semibold); letter-spacing: var(--letter-spacing-caps); text-transform: uppercase; color: var(--color-text-muted); background-color: var(--color-surface-subtle); vertical-align: middle; border-bottom: 2px solid var(--color-border-strong); } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table th.ds-num, .ds-table td.ds-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-table td.ds-code { font-family: var(--font-family-mono); white-space: nowrap; } .ds-row-error > td:first-child { border-left: 3px solid var(--color-border-strong); } .ds-row-clickable { cursor: pointer; } .ds-row-clickable:hover { background-color: var(--color-surface-subtle); } .ds-row-clickable a { color: inherit; text-decoration: none; } .ds-row-clickable a:hover { text-decoration: underline; } .ds-diff { font-weight: var(--font-weight-semibold); } @media (pointer: coarse) { .ds-table th, .ds-table td { padding-block: var(--space-3); } } .ds-empty-row { color: var(--color-text-muted); } .ds-empty-row td { padding: var(--space-6) var(--space-3); white-space: normal; } .ds-es-title { margin: 0; font-size: var(--font-size-section-title); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-es-desc { margin: var(--space-1) 0 0; font-size: var(--font-size-body); }"
-    },
-    {
-      "name": "Pagination",
-      "kind": "nav",
-      "refersTo": "pagination-link",
-      "description": "Só Anterior/Próxima + página atual (não clicável, semibold + borda primary). Links preservam os demais parâmetros da URL e voltam à âncora da seção.",
-      "html": "<nav class=\"ds-pagination\" aria-label=\"Paginação de materiais\"><p class=\"ds-pagination-summary\">Página 2 de 68 — 1.354 materiais no total</p><ul class=\"ds-pagination-list\"><li><a class=\"ds-pagination-link\" href=\"#\">Anterior</a></li><li><span class=\"ds-pagination-link ds-pagination-current\" aria-current=\"page\">2</span></li><li><a class=\"ds-pagination-link\" href=\"#\">Próxima</a></li></ul></nav><nav class=\"ds-pagination\" aria-label=\"Paginação de exceções\"><p class=\"ds-pagination-summary\">Página 1 de 1 — 3 no total</p><ul class=\"ds-pagination-list\"><li><span class=\"ds-pagination-link ds-pagination-disabled\" aria-disabled=\"true\">Anterior</span></li><li><span class=\"ds-pagination-link ds-pagination-current\" aria-current=\"page\">1</span></li><li><span class=\"ds-pagination-link ds-pagination-disabled\" aria-disabled=\"true\">Próxima</span></li></ul></nav>",
-      "css": ".ds-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-4); font-family: var(--font-family-base); } .ds-pagination-summary { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); } .ds-pagination-list { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); list-style: none; margin: 0; padding: 0; } .ds-pagination-link { display: inline-flex; align-items: center; justify-content: center; min-width: var(--control-height-compact); min-height: var(--control-height-compact); padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); text-decoration: none; font-size: var(--font-size-body); } .ds-pagination-link:hover { background-color: var(--color-surface-subtle); } .ds-pagination-link:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-pagination-current { border-color: var(--color-primary); font-weight: var(--font-weight-semibold); color: var(--color-primary); } .ds-pagination-current:hover { background-color: transparent; } .ds-pagination-disabled { color: var(--color-disabled-text); cursor: not-allowed; pointer-events: none; } @media (pointer: coarse) { .ds-pagination-link { min-width: var(--control-height); min-height: var(--control-height); } }"
-    },
-    {
-      "name": "Filter Bar",
-      "kind": "custom",
-      "refersTo": "input-text",
-      "description": "Filtros antes do conteúdo, alinhados pelo topo (align-items: flex-start); ações compensadas por uma linha de rótulo a partir de 641px; coluna única até 640px.",
-      "html": "<form class=\"ds-filter-bar\" onsubmit=\"return false\"><div class=\"ds-field ds-filter-field\"><label for=\"ds-fb1\">Código (CADPRO)</label><input id=\"ds-fb1\" type=\"text\"><p class=\"ds-field-hint\">Formato completo XXX.YYY.ZZZ.</p></div><div class=\"ds-field ds-filter-field\"><label for=\"ds-fb2\">Descrição</label><input id=\"ds-fb2\" type=\"text\"></div><div class=\"ds-filter-actions\"><button type=\"submit\" class=\"ds-btn ds-btn-primary\">Buscar</button><a href=\"#\" class=\"ds-btn ds-btn-secondary\">Limpar</a></div></form>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); } .ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:hover:not(:disabled), .ds-btn-primary:active:not(:disabled) { background-color: var(--color-primary-hover); border-color: var(--color-primary-hover); } .ds-btn-primary:disabled { background-color: var(--color-disabled-surface); border-color: var(--color-disabled-surface); color: var(--color-disabled-text); cursor: not-allowed; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-filter-bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3) var(--space-4); margin-bottom: var(--space-4); } .ds-filter-field { flex: 1 1 220px; min-width: 160px; margin-bottom: 0; } .ds-filter-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); flex: 0 0 auto; } @media (min-width: 641px) { .ds-filter-actions { margin-top: calc(var(--font-size-body) * var(--line-height-base) + var(--space-1)); } } @media (max-width: 640px) { .ds-filter-bar { flex-direction: column; align-items: stretch; } .ds-filter-field { flex: 1 1 auto; min-width: 0; } .ds-filter-actions .ds-btn { flex: 1 1 0; } }"
-    },
-    {
-      "name": "Page Header",
-      "kind": "custom",
-      "refersTo": "page-header-title",
-      "description": "Título + contexto em text-muted + ações à direita; borda inferior fina. Abaixo de 480px as ações ocupam linha própria.",
-      "html": "<header class=\"ds-page-header\"><div><h1 class=\"ds-ph-title\">Histórico de importações</h1><p class=\"ds-ph-desc\">Execuções de importação do catálogo confirmadas, da mais recente para a mais antiga.</p></div><div class=\"ds-ph-actions\"><a href=\"#\" class=\"ds-btn ds-btn-secondary\">Importar catálogo</a></div></header>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-page-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding-bottom: var(--space-4); margin-bottom: var(--space-6); border-bottom: 1px solid var(--color-border-frame); font-family: var(--font-family-base); } .ds-ph-title { margin: 0; font-size: var(--font-size-page-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); color: var(--color-text); } .ds-ph-desc { margin: var(--space-1) 0 0; font-size: var(--font-size-body); color: var(--color-text-muted); } .ds-ph-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); } @media (max-width: 480px) { .ds-ph-actions { width: 100%; } .ds-ph-actions .ds-btn { flex: 1 1 auto; } }"
-    },
-    {
-      "name": "Empty State",
-      "kind": "custom",
-      "refersTo": "empty-state",
-      "description": "Ausência explícita fora de tabela, quando a seção inteira não tem registros e não há colunas a preservar.",
-      "html": "<div class=\"ds-empty-state\"><p class=\"ds-es-title\">Nenhuma divergência de saldo.</p><p class=\"ds-es-desc\">O saldo do WMS coincide com o saldo do arquivo para todos os materiais atualizados.</p></div>",
-      "css": ".ds-empty-state { padding: var(--space-8) var(--space-4); color: var(--color-text-muted); font-family: var(--font-family-base); } .ds-es-title { margin: 0; font-size: var(--font-size-section-title); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-es-desc { margin: var(--space-1) 0 0; font-size: var(--font-size-body); }"
-    },
-    {
-      "name": "Loading Indicator",
-      "kind": "custom",
-      "refersTo": "loading-indicator",
-      "description": "Local à região atualizada por HTMX, em linha de altura reservada; spinner para sob prefers-reduced-motion, o texto permanece.",
-      "html": "<div class=\"ds-status-row\"><p class=\"ds-loading\" role=\"status\"><span class=\"ds-spinner\" aria-hidden=\"true\"></span>Carregando resultados…</p></div>",
-      "css": ".ds-status-row { min-height: var(--space-6); margin-bottom: var(--space-2); } .ds-loading { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; font-family: var(--font-family-base); font-size: var(--font-size-meta); color: var(--color-text-muted); } .ds-spinner { width: 14px; height: 14px; border: 2px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: ds-spin 0.6s linear infinite; } @media (prefers-reduced-motion: reduce) { .ds-spinner { animation: none; } } @keyframes ds-spin { to { transform: rotate(360deg); } }"
-    },
-    {
-      "name": "File Upload",
-      "kind": "input",
-      "refersTo": "file-upload-meta",
-      "description": "Input nativo oculto só visualmente; <label for> com aparência de botão secundário abre o seletor sem JS; nome e tamanho do arquivo em pt-BR ao lado.",
-      "html": "<div class=\"ds-field\"><label for=\"ds-arquivo\">Arquivo CSV</label><div class=\"ds-file-upload\"><input type=\"file\" id=\"ds-arquivo\" accept=\".csv\" class=\"ds-file-input\"><label for=\"ds-arquivo\" class=\"ds-btn ds-btn-secondary ds-file-trigger\">Escolher arquivo</label><span class=\"ds-file-meta\">catalogo_scpi.csv — 2.4 MB</span></div><p class=\"ds-field-hint\">Arquivo CSV exportado do SCPI, até 10&nbsp;MB.</p></div>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); font-family: var(--font-family-base); } .ds-field label { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); } .ds-field input[type=\"text\"] { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-body); } .ds-field input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-field-hint { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-meta); } .ds-field-error { margin: 0; color: var(--color-danger); font-size: var(--font-size-meta); } .ds-field-has-error input[type=\"text\"] { border-color: var(--color-danger); } .ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-file-upload { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); } .ds-file-input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; } .ds-file-input:focus-visible { outline: none; } .ds-file-input:focus-visible + .ds-file-trigger { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-file-meta { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); }"
-    },
-    {
-      "name": "Totals Summary",
-      "kind": "custom",
-      "refersTo": "summary-value",
-      "description": "Totais de uma operação: valor em tamanho de título, semibold, tabular-nums; item fora da soma separado por espaço e explicado por nota logo abaixo.",
-      "html": "<dl class=\"ds-summary\"><div class=\"ds-summary-item\"><dt>Recebidos</dt><dd>1.402</dd></div><div class=\"ds-summary-item\"><dt>Serão inseridos</dt><dd>12</dd></div><div class=\"ds-summary-item\"><dt>Serão atualizados</dt><dd>1.387 <span class=\"ds-summary-detail\">(340 com alteração)</span></dd></div><div class=\"ds-summary-item\"><dt>Rejeitados</dt><dd>3</dd></div><div class=\"ds-summary-item ds-summary-item-separado\"><dt>Ausentes do arquivo</dt><dd>27</dd></div></dl><p class=\"ds-note\">\"Ausentes do arquivo\" não entra na soma Recebidos = Inseridos + Atualizados + Rejeitados. Esta importação <strong>não altera nem remove</strong> esses materiais.</p>",
-      "css": ".ds-summary { display: flex; flex-wrap: wrap; gap: var(--space-6); margin: 0; font-family: var(--font-family-base); } .ds-summary-item { display: flex; flex-direction: column; gap: var(--space-1); padding-right: var(--space-6); border-right: 1px solid var(--color-border); } .ds-summary-item:last-child { padding-right: 0; border-right: none; } .ds-summary-item dt { margin: 0; font-size: var(--font-size-meta); color: var(--color-text-muted); } .ds-summary-item dd { margin: 0; font-size: var(--font-size-metric); font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; color: var(--color-text); } .ds-summary-detail { margin-left: var(--space-1); font-size: var(--font-size-meta); font-weight: var(--font-weight-regular); color: var(--color-text-muted); } .ds-summary-item-separado { margin-left: var(--space-4); } .ds-note { max-width: 72ch; margin: var(--space-4) 0 0; font-family: var(--font-family-base); font-size: var(--font-size-body); color: var(--color-text-muted); } @media (max-width: 640px) { .ds-summary { gap: var(--space-4) var(--space-6); } .ds-summary-item { flex: 1 1 40%; } }"
-    },
-    {
-      "name": "Confirmation Bar",
-      "kind": "custom",
-      "refersTo": "confirmation-bar",
-      "description": "Par confirmar/cancelar de ação de impacto, persistente com position: sticky; bottom: 0 (nunca fixed), plano: fundo surface + borda superior, sem sombra.",
-      "html": "<div class=\"ds-confirm-bar\"><button class=\"ds-btn ds-btn-primary\">Confirmar importação: 12 inseridos, 1.387 atualizados</button><button class=\"ds-btn ds-btn-secondary\">Cancelar</button></div>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-height); padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-sm); font-family: var(--font-family-base); font-size: var(--font-size-body); font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; } .ds-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-btn-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); } .ds-btn-primary:hover:not(:disabled), .ds-btn-primary:active:not(:disabled) { background-color: var(--color-primary-hover); border-color: var(--color-primary-hover); } .ds-btn-primary:disabled { background-color: var(--color-disabled-surface); border-color: var(--color-disabled-surface); color: var(--color-disabled-text); cursor: not-allowed; } .ds-btn-secondary { background-color: var(--color-surface); border-color: var(--color-border-frame); color: var(--color-text); } .ds-btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-subtle); } .ds-btn-secondary:disabled { border-color: var(--color-disabled); color: var(--color-disabled-text); cursor: not-allowed; } .ds-confirm-bar { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-3) 0; background-color: var(--color-surface); border-top: 1px solid var(--color-border-frame); } @media (max-width: 480px) { .ds-confirm-bar { flex-direction: column; align-items: stretch; } .ds-confirm-bar .ds-btn { width: 100%; } }"
-    },
-    {
-      "name": "Surface Card",
-      "kind": "card",
-      "refersTo": "card-surface",
-      "description": "Container isolado das telas de entrada e início (raio md, borda fina, sem sombra). Não é a estrutura universal de conteúdo — listagens e páginas densas não viram card.",
-      "html": "<div class=\"ds-card\"><h1 class=\"ds-card-title\">WMS-Almoxarifado</h1><p class=\"ds-card-text\">Sessão autenticada como <strong>12345</strong>.</p></div>",
-      "css": ".ds-card { max-width: 480px; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-6) var(--space-4); font-family: var(--font-family-base); color: var(--color-text); } .ds-card-title { font-size: var(--font-size-metric); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); margin: 0 0 var(--space-4); } .ds-card-text { margin: 0; font-size: var(--font-size-body); } @media (min-width: 480px) { .ds-card { padding: var(--space-8) var(--space-6); } }"
-    },
-    {
-      "name": "Isolated Form Surface",
-      "kind": "card",
-      "refersTo": "form-surface",
-      "description": "Formulário simples que ocupa a tela sozinho (envio do CSV): a única superfície da página, para que os controles não flutuem sobre o canvas. Sem sombra.",
-      "html": "<form class=\"ds-form\"><p style=\"margin:0 0 12px;font-weight:500\">Arquivo CSV</p><div style=\"display:flex;gap:12px;align-items:center;flex-wrap:wrap\"><span class=\"ds-btn ds-btn-secondary\">Escolher arquivo</span><span style=\"font-size:13px;color:var(--color-text-muted)\">Nenhum arquivo selecionado.</span></div></form>",
-      "css": ".ds-form { background-color: var(--color-surface); border: 1px solid var(--color-border-frame); border-radius: var(--radius-md); padding: var(--space-6) var(--space-4); max-width: 640px; }"
+      "refersTo": "alert-info",
+      "description": "Feedback de seção em frase explícita, família semântica completa.",
+      "html": "<div class=\"ds-alert ds-alert-info\"><p>Esta é só uma prévia: nada foi gravado.</p></div>",
+      "css": ".ds-alert{padding:var(--space-3);border-radius:var(--radius-sm);font-family: var(--font-family-base);font-size:var(--font-size-body)}.ds-alert p{margin:0}.ds-alert-info{background:var(--color-info-surface);border:1px solid var(--color-info-border);color:var(--color-info)}"
     }
   ],
   "narrative": {
-    "northStar": "A Bancada de Trabalho Confiável",
-    "overview": "O WMS-Almoxarifado é uma ferramenta operacional interna, não um produto de mercado: quem a abre já sabe o que veio fazer, e a interface existe para que essa tarefa seja concluída rápido, sem ambiguidade e sem erro — como uma bancada de trabalho bem organizada, onde cada ferramenta está sempre no mesmo lugar. A personalidade é a de uma ferramenta operacional confiável, não a de um software vistoso: densidade útil, baixa carga cognitiva, comparação rápida entre registros, previsibilidade de onde cada ação mora e clareza inequívoca de estado. Hierarquia visual é resolvida por tipografia, alinhamento, spacing, bordas e superfície — nunca por decoração aplicada por cima.\n\nEste sistema é compartilhado entre papéis com contextos operacionais muito diferentes — Solicitantes e Chefes de setor usam predominantemente celular, Funcionários do almoxarifado usam predominantemente desktop, e também operam em tablet dentro do almoxarifado. Por isso a fundação (papéis semânticos, primitives, comportamento de estado) é uma só, mas a composição e a densidade variam conscientemente por papel, tarefa e dispositivo — isto é uma decisão de produto estabelecida, não uma lacuna (ver Layout).\n\nRejeições visuais confirmadas: dashboards decorativos, cards como estrutura universal de conteúdo, glassmorphism, gradientes, sombras decorativas, arredondamento excessivo, animações chamativas, estética de SaaS genérico, tipografia de marketing, excesso de whitespace tratado como hierarquia. Não existe identidade institucional definida hoje (sem logotipo, sem cor oficial do órgão); nenhum valor cromático abaixo é branding aprovado — é hipótese de direção sujeita a validação visual.\n\nEscopo de acessibilidade: as regras de estado não cromático e de foco visível abaixo são decisões deste design system, a serviço da leitura operacional — não uma promessa de conformidade. Requisitos específicos de acessibilidade (WCAG, ARIA, leitores de tela, navegação por teclado) não são adicionados por padrão; entram só quando necessários ao funcionamento correto de um componente ou quando uma feature os exigir explicitamente (Constitution).",
+    "northStar": "Tubulação e Piso Industrial",
+    "overview": "O WMS-Almoxarifado é lido como a própria planta do almoxarifado: piso de concreto quente, folhas brancas de trabalho assentadas sobre ele, texto grafite, e o que está em circulação identificado como a indústria identifica tubulações e corredores — faixa de identificação escura com rótulo e seta de fluxo, linha de demarcação amarela, fita zebrada onde há obra. O código de cores de segurança NR-26 não é ornamento importado: é a gramática semântica do sistema. Azul é ação obrigatória, amarelo é circulação e demarcação, verde, vermelho e âmbar são estado. Quem abre a ferramenta já sabe o que veio fazer; a interface existe para que isso aconteça rápido, sem ambiguidade e sem erro.\n\nO mundo substitui a fundação anterior (\"A Bancada de Trabalho Confiável\", azul-acinzentada, fonte do sistema, raios de 2/4px), mas não as regras operacionais dela: densidade útil, uma só fundação para todos os papéis e dispositivos, estado nunca só por cor, superfícies planas. Hierarquia continua resolvida por tipografia, alinhamento, spacing, borda e tom de superfície. Hoje a composição nova só existe na Home autenticada (a barra de trabalho, os marcadores de tubulação, a lista de tarefas e a zona \"Em preparação\"). Catálogo, importação e login herdam os tokens novos sem recomposição, e a densidade das telas operacionais densas continua sendo a validada pela fundação anterior. Ver \"Estado de validação\" em Layout.\n\nRejeições visuais confirmadas: dashboards decorativos, grade de cards iguais como estrutura, eyebrow acima de título, glassmorphism, gradiente de cor suave, sombra decorativa, arredondamento pronunciado, animação chamativa, estética de SaaS genérico, tipografia de marketing, whitespace tratado como hierarquia. Não existe identidade institucional do SAEP (sem logotipo, sem cor oficial); a paleta é a do mundo escolhido, não branding aprovado. Escopo de acessibilidade: as regras de estado não cromático, contraste e foco visível abaixo são decisões deste design system a serviço da leitura operacional, não promessa de conformidade; requisitos específicos entram quando uma feature os exigir (Constitution).",
     "keyCharacteristics": [
-      "Densidade útil como padrão, não como exceção.",
-      "Estado ou seleção relevante nunca depende só de cor — sempre há uma pista não cromática adequada ao contexto.",
-      "Ação primária previsível, no mesmo lugar, em toda superfície equivalente.",
-      "Uma só fundação visual para mobile, tablet e desktop — composição varia, papéis e tokens não.",
-      "Nenhuma decoração sem função operacional."
+      "Piso concreto quente, folhas brancas, tinta grafite: profundidade por tom e moldura, nunca por sombra.",
+      "Cor de segurança NR-26 como significado, nunca como decoração.",
+      "Uma família legível auto-hospedada, igual em Windows, Android e Linux; mono só para dado e identificador.",
+      "O que está disponível circula (tinta grafite, seta de fluxo); o que está planejado fica atrás da fita, atenuado e sem link.",
+      "Densidade útil como padrão; uma só fundação para celular, tablet e desktop."
     ],
     "rules": [
       {
+        "name": "The NR-26 Grammar Rule",
+        "body": "Cada cor de segurança tem um só significado em todo o sistema: azul é ação, amarelo é circulação/demarcação, verde/âmbar/vermelho são estado. Uma cor usada fora do próprio significado é um erro, mesmo que \"combine\".",
+        "section": "colors"
+      },
+      {
         "name": "The One Accent Rule",
-        "body": "Deve existir uma ação visualmente dominante por contexto de interação, quando houver uma ação principal clara — a tela inteira, um dialog/modal que abre seu próprio contexto, ou uma região independente da página. O uso de `primary` permanece raro e hierarquizado, evitando múltiplas ações concorrentes com o mesmo peso visual; isso não licencia vários botões primários competindo dentro do mesmo contexto.",
+        "body": "Por contexto de interação (tela, dialog ou região independente) existe no máximo uma ação preenchida em `primary`, quando houver uma ação principal clara. Onde ela existe, é primária: deixar tudo em secundário não é aplicar a regra, é não decidir. Fora do preenchimento, o azul aparece só como sinal de ação pequeno (traço da seta de tarefa, página atual, seta de ordenação), nunca competindo como segundo botão.",
+        "section": "colors"
+      },
+      {
+        "name": "The Yellow-On-Ink Rule",
+        "body": "O amarelo de segurança só existe sobre a tinta grafite ou como linha de demarcação. Nunca é texto, ícone, preenchimento de botão ou fundo sobre superfície clara.",
         "section": "colors"
       },
       {
         "name": "The No Color-Only State Rule",
-        "body": "Nenhum estado ou seleção relevante depende exclusivamente de cor; deve existir ao menos uma pista não cromática adequada ao contexto — texto, ícone, peso tipográfico, borda, forma, posição ou outro indicador estrutural. Para estados semânticos como erro, warning, sucesso e divergência, prefira texto explícito quando o significado não puder ser inferido inequivocamente; para estados estruturais como selecionado ou item de navegação ativo, peso, borda, posição ou outro indicador estrutural bastam, sem exigir texto redundante.",
+        "body": "Nenhum estado ou seleção relevante depende só de cor: há sempre uma pista não cromática (texto, peso, borda, forma, posição). Estados semânticos preferem texto explícito; estados estruturais (página atual, coluna ordenada, item disponível vs. planejado) podem usar peso, borda, forma ou presença/ausência de seta.",
         "section": "colors"
       },
       {
-        "name": "The No Display Font Rule",
-        "body": "Nenhuma fonte de exibição decorativa é introduzida; hierarquia se resolve por peso, contraste e posição antes de tamanho.",
+        "name": "The Legible Pair Rule",
+        "body": "O sistema usa uma família legível auto-hospedada (Atkinson Hyperlegible Next e Mono) e nenhuma outra. Não se acrescenta fonte de exibição, fonte de CDN nem terceira família; hierarquia se resolve por peso, caixa e posição antes de tamanho. Substitui a antiga No Display Font Rule.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono-Is-Data Rule",
+        "body": "A Mono é exclusiva de dado e identificador opaco (CADPRO, matrícula, hash). Nunca em título, rótulo, botão ou prosa.",
         "section": "typography"
       },
       {
         "name": "The Shared Foundation Rule",
-        "body": "Papéis semânticos, primitives e comportamento de estado são únicos e compartilhados entre mobile, tablet e desktop. O que varia por contexto é composição e densidade, nunca a linguagem de tokens — dois design systems separados (um \"mobile\", um \"desktop\") são uma violação desta fundação.",
+        "body": "Papéis semânticos, primitives e comportamento de estado são únicos entre celular, tablet e desktop. Varia a composição e a densidade, nunca a linguagem de tokens. Dois design systems (\"mobile\" e \"desktop\") violam esta fundação.",
+        "section": "layout"
+      },
+      {
+        "name": "The No Hover Dependency Rule",
+        "body": "Nenhuma ação necessária depende de hover. Realce de hover é bônus de ponteiro fino: em componente novo, fica dentro de `@media (hover: hover)` para não \"prender\" após um toque (como na lista de tarefas da Home). Botões e campos têm 44px em qualquer dispositivo; controles compactos do desktop crescem só sob `pointer: coarse`.",
         "section": "layout"
       },
       {
         "name": "The Flat-By-Default Rule",
-        "body": "Superfícies em repouso são planas. Sombra só aparece como recurso funcional de separação em elementos genuinamente sobrepostos ao conteúdo, nunca como decoração de card, botão, tabela ou hover.",
+        "body": "Superfícies em repouso são planas. Sombra só aparece como separação funcional de um elemento genuinamente sobreposto ao conteúdo, nunca em card, botão, tabela, faixa ou hover.",
         "section": "elevation"
+      },
+      {
+        "name": "The Available-Versus-Planned Rule",
+        "body": "A seta de fluxo e o fundo grafite pertencem só ao que está disponível. O que é planejado fica atenuado, tracejado, sem seta, sem link e sem cursor de clique. Planejado nunca pode parecer clicável nem disponível.",
+        "section": "components"
       }
     ],
     "dos": [
-      "Do resolver hierarquia por peso tipográfico, alinhamento e spacing antes de recorrer a card ou sombra.",
-      "Do manter papéis semânticos, primitives e comportamento de estado únicos entre mobile, tablet e desktop (The Shared Foundation Rule).",
-      "Do preservar coluna de tabela por padrão e usar scroll horizontal antes de ocultar dado.",
-      "Do usar `tabular-nums` para número comparável e monoespaçada para `CADPRO` e identificadores opacos.",
-      "Do exigir confirmação explícita antes de ação de impacto (ex.: efetivar importação).",
-      "Do garantir que nenhuma ação necessária dependa de hover, em qualquer dispositivo.",
-      "Do apoiar todo estado ou seleção relevante em ao menos uma pista não cromática (texto, ícone, peso, borda, posição ou indicador estrutural); preferir texto explícito para erro, warning, sucesso e divergência quando o significado não for inequívoco.",
-      "Do reservar a marcação de exceção de linha (`border-strong` lateral) às linhas que são de fato exceção; em tabela informativa, deixe o próprio dado (sinal, peso) diferenciar.",
-      "Do reutilizar o parcial de paginação e os primitivos de `components.css` em vez de recriar a composição por tela.",
-      "Dar a cada estado semântico a sua família completa (texto + superfície + borda) — quatro retângulos cinza distinguidos só pela cor do texto não são estado legível numa tela densa.",
-      "Re-derivar contraste de borda e de rótulo desabilitado contra os dois fundos em que o controle aparece (superfície e canvas) sempre que a rampa neutra mudar.",
-      "Promover a primária a ação principal de cada tela quando ela existe e é clara — a One Accent Rule limita o número de acentos, não proíbe usar o accent.",
-      "Suprimir zero decimal irrelevante (722, não 722,000) preservando a parte fracionária quando ela existir de fato."
+      "**Do** usar cada cor de segurança só no próprio significado: azul para ação, amarelo para circulação/demarcação, verde/âmbar/vermelho para estado (The NR-26 Grammar Rule).",
+      "**Do** manter o amarelo de segurança sobre a tinta grafite (9,93:1) ou como linha de demarcação.",
+      "**Do** resolver hierarquia por peso, caixa, alinhamento e spacing antes de recorrer a superfície própria.",
+      "**Do** manter papéis semânticos, primitives e tokens únicos entre celular, tablet e desktop (The Shared Foundation Rule).",
+      "**Do** mudar densidade só pelos tokens de controle e célula sob `pointer: coarse`, com botões e campos de 44px em qualquer dispositivo.",
+      "**Do** desenhar setas e ícones em SVG inline com `currentColor`, marcados `aria-hidden` quando o texto já diz a ação.",
+      "**Do** escrever o título de tarefa com o verbo primeiro e tornar a linha inteira o alvo.",
+      "**Do** colocar realce de hover novo dentro de `@media (hover: hover)`; nenhuma ação depende dele.",
+      "**Do** separar o disponível do planejado por forma, não só por cor: seta e grafite para o primeiro, tracejado, atenuação e ausência de link para o segundo.",
+      "**Do** usar a Mono para CADPRO, matrícula e hash, e `tabular-nums` para número comparável.",
+      "**Do** preservar coluna de tabela e usar scroll horizontal antes de ocultar dado.",
+      "**Do** dar a cada estado semântico a família completa (texto + superfície + borda) e texto explícito.",
+      "**Do** reconferir contraste de borda, texto atenuado e rótulo desabilitado contra a folha **e** o piso sempre que a rampa neutra mudar.",
+      "**Do** reutilizar os primitivos de `components.css` e o parcial de paginação em vez de recompor por tela."
     ],
     "donts": [
-      "Don't transformar cada registro de catálogo (ou qualquer listagem densa) em card por estar em tela mobile/tablet.",
-      "Don't introduzir sombra decorativa, gradiente, glassmorphism ou arredondamento pronunciado.",
-      "Don't esconder ação frequente (buscar, filtrar, confirmar) atrás de menu de três pontos.",
-      "Don't reduzir permanentemente a densidade do desktop para acomodar tablet ou celular.",
-      "Don't criar dois design systems separados — um \"mobile\" e outro \"desktop\" — em vez de compartilhar papéis e primitives.",
-      "Don't reformatar, truncar de forma destrutiva ou \"limpar\" o `CADPRO` ou qualquer identificador opaco do domínio (viola `INV-CATALOG-001` mesmo só na camada visual).",
-      "Don't deixar erro ou exceção de importação desaparecer sozinho — o usuário depende dela para corrigir e reprocessar.",
-      "Don't usar toast para informação já visível pela própria mudança de resultado (ex.: aplicar filtro não precisa de toast de confirmação).",
-      "Don't marcar toda linha de uma tabela com selo ou borda de erro — ênfase universal se anula (caso da divergência de saldo).",
-      "Usar barra lateral colorida acima de 1px em alert, callout ou item de lista — a border-strong lateral de 3px é exclusiva da linha que é de fato exceção.",
-      "Gastar primary em decoração, moldura permanente ou área grande de fundo; o app shell escuro usa a rampa ink, que é neutra justamente por isso.",
-      "Deixar um rótulo de cabeçalho de tabela crescer além de ~3 palavras mantendo a caixa-alta — encurte o rótulo em vez de abandonar a convenção."
+      "**Don't** colocar eyebrow, kicker ou rótulo em caixa-alta acima de um título; o marcador de seção é o próprio título.",
+      "**Don't** usar grade de cards iguais como estrutura de atalhos, tarefas ou listagem, em nenhum dispositivo.",
+      "**Don't** usar seta ou símbolo Unicode (→, ←, ⇅, ▲) no lugar de ícone; setas são SVG desenhadas.",
+      "**Don't** usar amarelo como texto, ícone, fundo de botão ou preenchimento sobre superfície clara (1,68:1 sobre branco).",
+      "**Don't** preencher faixa, moldura ou área grande com `primary`, nem colocar mais de uma ação preenchida em `primary` no mesmo contexto.",
+      "**Don't** introduzir sombra, glassmorphism, gradiente de cor suave ou arredondamento acima de 8px; a fita zebrada de paradas duras é o único preenchimento padronizado.",
+      "**Don't** dar seta de fluxo, fundo grafite, link ou cursor de clique a algo planejado, nem transformar \"Em preparação\" em métrica, contagem ou alerta.",
+      "**Don't** acrescentar fonte de CDN, fonte de exibição ou terceira família; nem usar a Mono em título, rótulo ou prosa.",
+      "**Don't** reformatar, truncar de forma destrutiva ou \"limpar\" o CADPRO ou outro identificador opaco (viola `INV-CATALOG-001` mesmo na camada visual).",
+      "**Don't** transformar listagem densa em card por estar em tablet ou celular, nem reduzir permanentemente a densidade do desktop para acomodar toque.",
+      "**Don't** usar barra lateral colorida acima de 1px em alert, callout ou item de lista; a lateral de 3px é exclusiva da linha de exceção.",
+      "**Don't** marcar toda linha de uma tabela com selo ou borda de erro; ênfase universal se anula.",
+      "**Don't** deixar erro de importação sumir sozinho nem usar toast para resultado já visível.",
+      "**Don't** esconder ação frequente (buscar, filtrar, confirmar) atrás de menu de três pontos."
     ]
   }
 }

@@ -146,7 +146,10 @@ O projeto também possui os agentes auxiliares `impeccable-asset-producer`,
 `impeccable-manual-edit-applier`, usados pelo workflow da skill `impeccable`
 para estabelecer, documentar e auditar a fundação do design system
 (`DESIGN.md`). O `frontend-implementer` implementa dentro dessa fundação já
-estabelecida; não a substitui.
+estabelecida; não a substitui. Num redesign da fundação, a direção é decidida
+pelo workflow Impeccable, coordenado pelo Claude principal, e o
+`frontend-implementer` implementa os tokens e componentes sob esse contrato
+(ver "Redesign da fundação visual" em `.claude/rules/agent-orchestration.md`).
 
 O Claude da sessão principal é responsável por coordenar esses agentes.
 

@@ -27,7 +27,10 @@ Como gate de revisão: não é seu. Não execute `impeccable critique`, `impecca
 `impeccable_finish_reviewer` sobre o próprio trabalho — revisão do autor sobre si mesmo não é gate.
 Esses passos são do coordenador, depois que você entregar. Também não invoque subagents e não assuma
 a auditoria estrutural do design system: se a fundação precisar ser criada, revista ou auditada — e
-não apenas uma tela — devolva essa necessidade ao coordenador.
+não apenas uma tela — devolva essa necessidade ao coordenador. Exceção: quando o coordenador já
+tiver decidido a direção no workflow impeccable e entregar o contrato de direção (surface brief em
+.impeccable/surfaces/) como instrução, implementar os tokens e componentes compartilhados desse
+contrato é seu trabalho, sem editar DESIGN.md nem .impeccable/design.json.
 
 Não redefina requisitos, não troque a stack, não introduza SPA nem dependência frontend relevante e
 não altere regra de negócio, autorização, estoque ou migrations substanciais. Regras críticas ficam no
