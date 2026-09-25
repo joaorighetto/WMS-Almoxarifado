@@ -206,6 +206,10 @@
    dentro da coluna, fora do alinhamento do marcador/tabela acima dela. */
 .catalogo-section > .empty-state {
   padding-inline: 0;
+  /* Dentro de uma seção, o marcador acima já dá a separação: sem os 32px
+     verticais do primitivo, o ritmo até a próxima seção fica igual ao das
+     demais (24px), em vez de ~60px depois de um estado vazio. */
+  padding-block: 0;
 }
 
 /* Diferença de saldo (revisão do gate visual, achado P2): a tabela de divergências
