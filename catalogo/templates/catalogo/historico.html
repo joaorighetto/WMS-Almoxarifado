@@ -64,9 +64,14 @@ existente do `.table-wrapper`, nunca conteúdo inacessível). É o nível 3 da
 regra de responsividade de tabela (DESIGN.md → Tabelas), preferível a
 ocultar coluna (nível 5) ou a espremer o selo de estado em três linhas. "Arquivo"
 ganhou `.catalogo-historico-arquivo` (`max-width: 15ch`, `catalogo.css`)
-para não ser o fiel-da-balança que a tabela toda usa como largura mínima —
-sem `overflow-wrap: anywhere`, de propósito: quebrar um nome de arquivo em
-qualquer ponto (ex. "MOTHERLODE.CSV" → "MOTHE"/"RLODE") era pior do que a
+para não ser o fiel-da-balança que a tabela toda usa como largura mínima.
+Sublinhado não é ponto de quebra do navegador (só hífen é): nomes gerados
+pelo `seed_dev` como "seed_dev_03_restauracao_carga_inicial_valida.csv"
+transbordavam por cima da coluna seguinte sem uma quebra explícita. A
+correção usa `overflow-wrap: break-word` (não `anywhere`), de propósito:
+`break-word` só quebra quando a palavra não cabe, sem reduzir o min-content
+da célula, então nomes curtos continuam inteiros; `anywhere` quebraria em
+qualquer ponto (ex. "MOTHERLODE.CSV" → "MOTHE"/"RLODE"), pior do que a
 rolagem residual que sobrou.
 {% endcomment %}
 
