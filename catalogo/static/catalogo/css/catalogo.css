@@ -143,6 +143,7 @@
    "table-cell-numeric"). Substitui `--color-danger` (revisão anterior, 2026-09-22):
    mede 6,10:1 sobre a folha e 4,80:1 sobre o piso, acima do mínimo de 4,5:1. */
 .catalogo-rejeitados-emphasis,
+.catalogo-rejeitados-emphasis dt,
 .catalogo-rejeitados-emphasis dd {
   color: var(--color-warning);
   font-weight: var(--font-weight-semibold);
