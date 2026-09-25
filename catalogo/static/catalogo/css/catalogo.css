@@ -367,17 +367,20 @@
    `_` (ex. os do `seed_dev`, como
    "seed_dev_03_restauracao_carga_inicial_valida.csv") não têm ponto de
    quebra e transbordavam por cima da coluna seguinte. A largura fica presa
-   em 15ch pelos dois lados: `overflow-wrap: anywhere` zera o min-content do
-   nome (quebra quando não cabe, sem transbordar) e `min-width: 15ch` impede
-   que o layout `auto` da tabela aproveite isso para espremer a coluna — nomes
-   que cabem em 15ch continuam inteiros, sem o "MOTHE"/"RLODE.CSV" de um
-   `anywhere` sem piso. O `min-width` não depende do `max-width`, cujo efeito
-   em célula de tabela o CSS 2.1 deixa indefinido: sem o teto, só com
-   `break-word`, a coluna voltaria a crescer até o nome inteiro numa linha.
+   em 15ch: `overflow-wrap: anywhere` zera o min-content do nome (quebra
+   quando não cabe, sem transbordar); `min-width: 15ch` impede que o layout
+   `auto` da tabela aproveite isso para espremer a coluna — nomes que cabem
+   em 15ch continuam inteiros, sem o "MOTHE"/"RLODE.CSV" de um `anywhere` sem
+   piso; `width: 15ch` impede o inverso, a coluna receber a sobra quando a
+   `.table` (`width: 100%`) é mais estreita que o wrapper — o `max-width`
+   sozinho não segura isso no Chromium (medido com container alargado: 293px
+   só com `max-width`, 136px com `width`), e o efeito dele em célula de
+   tabela é indefinido no CSS 2.1.
    A tabela ainda passa da área disponível a 1440px; o excedente fica na
    rolagem interna de `.table-wrapper`, nunca invisível/inacessível, e nunca
    estica a página. */
 .catalogo-historico-arquivo {
+  width: 15ch;
   min-width: 15ch;
   max-width: 15ch;
   overflow-wrap: anywhere;
