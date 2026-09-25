@@ -3,8 +3,7 @@
  *
  * Composição da direção "Tubulação e piso industrial"
  * (`.impeccable/surfaces/contas-templates-contas-home-html.md`): laboratório da
- * nova fundação visual antes da propagação ao catálogo/importação/login, que só
- * herdam tokens nesta etapa. Consome exclusivamente os tokens de
+ * nova fundação visual, depois propagada ao catálogo/importação e ao login. Consome exclusivamente os tokens de
  * static/css/tokens.css e os primitivos de static/css/components.css (`.btn`,
  * `.badge`, `.empty-state`, `.appbar`, `.section-marker`) — nenhum deles é
  * redefinido aqui, só composição/layout específicos desta tela.

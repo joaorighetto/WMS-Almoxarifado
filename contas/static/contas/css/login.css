@@ -1,12 +1,38 @@
 /*
  * Login — WMS-Almoxarifado
  *
+ * Propagação (etapa 3) da direção "Tubulação e piso industrial" — Home (PR #15)
+ * e catálogo (PR #17) já a têm; ver `.impeccable/surfaces/contas-templates-contas-home-html.md`.
  * Consome exclusivamente os tokens de static/css/tokens.css — nenhum valor literal de
  * cor, tipografia, spacing ou raio é redefinido aqui.
  *
  * Primitivos compartilhados (`.btn`/`.btn-primary`, `.alert`/`.alert-danger`,
- * `.field`/`.field-error`) vivem em static/css/components.css (nível de projeto) — este
+ * `.field`/`.field-error`/`.field-has-error`, e agora `.appbar`/`.appbar-inner`/
+ * `.appbar-brand`) vivem em static/css/components.css (nível de projeto) — este
  * arquivo contém apenas composição/layout específicos da tela de login.
+ *
+ * Faixa de identidade (`.login-band`): reaproveita os primitivos da barra de
+ * trabalho para a faixa ficar idêntica à da Home/catálogo (mesmo grafite, mesma
+ * linha de corredor amarela de 4px, mesma altura `--appbar-height`, mesmo x de
+ * início da marca), mas não é a barra de trabalho — o login não tem sessão
+ * autenticada nem destino de navegação. `.login-band` derruba a faixa de
+ * `position: sticky` (padrão de `.appbar`) para `static`: o login não tem
+ * conteúdo que role por baixo dela, e mantê-la grudada roubaria altura útil
+ * quando o teclado virtual reduz a viewport. Sem `.appbar-account` (sem
+ * matrícula, sem "Sair"); a marca é `<span>` (nunca `<a>`, nunca
+ * `aria-current`) — não é item de navegação, e não há seta de fluxo (Flow
+ * Arrow Rule: a faixa não leva a lugar nenhum).
+ *
+ * Moldura da caixa de login: `border-frame` (a mesma moldura de placa de
+ * identificação, lista de tarefas e formulário isolado, DESIGN.md → Shapes),
+ * não o divisor `border` fino usado antes — a caixa agora assenta sobre o
+ * piso concreto (`--color-background`, herdado do `body` em base.css) igual às
+ * demais superfícies isoladas. Largura em 360px (revisão do gate visual,
+ * achado P3, 2026-09-25): a justificativa anterior de 400px ("aproxima o
+ * subtítulo de uma linha só") não se confirmou — medido no Chromium renderizado,
+ * o subtítulo quebra em duas linhas nas duas larguras (a diferença de 40px não
+ * muda o número de linhas, só sobra espaço em branco lateral). Sem ganho medido,
+ * a caixa volta à largura que já tinha antes da propagação.
  *
  * Layout mobile-first: coluna única, campo ocupando a largura do container em telas
  * estreitas (DESIGN.md → Layout → Fundamento: contexto operacional por papel e
@@ -15,15 +41,25 @@
  * é removido nem sobrescrito aqui.
  */
 
+.login-band {
+  position: static;
+}
+
+/* Caixa sempre ao topo da coluna (revisão do gate visual, achado P2), seguindo o
+   modelo de página das demais telas (DESIGN.md → Layout → Estrutura de página):
+   24px de respiro acima, 32px abaixo, 16px lateral com safe-area. Não centraliza
+   verticalmente em viewport alta: no iOS Safari/Chrome Android o teclado virtual
+   reduz só a altura *visual*, não o layout viewport usado por `100vh`/`100dvh` —
+   uma caixa centralizada nesse cálculo ficava parcialmente coberta pelo teclado ao
+   focar Senha. Ao topo, a caixa nunca depende de quanto teclado sobra. O
+   safe-area-inset-top não entra no respiro superior porque a faixa de identidade
+   já ocupa o topo da página. */
 .login-page {
-  min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  overflow-y: auto;
-  padding-block: max(var(--space-4), env(safe-area-inset-top, var(--space-1)))
-    max(var(--space-4), env(safe-area-inset-bottom, var(--space-1)));
+  padding-block: var(--space-6)
+    max(var(--space-8), env(safe-area-inset-bottom, var(--space-1)));
   padding-inline: max(var(--space-4), env(safe-area-inset-left, var(--space-1)))
     max(var(--space-4), env(safe-area-inset-right, var(--space-1)));
 }
@@ -32,7 +68,7 @@
   width: 100%;
   max-width: 360px;
   background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-frame);
   border-radius: var(--radius-md);
   padding: var(--space-6) var(--space-4);
 }
@@ -44,10 +80,15 @@
   margin-bottom: var(--space-1);
 }
 
+/* `text-wrap: pretty` evita a órfã de uma palavra sozinha na última linha (era o
+   caso de "materiais."/"sistema." em telas estreitas). Não `balance`: testado a
+   350px, o navegador redistribuía a segunda linha e o resultado ficava pior, não
+   melhor, que a quebra padrão. Mesmo motivo em `.login-recovery` abaixo. */
 .login-card-subtitle {
   font-size: var(--font-size-body);
   color: var(--color-text-muted);
   margin: 0 0 var(--space-6);
+  text-wrap: pretty;
 }
 
 .login-error-block {
@@ -62,6 +103,26 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-meta);
   margin: 0;
+  text-wrap: pretty;
+}
+
+/* Canal de recuperação (e-mail do Setor de Almoxarifado): link em `primary`, o
+   mesmo sinal pequeno de ação do retorno contextual, sublinhado sempre por estar
+   no meio da frase (a cor sozinha não o distinguiria do texto atenuado — The No
+   Color-Only State Rule). `overflow-wrap` evita estourar a caixa se a fonte ou o
+   zoom aumentarem. */
+.login-recovery a {
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+/* Mono-Is-Data Rule (DESIGN.md → Typography): a matrícula é um identificador
+   opaco, não prosa — só o campo de matrícula troca para `--font-family-mono`.
+   Rótulo, Senha e o botão continuam na fonte de UI. Só `font-family`: tamanho e
+   altura do campo seguem `.field input[type="text"]` de components.css, incluindo
+   o 1rem sob `pointer: coarse` que evita zoom automático no Safari. */
+.login-form input[name="username"] {
+  font-family: var(--font-family-mono);
 }
 
 /* Ação primária do contexto (The One Accent Rule): ocupa a largura do card, coerente
@@ -98,14 +159,6 @@
 @media (prefers-reduced-motion: reduce) {
   .login-submit-spinner {
     animation: none;
-  }
-}
-
-/* Em viewports altas a tarefa permanece centralizada. Quando o teclado virtual reduz
-   a altura útil, o alinhamento superior evita que o início do formulário saia da tela. */
-@media (min-height: 32rem) {
-  .login-page {
-    align-items: center;
   }
 }
 

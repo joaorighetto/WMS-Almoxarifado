@@ -1122,10 +1122,10 @@
  * Barra de trabalho / App bar (direção "Tubulação e piso industrial",
  * `.impeccable/surfaces/contas-templates-contas-home-html.md`)
  * Faixa grafite fixa no topo, com a "linha de corredor" amarela de 4px como
- * separação estrutural (nunca sombra — Flat-By-Default). Hoje incluída só por
- * contas/templates/contas/_barra_trabalho.html (consumido só pela Home);
- * destinada a todas as telas quando a direção for propagada — o componente já é
- * genérico o bastante para isso.
+ * separação estrutural (nunca sombra — Flat-By-Default). Barra de trabalho em
+ * toda tela autenticada via contas/templates/contas/_barra_trabalho.html
+ * (incluída por base.html); o login reaproveita `.appbar`/`.appbar-inner`/
+ * `.appbar-brand` como faixa de identidade estática (`.login-band`, login.css).
  *
  * `position: sticky` (nunca `fixed`): mesma técnica já usada em
  * `.catalogo-confirmacao-sticky` — permanece no fluxo do documento, sem exigir
