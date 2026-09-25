@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
+from django.template.defaultfilters import pluralize
 from django.utils.cache import patch_vary_headers
 from django.views.generic import DetailView, ListView, View
 
@@ -375,11 +376,17 @@ class ImportacaoConfirmarView(ExigePapelMixin, View):
         # terminava em silêncio, sem nenhuma mensagem de sucesso; o selo
         # "Concluída" no page header do detalhe (`execucao_detalhe.html`)
         # mantém o estado legível depois que esta mensagem some.
+        # Plural correto (gate visual P2, propagação ao catálogo — só troca de
+        # copy, mesma lógica de `total_*`): "1 inserido" x "2 inseridos", igual
+        # ao rótulo do botão de confirmação em `importacao_previa.html`.
         messages.success(
             request,
-            f"Importação concluída: {execucao.total_inseridos} inseridos, "
-            f"{execucao.total_atualizados} atualizados, "
-            f"{execucao.total_rejeitados} rejeitados.",
+            f"Importação concluída: {execucao.total_inseridos} "
+            f"inserido{pluralize(execucao.total_inseridos)}, "
+            f"{execucao.total_atualizados} "
+            f"atualizado{pluralize(execucao.total_atualizados)}, "
+            f"{execucao.total_rejeitados} "
+            f"rejeitado{pluralize(execucao.total_rejeitados)}.",
         )
         return redirect("catalogo:execucao_detalhe", pk=execucao.pk)
 

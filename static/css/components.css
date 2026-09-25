@@ -112,7 +112,12 @@
   font-size: var(--font-size-body);
 }
 
+/* Medida de leitura (gate visual P2, propagação ao catálogo: o detector mediu
+   ~150 caracteres por linha no alerta "Esta é só uma prévia…" em telas largas,
+   quase o dobro da faixa de 65-75 recomendada) — mesma unidade `ch` já usada em
+   `.page-header-description`. */
 .alert p {
+  max-width: 72ch;
   margin: 0;
 }
 
@@ -974,7 +979,10 @@
   color: var(--color-text);
 }
 
+/* Medida de leitura (gate visual P2, propagação ao catálogo — mesma correção de
+   `.alert p` acima). */
 .empty-state-description {
+  max-width: 72ch;
   margin: var(--space-1) 0 0;
   font-size: var(--font-size-body);
 }
