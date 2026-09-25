@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T14:27:17Z",
+  "generatedAt": "2026-09-25T18:00:00Z",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -120,7 +120,7 @@
         "role": "neutral",
         "displayName": "Borda de Ênfase",
         "canonical": "#8E8A80",
-        "purpose": "Linha de exceção, cabeçalho de tabela, badge neutro, tracejado do planejado.",
+        "purpose": "Linha de exceção, cabeçalho de tabela, badge neutro, tracejado do planejado; contorno do Sair sobre ink (4,85:1).",
         "tonalRamp": [
           "#0E0B05",
           "#28251D",
@@ -264,7 +264,7 @@
         "role": "semantic",
         "displayName": "Âmbar Atenção",
         "canonical": "#8A5700",
-        "purpose": "Texto de atenção.",
+        "purpose": "Texto de atenção; total de rejeitados diferente de zero (resumo e histórico). 6,10:1 sobre a folha, 4,80:1 sobre o piso.",
         "tonalRamp": [
           "#140800",
           "#362001",
@@ -488,7 +488,7 @@
         "role": "neutral",
         "displayName": "Grafite de Faixa, borda",
         "canonical": "#3A3A36",
-        "purpose": "Contorno de controle sobre a faixa.",
+        "purpose": "Sem consumidor hoje: 1,46:1 contra ink, insuficiente para contorno de controle (o Sair usa border-strong).",
         "tonalRamp": [
           "#0B0B08",
           "#252522",
@@ -616,7 +616,7 @@
       {
         "name": "compact",
         "value": "480px",
-        "purpose": "Barra de trabalho a 48px; ações do page header e da confirmação ocupam a largura."
+        "purpose": "--appbar-height a 48px; ações do page header e da confirmação ocupam a largura."
       },
       {
         "name": "narrow",
@@ -660,6 +660,12 @@
         "--table-cell-pad-y": "12px"
       },
       "inputFontSize": "1rem"
+    },
+    "appbarHeight": {
+      "token": "--appbar-height",
+      "value": "56px",
+      "compact": "48px (max-width: 480px)",
+      "scrollPaddingTop": "calc(var(--appbar-height) + 4px) no html"
     }
   },
   "components": [
@@ -691,17 +697,33 @@
       "name": "Barra de trabalho",
       "kind": "nav",
       "refersTo": "appbar",
-      "description": "Faixa grafite sticky com linha de corredor amarela de 4px; marca, matrícula e Sair.",
+      "description": "Faixa grafite sticky em toda tela autenticada, linha de corredor amarela de 4px; marca (retorno global à Home), matrícula e Sair.",
       "html": "<header class=\"ds-appbar\"><div class=\"ds-appbar-inner\"><span class=\"ds-appbar-brand\">Almoxarifado SAEP</span><div class=\"ds-appbar-account\"><span class=\"ds-appbar-mat\">chefe</span><button class=\"ds-appbar-logout\">Sair</button></div></div></header>",
-      "css": ".ds-appbar{background:var(--color-ink);border-bottom:4px solid var(--color-signal);font-family: var(--font-family-base);}.ds-appbar-inner{height:56px;padding-inline:var(--space-4);display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)}.ds-appbar-brand{color:var(--color-on-ink);font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold)}.ds-appbar-account{display:flex;align-items:center;gap:var(--space-3)}.ds-appbar-mat{font-family:var(--font-family-mono);font-size:var(--font-size-meta);color:var(--color-on-ink-muted)}.ds-appbar-logout{min-height:44px;padding:var(--space-1) var(--space-3);background:none;border:1px solid var(--color-ink-border);border-radius:var(--radius-sm);color:var(--color-on-ink);font:inherit;font-weight:var(--font-weight-medium);cursor:pointer}.ds-appbar-logout:hover{background:var(--color-ink-raised)}.ds-appbar-logout:focus-visible{outline:2px solid var(--color-on-ink-accent);outline-offset:2px}"
+      "css": ".ds-appbar{background:var(--color-ink);border-bottom:4px solid var(--color-signal);font-family: var(--font-family-base);}.ds-appbar-inner{height:var(--appbar-height,56px);padding-inline:var(--space-4);display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)}.ds-appbar-brand{color:var(--color-on-ink);font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold)}.ds-appbar-account{display:flex;align-items:center;gap:var(--space-3)}.ds-appbar-mat{font-family:var(--font-family-mono);font-size:var(--font-size-meta);color:var(--color-on-ink-muted)}.ds-appbar-logout{min-height:44px;padding:var(--space-1) var(--space-3);background:none;border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);color:var(--color-on-ink);font:inherit;font-weight:var(--font-weight-medium);cursor:pointer}.ds-appbar-logout:hover{background:var(--color-ink-raised)}.ds-appbar-logout:focus-visible{outline:2px solid var(--color-on-ink-accent);outline-offset:2px}"
     },
     {
       "name": "Marcador de seção + lista de tarefas",
       "kind": "custom",
       "refersTo": "section-marker",
-      "description": "H2 em faixa grafite com seta de fluxo, encostado numa lista de linhas inteiras clicáveis com verbo primeiro.",
+      "description": "Variante cheia com seta de fluxo (a seção leva a algum lugar), encostada numa lista de linhas inteiras clicáveis com verbo primeiro.",
       "html": "<section class=\"ds-tasks\"><h2 class=\"ds-marker\">Suas tarefas <svg class=\"ds-marker-arrow\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M2 8H13M13 8L9 4M13 8L9 12\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></h2><ul class=\"ds-task-list\"><li><a class=\"ds-task\" href=\"#\"><span><span class=\"ds-task-title\">Consultar catálogo de materiais</span><span class=\"ds-task-desc\">Localize materiais por CADPRO ou descrição e confira o saldo.</span></span><svg class=\"ds-task-arrow\" width=\"20\" height=\"20\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M2 8H13M13 8L9 4M13 8L9 12\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></a></li><li><a class=\"ds-task\" href=\"#\"><span><span class=\"ds-task-title\">Importar catálogo do SCPI</span><span class=\"ds-task-desc\">Envie o CSV exportado, confira a prévia e confirme a carga.</span></span><svg class=\"ds-task-arrow\" width=\"20\" height=\"20\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M2 8H13M13 8L9 4M13 8L9 12\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></a></li></ul></section>",
       "css": ".ds-tasks{font-family: var(--font-family-base);}.ds-marker{display:inline-flex;align-items:center;gap:var(--space-2);vertical-align:bottom;margin:0;padding:var(--space-2) var(--space-3);background:var(--color-ink);border-radius:var(--radius-sm) var(--radius-sm) 0 0;color:var(--color-on-ink);font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold);line-height:var(--line-height-tight);text-transform:uppercase;letter-spacing:var(--letter-spacing-caps)}.ds-marker-arrow{color:var(--color-on-ink-accent)}.ds-task-list{list-style:none;margin:0;padding:0;background:var(--color-surface);border:1px solid var(--color-border-frame);border-radius:0 var(--radius-md) var(--radius-md) var(--radius-md)}.ds-task-list li+li{border-top:1px solid var(--color-border)}.ds-task{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);min-height:56px;padding:var(--space-4);color:inherit;text-decoration:none}.ds-task-title{display:block;font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold);color:var(--color-text)}.ds-task-desc{display:block;margin-top:var(--space-1);font-size:var(--font-size-body);color:var(--color-text-muted)}.ds-task-arrow{flex-shrink:0;color:var(--color-primary);transition:transform .18s ease-out}@media (hover:hover){.ds-task:hover{background:var(--color-surface-subtle)}.ds-task:hover .ds-task-arrow{transform:translateX(3px)}}.ds-task:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-task:focus-visible .ds-task-arrow{transform:translateX(3px)}@media (prefers-reduced-motion:reduce){.ds-task-arrow{transition:none}}"
+    },
+    {
+      "name": "Retorno contextual",
+      "kind": "nav",
+      "refersTo": "back-link",
+      "description": "Link acima do page header para a tela de origem quando ela não é a Home; seta SVG espelhada, alvo de 44px.",
+      "html": "<a class=\"ds-back-link\" href=\"#\"><svg class=\"ds-back-arrow\" width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M14 8H3M3 8L7 4M3 8L7 12\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Envio</span></a>",
+      "css": ".ds-back-link{display:inline-flex;align-items:center;gap:var(--space-1);min-height:44px;color:var(--color-primary);font-family:var(--font-family-base);font-size:var(--font-size-meta);text-decoration:none}.ds-back-link:hover,.ds-back-link:focus-visible{text-decoration:underline}.ds-back-link:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-back-arrow{flex-shrink:0}"
+    },
+    {
+      "name": "Marcador de leitura + tabela encostada",
+      "kind": "custom",
+      "refersTo": "section-marker-attached",
+      "description": "Variante cheia sem seta (seção de leitura), encostada na moldura da tabela renderizada logo abaixo; no estado vazio o marcador fica simples.",
+      "html": "<section class=\"ds-read\"><h2 class=\"ds-rmarker\">Exceções (2)</h2><div class=\"ds-rtable-wrap\"><table class=\"ds-rtable\"><thead><tr><th class=\"ds-rnum\">Linha</th><th>CADPRO</th><th>Motivo</th></tr></thead><tbody><tr class=\"ds-rerr\"><td class=\"ds-rnum\">14</td><td class=\"ds-rcode\">001.002.0O3</td><td>Código fora do formato</td></tr><tr class=\"ds-rerr\"><td class=\"ds-rnum\">27</td><td class=\"ds-rcode\">004.010.112</td><td>Unidade vazia</td></tr></tbody></table></div></section>",
+      "css": ".ds-read{font-family:var(--font-family-base)}.ds-rmarker{display:inline-flex;align-items:center;vertical-align:bottom;margin:0;padding:var(--space-2) var(--space-3);background:var(--color-ink);border-radius:var(--radius-sm) var(--radius-sm) 0 0;color:var(--color-on-ink);font-size:var(--font-size-section-title);font-weight:var(--font-weight-semibold);line-height:var(--line-height-tight);text-transform:uppercase;letter-spacing:var(--letter-spacing-caps)}.ds-rtable-wrap{overflow-x:auto;border:1px solid var(--color-border-frame);border-radius:0 var(--radius-sm) var(--radius-sm) var(--radius-sm)}.ds-rtable{width:100%;border-collapse:collapse;background:var(--color-surface);font-size:var(--font-size-body);color:var(--color-text)}.ds-rtable th,.ds-rtable td{padding:var(--table-cell-pad-y,8px) var(--table-cell-pad-x,12px);text-align:left;vertical-align:top;border-bottom:1px solid var(--color-border)}.ds-rtable thead th{font-size:var(--font-size-table-header);font-weight:var(--font-weight-semibold);letter-spacing:var(--letter-spacing-caps);text-transform:uppercase;color:var(--color-text-muted);background:var(--color-surface-subtle);border-bottom:2px solid var(--color-border-strong)}.ds-rtable tbody tr:last-child td{border-bottom:none}.ds-rerr td:first-child{border-left:3px solid var(--color-border-strong)}.ds-rnum{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ds-rcode{font-family:var(--font-family-mono);white-space:nowrap}"
     },
     {
       "name": "Zona Em preparação",
@@ -746,12 +768,12 @@
   ],
   "narrative": {
     "northStar": "Tubulação e Piso Industrial",
-    "overview": "O WMS-Almoxarifado é lido como a própria planta do almoxarifado: piso de concreto quente, folhas brancas de trabalho assentadas sobre ele, texto grafite, e o que está em circulação identificado como a indústria identifica tubulações e corredores — faixa de identificação escura com rótulo e seta de fluxo, linha de demarcação amarela, fita zebrada onde há obra. O código de cores de segurança NR-26 não é ornamento importado: é a gramática semântica do sistema. Azul é ação obrigatória, amarelo é circulação e demarcação, verde, vermelho e âmbar são estado. Quem abre a ferramenta já sabe o que veio fazer; a interface existe para que isso aconteça rápido, sem ambiguidade e sem erro.\n\nO mundo substitui a fundação anterior (\"A Bancada de Trabalho Confiável\", azul-acinzentada, fonte do sistema, raios de 2/4px), mas não as regras operacionais dela: densidade útil, uma só fundação para todos os papéis e dispositivos, estado nunca só por cor, superfícies planas. Hierarquia continua resolvida por tipografia, alinhamento, spacing, borda e tom de superfície. Hoje a composição nova só existe na Home autenticada (a barra de trabalho, os marcadores de tubulação, a lista de tarefas e a zona \"Em preparação\"). Catálogo, importação e login herdam os tokens novos sem recomposição, e a densidade das telas operacionais densas continua sendo a validada pela fundação anterior. Ver \"Estado de validação\" em Layout.\n\nRejeições visuais confirmadas: dashboards decorativos, grade de cards iguais como estrutura, eyebrow acima de título, glassmorphism, gradiente de cor suave, sombra decorativa, arredondamento pronunciado, animação chamativa, estética de SaaS genérico, tipografia de marketing, whitespace tratado como hierarquia. Não existe identidade institucional do SAEP (sem logotipo, sem cor oficial); a paleta é a do mundo escolhido, não branding aprovado. Escopo de acessibilidade: as regras de estado não cromático, contraste e foco visível abaixo são decisões deste design system a serviço da leitura operacional, não promessa de conformidade; requisitos específicos entram quando uma feature os exigir (Constitution).",
+    "overview": "O WMS-Almoxarifado é lido como a própria planta do almoxarifado: piso de concreto quente, folhas brancas de trabalho assentadas sobre ele, texto grafite, e o que está em circulação identificado como a indústria identifica tubulações e corredores — faixa de identificação escura com rótulo e seta de fluxo, linha de demarcação amarela, fita zebrada onde há obra. O código de cores de segurança NR-26 não é ornamento importado: é a gramática semântica do sistema. Azul é ação obrigatória, amarelo é circulação e demarcação, verde, vermelho e âmbar são estado. Quem abre a ferramenta já sabe o que veio fazer; a interface existe para que isso aconteça rápido, sem ambiguidade e sem erro.\n\nO mundo substitui a fundação anterior (\"A Bancada de Trabalho Confiável\", azul-acinzentada, fonte do sistema, raios de 2/4px), mas não as regras operacionais dela: densidade útil, uma só fundação para todos os papéis e dispositivos, estado nunca só por cor, superfícies planas. Hierarquia continua resolvida por tipografia, alinhamento, spacing, borda e tom de superfície. A composição nova cobre a Home autenticada e as cinco telas do catálogo (consulta, envio, prévia, histórico e execução): a barra de trabalho em toda tela autenticada, os marcadores de tubulação, o retorno contextual e, na Home, a lista de tarefas e a zona \"Em preparação\". O login herda só os tokens. Ver \"Estado de validação\" em Layout.\n\nRejeições visuais confirmadas: dashboards decorativos, grade de cards iguais como estrutura, eyebrow acima de título, glassmorphism, gradiente de cor suave, sombra decorativa, arredondamento pronunciado, animação chamativa, estética de SaaS genérico, tipografia de marketing, whitespace tratado como hierarquia. Não existe identidade institucional do SAEP (sem logotipo, sem cor oficial); a paleta é a do mundo escolhido, não branding aprovado. Escopo de acessibilidade: as regras de estado não cromático, contraste e foco visível abaixo são decisões deste design system a serviço da leitura operacional, não promessa de conformidade; requisitos específicos entram quando uma feature os exigir (Constitution).",
     "keyCharacteristics": [
       "Piso concreto quente, folhas brancas, tinta grafite: profundidade por tom e moldura, nunca por sombra.",
       "Cor de segurança NR-26 como significado, nunca como decoração.",
       "Uma família legível auto-hospedada, igual em Windows, Android e Linux; mono só para dado e identificador.",
-      "O que está disponível circula (tinta grafite, seta de fluxo); o que está planejado fica atrás da fita, atenuado e sem link.",
+      "O que está disponível ganha a faixa grafite, e a seta de fluxo só quando leva a algum lugar; o que está planejado fica atrás da fita, atenuado e sem link.",
       "Densidade útil como padrão; uma só fundação para celular, tablet e desktop."
     ],
     "rules": [
@@ -792,7 +814,7 @@
       },
       {
         "name": "The No Hover Dependency Rule",
-        "body": "Nenhuma ação necessária depende de hover. Realce de hover é bônus de ponteiro fino: em componente novo, fica dentro de `@media (hover: hover)` para não \"prender\" após um toque (como na lista de tarefas da Home). Botões e campos têm 44px em qualquer dispositivo; controles compactos do desktop crescem só sob `pointer: coarse`.",
+        "body": "Nenhuma ação necessária depende de hover. Realce de hover é bônus de ponteiro fino: em componente novo, fica dentro de `@media (hover: hover)` para não \"prender\" após um toque (como na lista de tarefas da Home e na linha clicável de tabela). Botões e campos têm 44px em qualquer dispositivo; controles compactos do desktop crescem só sob `pointer: coarse`.",
         "section": "layout"
       },
       {
@@ -802,7 +824,12 @@
       },
       {
         "name": "The Available-Versus-Planned Rule",
-        "body": "A seta de fluxo e o fundo grafite pertencem só ao que está disponível. O que é planejado fica atenuado, tracejado, sem seta, sem link e sem cursor de clique. Planejado nunca pode parecer clicável nem disponível.",
+        "body": "O fundo grafite pertence só ao que está disponível. O que é planejado fica atenuado, tracejado, sem seta, sem link e sem cursor de clique. Planejado nunca pode parecer clicável nem disponível.",
+        "section": "components"
+      },
+      {
+        "name": "The Flow Arrow Rule",
+        "body": "A seta de fluxo afirma que a seção leva a algum lugar; ela não é decoração do marcador. Faixa cheia com seta = leva a algum lugar; faixa cheia sem seta = seção de leitura; `-muted` = planejado. Seta numa seção de leitura promete um destino que não existe.",
         "section": "components"
       }
     ],
@@ -815,7 +842,8 @@
       "**Do** desenhar setas e ícones em SVG inline com `currentColor`, marcados `aria-hidden` quando o texto já diz a ação.",
       "**Do** escrever o título de tarefa com o verbo primeiro e tornar a linha inteira o alvo.",
       "**Do** colocar realce de hover novo dentro de `@media (hover: hover)`; nenhuma ação depende dele.",
-      "**Do** separar o disponível do planejado por forma, não só por cor: seta e grafite para o primeiro, tracejado, atenuação e ausência de link para o segundo.",
+      "**Do** separar o disponível do planejado por forma, não só por cor: grafite para o primeiro (com seta só quando leva a algum lugar), tracejado, atenuação e ausência de link para o segundo.",
+      "**Do** deixar o retorno à Home com a marca da barra de trabalho e usar o retorno contextual só quando a origem é outra tela.",
       "**Do** usar a Mono para CADPRO, matrícula e hash, e `tabular-nums` para número comparável.",
       "**Do** preservar coluna de tabela e usar scroll horizontal antes de ocultar dado.",
       "**Do** dar a cada estado semântico a família completa (texto + superfície + borda) e texto explícito.",
@@ -830,6 +858,8 @@
       "**Don't** preencher faixa, moldura ou área grande com `primary`, nem colocar mais de uma ação preenchida em `primary` no mesmo contexto.",
       "**Don't** introduzir sombra, glassmorphism, gradiente de cor suave ou arredondamento acima de 8px; a fita zebrada de paradas duras é o único preenchimento padronizado.",
       "**Don't** dar seta de fluxo, fundo grafite, link ou cursor de clique a algo planejado, nem transformar \"Em preparação\" em métrica, contagem ou alerta.",
+      "**Don't** dar seta de fluxo a uma seção de leitura; a seta promete um destino.",
+      "**Don't** duplicar a ação de confirmação numa seção final quando a barra persistente já a oferece.",
       "**Don't** acrescentar fonte de CDN, fonte de exibição ou terceira família; nem usar a Mono em título, rótulo ou prosa.",
       "**Don't** reformatar, truncar de forma destrutiva ou \"limpar\" o CADPRO ou outro identificador opaco (viola `INV-CATALOG-001` mesmo na camada visual).",
       "**Don't** transformar listagem densa em card por estar em tablet ou celular, nem reduzir permanentemente a densidade do desktop para acomodar toque.",
