@@ -370,7 +370,7 @@
    em 15ch pelos dois lados: `overflow-wrap: anywhere` zera o min-content do
    nome (quebra quando não cabe, sem transbordar) e `min-width: 15ch` impede
    que o layout `auto` da tabela aproveite isso para espremer a coluna — nomes
-   que cabem em 15ch continuam inteiros, sem o "MOTHE"/"RLODE" de um
+   que cabem em 15ch continuam inteiros, sem o "MOTHE"/"RLODE.CSV" de um
    `anywhere` sem piso. O `min-width` não depende do `max-width`, cujo efeito
    em célula de tabela o CSS 2.1 deixa indefinido: sem o teto, só com
    `break-word`, a coluna voltaria a crescer até o nome inteiro numa linha.
