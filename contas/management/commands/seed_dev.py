@@ -27,7 +27,7 @@ SEED_TOKENS = (
     UUID("f76e99e0-bfc4-497b-a566-816dc567c002"),
     UUID("f76e99e0-bfc4-497b-a566-816dc567c003"),
 )
-CATALOGO_PADRAO = Path("docs/domain-legacy/relacao-de-todos-produtos-importados-do-SCPI.csv")
+CATALOGO_PADRAO = Path("docs/CSVs/relacao-de-todos-produtos-importados-do-SCPI.csv")
 
 
 class Command(BaseCommand):
@@ -43,7 +43,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--catalogo", type=Path,
-            help="CSV SCPI de origem; padrão: arquivo local em docs/domain-legacy.",
+            help="CSV SCPI de origem; padrão: arquivo local em docs/CSVs.",
         )
 
     def handle(self, *args, **options):
@@ -120,7 +120,7 @@ class Command(BaseCommand):
         except OSError as exc:
             raise CommandError(
                 "Não foi possível ler o catálogo SCPI. Disponibilize o arquivo em "
-                "docs/domain-legacy ou informe --catalogo CAMINHO."
+                "docs/CSVs ou informe --catalogo CAMINHO."
             ) from exc
         if len(conteudo) > LIMITE_TAMANHO_ARQUIVO:
             raise CommandError("O catálogo SCPI excede o limite de 10 MB.")

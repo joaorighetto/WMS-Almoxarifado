@@ -12,7 +12,7 @@ criadas, passa pelos validadores do Django e nunca é exibida pelo comando.
 Não versione o `.env`.
 
 O CSV padrão é
-`docs/domain-legacy/relacao-de-todos-produtos-importados-do-SCPI.csv`. Ele está
+`docs/CSVs/relacao-de-todos-produtos-importados-do-SCPI.csv`. Ele está
 ignorado pelo Git; um clone novo precisa receber o arquivo localmente.
 
 ```bash

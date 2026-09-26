@@ -100,6 +100,29 @@ def test_check_recusa_catalogo_inexistente_sem_acessar_banco():
         )
 
 
+def test_catalogo_padrao_fica_em_docs_csvs(monkeypatch, tmp_path):
+    """Sem `--catalogo`, o seed lê `docs/CSVs/`. `BASE_DIR` aponta para um
+    diretório temporário com a fixture sintética: o teste nunca toca o arquivo
+    real."""
+    from django.conf import settings
+
+    monkeypatch.setattr(settings, "BASE_DIR", tmp_path)
+    destino = tmp_path / "docs" / "CSVs" / "relacao-de-todos-produtos-importados-do-SCPI.csv"
+    destino.parent.mkdir(parents=True)
+    destino.write_bytes(CATALOGO.read_bytes())
+
+    call_command("seed_dev", check=True, stdout=StringIO())
+
+
+def test_catalogo_padrao_ausente_indica_docs_csvs(monkeypatch, tmp_path):
+    from django.conf import settings
+
+    monkeypatch.setattr(settings, "BASE_DIR", tmp_path)
+
+    with pytest.raises(CommandError, match="docs/CSVs"):
+        call_command("seed_dev", check=True)
+
+
 @pytest.mark.django_db
 def test_seed_cria_organizacao_com_papeis_explicitos_e_credenciais_validas(senha_valida):
     saida = executar_seed()

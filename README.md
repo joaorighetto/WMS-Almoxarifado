@@ -15,7 +15,7 @@ make init    # .venv + dependências; cria .env a partir do .env.example
 
 Defina `SEED_DEV_PASSWORD` no `.env` com a senha local das contas de demonstração
 (sujeita aos validadores de senha do Django). O catálogo usa o arquivo existente
-`docs/domain-legacy/relacao-de-todos-produtos-importados-do-SCPI.csv`, que não é
+`docs/CSVs/relacao-de-todos-produtos-importados-do-SCPI.csv`, que não é
 versionado e precisa estar disponível localmente.
 
 ```bash
