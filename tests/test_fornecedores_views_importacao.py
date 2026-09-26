@@ -493,15 +493,14 @@ def test_falha_inesperada_na_confirmacao_nao_grava_nada_mantem_pedido_e_nao_vaza
     assert "Traceback" not in conteudo_html
 
 
-def test_falha_tambem_no_recalculo_da_previa_redireciona_para_a_previa_sem_500(
+def test_falha_tambem_no_recalculo_da_previa_leva_ao_envio_sem_500(
     chefe_almoxarifado,
 ):
-    """A falha que derruba a confirmação (ex.: banco indisponível) pode
-    derrubar também o recálculo da prévia no re-render; a view redireciona
-    para a prévia com a mensagem genérica em vez de responder 500."""
+    """A falha que derruba a confirmação pode derrubar também o recálculo da
+    prévia no re-render. A view leva à tela de envio, que não recalcula nada,
+    com a mensagem genérica e o link para a prévia, que continua na sessão —
+    mesmo com a falha ainda ativa ao seguir o redirect."""
     from unittest import mock
-
-    from django.contrib.messages import get_messages
 
     from fornecedores import importacao
 
@@ -518,14 +517,18 @@ def test_falha_tambem_no_recalculo_da_previa_redireciona_para_a_previa_sem_500(
         resposta = client.post(
             reverse("fornecedores:importacao_confirmar"),
             {"token": pedido.token, "impressao_digital": plano.impressao_digital},
+            follow=True,
         )
 
-    assert resposta.status_code == 302
-    assert resposta.url == reverse("fornecedores:importacao_previa")
+    assert resposta.redirect_chain == [(reverse("fornecedores:importacao_envio"), 302)]
+    assert resposta.status_code == 200
     assert _contagem_das_quatro_tabelas() == 0
     assert importacao.obter_pedido(client.session) is not None
-    mensagens = [str(m) for m in get_messages(resposta.wsgi_request)]
-    assert any("erro inesperado" in m for m in mensagens)
+
+    conteudo_html = resposta.content.decode("utf-8")
+    assert "erro inesperado" in conteudo_html
+    assert reverse("fornecedores:importacao_previa") in conteudo_html
+    assert "falha no recálculo" not in conteudo_html
 
 
 def test_cancelamento_limpa_a_sessao_sem_efeito_em_banco(chefe_almoxarifado):
