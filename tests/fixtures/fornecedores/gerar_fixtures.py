@@ -87,7 +87,7 @@ def _arquivo(cabecalho, *linhas, bom=True):
     registro, como o arquivo real — e prefixa o BOM UTF-8 (`\\ufeff`, que
     vira `EF BB BF` ao codificar)."""
     texto = "\r\n".join([cabecalho, *linhas]) + "\r\n"
-    prefixo = "﻿" if bom else ""
+    prefixo = "\ufeff" if bom else ""
     return (prefixo + texto).encode("utf-8")
 
 
@@ -199,7 +199,7 @@ def _construir_fixtures():
     # Também é o `somente_lf.csv` exigido nominalmente por T003 — um único
     # arquivo cobre as duas exigências, sem duplicar conteúdo sob dois nomes.
     fixtures["somente_lf.csv"] = (
-        "﻿"
+        "\ufeff"
         + "\n".join([
             CABECALHO_PADRAO,
             _linha(CODIF="500061", NOME="FORNECEDOR SOMENTE LF",
@@ -291,7 +291,7 @@ def _construir_fixtures():
     # `byte_invalido.csv` — byte inválido em UTF-8 ao final do arquivo
     # (mesma técnica de `tests/fixtures/catalogo/codificacao_invalida.csv`).
     texto_valido = (
-        "﻿"
+        "\ufeff"
         + "\r\n".join([
             CABECALHO_PADRAO,
             _linha(CODIF="600031", NOME="FORNECEDOR BYTE INVALIDO",

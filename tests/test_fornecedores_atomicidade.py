@@ -89,7 +89,7 @@ def _linha(codif, nome, bloq="S", msg="", tipo=""):
 
 def _arquivo(*linhas):
     texto = "\r\n".join([_CABECALHO, *linhas]) + "\r\n"
-    return ("﻿" + texto).encode("utf-8")
+    return ("\ufeff" + texto).encode("utf-8")
 
 
 CONTEUDO_INICIAL = _arquivo(
@@ -444,7 +444,7 @@ def test_chave_de_lock_de_fornecedores_e_distinta_da_do_catalogo():
 def _csv_sintetico_de_porte_real(n=10_035):
     linhas = [f"{i};FORNECEDOR SINTETICO {i};;;01;S;;;" for i in range(1, n + 1)]
     texto = "\r\n".join([_CABECALHO, *linhas]) + "\r\n"
-    return ("﻿" + texto).encode("utf-8")
+    return ("\ufeff" + texto).encode("utf-8")
 
 
 @pytest.mark.django_db

@@ -493,6 +493,41 @@ def test_falha_inesperada_na_confirmacao_nao_grava_nada_mantem_pedido_e_nao_vaza
     assert "Traceback" not in conteudo_html
 
 
+def test_falha_tambem_no_recalculo_da_previa_redireciona_para_a_previa_sem_500(
+    chefe_almoxarifado,
+):
+    """A falha que derruba a confirmação (ex.: banco indisponível) pode
+    derrubar também o recálculo da prévia no re-render; a view redireciona
+    para a prévia com a mensagem genérica em vez de responder 500."""
+    from unittest import mock
+
+    from django.contrib.messages import get_messages
+
+    from fornecedores import importacao
+
+    client = _cliente_autenticado(chefe_almoxarifado)
+    _enviar(client, CONTEUDO_VALIDO)
+    pedido, plano = _pedido_e_plano_da_sessao(client)
+
+    with (
+        mock.patch.object(importacao, "aplicar_plano", side_effect=RuntimeError("falha injetada")),
+        mock.patch(
+            "fornecedores.views._contexto_previa", side_effect=RuntimeError("falha no recálculo")
+        ),
+    ):
+        resposta = client.post(
+            reverse("fornecedores:importacao_confirmar"),
+            {"token": pedido.token, "impressao_digital": plano.impressao_digital},
+        )
+
+    assert resposta.status_code == 302
+    assert resposta.url == reverse("fornecedores:importacao_previa")
+    assert _contagem_das_quatro_tabelas() == 0
+    assert importacao.obter_pedido(client.session) is not None
+    mensagens = [str(m) for m in get_messages(resposta.wsgi_request)]
+    assert any("erro inesperado" in m for m in mensagens)
+
+
 def test_cancelamento_limpa_a_sessao_sem_efeito_em_banco(chefe_almoxarifado):
     client = _cliente_autenticado(chefe_almoxarifado)
     _enviar(client, CONTEUDO_VALIDO)
@@ -539,7 +574,7 @@ def test_execucao_detalhe_mostra_totais_e_recusas(chefe_almoxarifado):
     assert resposta_detalhe.status_code == 200
     conteudo_html = resposta_detalhe.content.decode("utf-8")
     assert re.search(
-        rf"{plano.total_inseridos}", conteudo_html
+        rf"<dt>Inseridos</dt>\s*<dd>{plano.total_inseridos}</dd>", conteudo_html
     ), f"total_inseridos ({plano.total_inseridos}) não encontrado no detalhe"
     assert "900012" in conteudo_html
     assert 'id="excecoes"' in conteudo_html

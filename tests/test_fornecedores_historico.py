@@ -513,6 +513,10 @@ def test_alteracao_de_bloqueado_mostra_o_valor_s_ou_b_de_alguma_forma_legivel(ch
 
     resposta = client.get(reverse("fornecedores:execucao_detalhe", args=[execucao.pk]))
     assert resposta.status_code == 200
+    conteudo_html = resposta.content.decode("utf-8")
+    secao_alteracoes = conteudo_html.split('data-secao="alteracoes"', 1)[1]
+    assert "500003" in secao_alteracoes
+    assert ">Bloqueado<" in secao_alteracoes
 
 
 # ---------------------------------------------------------------------------

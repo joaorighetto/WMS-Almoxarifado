@@ -21,7 +21,8 @@ Arquivo vazio, só com espaços ou só com cabeçalho válido: zero recebidos, s
 ## 2. Estrutura
 
 - BOM opcional, removido. Separador `;`. Delimitador final gera uma coluna vazia no cabeçalho, que
-  é ignorada.
+  é ignorada como coluna, mas conta no número de campos: os registros do SCPI trazem o mesmo `;`
+  final, e o campo vazio que ele gera entra na comparação de `COLUNAS_DESLOCADAS`.
 - Registro termina em `\r\n`. `\n` isolado pertence ao campo. Um último registro sem terminador é
   aceito. Registro vazio é ignorado.
 - Aspas são caracteres literais.

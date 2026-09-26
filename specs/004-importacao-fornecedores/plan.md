@@ -162,19 +162,20 @@ tests/
 ```text
 POST /fornecedores/importacao/        [CHEFE_ALMOXARIFADO]
   upload só em memória (≤ 10 MB)
-  leitura_fornecedores.ler(conteudo)  → recusa de arquivo: re-render com erro, nada guardado
-                                      → ok: ResultadoLeitura com projeção mínima
+  leitura_fornecedores.ler_fornecedores(conteudo)
+                                      → recusa de arquivo: re-render com erro, nada guardado
+                                      → ok: LeituraFornecedores com projeção mínima
   sessão["fornecedores_importacao_previa"] = {token, nome, tamanho, sha256, projeção zlib+b64}
   bytes do arquivo descartados → 302 /previa/
 
 GET  /fornecedores/importacao/previa/
-  importacao.calcular_plano(projeção)        # só SELECTs
+  importacao.calcular_plano(leitura, sha256)  # só SELECTs
 
 POST /fornecedores/importacao/confirmar/
   transaction.atomic():
     pg_advisory_xact_lock(CHAVE_LOCK_IMPORTACAO_FORNECEDORES)
     token já confirmado → PreviaJaConfirmada
-    plano = calcular_plano(projeção, bloquear=True)
+    plano = calcular_plano(leitura, sha256, bloquear=True)
     impressão digital ≠ enviada → PreviaDesatualizada
     aplicar_plano(...)   # execução, inserções, updates, alterações, recusas
   descarta a prévia → 302 detalhe

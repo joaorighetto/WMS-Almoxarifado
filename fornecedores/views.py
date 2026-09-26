@@ -389,7 +389,18 @@ class ImportacaoConfirmarView(ExigePapelMixin, View):
                 request,
                 "Não foi possível concluir a confirmação por um erro inesperado. Tente novamente.",
             )
-            contexto = _contexto_previa(pedido, request)
+            # A falha que chegou aqui (ex.: banco indisponível) pode derrubar
+            # também o recálculo da prévia; nesse caso, o GET da prévia
+            # mostra a mensagem acima em vez de um 500.
+            try:
+                contexto = _contexto_previa(pedido, request)
+            except Exception:
+                logger.exception(
+                    "Falha ao recalcular a prévia de fornecedores após erro na confirmação "
+                    "(token=%s).",
+                    token,
+                )
+                return redirect("fornecedores:importacao_previa")
             return render(request, ImportacaoPreviaView.template_name, contexto, status=200)
 
         importacao.descartar_pedido(request.session)

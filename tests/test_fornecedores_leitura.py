@@ -54,7 +54,7 @@ def _arquivo(*linhas, bom=True, terminador="\r\n", terminador_final=True):
     texto = terminador.join(linhas)
     if terminador_final:
         texto += terminador
-    prefixo = "﻿" if bom else ""
+    prefixo = "\ufeff" if bom else ""
     return (prefixo + texto).encode("utf-8")
 
 
