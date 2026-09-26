@@ -48,7 +48,7 @@
           </svg>
         </h2>
 
-        {% if pode_consultar_catalogo or pode_importar_catalogo %}
+        {% if pode_consultar_catalogo or pode_importar_catalogo or pode_consultar_fornecedores or pode_importar_fornecedores %}
         {% comment %}
         Links de conveniência — cada rota já verifica seu papel exigido no
         servidor (o esconder do link não é a autorização, Constitution VI).
@@ -93,6 +93,56 @@
                 <span class="home-task-title">Histórico de importações</span>
                 <span class="home-task-desc">
                   Veja quem importou, quando, e as rejeições e divergências de cada carga.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          {% endif %}
+          {% if pode_consultar_fornecedores %}
+          <li class="home-task-item">
+            <a href="{% url 'fornecedores:consulta' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Consultar fornecedores</span>
+                <span class="home-task-desc">
+                  Localize um fornecedor por código, nome ou documento e confira a situação de bloqueio.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          {% endif %}
+          {% if pode_importar_fornecedores %}
+          <li class="home-task-item">
+            <a href="{% url 'fornecedores:importacao_envio' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Importar fornecedores</span>
+                <span class="home-task-desc">
+                  Envie o cadastro de fornecedores exportado do SCPI, confira a prévia
+                  e confirme a carga.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          <li class="home-task-item">
+            <a href="{% url 'fornecedores:historico' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Histórico de importações de fornecedores</span>
+                <span class="home-task-desc">
+                  Veja quem importou, quando, e as rejeições e alterações cadastrais de cada carga.
                 </span>
               </span>
               <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"

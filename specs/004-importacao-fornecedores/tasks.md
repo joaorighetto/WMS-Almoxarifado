@@ -46,14 +46,14 @@ parecer exigir isso, o implementador **para e reporta** ao coordenador.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Criar o app `fornecedores` na raiz (`fornecedores/__init__.py`, `fornecedores/apps.py`
+- [x] T001 Criar o app `fornecedores` na raiz (`fornecedores/__init__.py`, `fornecedores/apps.py`
   com `FornecedoresConfig`, `default_auto_field` igual ao de `catalogo`), incluí-lo em
   `INSTALLED_APPS` de `config/settings/base.py` **depois** de `"catalogo"` (o `pg_trgm` é criado no
   `pre_migrate` de `catalogo`) e acrescentar `path("fornecedores/", include("fornecedores.urls"))`
   em `config/urls.py`, com `fornecedores/urls.py` vazio (`app_name = "fornecedores"`)
-- [ ] T002 [P] Acrescentar o logger `fornecedores.importacao` em `LOGGING` de
+- [x] T002 [P] Acrescentar o logger `fornecedores.importacao` em `LOGGING` de
   `config/settings/base.py`, no mesmo formato do logger `catalogo.importacao`
-- [ ] T003 [P] (test-engineer) Criar fixtures sintéticas em bytes exatos em
+- [x] T003 [P] (test-engineer) Criar fixtures sintéticas em bytes exatos em
   `tests/fixtures/fornecedores/`, cobrindo os 10 exemplos normativos de
   `contracts/arquivo-fornecedores.md` §5, mais: `valido_basico.csv` (UTF-8 com BOM, CRLF, cabeçalho
   com as 8 colunas obrigatórias e colunas descartadas `BANCO;AGENC;CONTA;PISPASEP;ENDER;CONTATO`,
@@ -67,11 +67,11 @@ parecer exigir isso, o implementador **para e reporta** ao coordenador.
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T004 (coordenador) Acionar o `test-engineer` com `plan.md` → "Testes",
+- [x] T004 (coordenador) Acionar o `test-engineer` com `plan.md` → "Testes",
   `contracts/arquivo-fornecedores.md` e `contracts/interface-importacao.md` para revisar e completar
   os cenários críticos antes da implementação, com prioridade para `INV-SUPPLIER-004` (dados
   mínimos) e `INV-STOCK-004` (atomicidade)
-- [ ] T005 Criar em `fornecedores/models.py`, conforme `data-model.md`: `MotivoRecusaFornecedor`
+- [x] T005 Criar em `fornecedores/models.py`, conforme `data-model.md`: `MotivoRecusaFornecedor`
   (`COLUNAS_DESLOCADAS`, `CODIF_AUSENTE`, `CODIF_INVALIDO`, `CODIF_DUPLICADO`, `NOME_AUSENTE`,
   `SITUACAO_BLOQUEIO_INVALIDA`, com rótulos em pt-BR); `CampoFornecedor` (os 7
   `CAMPOS_ATUALIZAVEIS`); `ExecucaoImportacaoFornecedores` (`token_previa` UUID `UNIQUE`;
@@ -87,7 +87,7 @@ parecer exigir isso, o implementador **para e reporta** ao coordenador.
   ordering `linha`); `AlteracaoFornecedor` (`execucao` e `fornecedor` FK `PROTECT`, `campo`,
   `valor_anterior`, `valor_novo`). Nada registrado no admin. Rodar `make resetdb`.
   Aplica: —. Preserva: `INV-SUPPLIER-001`, `INV-SUPPLIER-002`, `INV-SUPPLIER-004`
-- [ ] T006 [P] (test-engineer) Escrever `tests/test_fornecedores_modelos.py`: `IntegrityError` para
+- [x] T006 [P] (test-engineer) Escrever `tests/test_fornecedores_modelos.py`: `IntegrityError` para
   `codif` duplicado, com não dígito (`"12A"`, `"٣"`), nome vazio ou só espaços, e totais
   inconsistentes; `Fornecedor` não registrado no admin
 
@@ -106,36 +106,36 @@ log.
 
 ### Tests for User Story 1 ⚠️ (escrever primeiro; devem falhar)
 
-- [ ] T007 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_leitura.py` (sem banco):
+- [x] T007 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_leitura.py` (sem banco):
   todos os exemplos de `contracts/arquivo-fornecedores.md` §5; recusas de arquivo do §1, com o
   código; BOM e coluna vazia final não contaminam valores; `\n` dentro de campo não quebra
   registro; último registro sem CRLF aceito; ordem dos motivos do §3; `CODIF_DUPLICADO` em todas as
   ocorrências; valores preservados sem `strip`; `detalhe` e `codif` de recusa nunca contêm valor de
   outra coluna; `para_json`/`de_json` fazem ida e volta sem perda; `somente_digitos`
-- [ ] T008 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_importacao.py`: carga
+- [x] T008 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_importacao.py`: carga
   inicial via `calcular_plano` + `confirmar_importacao`; totais (recebidos = inseridos +
   atualizados + rejeitados); recusas gravadas com linha, motivo e `codif`; `bloqueado` e motivo
   gravados; `nome_busca` e `documento_digitos` derivados; `execucao_origem`
-- [ ] T009 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_dados_minimos.py`
+- [x] T009 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_dados_minimos.py`
   (`INV-SUPPLIER-004`, crítico): com `sentinelas.csv`, após envio, prévia e confirmação, nenhum
   sentinela aparece em nenhuma coluna de texto de nenhuma tabela de `fornecedores`, nem na sessão
   decodificada (`zlib` + base64 + JSON), nem nos logs capturados (`caplog`); o POST de envio não
   cria `TemporaryUploadedFile` (verificar `request.upload_handlers` ou interceptar o handler) e a
   sessão não contém os bytes do arquivo
-- [ ] T010 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_atomicidade.py`
+- [x] T010 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_atomicidade.py`
   (`transaction=True`): falha injetada em `aplicar_plano` → nenhum fornecedor, execução, recusa ou
   alteração; duas confirmações concorrentes do mesmo arquivo sobre banco vazio → uma efetiva, a
   outra `PreviaDesatualizada`, sem duplicata; mesmo token duas vezes → uma execução
   (`PreviaJaConfirmada`); importação de fornecedores e do catálogo não compartilham a chave de lock; desempenho (SC-006):
   arquivo sintético de 10.035 registros gerado em memória, com prévia (`guardar_pedido` +
   `calcular_plano`) e confirmação em menos de 30 s cada
-- [ ] T011 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_views_importacao.py`: `GET`
+- [x] T011 [P] [US1] (test-engineer) Escrever `tests/test_fornecedores_views_importacao.py`: `GET`
   e `POST` de envio; recusa de arquivo re-renderiza com erro e não grava sessão; envio e prévia não
   alteram nenhuma tabela de `fornecedores` (contagem antes/depois); prévia mostra totais e recusas
   paginadas; confirmação redireciona ao detalhe com mensagem de totais; confirmação repetida →
   detalhe com "já confirmada"; token diferente → envio; cancelamento limpa a sessão; erro
   inesperado → mensagem genérica e sessão mantida
-- [ ] T012 [P] [US1] (test-engineer) Escrever a parte de importação de
+- [x] T012 [P] [US1] (test-engineer) Escrever a parte de importação de
   `tests/test_fornecedores_permissoes.py`: envio, prévia, confirmação e cancelamento para
   {anônimo → login, inativo → login, superusuário técnico → 403, requisitante → 403, funcionário do
   almoxarifado → 403, chefe de setor → 403, auditor → 403, admin de sistema → 403, chefe do
@@ -143,7 +143,7 @@ log.
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implementar `fornecedores/leitura_fornecedores.py` conforme
+- [x] T013 [US1] Implementar `fornecedores/leitura_fornecedores.py` conforme
   `contracts/interface-importacao.md` e `contracts/arquivo-fornecedores.md`: reusar
   `catalogo.leitura_scpi.decodificar` e `ArquivoRecusado`; recusar arquivo com `\n` sem nenhum
   `\r\n` (`ARQUIVO_TERMINADOR_INVALIDO`); separar registros só por `\r\n`, ignorando registros
@@ -152,7 +152,7 @@ log.
   (nunca `\d`); projetar os aceitos para `FornecedorLido`, descartando as demais colunas já na
   leitura; `para_json`/`de_json`; `somente_digitos`.
   Preserva: `INV-SUPPLIER-001`, `INV-SUPPLIER-004`
-- [ ] T014 [US1] Implementar `calcular_plano`, `aplicar_plano` e `confirmar_importacao` em
+- [x] T014 [US1] Implementar `calcular_plano`, `aplicar_plano` e `confirmar_importacao` em
   `fornecedores/importacao.py`, no molde de `catalogo/importacao.py` (research R5): existentes por
   `codif__in` em lotes de 500 (`select_for_update().order_by("pk")` quando `bloquear`); inserções
   com derivados e `execucao_origem`; atualizações só dos `CAMPOS_ATUALIZAVEIS` que mudaram, com
@@ -162,27 +162,27 @@ log.
   própria; idempotência por token; log sem dados de fornecedor.
   Aplica: `PERM-SUPPLIER-IMPORT-EXECUTE` (duas etapas). Preserva: `INV-SUPPLIER-002`,
   `INV-SUPPLIER-003`, `INV-STOCK-004`
-- [ ] T015 [US1] Implementar `guardar_pedido`, `obter_pedido` e `descartar_pedido` em
+- [x] T015 [US1] Implementar `guardar_pedido`, `obter_pedido` e `descartar_pedido` em
   `fornecedores/importacao.py` (research R3): lê e projeta no envio, guarda na sessão só
   `{token, nome_arquivo, tamanho, sha256, leitura (para_json → zlib → base64)}`; os bytes nunca vão
   para a sessão; recusa de arquivo propaga `ArquivoRecusado` sem tocar a sessão.
   Preserva: `INV-SUPPLIER-004`
-- [ ] T016 [P] [US1] Criar `ArquivoFornecedoresForm` em `fornecedores/forms.py`: `FileField`
+- [x] T016 [P] [US1] Criar `ArquivoFornecedoresForm` em `fornecedores/forms.py`: `FileField`
   obrigatório, `allow_empty_file=True`, mesmo widget do `ArquivoImportacaoForm` do catálogo, limite
   de `catalogo.leitura_scpi.LIMITE_TAMANHO_ARQUIVO` com código `ARQUIVO_TAMANHO_EXCEDIDO`; expõe
   `conteudo_arquivo`
-- [ ] T017 [US1] Implementar em `fornecedores/views.py` as views de importação com
+- [x] T017 [US1] Implementar em `fornecedores/views.py` as views de importação com
   `catalogo.views.ExigePapelMixin` e `papel_exigido = Papel.CHEFE_ALMOXARIFADO`, conforme
   `contracts/rotas-e-autorizacao.md`: envio (GET/POST) com upload só em memória (research R4:
   `csrf_exempt` na view e `csrf_protect` no processamento; handler em memória limitado a 10 MB;
   a troca de handlers ocorre antes de qualquer acesso a `request.POST`/`FILES`), prévia,
   confirmação (tabela "Efetivação") e cancelamento; registrar as rotas em `fornecedores/urls.py`.
   Aplica: `PERM-SUPPLIER-IMPORT-EXECUTE`. Preserva: `INV-AUTH-001`, `INV-SUPPLIER-004`
-- [ ] T018 [US1] Em `contas/views.py`, acrescentar a `HomeView.get_context_data` as flags
+- [x] T018 [US1] Em `contas/views.py`, acrescentar a `HomeView.get_context_data` as flags
   `pode_importar_fornecedores` (`Papel.CHEFE_ALMOXARIFADO`) e `pode_consultar_fornecedores`
   (`Papel.FUNCIONARIO_ALMOXARIFADO`), derivadas do mesmo `codigos_papeis`, e atualizar a docstring;
   acrescentar os testes correspondentes em `tests/test_contas_home_papeis.py`
-- [ ] T019 [US1] (frontend-implementer) Criar `fornecedores/templates/fornecedores/importacao_envio.html`,
+- [x] T019 [US1] (frontend-implementer) Criar `fornecedores/templates/fornecedores/importacao_envio.html`,
   `importacao_previa.html` e `execucao_detalhe.html` (este com totais e recusas paginadas; as
   alterações entram na US4), no molde das telas equivalentes de `catalogo/templates/catalogo/`,
   com o total de existentes ausentes do arquivo na prévia e no detalhe (FR-016, FR-024),
@@ -204,27 +204,27 @@ outros papéis recebem 403.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T020 [P] [US2] (test-engineer) Escrever `tests/test_fornecedores_consulta.py`: `codigo` exato
+- [x] T020 [P] [US2] (test-engineer) Escrever `tests/test_fornecedores_consulta.py`: `codigo` exato
   (`7` não encontra `007`, não completa zeros); `codigo` com não dígito → erro de validação;
   palavras de `nome` sem acento e caixa, em qualquer ordem, em `nome` ou `nome_fantasia`;
   `documento` formatado e só com dígitos → mesmo resultado; menos de 3 dígitos → erro; filtros
   combinados por E; ordenação padrão por nome com desempate por código; ordem desconhecida →
   padrão; paginação de 50; estado vazio; fragmento com `HX-Request`; bloqueado com situação e
   motivo visíveis
-- [ ] T021 [P] [US2] (test-engineer) Acrescentar a `tests/test_fornecedores_permissoes.py` a
+- [x] T021 [P] [US2] (test-engineer) Acrescentar a `tests/test_fornecedores_permissoes.py` a
   consulta: funcionário do almoxarifado e chefe do almoxarifado → 200; requisitante, chefe de
   setor, auditor, admin, superusuário técnico → 403; anônimo e inativo → login
 
 ### Implementation for User Story 2
 
-- [ ] T022 [P] [US2] Criar `ConsultaFornecedoresForm` em `fornecedores/forms.py` (`codigo`, `nome`,
+- [x] T022 [P] [US2] Criar `ConsultaFornecedoresForm` em `fornecedores/forms.py` (`codigo`, `nome`,
   `documento`), conforme `contracts/rotas-e-autorizacao.md` → "Consulta"
-- [ ] T023 [US2] Implementar `ConsultaFornecedoresView` em `fornecedores/views.py`
+- [x] T023 [US2] Implementar `ConsultaFornecedoresView` em `fornecedores/views.py`
   (`catalogo.ordenacao.OrdenacaoMixin` + `ExigePapelMixin`, `papel_exigido =
   Papel.FUNCIONARIO_ALMOXARIFADO`), com filtros, ordenação, paginação e fragmento HTMX no molde de
   `ConsultaCatalogoView`; registrar a rota `consulta`.
   Aplica: `PERM-SUPPLIER-VIEW`. Preserva: `INV-SUPPLIER-001`, `INV-AUTH-001`
-- [ ] T024 [US2] (frontend-implementer) Criar `fornecedores/templates/fornecedores/consulta.html`
+- [x] T024 [US2] (frontend-implementer) Criar `fornecedores/templates/fornecedores/consulta.html`
   (página + partial de resultados) no molde de `catalogo/consulta.html`, com a situação de bloqueio
   como Badge e sem nenhuma ação de criar, editar ou excluir
 
@@ -239,15 +239,15 @@ outros papéis recebem 403.
 **Independent Test**: duas importações aparecem no histórico, da mais recente para a mais antiga,
 cada uma com seus totais e recusas.
 
-- [ ] T025 [P] [US3] (test-engineer) Escrever `tests/test_fornecedores_historico.py`: ordem padrão,
+- [x] T025 [P] [US3] (test-engineer) Escrever `tests/test_fornecedores_historico.py`: ordem padrão,
   ordenação e paginação do histórico; detalhe com recusas paginadas; execuções preservadas; sem
   N+1 (`django_assert_max_num_queries`); e acrescentar a `tests/test_fornecedores_permissoes.py`
   histórico e detalhe (só o chefe do almoxarifado)
-- [ ] T026 [US3] Implementar `HistoricoImportacoesView` e `ExecucaoDetalheView` em
+- [x] T026 [US3] Implementar `HistoricoImportacoesView` e `ExecucaoDetalheView` em
   `fornecedores/views.py` (`papel_exigido = Papel.CHEFE_ALMOXARIFADO`, `select_related`), no molde
   das views do catálogo; registrar as rotas `historico` e `execucao_detalhe`.
   Aplica: `PERM-SUPPLIER-IMPORT-HISTORY-VIEW`
-- [ ] T027 [US3] (frontend-implementer) Criar `fornecedores/templates/fornecedores/historico.html`
+- [x] T027 [US3] (frontend-implementer) Criar `fornecedores/templates/fornecedores/historico.html`
   no molde de `catalogo/historico.html` e ligar o link do histórico na Home e na tela de envio
 
 **Checkpoint**: histórico auditável.
@@ -261,14 +261,14 @@ cada uma com seus totais e recusas.
 **Independent Test**: importar, reimportar com nome alterado, bloqueio trocado e um registro
 removido; conferir atualizações, trilha e ausentes.
 
-- [ ] T028 [P] [US4] (test-engineer) Escrever `tests/test_fornecedores_reimportacao.py`: US4
+- [x] T028 [P] [US4] (test-engineer) Escrever `tests/test_fornecedores_reimportacao.py`: US4
   cenários 1–5; `AlteracaoFornecedor` por campo, com `bloqueado` como `"S"`/`"B"`; `nome_busca` e
   `documento_digitos` reescritos quando a origem muda; `codif` e `execucao_origem` nunca mudam;
   mesmo arquivo duas vezes → 0 alterações; ausentes contados e intactos; prévia desatualizada se o
   cadastro mudar entre a prévia e a confirmação
-- [ ] T029 [US4] Completar em `fornecedores/importacao.py` o que os testes de T028 exigirem além do
+- [x] T029 [US4] Completar em `fornecedores/importacao.py` o que os testes de T028 exigirem além do
   feito em T014 (sem ampliar escopo). Preserva: `INV-SUPPLIER-003`, `INV-SUPPLIER-005`
-- [ ] T030 [US4] (frontend-implementer) Acrescentar à prévia e ao detalhe da execução a lista
+- [x] T030 [US4] (frontend-implementer) Acrescentar à prévia e ao detalhe da execução a lista
   paginada de alterações (campo, anterior, novo), no molde de
   `catalogo/execucao_detalhe.html`
 
@@ -278,22 +278,22 @@ removido; conferir atualizações, trilha e ausentes.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T031 [P] (test-engineer) Escrever `tests/test_fornecedores_sem_criacao_manual.py` (SC-008):
+- [x] T031 [P] (test-engineer) Escrever `tests/test_fornecedores_sem_criacao_manual.py` (SC-008):
   nenhum modelo de `fornecedores` no admin; nenhuma rota de `fornecedores` aceita POST fora de
   envio, confirmar e cancelar
-- [ ] T032 [P] (test-engineer) Escrever `tests/test_fornecedores_arquivo_real.py`, pulado sem
+- [x] T032 [P] (test-engineer) Escrever `tests/test_fornecedores_arquivo_real.py`, pulado sem
   `FORNECEDORES_CSV_REAL`: 10.035 recebidos e inseridos, 0 rejeitados, 18 bloqueados, campos
   conferem com o arquivo, nenhum dado de coluna descartada no banco (SC-001 a SC-003), prévia e
   confirmação em menos de 30 s cada (SC-006)
-- [ ] T033 Em `contas/management/commands/seed_dev.py`, importar `docs/CSVs/fornecedores.csv` pelo
+- [x] T033 Em `contas/management/commands/seed_dev.py`, importar `docs/CSVs/fornecedores.csv` pelo
   mesmo `confirmar_importacao` quando o arquivo existir (opção `--fornecedores CAMINHO`); se
   ausente, emitir aviso e seguir sem falhar; atualizar `tests/test_seed_dev.py` e
   `docs/development/seed-dev.md`
-- [ ] T034 (coordenador) Rodar `make verify` e o roteiro de `quickstart.md`, inclusive §1 com o
+- [x] T034 (coordenador) Rodar `make verify` e o roteiro de `quickstart.md`, inclusive §1 com o
   arquivo real
-- [ ] T035 (coordenador) Acionar o `code-reviewer` com o escopo da feature e esta spec; tratar
+- [x] T035 (coordenador) Acionar o `code-reviewer` com o escopo da feature e esta spec; tratar
   P0/P1
-- [ ] T036 (coordenador) Gate visual: `impeccable critique` nas telas de `fornecedores` depois do
+- [x] T036 (coordenador) Gate visual: `impeccable critique` nas telas de `fornecedores` depois do
   `code-reviewer`; `impeccable document` só se surgir padrão novo no `DESIGN.md`
 - [ ] T037 (coordenador) `/speckit-converge`; depois do merge, atualizar o status de `FOR` no
   `ROADMAP.md` para concluída e registrar que a dependência `FOR → ENT` foi satisfeita
@@ -321,3 +321,9 @@ removido; conferir atualizações, trilha e ausentes.
    `Fornecedor`.
 2. US2 (consulta), depois US3 (auditoria) e US4 (reimportação).
 3. Polish, review, gate visual, converge.
+
+---
+
+## Phase 8: Convergence
+
+- [x] T038 Identificar na consulta de fornecedores que os dados exibidos são de origem do SCPI, em `fornecedores/templates/fornecedores/consulta.html` per FR-028 (partial)
