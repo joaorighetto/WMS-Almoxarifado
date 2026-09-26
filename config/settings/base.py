@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "contas",
     "django.contrib.postgres",
     "catalogo",
+    "fornecedores",
 ]
 
 MIDDLEWARE = [
@@ -136,6 +137,10 @@ LOGGING = {
     },
     "loggers": {
         "catalogo.importacao": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "fornecedores.importacao": {
             "handlers": ["console"],
             "level": "INFO",
         },

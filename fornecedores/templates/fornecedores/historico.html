@@ -1,0 +1,99 @@
+{% extends "contas/base.html" %}
+{% load static catalogo_extras %}
+
+{% comment %}
+Histórico de importações de fornecedores (US3, `contracts/rotas-e-
+autorizacao.md` → "GET /fornecedores/importacoes/"), no molde de
+`catalogo/historico.html` — sem divergências (fornecedores não tem esse
+conceito) e sem a coluna correspondente.
+
+Marcador exigido por `tests/test_fornecedores_historico.py` (contrato
+fixo): `data-estado="vazio"` quando não houver nenhuma execução — mesma
+convenção de `execucao_detalhe.html` (seção "Exceções"): a ausência é
+explícita fora da tabela (`.empty-state`), não `.table-empty-row` dentro
+dela.
+
+Cada execução leva ao detalhe (`fornecedores:execucao_detalhe`, pk) por um
+`<a>` real na coluna "Execução" — funciona sozinho, sem nenhum JS;
+`fornecedores/static/fornecedores/js/historico.js` estende o clique para a
+linha inteira como aprimoramento progressivo, mesmo padrão do catálogo.
+{% endcomment %}
+
+{% block title %}Histórico de importações de fornecedores — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'fornecedores/css/fornecedores.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="fornecedores-page">
+  <div class="fornecedores-container">
+    {% include "catalogo/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Histórico de importações de fornecedores</h1>
+        <p class="page-header-description">Execuções de importação do cadastro de fornecedores confirmadas.</p>
+      </div>
+      <div class="page-header-actions">
+        <a href="{% url 'fornecedores:importacao_envio' %}" class="btn btn-primary">Importar fornecedores</a>
+      </div>
+    </header>
+
+    <section class="fornecedores-section">
+      {% if execucoes %}
+      <div class="table-wrapper table-sticky-header">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Execução</th>
+              <th scope="col">Situação</th>
+              {% include "catalogo/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
+              {% include "catalogo/_th_ordenavel.html" with coluna="executor" rotulo="Executada por" rotulo_acao="executor" %}
+              <th scope="col" class="fornecedores-historico-arquivo">Arquivo</th>
+              {% include "catalogo/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
+              <th scope="col" class="table-cell-numeric">Inseridos</th>
+              <th scope="col" class="table-cell-numeric">Atualizados</th>
+              {% include "catalogo/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in execucoes %}
+            <tr class="table-row-clickable fornecedores-historico-row">
+              <td>
+                <a href="{% url 'fornecedores:execucao_detalhe' e.pk %}" class="fornecedores-historico-link">#{{ e.pk }}</a>
+              </td>
+              <td>
+                {% if e.total_rejeitados %}
+                <span class="badge badge-warning">Com rejeições</span>
+                {% else %}
+                <span class="badge badge-success">Sem rejeições</span>
+                {% endif %}
+              </td>
+              <td>{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
+              <td>{{ e.executada_por.matricula }}</td>
+              <td class="fornecedores-historico-arquivo">{{ e.nome_arquivo }}</td>
+              <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
+              <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
+              <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
+              <td class="table-cell-numeric{% if e.total_rejeitados %} fornecedores-rejeitados-emphasis{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">Nenhuma importação registrada.</p>
+        <p class="empty-state-description">As execuções confirmadas de importação de fornecedores aparecerão aqui.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'fornecedores/js/historico.js' %}" defer></script>
+{% endblock %}

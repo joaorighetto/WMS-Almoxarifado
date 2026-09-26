@@ -1,0 +1,207 @@
+{% extends "contas/base.html" %}
+{% load static catalogo_extras %}
+
+{% comment %}
+Consulta do cadastro de fornecedores (US2, FR-027–FR-029,
+`contracts/rotas-e-autorizacao.md` → "Consulta"), no molde de
+`catalogo/consulta.html`. Reusa os mesmos primitivos (`static/css/
+components.css`): Filter Bar, Loading Indicator, Table, Pagination, Empty
+State, Chips (Badge). Sem a complexidade de sincronização OOB da consulta do
+catálogo: lá ela existe porque o cabeçalho ordenável troca só
+`#resultados-consulta` via HTMX, deixando o `<form>` de filtros (fora dessa
+região) com o campo oculto `ordem` desatualizado. Aqui os cabeçalhos de
+`catalogo/_th_ordenavel.html` são passados SEM `htmx_alvo`/`htmx_indicador` —
+ordenar é navegação de página inteira (recarrega o `<form>` inteiro, sempre
+consistente com o contexto) —, então o campo oculto `ordem` do formulário
+nunca fica desatualizado sem depender de nenhuma cópia OOB.
+
+Sem tratamento de erro de rede (`hx-on::response:error`) da consulta do
+catálogo: nenhum teste exige esse estado aqui, e a única troca HTMX real
+desta tela (filtro e paginação, ambos para `#resultados-consulta`) já falha
+de forma segura — sem indicador de sucesso, sem apagar os resultados
+anteriores no HTMX 4 por padrão.
+
+Nenhuma ação de criar, editar ou excluir fornecedor nesta tela (FR-005,
+cenário 6 da US2) — `tests/test_fornecedores_consulta.py` proíbe esses
+textos.
+
+Marcadores exigidos por `tests/test_fornecedores_consulta.py` (contrato
+fixo, nunca classe CSS ou texto): `data-estado="codigo-invalido"`,
+`data-estado="documento-invalido"`, `data-estado="vazio"`; o fragmento HTMX é
+`resultados_consulta` (template partials, Django 6).
+{% endcomment %}
+
+{% block title %}Consulta de fornecedores — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'fornecedores/css/fornecedores.css' %}">
+{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'vendor/htmx/htmx-4.0.0.min.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<main class="fornecedores-page">
+  <div class="fornecedores-container">
+    {% include "catalogo/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Consulta de fornecedores</h1>
+        <p class="page-header-description">
+          Cadastro de origem do SCPI, trazido pela importação. Localize um fornecedor pelo
+          código, por palavras do nome (ou nome fantasia) ou pelo documento.
+        </p>
+      </div>
+    </header>
+
+    <section class="fornecedores-section">
+      <form
+        method="get"
+        class="filter-bar"
+        hx-get="{% url 'fornecedores:consulta' %}"
+        hx-target="#resultados-consulta"
+        hx-push-url="true"
+        hx-indicator="#resultados-indicador"
+      >
+        <div class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}">
+          <label for="{{ form.codigo.id_for_label }}">Código (CODIF)</label>
+          {{ form.codigo }}
+          {% if form.codigo.errors %}
+          <p class="field-error">{{ form.codigo.errors.0 }}</p>
+          {% else %}
+          <p class="field-hint">Só os dígitos, sem completar com zeros.</p>
+          {% endif %}
+        </div>
+        <div class="field filter-bar-field">
+          <label for="{{ form.nome.id_for_label }}">Nome</label>
+          {{ form.nome }}
+          <p class="field-hint">Palavras do nome ou do nome fantasia, em qualquer ordem.</p>
+        </div>
+        <div class="field filter-bar-field{% if form.documento.errors %} field-has-error{% endif %}">
+          <label for="{{ form.documento.id_for_label }}">Documento</label>
+          {{ form.documento }}
+          {% if form.documento.errors %}
+          <p class="field-error">{{ form.documento.errors.0 }}</p>
+          {% else %}
+          <p class="field-hint">CNPJ ou CPF completo, com ou sem pontuação.</p>
+          {% endif %}
+        </div>
+        {% comment %}
+        Ordem vigente (mesma convenção da consulta do catálogo): campo
+        oculto, não um filtro visível — carrega a ordenação escolhida no
+        cabeçalho da tabela para que uma nova busca a preserve. Como a
+        ordenação daqui é sempre navegação de página inteira (ver
+        comentário do topo), este valor nunca fica desatualizado: qualquer
+        mudança de `ordem` já vem de um recarregamento completo da página,
+        que já renderiza este campo com o valor novo — sem cópia OOB.
+        {% endcomment %}
+        <input type="hidden" name="ordem" value="{{ ordem }}">
+        <div class="filter-bar-actions">
+          <button type="submit" class="btn btn-primary">Buscar</button>
+          <a href="{% url 'fornecedores:consulta' %}" class="btn btn-secondary">Limpar</a>
+        </div>
+      </form>
+
+      <div class="fornecedores-consulta-status">
+        <p id="resultados-indicador" class="htmx-indicator loading-indicator" role="status">
+          <span class="loading-indicator-spinner" aria-hidden="true"></span>
+          Carregando resultados…
+        </p>
+      </div>
+
+      <div id="resultados-consulta">
+        {% comment %}
+        Partial de resultados (template partials, Django 6).
+        `ConsultaFornecedoresView` renderiza este mesmo partial sozinho,
+        como `"fornecedores/consulta.html#resultados_consulta"`, quando a
+        requisição traz `HX-Request`; aqui, `inline`, ele é incluído dentro
+        deste mesmo contêiner na renderização normal da página inteira.
+        {% endcomment %}
+        {% partialdef resultados_consulta inline %}
+        {% if codigo_invalido %}
+        <div class="alert alert-danger" role="alert" data-estado="codigo-invalido">
+          <p>{{ form.codigo.errors.0 }}</p>
+        </div>
+        {% elif documento_invalido %}
+        <div class="alert alert-danger" role="alert" data-estado="documento-invalido">
+          <p>{{ form.documento.errors.0 }}</p>
+        </div>
+        {% elif pagina.object_list %}
+        <div class="table-wrapper table-sticky-header">
+          <table class="table">
+            <thead>
+              <tr>
+                {% include "catalogo/_th_ordenavel.html" with coluna="codigo" rotulo="Código" rotulo_acao="código" %}
+                {% include "catalogo/_th_ordenavel.html" with coluna="nome" rotulo="Nome" rotulo_acao="nome" %}
+                <th scope="col">Situação</th>
+                {% include "catalogo/_th_ordenavel.html" with coluna="documento" rotulo="Documento" rotulo_acao="documento" %}
+                <th scope="col">Tipo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fornecedor in pagina %}
+              <tr>
+                <td class="table-cell-code">{{ fornecedor.codif }}</td>
+                <td>
+                  {{ fornecedor.nome }}
+                  {% if fornecedor.nome_fantasia %}<span class="fornecedores-nome-fantasia">{{ fornecedor.nome_fantasia }}</span>{% endif %}
+                </td>
+                <td>
+                  {% comment %}
+                  Selo só para "Bloqueado" (P2 do gate visual, 2026-09-26):
+                  "Liberado" é a situação de ~99,8% do cadastro — um selo em
+                  toda linha vira ruído e esvazia o selo de exceção
+                  (DESIGN.md → The No Color-Only State Rule; ênfase
+                  universal cancela a própria ênfase). "Liberado" fica texto
+                  simples; só "Bloqueado" (a exceção, com consequência real
+                  — INV-SUPPLIER-005) ganha o selo `badge-warning`, mesma
+                  família já usada na seção de alterações cadastrais.
+                  {% endcomment %}
+                  {% if fornecedor.bloqueado %}
+                  <span class="badge badge-warning">Bloqueado</span>
+                  <div class="fornecedores-situacao-detalhe">
+                    {% if fornecedor.motivo_bloqueio %}<span>{{ fornecedor.motivo_bloqueio }}</span>{% endif %}
+                    {% if fornecedor.tipo_bloqueio %}<span class="fornecedores-muted">{{ fornecedor.tipo_bloqueio }}</span>{% endif %}
+                  </div>
+                  {% else %}
+                  Liberado
+                  {% endif %}
+                </td>
+                <td>{% if fornecedor.documento %}{{ fornecedor.documento }}{% else %}<span class="fornecedores-muted">—</span>{% endif %}</td>
+                <td>{% if fornecedor.tipo %}{{ fornecedor.tipo }}{% else %}<span class="fornecedores-muted">—</span>{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% include "catalogo/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de fornecedores" rotulo_item="fornecedor" rotulo_item_plural="fornecedores" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+        {% else %}
+        <div class="empty-state" data-estado="vazio">
+          <p class="empty-state-title">Nenhum fornecedor encontrado.</p>
+          {% if form.cleaned_data.documento and not form.cleaned_data.codigo and not form.cleaned_data.nome %}
+          {% comment %}
+          Estado vazio nomeando o filtro (P1 do gate visual, 2026-09-26): a
+          busca por documento é sempre EXATA (decisão do dono do produto,
+          `ConsultaFornecedoresView`) — sem isto, um usuário que digitasse só
+          a raiz do CNPJ concluiria que o fornecedor não existe, em vez de
+          que faltam dígitos. Só quando o documento é o único filtro: com
+          código ou nome junto, o fornecedor pode existir e ter sido excluído
+          pelo outro filtro.
+          {% endcomment %}
+          <p class="empty-state-description">
+            Nenhum fornecedor com esse documento. A busca por documento exige o
+            CNPJ ou CPF completo — confira se não faltou nenhum dígito.
+          </p>
+          {% else %}
+          <p class="empty-state-description">Ajuste os filtros e tente novamente.</p>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endpartialdef %}
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

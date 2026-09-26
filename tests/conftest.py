@@ -15,6 +15,7 @@ from contas.models import Papel, PapelUsuario, Setor, User
 SENHA_VALIDA = "uma-senha-de-teste-bastante-forte-123"
 
 FIXTURES_CATALOGO_DIR = pathlib.Path(__file__).parent / "fixtures" / "catalogo"
+FIXTURES_FORNECEDORES_DIR = pathlib.Path(__file__).parent / "fixtures" / "fornecedores"
 
 
 @pytest.fixture
@@ -153,3 +154,18 @@ def csv_fixture():
         return (FIXTURES_CATALOGO_DIR / nome).read_bytes()
 
     return _csv_fixture
+
+
+@pytest.fixture
+def csv_fornecedores():
+    """Factory `nome -> bytes` que lê um arquivo de
+    `tests/fixtures/fornecedores/`, para os testes de importação de
+    fornecedores (feature 004). Mesmo padrão de `csv_fixture` (catálogo,
+    001); ver `tests/fixtures/fornecedores/README.md` para o que cada
+    arquivo cobre e `gerar_fixtures.py`, no mesmo diretório, para como os
+    bytes exatos (BOM, CRLF, LF embutido) foram produzidos e verificados."""
+
+    def _csv_fornecedores(nome):
+        return (FIXTURES_FORNECEDORES_DIR / nome).read_bytes()
+
+    return _csv_fornecedores

@@ -12,8 +12,15 @@ criadas, passa pelos validadores do Django e nunca é exibida pelo comando.
 Não versione o `.env`.
 
 O CSV padrão é
-`docs/domain-legacy/relacao-de-todos-produtos-importados-do-SCPI.csv`. Ele está
+`docs/CSVs/relacao-de-todos-produtos-importados-do-SCPI.csv`. Ele está
 ignorado pelo Git; um clone novo precisa receber o arquivo localmente.
+
+O cadastro de fornecedores é **opcional**: se
+`docs/CSVs/fornecedores.csv` existir (também ignorado pelo Git), o seed o
+importa pelo mesmo `fornecedores.importacao.confirmar_importacao` usado pela
+aplicação; se estiver ausente — padrão ou caminho informado por
+`--fornecedores` —, o comando emite um aviso e segue sem falhar. Diferente do
+catálogo, não é um pré-requisito do seed.
 
 ```bash
 make setup
@@ -21,6 +28,8 @@ make setup
 make seed_dev
 # Para usar outro CSV do SCPI:
 uv run --env-file .env python manage.py seed_dev --catalogo /caminho/catalogo.csv
+# Para usar outro CSV de fornecedores (opcional):
+uv run --env-file .env python manage.py seed_dev --fornecedores /caminho/fornecedores.csv
 # Para conferir os pré-requisitos sem escrever no banco:
 uv run --env-file .env python manage.py seed_dev --check
 ```
@@ -81,7 +90,7 @@ Com o CSV local validado nesta implementação, a carga resulta em 1.588 materia
 restauração). Há 52 atribuições explícitas de papéis. As contagens do catálogo e
 do histórico podem variar quando outro CSV é fornecido.
 
-O seed cobre os oito modelos de negócio existentes: `Setor`, `User`,
+O seed cobre os oito modelos de negócio do catálogo: `Setor`, `User`,
 `PapelUsuario`, `Material`, `ExecucaoImportacao`, `ExcecaoImportacao`,
 `DivergenciaSaldo` e `AlteracaoCadastralMaterial`. Tabelas internas do Django são
 administradas pelos próprios mecanismos do framework. Não são criadas
@@ -90,16 +99,45 @@ movimentações, reservas ou requisições, cujos modelos ainda não existem.
 Esse provisionamento automático é exclusivo do ambiente de desenvolvimento.
 A importação operacional pela interface continua exigindo prévia e confirmação.
 
+## Fornecedores (opcional)
+
+Se `docs/CSVs/fornecedores.csv` existir — ou o caminho informado por
+`--fornecedores` —, o seed importa o cadastro de fornecedores pelo mesmo
+`fornecedores.importacao.confirmar_importacao` da aplicação (feature 004),
+como uma quarta importação, executada pela conta `chefe`. A ausência do
+arquivo (padrão ou informado) só emite um aviso no console; o comando
+continua e o restante do seed (contas, catálogo, histórico) é criado
+normalmente. Um arquivo presente, mas inválido (estrutura recusada,
+`contracts/arquivo-fornecedores.md` da spec 004), falha o comando inteiro,
+como o catálogo.
+
+A saída do comando só informa totais da importação de fornecedores
+(recebidos, inseridos, atualizados, rejeitados) — nunca nome, documento ou
+qualquer outro valor do arquivo, o mesmo cuidado que a interface de
+importação já tem com dados pessoais do cadastro (`INV-SUPPLIER-004`).
+
+O seed cobre os quatro modelos de negócio de `fornecedores`: `Fornecedor`,
+`ExecucaoImportacaoFornecedores`, `ExcecaoImportacaoFornecedores` e
+`AlteracaoFornecedor` — só quando o arquivo é fornecido.
+
 ## Repetição e falhas
 
-O conjunto inteiro é criado em uma única transação. Uma falha desfaz contas,
-setores, materiais e históricos dessa tentativa. Execuções concorrentes do seed
-usam o mesmo bloqueio de importação para evitar duplicação.
+O conjunto inteiro (contas, setores, catálogo, histórico e, quando o arquivo
+existe, fornecedores) é criado em uma única transação. Uma falha desfaz tudo
+dessa tentativa. Execuções concorrentes do seed usam o mesmo bloqueio de
+importação para evitar duplicação.
 
-Os três tokens fixos de importação identificam um seed já concluído. Repetir
-`make seed_dev` nesse estado não cria registros, não troca senhas e não desfaz
-edições feitas depois, mesmo que o arquivo ou a senha inicial já não estejam
-disponíveis. Esse reconhecimento não repara dados modificados ou removidos.
+Os três tokens fixos de importação do catálogo identificam um seed já
+concluído. Repetir `make seed_dev` nesse estado não cria registros, não troca
+senhas e não desfaz edições feitas depois, mesmo que os arquivos ou a senha
+inicial já não estejam disponíveis — inclusive a importação de fornecedores,
+que tem seu próprio token fixo, mas cuja repetição está protegida pelo mesmo
+reconhecimento: como todo o comando é uma única unidade de bootstrap, a
+segunda chamada nunca chega a tentar importar fornecedores de novo (nem a
+validar o arquivo), então nunca duplica nem falha por token já usado. Esse
+reconhecimento não repara dados modificados ou removidos, e não reimporta
+fornecedores retroativamente num banco já seedado sem esse arquivo antes —
+para isso, reconstrua o ambiente (abaixo).
 
 Se houver dados de negócio e o conjunto de tokens não estiver completo, o comando
 recusa a carga sem alterar a base. Para reconstruir deliberadamente o ambiente

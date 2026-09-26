@@ -1,0 +1,359 @@
+/*
+ * Fornecedores — composição das telas de importação (T019)
+ *
+ * Consome exclusivamente os tokens de static/css/tokens.css e os primitivos de
+ * static/css/components.css (Page Header, File Upload, Table, Pagination, Empty
+ * State, Alert, Buttons, Inputs/Fields, Back Link, Chips (Badge)) — nenhum deles é
+ * redefinido aqui.
+ *
+ * `catalogo/static/catalogo/css/catalogo.css` NÃO é reusado diretamente: apesar do
+ * nome, é a composição própria das telas do catálogo (classes `catalogo-*`,
+ * inclusive a seção de divergências de saldo, que não existe para fornecedores) —
+ * não um arquivo compartilhado entre apps (ver o próprio cabeçalho dele). Este
+ * arquivo replica só o subconjunto de regras de composição que as telas de
+ * importação de fornecedores também precisam, com nomes `fornecedores-*` próprios.
+ *
+ * `.catalogo-messages` abaixo é a única exceção: `catalogo/_mensagens.html` é
+ * reusado como partial (instrução da task, `fornecedores` não tem motivo para
+ * duplicar o parcial de mensagens do Django) e emite esse nome de classe
+ * literalmente — sem esta regra, o espaçamento abaixo das mensagens desapareceria
+ * nas telas de fornecedores. `catalogo/_paginacao.html`, também reusado, não tem
+ * esse problema: só emite classes já compartilhadas em components.css
+ * (`pagination`, `pagination-*`).
+ *
+ * Superfícies operacionais densas do almoxarifado são desktop-first
+ * (DESIGN.md → Layout): páginas ocupam a largura disponível (sem contenção estreita
+ * de página de marketing), separadas por estrutura/divisor/spacing — nunca cards
+ * empilhados (DESIGN.md → Layout → Estrutura de página; Do's and Don'ts).
+ */
+
+.catalogo-messages {
+  margin-bottom: var(--space-2);
+}
+
+/* Mesmo modelo de `.catalogo-page`/`.catalogo-container`
+   (catalogo/static/catalogo/css/catalogo.css): o teto de 1120px é do CONTEÚDO, não
+   da caixa que também carrega o padding lateral. */
+.fornecedores-page {
+  padding-block: var(--space-6) var(--space-8);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
+    max(var(--space-4), env(safe-area-inset-right, 0px));
+}
+
+.fornecedores-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* Envio é um formulário simples, não uma superfície densa de comparação — largura
+   mais contida favorece leitura, sem virar "card" (sem borda/superfície própria). */
+.fornecedores-container-narrow {
+  max-width: 640px;
+}
+
+/* Seções separadas por espaçamento: o próprio marcador de tubulação
+   (`.section-marker`, faixa `ink` cheia) que abre cada seção já funciona como
+   separador — sobra só o espaço entre seções; a primeira não recebe nem isso, já
+   separada do page header pela borda dele. */
+.fornecedores-section {
+  margin-top: var(--space-6);
+}
+
+.fornecedores-section:first-of-type {
+  margin-top: 0;
+}
+
+/* Resumo de totais: números como o elemento de maior peso da seção — hierarquia por
+   tamanho/peso, não por card ou cor (DESIGN.md → Typography; Elevation & Depth). */
+.fornecedores-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: 0;
+}
+
+.fornecedores-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--color-border);
+}
+
+.fornecedores-summary-item:last-child {
+  padding-right: 0;
+  border-right: none;
+}
+
+.fornecedores-summary-item dt {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.fornecedores-summary-item dd {
+  margin: 0;
+  font-size: var(--font-size-metric);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* Detalhe secundário de um total (ex.: "N com alteração" dentro de "Atualizados") —
+   mesmo número em destaque, complemento em peso/tamanho menor e cor atenuada, nunca
+   um segundo total do mesmo peso visual (DESIGN.md → Typography → Hierarquia). */
+.fornecedores-summary-detail {
+  margin-left: var(--space-1);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
+/* Celular: os itens do resumo deixam de caber numa linha só e quebram por
+   `flex-wrap` — sem divisor vertical nenhum abaixo de 640px; o gap entre
+   linhas/colunas já separa (mesma correção aplicada ao catálogo). */
+@media (max-width: 640px) {
+  .fornecedores-summary {
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .fornecedores-summary-item {
+    flex: 1 1 40%;
+    padding-right: 0;
+    border-right: none;
+  }
+}
+
+/* "Ausentes do arquivo" (FR-016, FR-024) não entra na soma Recebidos = Inseridos +
+   Atualizados + Rejeitados — os demais números têm peso idêntico e nenhuma relação
+   declarada com este. Gap adicional detacha esse item do grupo que soma entre si; a
+   nota textual abaixo (`.fornecedores-nota`) declara a relação por extenso, sem
+   depender só do espaçamento. */
+.fornecedores-summary-item-separado {
+  margin-left: var(--space-4);
+}
+
+/* Família âmbar/warning (mesma decisão do catálogo: rejeição é atenção, não erro).
+   Aplicado ao elemento PAI do par `<dt>Rejeitados</dt><dd>N</dd>`. */
+.fornecedores-rejeitados-emphasis,
+.fornecedores-rejeitados-emphasis dt,
+.fornecedores-rejeitados-emphasis dd {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Situação de bloqueio em destaque no Resumo (P1 do gate visual,
+   2026-09-26): "passam a bloqueado" e "chegam bloqueados" têm consequência
+   real (INV-SUPPLIER-005 — fornecedor bloqueado não pode ser emitente de
+   entrada) — mesma família âmbar/warning de `.fornecedores-rejeitados-
+   emphasis` quando o total é maior que zero. "Voltam a liberado" nunca
+   recebe esta classe: não há risco em desbloquear, só o tratamento
+   discreto abaixo quando zero. */
+.fornecedores-situacao-destaque,
+.fornecedores-situacao-destaque dt,
+.fornecedores-situacao-destaque dd {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Total zerado dos três itens de situação de bloqueio: discreto, sem competir
+   com os números realmente acionáveis da carga (decisão do dono do produto,
+   gate visual). Só a cor/peso do valor muda — a métrica continua com o
+   mesmo tamanho e alinhamento tabular dos demais itens do Resumo. */
+.fornecedores-situacao-neutra dd {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-regular);
+}
+
+/* Metadados textuais da execução (quem, quando, arquivo) — mesma convenção de
+   rótulo muted acima do valor, sem função numérica comparável (sem tabular-nums). */
+.fornecedores-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4) var(--space-6);
+  margin: 0;
+}
+
+.fornecedores-meta dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.fornecedores-meta dd {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* SHA-256 do arquivo: identificador técnico opaco, mesma convenção visual de
+   `.table-cell-code` (DESIGN.md → Typography → Fonte de dado/identificador). */
+.fornecedores-hash {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+}
+
+.fornecedores-muted {
+  color: var(--color-text-muted);
+}
+
+/* Nota "Ausentes do arquivo" sob o Resumo — texto corrido, não um alerta de
+   página: não exige ação nem é um erro da importação, só informação para o chefe
+   do almoxarifado avaliar depois. */
+.fornecedores-nota {
+  max-width: 72ch;
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-muted);
+}
+
+/* Estado vazio alinhado à coluna: `.empty-state` (components.css) carrega
+   padding-inline próprio para quando é usada como card isolado — aqui ela é filha
+   direta de `.fornecedores-section`, sem moldura nenhuma, e esse padding só
+   empurraria o texto para dentro da coluna, fora do alinhamento do marcador/tabela
+   acima dela. */
+.fornecedores-section > .empty-state {
+  padding-inline: 0;
+  padding-block: 0;
+}
+
+/* Moldura própria do formulário de envio — mesma moldura da tabela (`surface` + 1px
+   `border-frame`, sem sombra — Flat-By-Default), com o raio `md` de container
+   isolado (DESIGN.md → Shapes; Components → Cards / Containers). */
+.fornecedores-form {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-4);
+}
+
+.fornecedores-form-submit {
+  margin-top: var(--space-2);
+}
+
+/* Barra de confirmação persistente — ÚNICO par de botões da página, último
+   elemento de `<main>`: colada ao rodapé da viewport durante a rolagem
+   (`position: sticky`, nunca `fixed` — Elevation & Depth) e assentada no fim da
+   página (sua própria posição no fluxo) quando o usuário chega lá. */
+.fornecedores-confirmacao-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border-frame);
+}
+
+@media (max-width: 480px) {
+  .fornecedores-confirmacao-sticky {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fornecedores-confirmacao-sticky .btn {
+    width: 100%;
+  }
+}
+
+/* Folga inferior de rolagem enquanto a barra de confirmação está grudada no
+   rodapé: foco por teclado (ex.: links de paginação das exceções) e âncoras não
+   ficam escondidos sob ela — o espelho do `scroll-padding-top` da barra de
+   trabalho (base.css). Só nas páginas que têm a barra. */
+html:has(.fornecedores-confirmacao-sticky) {
+  scroll-padding-bottom: 5rem;
+}
+
+@media (max-width: 480px) {
+  html:has(.fornecedores-confirmacao-sticky) {
+    scroll-padding-bottom: 10rem;
+  }
+}
+
+/* Selo de estado no page header do detalhe: a confirmação da importação emite
+   `messages.success`, mas a mensagem some na próxima navegação — o selo
+   "Concluída" no título permanece legível a qualquer momento. */
+.fornecedores-page-header-badge {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}
+
+/*
+ * Consulta de fornecedores (T024) — composição sobre os primitivos Filter
+ * Bar, Loading Indicator, Table, Pagination e Empty State
+ * (`static/css/components.css`).
+ */
+
+/* Linha entre a barra de filtros e a tabela: hospeda o Loading Indicator.
+   `min-height` reserva o espaço permanentemente (mesma correção do
+   catálogo): o indicador só fica visível via opacidade durante a
+   requisição, mas continua no fluxo o tempo todo — sem essa altura mínima
+   reservada, o resto da página "pularia" verticalmente sempre que ele
+   aparecesse/sumisse. */
+.fornecedores-consulta-status {
+  min-height: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+/* Nome fantasia sob o nome: mesma convenção de metadado secundário abaixo
+   do dado principal já usada em `.fornecedores-summary-detail`. */
+.fornecedores-nome-fantasia {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+/* Motivo e tipo do bloqueio, sob o badge "Bloqueado" (FR-028: situação e
+   motivo visíveis) — texto explícito, nunca só a cor do badge
+   (The No Color-Only State Rule). O tipo do bloqueio fica um nível mais
+   atenuado que o motivo: o motivo é a informação principal do bloqueio, o
+   tipo é uma categorização adicional dele. */
+.fornecedores-situacao-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+}
+
+/*
+ * Histórico de importações de fornecedores (T027) — mesma composição do
+ * histórico do catálogo, sem divergências (fornecedores não tem esse
+ * conceito).
+ */
+
+/* Coluna "Arquivo": mesma trava de largura do histórico do catálogo
+   (`.catalogo-historico-arquivo`) — o navegador só quebra linha em hífen, e
+   nomes com `_` (ex. os do `seed_dev`) não têm ponto de quebra e
+   transbordariam por cima da coluna seguinte sem este piso/teto de largura
+   (`overflow-wrap: anywhere` + `width`/`min-width`/`max-width` em 15ch). O
+   excedente da tabela, se houver, fica na rolagem interna de
+   `.table-wrapper` — nunca invisível/inacessível, nunca estica a página. */
+.fornecedores-historico-arquivo {
+  width: 15ch;
+  min-width: 15ch;
+  max-width: 15ch;
+  overflow-wrap: anywhere;
+}
+
+/* Linha inteira clicável (aprimoramento progressivo,
+   `fornecedores/static/fornecedores/js/historico.js`) — cada linha já tem
+   um `<a>` real na coluna "Execução", que funciona sozinho sem nenhum
+   script; o JS só estende a área de clique, sem overlay que bloqueie a
+   seleção de texto das outras células. */
+.fornecedores-historico-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.fornecedores-historico-link:hover {
+  text-decoration: underline;
+}
