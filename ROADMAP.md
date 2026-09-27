@@ -31,6 +31,10 @@ são históricos: candidatos pendentes não foram promovidos a requisitos.
   (commit `24b8c44`). A entrega inclui a fundação de acesso e as correções de integridade
   do provisionamento identificadas na revisão. A dependência de autenticação das próximas
   features está satisfeita; a administração de produto (`ORG`) permanece planejada.
+- **004 — `004-importacao-fornecedores` (`FOR`): concluída e entregue em `main`** pelo merge do
+  [PR #21](https://github.com/joaorighetto/WMS-Almoxarifado/pull/21) (commit `ddb24de`). A
+  entrega inclui US1 a US4 e foi validada contra o CSV real de fornecedores do SCPI (10.035
+  registros). A dependência de fornecedores de `ENT` está satisfeita.
 - O SCPI permanece oficial para cadastro e administração/contabilidade. O WMS controla a
   operação do almoxarifado. A carga vem de CSV e o lançamento posterior no SCPI é manual,
   externo ao WMS. Não há integração automática em nenhuma direção (`INV-SCPI-001`).
@@ -108,7 +112,7 @@ features estão na seção 6.
 | 001 | Importação e consulta do catálogo | Do CSV à consulta de materiais e conferência auditável da carga | Prévia e confirmação; saldo inicial; busca; histórico de importações; reimportação cadastral e divergências informativas | Cadastro manual; manutenção local; correção de saldo; movimentações; integração automática | O: 002 | Concluída — entregue em `main` pelo [PR #8](https://github.com/joaorighetto/WMS-Almoxarifado/pull/8) |
 | 002 | Autenticação e acesso inicial | Da matrícula e senha à sessão identificada, acesso protegido e logout | Home mínima; retorno seguro; papéis/setor consultáveis; salvaguardas do provisionamento inicial já especificadas | Gestão de produto de usuários/setores; recuperação de senha; painel; autorização das operações de negócio | Nenhuma feature funcional anterior | Concluída — entregue em `main` pelo [PR #5](https://github.com/joaorighetto/WMS-Almoxarifado/pull/5) |
 | ORG | Administração de usuários, papéis e setores | Manter identidades e sua organização com chefia válida e atribuições explícitas | Gestão pelo administrador de sistema; vínculo setorial; atribuição dos papéis canônicos; manutenção das invariantes organizacionais | Redefinir papéis; conceder poderes operacionais implícitos; gestão de estoque; redefinir login | O: 002; R: antes do uso amplo de REQ | Planejada |
-| FOR | Importação do cadastro de fornecedores do SCPI | Do CSV do SCPI à consulta de fornecedores e conferência auditável da carga, para servirem de emitente nas entradas | Carga por CSV com prévia e confirmação; consulta; reimportação; resultado auditável | Cadastro manual de fornecedores; compras/licitações; contratos; dados financeiros ou fiscais além da identificação; integração automática | O: 002; R: antes de ENT | Em implementação — [spec 004](specs/004-importacao-fornecedores/spec.md) implementada no branch `004-importacao-fornecedores`, validada com o CSV real, aguardando merge em `main`; incluída por decisão do dono do produto em 2026-09-25 |
+| FOR | Importação do cadastro de fornecedores do SCPI | Do CSV do SCPI à consulta de fornecedores e conferência auditável da carga, para servirem de emitente nas entradas | Carga por CSV com prévia e confirmação; consulta; reimportação; resultado auditável | Cadastro manual de fornecedores; compras/licitações; contratos; dados financeiros ou fiscais além da identificação; integração automática | O: 002; R: antes de ENT | Concluída — entregue em `main` pelo [PR #21](https://github.com/joaorighetto/WMS-Almoxarifado/pull/21); incluída por decisão do dono do produto em 2026-09-25 |
 | ENT | Entrada de materiais | Registrar recebimento e conferir seu efeito no saldo e no registro da operação | Entrada nos motivos canônicos, com referência e emitente do cadastro de fornecedores; rastreabilidade da operação; estorno total da entrada pelo chefe, com justificativa | Criar materiais; cadastrar ou importar fornecedores; compras/licitações; devolução de requisição; ajuste de inventário; importar movimentações do SCPI; estorno parcial | O: 001 e FOR; R: primeira movimentação após catálogo | Em especificação — [spec 003](specs/003-entrada-materiais/spec.md), sem plano/tarefas |
 | REQ | Solicitação e autorização de materiais | Criar solicitação para si ou para terceiro permitido e levá-la à decisão do chefe do setor | Criação; consulta conforme escopo; fila e autorização setorial; definição dos estados desta etapa | Atendimento; baixa física; saída excepcional; notificações; pressupor reserva ou autorização parcial | O: 001 e identidades/setores/chefias válidos; R: ORG | Planejada |
 | ATE | Atendimento e conclusão de requisições | Da requisição autorizada à entrega, saída e conclusão consultável | Fila; atendimento por qualquer funcionário do almoxarifado; histórico de concluídas; estorno de requisição finalizada pelo chefe | Autorizar requisição; saída avulsa; devolução física; lançamento no SCPI; pressupor atendimento parcial | O: REQ; R: ENT e HIS | Planejada |
@@ -150,7 +154,7 @@ escopos completos das matrizes:
   Dependência satisfeita com a entrega da 001.
 - `FOR → ENT`: o emitente obrigatório das entradas por compra e por devolução de
   fornecedor/garantia vem do cadastro de fornecedores importado do SCPI (decisão de 2026-09-25).
-  A spec da ENT pode avançar antes; sua implementação e seu aceite esperam a entrega de `FOR`.
+  Dependência satisfeita com a entrega da 004.
 - `REQ → ATE → DEV`: atendimento exige autorização; devolução exige atendimento de origem.
   `ATE → REL` fornece o consumo por requisição; outras dependências de `REL` serão definidas
   pelas métricas escolhidas.
@@ -180,7 +184,8 @@ escopos completos das matrizes:
    disponíveis a todas as operações.
 2. **Especificar `ORG` e `ENT`**, agora que a 001 está entregue. A primeira organiza a
    administração cotidiana; a segunda entrega o primeiro fluxo de estoque após a carga.
-   **Especificar e implementar `FOR` antes da implementação de `ENT`**, que depende dela.
+   ~~Especificar e implementar `FOR` antes da implementação de `ENT`.~~ Concluída: a 004 entregou
+   o cadastro de fornecedores de que `ENT` depende.
 3. **Especificar `REQ` e `HIS`**, com suas dependências satisfeitas para implementação. A primeira
    fecha solicitação/autorização; a segunda permite investigar os movimentos já produzidos.
 4. **Especificar e implementar `ATE`**, fechando catálogo → solicitação → autorização → entrega
