@@ -124,10 +124,17 @@ def test_chefe_almoxarifado_ve_os_tres_links_de_catalogo(
     conteudo = response.content.decode()
 
     hrefs = _hrefs_de_negocio(conteudo)
+    # `chefe_almoxarifado` também tem `ROLE-WAREHOUSE-HEAD` e `ROLE-WAREHOUSE-
+    # STAFF` (`pode_importar_fornecedores` e `pode_consultar_fornecedores`,
+    # feature 004/T019 e T024/T027): além dos três links de catálogo, vê os
+    # três de fornecedores (consulta, importação e histórico).
     assert hrefs == {
         reverse("catalogo:consulta"),
         reverse("catalogo:importacao_envio"),
         reverse("catalogo:historico"),
+        reverse("fornecedores:consulta"),
+        reverse("fornecedores:importacao_envio"),
+        reverse("fornecedores:historico"),
     }
 
 
@@ -169,12 +176,17 @@ def test_titulos_de_capacidades_planejadas_nao_aparecem_como_links(
     assert titulos, "pré-condição: chefe do almoxarifado deveria ter capacidades planejadas"
 
     hrefs_de_negocio = _hrefs_de_negocio(conteudo)
-    # Os únicos hrefs de negócio permitidos continuam sendo os três atalhos
-    # reais — nenhum placeholder amplia esse conjunto.
+    # Os únicos hrefs de negócio permitidos continuam sendo os atalhos reais
+    # de `chefe_almoxarifado` (três de catálogo + três de fornecedores, ver
+    # `test_chefe_almoxarifado_ve_os_tres_links_de_catalogo`) — nenhum
+    # placeholder amplia esse conjunto.
     assert hrefs_de_negocio == {
         reverse("catalogo:consulta"),
         reverse("catalogo:importacao_envio"),
         reverse("catalogo:historico"),
+        reverse("fornecedores:consulta"),
+        reverse("fornecedores:importacao_envio"),
+        reverse("fornecedores:historico"),
     }
 
     for tag_abertura in re.finditer(r"<a\b[^>]*>(.*?)</a>", conteudo, re.DOTALL):
@@ -400,3 +412,50 @@ def test_home_nao_introduz_n_mais_1_ao_calcular_papeis_e_capacidades(
     # dispare uma query por papel ou por capacidade planejada deve estourá-lo.
     with django_assert_max_num_queries(10):
         client.get(reverse("home"))
+
+
+# ---------------------------------------------------------------------------
+# 8. Flags de fornecedores (feature 004 — T018): pode_importar_fornecedores
+# (ROLE-WAREHOUSE-HEAD, PERM-SUPPLIER-IMPORT-EXECUTE) e
+# pode_consultar_fornecedores (ROLE-WAREHOUSE-STAFF, PERM-SUPPLIER-VIEW). O
+# link real na Home é do T019 (frontend-implementer) — aqui só o contexto.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_chefe_almoxarifado_tem_as_duas_flags_de_fornecedores(
+    client, chefe_almoxarifado, senha_valida
+):
+    """`chefe_almoxarifado` tem tanto `ROLE-WAREHOUSE-HEAD` quanto
+    `ROLE-WAREHOUSE-STAFF` (ver `test_home_exibe_matricula_setor_e_rotulos_dos_papeis`),
+    então as duas flags de fornecedores são verdadeiras."""
+    _login(client, chefe_almoxarifado, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["pode_importar_fornecedores"] is True
+    assert response.context["pode_consultar_fornecedores"] is True
+
+
+@pytest.mark.django_db
+def test_funcionario_almoxarifado_so_tem_a_flag_de_consulta_de_fornecedores(
+    client, funcionario_almoxarifado, senha_valida
+):
+    """`ROLE-WAREHOUSE-STAFF`, sem `ROLE-WAREHOUSE-HEAD`: pode consultar
+    fornecedores, mas não importar."""
+    _login(client, funcionario_almoxarifado, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["pode_importar_fornecedores"] is False
+    assert response.context["pode_consultar_fornecedores"] is True
+
+
+@pytest.mark.django_db
+def test_requisitante_nao_tem_nenhuma_flag_de_fornecedores(client, requisitante, senha_valida):
+    _login(client, requisitante, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["pode_importar_fornecedores"] is False
+    assert response.context["pode_consultar_fornecedores"] is False

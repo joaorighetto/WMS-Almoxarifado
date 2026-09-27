@@ -1,7 +1,7 @@
 # Fixtures do catálogo SCPI (`tests/fixtures/catalogo/`)
 
 Todos os arquivos abaixo são **sintéticos**: nenhum dado vem do export real do SCPI
-(`docs/domain-legacy/`, fora do Git). Os únicos valores citados literalmente pela spec/contrato
+(`docs/CSVs/`, fora do Git). Os únicos valores citados literalmente pela spec/contrato
 (`specs/001-importacao-catalogo-materiais/contracts/arquivo-scpi.md`, `research.md`) são os códigos
 `000.000.002`, `004.001.002`, `000.029.742` e a descrição `COTOVELO GALVANIZADO ¾" X 90º`; todo o
 resto (descrições, demais códigos, `USUARIO`/`USUALT`, datas, códigos de barra) é fictício.

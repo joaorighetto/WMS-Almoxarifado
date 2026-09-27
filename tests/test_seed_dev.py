@@ -31,8 +31,22 @@ from catalogo.models import (
     MotivoRecusa,
 )
 from contas.models import Papel, PapelUsuario, Setor, User
+from fornecedores.models import (
+    AlteracaoFornecedor,
+    ExcecaoImportacaoFornecedores,
+    ExecucaoImportacaoFornecedores,
+    Fornecedor,
+)
 
 CATALOGO = Path(__file__).parent / "fixtures" / "catalogo" / "carga_inicial_valida.csv"
+# Fixture sintética de fornecedores (feature 004, T033) — nunca o arquivo real
+# `docs/CSVs/fornecedores.csv` (proibido nos testes: dado real sensível, fora do
+# Git). Um caminho garantidamente inexistente, para os testes que exercitam a
+# ausência do arquivo sem depender de nada do sistema de arquivos local.
+FORNECEDORES_VALIDO = Path(__file__).parent / "fixtures" / "fornecedores" / "valido_basico.csv"
+FORNECEDORES_INEXISTENTE = (
+    Path(__file__).parent / "fixtures" / "fornecedores" / "__inexistente_para_teste__.csv"
+)
 MODELOS = (
     Setor,
     User,
@@ -42,6 +56,12 @@ MODELOS = (
     ExcecaoImportacao,
     DivergenciaSaldo,
     AlteracaoCadastralMaterial,
+)
+MODELOS_FORNECEDORES = (
+    Fornecedor,
+    ExecucaoImportacaoFornecedores,
+    ExcecaoImportacaoFornecedores,
+    AlteracaoFornecedor,
 )
 
 
@@ -58,8 +78,22 @@ def ambiente_dev(monkeypatch, senha_valida):
 
 
 def executar_seed(**opcoes):
+    """`fornecedores` (opcional) SEMPRE vira um `--fornecedores CAMINHO`
+    explícito — por padrão um caminho garantidamente inexistente
+    (`FORNECEDORES_INEXISTENTE`), nunca o padrão real do comando
+    (`docs/CSVs/fornecedores.csv`), para nenhum teste depender do arquivo real
+    local (proibido: dado real sensível, fora do Git)."""
     saida = StringIO()
-    call_command("seed_dev", "--catalogo", str(CATALOGO), stdout=saida, **opcoes)
+    fornecedores = opcoes.pop("fornecedores", FORNECEDORES_INEXISTENTE)
+    call_command(
+        "seed_dev",
+        "--catalogo",
+        str(CATALOGO),
+        "--fornecedores",
+        str(fornecedores),
+        stdout=saida,
+        **opcoes,
+    )
     return saida.getvalue()
 
 
@@ -97,6 +131,34 @@ def test_check_recusa_catalogo_inexistente_sem_acessar_banco():
     with pytest.raises(CommandError, match="catálogo SCPI"):
         call_command(
             "seed_dev", "--catalogo", str(CATALOGO.with_name("inexistente.csv")), check=True
+        )
+
+
+def test_catalogo_padrao_fica_em_docs_csvs(monkeypatch, tmp_path):
+    """Sem `--catalogo`, o seed lê `docs/CSVs/` (mesma pasta local e ignorada do
+    CSV de fornecedores). `BASE_DIR` aponta para um diretório temporário com a
+    fixture sintética: o teste nunca toca o arquivo real."""
+    from django.conf import settings
+
+    monkeypatch.setattr(settings, "BASE_DIR", tmp_path)
+    destino = tmp_path / "docs" / "CSVs" / "relacao-de-todos-produtos-importados-do-SCPI.csv"
+    destino.parent.mkdir(parents=True)
+    destino.write_bytes(CATALOGO.read_bytes())
+
+    call_command(
+        "seed_dev", "--fornecedores", str(FORNECEDORES_INEXISTENTE), check=True,
+        stdout=StringIO(),
+    )
+
+
+def test_catalogo_padrao_ausente_indica_docs_csvs(monkeypatch, tmp_path):
+    from django.conf import settings
+
+    monkeypatch.setattr(settings, "BASE_DIR", tmp_path)
+
+    with pytest.raises(CommandError, match="docs/CSVs"):
+        call_command(
+            "seed_dev", "--fornecedores", str(FORNECEDORES_INEXISTENTE), check=True
         )
 
 
@@ -141,6 +203,89 @@ def test_seed_cria_organizacao_com_papeis_explicitos_e_credenciais_validas(senha
 
     chefe = User.objects.get(is_active=True, papeis__papel=Papel.CHEFE_ALMOXARIFADO)
     assert authenticate(matricula=chefe.matricula, password=senha_valida) == chefe
+
+
+# ---------------------------------------------------------------------------
+# Fornecedores (feature 004, T033) — opcional: ausência emite aviso e não
+# falha; presença importa pelo mesmo `confirmar_importacao` da aplicação;
+# saída do comando nunca vaza dado do arquivo, só totais.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_seed_sem_arquivo_de_fornecedores_emite_aviso_e_nao_falha():
+    """`executar_seed()` já passa `--fornecedores` apontando para um caminho
+    inexistente (ver docstring de `executar_seed`) — o cenário padrão desta
+    suíte é justamente a ausência do arquivo."""
+    saida = executar_seed()
+
+    assert "seed_dev concluído" in saida
+    assert "fornecedores" in saida.lower()
+    assert any(palavra in saida.lower() for palavra in ("aviso", "pulad", "não encontrado")), saida
+    assert not any(modelo.objects.exists() for modelo in MODELOS_FORNECEDORES)
+
+
+@pytest.mark.django_db
+def test_seed_importa_fornecedores_quando_arquivo_informado(senha_valida):
+    saida = executar_seed(fornecedores=str(FORNECEDORES_VALIDO))
+
+    assert Fornecedor.objects.count() == 4
+    execucao = ExecucaoImportacaoFornecedores.objects.get()
+    assert execucao.total_recebidos == execucao.total_inseridos == 4
+    assert execucao.total_atualizados == execucao.total_rejeitados == 0
+    chefe = User.objects.get(is_active=True, papeis__papel=Papel.CHEFE_ALMOXARIFADO)
+    assert execucao.executada_por_id == chefe.pk
+
+    # Saída só com totais — nunca nome, documento ou qualquer valor do
+    # arquivo (INV-SUPPLIER-004): a fixture `valido_basico.csv` tem
+    # fornecedores nomeados "FORNECEDOR ALFA COMERCIO LTDA" e o documento
+    # "11.111.111/0001-11"; nenhum dos dois pode vazar para stdout.
+    assert "FORNECEDOR ALFA" not in saida.upper()
+    assert "11.111.111/0001-11" not in saida
+    assert str(execucao.total_inseridos) in saida
+
+
+@pytest.mark.django_db
+def test_reexecucao_com_fornecedores_nao_falha_nem_duplica(senha_valida):
+    """Rodar o seed duas vezes com o mesmo arquivo de fornecedores não pode
+    falhar nem duplicar: a segunda chamada é interceptada pelo mesmo
+    early-return que já protege organização/catálogo (`SEED_TOKENS`) — a
+    importação de fornecedores nunca chega a ser tentada de novo (ver
+    docstring de `Command.handle`)."""
+    executar_seed(fornecedores=str(FORNECEDORES_VALIDO))
+    assert Fornecedor.objects.count() == 4
+
+    saida = executar_seed(fornecedores=str(FORNECEDORES_VALIDO))
+
+    assert "já aplicado" in saida
+    assert Fornecedor.objects.count() == 4
+    assert ExecucaoImportacaoFornecedores.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_check_com_arquivo_de_fornecedores_invalido_falha_sem_acessar_banco():
+    invalido = Path(__file__).parent / "fixtures" / "fornecedores" / "sem_coluna_bloq.csv"
+
+    with pytest.raises(CommandError, match="fornecedores"):
+        call_command(
+            "seed_dev",
+            "--catalogo",
+            str(CATALOGO),
+            "--fornecedores",
+            str(invalido),
+            check=True,
+        )
+
+
+@pytest.mark.django_db
+def test_arquivo_de_fornecedores_invalido_nao_grava_nada():
+    invalido = Path(__file__).parent / "fixtures" / "fornecedores" / "sem_coluna_bloq.csv"
+
+    with pytest.raises(CommandError, match="fornecedores"):
+        executar_seed(fornecedores=str(invalido))
+
+    assert not any(modelo.objects.exists() for modelo in MODELOS)
+    assert not any(modelo.objects.exists() for modelo in MODELOS_FORNECEDORES)
 
 
 @pytest.mark.django_db
@@ -326,7 +471,18 @@ def test_seed_com_catalogo_real_quando_disponibilizado():
     registros = ler_registros(Path(caminho).read_bytes()).aceitos
     assert registros, "o catálogo real deve conter materiais válidos"
 
-    call_command("seed_dev", "--catalogo", caminho, stdout=StringIO())
+    # `--fornecedores` explícito e inexistente: este teste valida só o catálogo
+    # real (gated por SCPI_CSV_REAL); nunca deve tocar o padrão real de
+    # fornecedores (docs/CSVs/fornecedores.csv), mesmo que esse arquivo exista
+    # localmente na máquina de quem roda o teste.
+    call_command(
+        "seed_dev",
+        "--catalogo",
+        caminho,
+        "--fornecedores",
+        str(FORNECEDORES_INEXISTENTE),
+        stdout=StringIO(),
+    )
 
     assert all(modelo.objects.exists() for modelo in MODELOS)
     assert ExecucaoImportacao.objects.count() == 3

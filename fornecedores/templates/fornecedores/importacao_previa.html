@@ -1,0 +1,245 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% block title %}Prévia da importação de fornecedores — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'fornecedores/css/fornecedores.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="fornecedores-page">
+  <div class="fornecedores-container">
+    <a href="{% url 'fornecedores:importacao_envio' %}" class="back-link">
+      <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
+           fill="none" aria-hidden="true">
+        <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Envio</span>
+    </a>
+
+    {% include "catalogo/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Prévia da importação de fornecedores</h1>
+        <p class="page-header-description">
+          Arquivo <strong>{{ pedido.nome_arquivo }}</strong> ({{ pedido.tamanho|filesizeformat }})
+        </p>
+      </div>
+    </header>
+
+    <div class="alert alert-info" role="status">
+      <p>
+        Esta é só uma prévia: nada foi gravado ainda. Confira os totais e as exceções
+        abaixo antes de confirmar.
+      </p>
+    </div>
+
+    <section class="fornecedores-section">
+      <h2 class="section-marker">
+        <span class="section-marker-label">Resumo</span>
+      </h2>
+      <dl class="fornecedores-summary">
+        <div class="fornecedores-summary-item">
+          <dt>Recebidos</dt>
+          <dd>{{ plano.total_recebidos }}</dd>
+        </div>
+        <div class="fornecedores-summary-item">
+          <dt>Serão inseridos</dt>
+          <dd>{{ plano.total_inseridos }}</dd>
+        </div>
+        <div class="fornecedores-summary-item">
+          <dt>Serão atualizados</dt>
+          <dd>
+            {{ plano.total_atualizados }}
+            <span class="fornecedores-summary-detail">({{ plano.total_atualizados_com_alteracao }} com alteração)</span>
+          </dd>
+        </div>
+        <div class="fornecedores-summary-item{% if plano.total_rejeitados %} fornecedores-rejeitados-emphasis{% endif %}">
+          <dt>Rejeitados</dt>
+          <dd>{{ plano.total_rejeitados }}</dd>
+        </div>
+        {% comment %}
+        Situação de bloqueio em destaque (P1 do gate visual, 2026-09-26):
+        antes só aparecia como mais uma linha da tabela de alterações — o
+        chefe do almoxarifado não via, antes de confirmar, quantos
+        fornecedores mudam de situação (INV-SUPPLIER-005: bloqueado não pode
+        ser emitente de entrada). Grupo próprio, separado da soma Recebidos =
+        Inseridos + Atualizados + Rejeitados (não entra nela). "Chegam
+        bloqueados" só existe aqui, na prévia: vem de `plano.insercoes`
+        (fornecedores NOVOS), que o detalhe de uma execução já confirmada não
+        tem como recalcular com fidelidade histórica (ver
+        `fornecedores/views.py`, `_totais_bloqueio_do_plano`).
+        {% endcomment %}
+        <div class="fornecedores-summary-item fornecedores-summary-item-separado{% if total_passam_a_bloqueado %} fornecedores-situacao-destaque{% else %} fornecedores-situacao-neutra{% endif %}">
+          <dt>Passam a bloqueado</dt>
+          <dd>{{ total_passam_a_bloqueado }}</dd>
+        </div>
+        <div class="fornecedores-summary-item{% if not total_voltam_a_liberado %} fornecedores-situacao-neutra{% endif %}">
+          <dt>Voltam a liberado</dt>
+          <dd>{{ total_voltam_a_liberado }}</dd>
+        </div>
+        <div class="fornecedores-summary-item{% if total_chegam_bloqueados %} fornecedores-situacao-destaque{% else %} fornecedores-situacao-neutra{% endif %}">
+          <dt>Chegam bloqueados</dt>
+          <dd>{{ total_chegam_bloqueados }}</dd>
+        </div>
+        <div class="fornecedores-summary-item fornecedores-summary-item-separado">
+          <dt>Ausentes do arquivo</dt>
+          <dd>{{ plano.total_ausentes_no_arquivo }}</dd>
+        </div>
+      </dl>
+      <p class="fornecedores-nota">
+        "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
+        Rejeitados: são fornecedores já cadastrados no WMS que não vieram neste CSV. Esta
+        importação <strong>não altera nem remove</strong> esses fornecedores — eles
+        permanecem como estão.
+      </p>
+      <p class="fornecedores-nota">
+        Um fornecedor bloqueado não pode ser emitente de uma entrada de materiais.
+        Confira, em "Alterações cadastrais" abaixo, quais fornecedores mudam de
+        situação nesta carga antes de confirmar.
+      </p>
+    </section>
+
+    {% comment %}
+    Alterações cadastrais (US4, T030) — no molde da seção equivalente de
+    `catalogo/execucao_detalhe.html` (mesma posição relativa: depois do
+    Resumo, antes das Exceções). `alteracoes_pagina` já vem achatada em uma
+    linha por campo alterado (`fornecedores/views.py`, `_linha_alteracao`)
+    — o total do rótulo usa `alteracoes_pagina.paginator.count`
+    (linhas/campos), não `plano.total_atualizados_com_alteracao`
+    (fornecedores com pelo menos um campo alterado). `data-secao=
+    "alteracoes"` fica no `<section>` incondicionalmente —
+    `tests/test_fornecedores_reimportacao.py` exige o marcador mesmo sem
+    nenhuma alteração.
+    {% endcomment %}
+    <section class="fornecedores-section" id="alteracoes" data-secao="alteracoes">
+      <h2 class="section-marker{% if alteracoes_pagina.object_list %} section-marker-attached{% endif %}">
+        <span class="section-marker-label">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</span>
+      </h2>
+      {% if alteracoes_pagina.object_list %}
+      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Código (CODIF)</th>
+              <th scope="col">Nome</th>
+              <th scope="col">Campo</th>
+              <th scope="col">Valor anterior</th>
+              <th scope="col">Valor novo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for alteracao in alteracoes_pagina %}
+            <tr>
+              <td class="table-cell-code">{{ alteracao.codif }}</td>
+              <td>{{ alteracao.nome }}</td>
+              <td>{{ alteracao.campo_label }}</td>
+              <td>
+                {% if alteracao.valor_anterior_legivel %}{{ alteracao.valor_anterior_legivel|linebreaksbr }}{% else %}<span class="fornecedores-muted">(vazio)</span>{% endif %}
+              </td>
+              <td>
+                {% comment %}
+                Destaque proporcional da mudança de situação (P1 do gate
+                visual, 2026-09-26): nunca marca a linha inteira (a borda
+                lateral de 3px é exclusiva de `table-row-error`, nas
+                Exceções) — só o valor novo desta célula ganha o mesmo selo
+                da consulta quando o fornecedor passa a bloqueado.
+                {% endcomment %}
+                {% if alteracao.campo == "bloqueado" %}
+                {% if alteracao.valor_novo == "B" %}
+                <span class="badge badge-warning">Bloqueado</span>
+                {% else %}
+                {{ alteracao.valor_novo_legivel }}
+                {% endif %}
+                {% elif alteracao.valor_novo_legivel %}{{ alteracao.valor_novo_legivel|linebreaksbr }}{% else %}<span class="fornecedores-muted">(vazio)</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "catalogo/_paginacao.html" with pagina=alteracoes_pagina parametro="pagina_alteracoes" rotulo="Paginação de alterações cadastrais" ancora="alteracoes" %}
+      {% else %}
+      <div class="empty-state">
+        <p class="empty-state-title">Nenhuma alteração cadastral nesta importação.</p>
+        <p class="empty-state-description">Os dados cadastrais do arquivo coincidiram com os já registrados no WMS.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="fornecedores-section" id="excecoes">
+      <h2 class="section-marker{% if excecoes_pagina.object_list %} section-marker-attached{% endif %}">
+        <span class="section-marker-label">Exceções ({{ plano.total_rejeitados }})</span>
+      </h2>
+      {% if excecoes_pagina.object_list %}
+      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Linha</th>
+              <th scope="col">Código (CODIF)</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Detalhe</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for excecao in excecoes_pagina %}
+            <tr class="table-row-error">
+              <td>{{ excecao.linha }}</td>
+              <td class="table-cell-code">
+                {% if excecao.codif %}{{ excecao.codif }}{% else %}<span class="fornecedores-muted">—</span>{% endif %}
+              </td>
+              <td>{{ excecao.motivo_label }}</td>
+              <td>{{ excecao.detalhe|default:""|linebreaksbr }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "catalogo/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" ancora="excecoes" %}
+      {% else %}
+      <div class="empty-state">
+        <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
+        <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    {% comment %}
+    Barra de confirmação (mesma decisão da 001, gate visual P1): ÚNICO par de
+    botões da página — grudada ao rodapé da viewport durante a rolagem
+    (`position: sticky`, `fornecedores/static/fornecedores/css/fornecedores.css`) e
+    assentada no fim quando o usuário chega lá, por ser o último elemento de
+    `.fornecedores-container`.
+    {% endcomment %}
+    <div class="fornecedores-confirmacao-sticky">
+      <form
+        method="post"
+        action="{% url 'fornecedores:importacao_confirmar' %}"
+        data-processing-form
+        data-processing-label="Confirmando…"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="impressao_digital" value="{{ impressao_digital }}">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label
+            >Confirmar importação: {{ plano.total_inseridos }} inserido{{ plano.total_inseridos|pluralize }}, {{ plano.total_atualizados }} atualizado{{ plano.total_atualizados|pluralize }}{% if plano.total_rejeitados %} ({{ plano.total_rejeitados }} rejeitado{{ plano.total_rejeitados|pluralize }} fic{{ plano.total_rejeitados|pluralize:"a,am" }} de fora){% endif %}{% if total_passam_a_bloqueado %}, {{ total_passam_a_bloqueado }} pass{{ total_passam_a_bloqueado|pluralize:"a,am" }} a bloqueado{% endif %}{% if total_voltam_a_liberado %}, {{ total_voltam_a_liberado }} volt{{ total_voltam_a_liberado|pluralize:"a,am" }} a liberado{% endif %}{% if total_chegam_bloqueados %}, {{ total_chegam_bloqueados }} cheg{{ total_chegam_bloqueados|pluralize:"a,am" }} bloqueado{{ total_chegam_bloqueados|pluralize }}{% endif %}</span
+          >
+        </button>
+      </form>
+      <form method="post" action="{% url 'fornecedores:importacao_cancelar' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">Cancelar</button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'catalogo/js/envio.js' %}" defer></script>
+{% endblock %}

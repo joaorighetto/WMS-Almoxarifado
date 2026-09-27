@@ -161,8 +161,12 @@ class HomeView(LoginRequiredMixin, TemplateView):
         `PERM-SCPI-IMPORT-EXECUTE` (importação) e `PERM-SCPI-IMPORT-HISTORY-VIEW` (histórico),
         ambas exigindo `ROLE-WAREHOUSE-HEAD` (`contracts/rotas-e-autorizacao.md`, 001).
         `pode_consultar_catalogo` cobre `PERM-MATERIAL-VIEW` (`ROLE-REQUESTER`, concedido a
-        toda identidade de negócio). Os links são conveniência de navegação — a autorização
-        efetiva continua nas próprias rotas (Constitution VI).
+        toda identidade de negócio). `pode_importar_fornecedores` cobre
+        `PERM-SUPPLIER-IMPORT-EXECUTE` (`ROLE-WAREHOUSE-HEAD`) e `pode_consultar_fornecedores`
+        cobre `PERM-SUPPLIER-VIEW` (`ROLE-WAREHOUSE-STAFF`) — feature 004
+        (`specs/004-importacao-fornecedores/contracts/rotas-e-autorizacao.md`). Os links são
+        conveniência de navegação — a autorização efetiva continua nas próprias rotas
+        (Constitution VI).
 
         `setor` e `papeis` são só apresentação. `capacidades_planejadas` filtra
         `CAPACIDADES_PLANEJADAS` pelos papéis do usuário e é puramente informativo: nenhum item
@@ -178,6 +182,8 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
         contexto["pode_importar_catalogo"] = Papel.CHEFE_ALMOXARIFADO in codigos_papeis
         contexto["pode_consultar_catalogo"] = Papel.REQUISITANTE in codigos_papeis
+        contexto["pode_importar_fornecedores"] = Papel.CHEFE_ALMOXARIFADO in codigos_papeis
+        contexto["pode_consultar_fornecedores"] = Papel.FUNCIONARIO_ALMOXARIFADO in codigos_papeis
         contexto["setor"] = usuario.setor
         contexto["papeis"] = [
             Papel(codigo).label for codigo in Papel.values if codigo in codigos_papeis

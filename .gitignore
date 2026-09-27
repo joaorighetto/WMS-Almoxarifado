@@ -49,6 +49,8 @@ htmlcov/
 
 # Dados de trabalho e exports do SCPI (contém credenciais e arquivos grandes)
 domain-legacy/
+# CSVs reais exportados do SCPI (dados pessoais: CPF, conta bancária, PIS)
+docs/CSVs/
 
 # impeccable
 .impeccable/critique/

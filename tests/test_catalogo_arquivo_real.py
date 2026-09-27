@@ -4,7 +4,7 @@
 Aceite pendente de SC-001, SC-002, SC-004 e SC-008 (ROADMAP, "Evidências de
 importação"), documentado em `quickstart.md` §5. O export real não é
 versionado — hoje existe só localmente em
-`docs/domain-legacy/relacao-de-todos-produtos-importados-do-SCPI.csv`,
+`docs/CSVs/relacao-de-todos-produtos-importados-do-SCPI.csv`,
 ignorado pelo Git. Este teste lê **só o caminho** da variável de ambiente
 `SCPI_CSV_REAL`; sem ela, é *skipped*. Nenhum dado do arquivo é escrito em
 fixture, snapshot ou mensagem de erro extensa — as asserções comparam
