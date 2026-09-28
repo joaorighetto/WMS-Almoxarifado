@@ -151,8 +151,10 @@ def _para_int(valor) -> int | None:
 
 def _pk_informado(texto) -> int | None:
     """`pk` vindo de um botão do formulário: só dígitos ASCII. `str.isdigit()`
-    aceita dígitos Unicode ("²") que o ORM recusaria com `ValueError` (500)."""
-    if not isinstance(texto, str) or not re.fullmatch(r"[0-9]+", texto):
+    aceita dígitos Unicode ("²") que o ORM recusaria com `ValueError` (500).
+    No máximo 18 dígitos: cabe em `bigint` e fica longe do limite de dígitos
+    do `int()` do Python."""
+    if not isinstance(texto, str) or not re.fullmatch(r"[0-9]{1,18}", texto):
         return None
     return int(texto) or None
 
