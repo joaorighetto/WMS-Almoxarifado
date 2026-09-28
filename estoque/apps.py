@@ -8,7 +8,8 @@ def criar_triggers_imutabilidade(using, **kwargs):
     imutabilidade dos fatos de estoque (`INV-MOV-001`, research R7).
 
     `ItemEntrada`, `EstornoEntrada` e `MovimentacaoEstoque` recusam qualquer
-    `UPDATE` ou `DELETE`. `Entrada` recusa qualquer `DELETE` e só aceita um
+    `UPDATE` ou `DELETE`. `Entrada` não pode ser criada já estornada, recusa
+    qualquer `DELETE` e só aceita um
     `UPDATE` que mude exclusivamente `estornada` de `False` para `True`, e só
     quando o `EstornoEntrada` dela já existe (o estorno em si é esse registro
     próprio, também imutável).
@@ -70,6 +71,17 @@ def criar_triggers_imutabilidade(using, **kwargs):
                         TG_TABLE_NAME;
                 END IF;
 
+                -- Uma entrada nunca nasce estornada: o estorno depende de a
+                -- entrada já existir.
+                IF TG_OP = 'INSERT' THEN
+                    IF NEW.estornada THEN
+                        RAISE EXCEPTION
+                            'Em %, a entrada não pode ser criada já estornada',
+                            TG_TABLE_NAME;
+                    END IF;
+                    RETURN NEW;
+                END IF;
+
                 IF NOT (
                     NOT OLD.estornada
                     AND NEW.estornada
@@ -106,7 +118,7 @@ def criar_triggers_imutabilidade(using, **kwargs):
         cursor.execute(
             f"""
             CREATE TRIGGER recusar_alteracao
-            BEFORE UPDATE OR DELETE ON "{tabela_entrada}"
+            BEFORE INSERT OR UPDATE OR DELETE ON "{tabela_entrada}"
             FOR EACH ROW EXECUTE FUNCTION estoque_entrada_recusar_alteracao()
             """
         )

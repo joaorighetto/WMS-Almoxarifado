@@ -314,13 +314,14 @@ def test_segundo_estorno_da_mesma_entrada_e_rejeitado_pelo_banco(
 ):
     """`INV-ENT-001`: `OneToOneField` garante no máximo um estorno por
     entrada também em persistência, não só pela regra de `estornar_entrada`."""
-    entrada = _criar_entrada(funcionario_almoxarifado, estornada=True)
+    entrada = _criar_entrada(funcionario_almoxarifado)
     EstornoEntrada.objects.create(
         entrada=entrada,
         justificativa="Erro de digitação na quantidade.",
         estornada_por=chefe_almoxarifado,
         estornada_em=timezone.now(),
     )
+    Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
@@ -383,7 +384,7 @@ def test_saldo_posterior_negativo_e_rejeitado_pelo_banco(
     """`INV-STOCK-001` também garantida na própria movimentação, não só em
     `Material.saldo`. A origem é válida (estorno real), então o saldo negativo
     é a única constraint violada."""
-    entrada = _criar_entrada(funcionario_almoxarifado, estornada=True)
+    entrada = _criar_entrada(funcionario_almoxarifado)
     material = criar_material("111.111.115", Decimal("10.000"))
     item = _criar_item(entrada, material, quantidade=Decimal("15.000"))
     estorno = EstornoEntrada.objects.create(
@@ -392,6 +393,7 @@ def test_saldo_posterior_negativo_e_rejeitado_pelo_banco(
         estornada_por=chefe_almoxarifado,
         estornada_em=timezone.now(),
     )
+    Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
@@ -444,7 +446,7 @@ def test_saldo_posterior_negativo_e_rejeitado_pelo_banco(
 def test_origem_incoerente_com_o_tipo_e_rejeitada_pelo_banco(
     funcionario_almoxarifado, chefe_almoxarifado, criar_material, kwargs, descricao
 ):
-    entrada = _criar_entrada(funcionario_almoxarifado, estornada=True)
+    entrada = _criar_entrada(funcionario_almoxarifado)
     material = criar_material(f"111.112.{abs(hash(descricao)) % 1000:03d}", Decimal("10.000"))
     item = _criar_item(entrada, material)
     estorno = EstornoEntrada.objects.create(
@@ -453,6 +455,7 @@ def test_origem_incoerente_com_o_tipo_e_rejeitada_pelo_banco(
         estornada_por=chefe_almoxarifado,
         estornada_em=timezone.now(),
     )
+    Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
 
     saldo_anterior = Decimal("10.000")
     variacao = kwargs["variacao"]
@@ -547,13 +550,14 @@ def test_delete_de_item_entrada_e_rejeitado_pelo_trigger(funcionario_almoxarifad
 def test_update_de_estorno_entrada_e_rejeitado_pelo_trigger(
     funcionario_almoxarifado, chefe_almoxarifado
 ):
-    entrada = _criar_entrada(funcionario_almoxarifado, estornada=True)
+    entrada = _criar_entrada(funcionario_almoxarifado)
     estorno = EstornoEntrada.objects.create(
         entrada=entrada,
         justificativa="Justificativa original.",
         estornada_por=chefe_almoxarifado,
         estornada_em=timezone.now(),
     )
+    Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
 
     with pytest.raises(Error):
         with transaction.atomic():
@@ -565,13 +569,14 @@ def test_update_de_estorno_entrada_e_rejeitado_pelo_trigger(
 def test_delete_de_estorno_entrada_e_rejeitado_pelo_trigger(
     funcionario_almoxarifado, chefe_almoxarifado
 ):
-    entrada = _criar_entrada(funcionario_almoxarifado, estornada=True)
+    entrada = _criar_entrada(funcionario_almoxarifado)
     estorno = EstornoEntrada.objects.create(
         entrada=entrada,
         justificativa="Justificativa original.",
         estornada_por=chefe_almoxarifado,
         estornada_em=timezone.now(),
     )
+    Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
 
     with pytest.raises(Error):
         with transaction.atomic():
@@ -659,7 +664,8 @@ def test_save_da_entrada_reescrevendo_todos_os_campos_e_rejeitado_pelo_trigger(
 def test_update_de_estornada_de_true_para_false_e_rejeitado_pelo_trigger(
     funcionario_almoxarifado,
 ):
-    entrada = _criar_entrada(funcionario_almoxarifado, estornada=True)
+    entrada = _criar_entrada(funcionario_almoxarifado)
+    _estornar_no_banco(entrada, funcionario_almoxarifado)
 
     with pytest.raises(Error):
         with transaction.atomic():
@@ -702,6 +708,16 @@ def test_update_de_estornada_de_false_para_true_e_aceito_pelo_trigger(funcionari
     _estornar_no_banco(entrada, funcionario_almoxarifado)
 
     assert Entrada.objects.get(pk=entrada.pk).estornada is True
+
+
+def test_entrada_nao_pode_ser_criada_ja_estornada(funcionario_almoxarifado):
+    """O estorno depende de a entrada já existir: nenhum INSERT nasce com a
+    situação "estornada" sem o `EstornoEntrada` correspondente."""
+    with pytest.raises(Error):
+        with transaction.atomic():
+            _criar_entrada(funcionario_almoxarifado, estornada=True)
+
+    assert not Entrada.objects.exists()
 
 
 def test_update_de_estornada_sem_registro_de_estorno_e_rejeitado_pelo_trigger(

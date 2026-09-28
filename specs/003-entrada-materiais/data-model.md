@@ -48,8 +48,9 @@ Constraints adicionais:
   condition=Q(estornada=False), nulls_distinct=False, name="estoque_entrada_referencia_unica")`
   (FR-007a).
 
-Ordenação padrão: `-registrada_em`, `-pk`. Trigger: nenhum `DELETE`; `UPDATE` só de `estornada`
-`false → true`, e só com o `EstornoEntrada` da entrada já criado.
+Ordenação padrão: `-registrada_em`, `-pk`. Trigger: nenhum `INSERT` já estornado;
+nenhum `DELETE`; `UPDATE` só de `estornada` `false → true`, e só com o `EstornoEntrada` da
+entrada já criado.
 
 ## ItemEntrada
 

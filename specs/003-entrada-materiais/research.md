@@ -158,7 +158,8 @@ cria, de forma idempotente (`CREATE OR REPLACE FUNCTION`, `DROP TRIGGER IF EXIST
 `BEFORE UPDATE OR DELETE`:
 
 - `ItemEntrada`, `EstornoEntrada`, `MovimentacaoEstoque`: qualquer `UPDATE` ou `DELETE` levanta erro;
-- `Entrada`: `DELETE` levanta erro; `UPDATE` só é aceito quando a única mudança é
+- `Entrada`: `INSERT` com `estornada = true` levanta erro (o estorno depende de a entrada já
+  existir); `DELETE` levanta erro; `UPDATE` só é aceito quando a única mudança é
   `estornada` de `false` para `true` (comparação de `to_jsonb(OLD) - 'estornada'` com
   `to_jsonb(NEW) - 'estornada'`) e o `EstornoEntrada` dela já existe. `estornar_entrada`
   cria o estorno antes de marcar a entrada, na mesma transação, e a situação "estornada"
