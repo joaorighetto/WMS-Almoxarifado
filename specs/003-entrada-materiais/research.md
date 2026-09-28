@@ -155,10 +155,11 @@ complexidade sem valor, porque espaço na ponta nunca é informação); normaliz
 **Decisão**: além de não existir caminho de edição (sem admin, sem rota de alteração, sem método que
 atualize), o banco recusa alteração dos fatos. Um handler de `post_migrate` em `estoque/apps.py`
 cria, de forma idempotente (`CREATE OR REPLACE FUNCTION`, `DROP TRIGGER IF EXISTS`), triggers
-`BEFORE UPDATE OR DELETE`:
+de linha:
 
-- `ItemEntrada`, `EstornoEntrada`, `MovimentacaoEstoque`: qualquer `UPDATE` ou `DELETE` levanta erro;
-- `Entrada`: `INSERT` com `estornada = true` levanta erro (o estorno depende de a entrada já
+- `ItemEntrada`, `EstornoEntrada`, `MovimentacaoEstoque` (`BEFORE UPDATE OR DELETE`): qualquer
+  `UPDATE` ou `DELETE` levanta erro;
+- `Entrada` (um único trigger `BEFORE INSERT OR UPDATE OR DELETE`): `INSERT` com `estornada = true` levanta erro (o estorno depende de a entrada já
   existir); `DELETE` levanta erro; `UPDATE` só é aceito quando a única mudança é
   `estornada` de `false` para `true` (comparação de `to_jsonb(OLD) - 'estornada'` com
   `to_jsonb(NEW) - 'estornada'`) e o `EstornoEntrada` dela já existe. `estornar_entrada`
