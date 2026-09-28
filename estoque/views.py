@@ -61,6 +61,7 @@ uma ação que não pode mais ser repetida é confuso, além de desnecessário).
 """
 
 import logging
+import re
 import uuid
 
 from django.contrib import messages
@@ -146,6 +147,14 @@ def _para_int(valor) -> int | None:
         return int(valor)
     except (TypeError, ValueError):
         return None
+
+
+def _pk_informado(texto) -> int | None:
+    """`pk` vindo de um botão do formulário: só dígitos ASCII. `str.isdigit()`
+    aceita dígitos Unicode ("²") que o ORM recusaria com `ValueError` (500)."""
+    if not isinstance(texto, str) or not re.fullmatch(r"[0-9]+", texto):
+        return None
+    return int(texto) or None
 
 
 class _ComposicaoEntradaBase(ExigePapelMixin, View):
@@ -424,10 +433,11 @@ class EntradaNovaView(_ComposicaoEntradaBase):
         apresentação em `_renderizar_formulario`), ou `None` quando nada foi
         acrescentado (pk inválido, material inexistente, já incluído ou
         `TOTAL_FORMS` fora do teto do formset)."""
-        pk_texto = dados.get("adicionar_material", "")
+        pk = _pk_informado(dados.get("adicionar_material", ""))
         dados["busca_material"] = ""
-        if not pk_texto.isdigit() or not Material.objects.filter(pk=pk_texto).exists():
+        if pk is None or not Material.objects.filter(pk=pk).exists():
             return None
+        pk_texto = str(pk)
         total = _para_int(dados.get("itens-TOTAL_FORMS")) or 0
         # `range(total)` sobre um `TOTAL_FORMS` cru do POST, ANTES de o
         # formset (que teria seu próprio `absolute_max`) sequer existir —
@@ -469,13 +479,13 @@ class EntradaNovaView(_ComposicaoEntradaBase):
         dados["itens-TOTAL_FORMS"] = str(len(linhas))
 
     def _aplicar_escolher_emitente(self, dados):
-        pk_texto = dados.get("escolher_emitente", "")
+        pk = _pk_informado(dados.get("escolher_emitente", ""))
         dados["busca_emitente"] = ""
-        if not pk_texto.isdigit():
+        if pk is None:
             return
-        fornecedor = Fornecedor.objects.filter(pk=pk_texto).first()
+        fornecedor = Fornecedor.objects.filter(pk=pk).first()
         if fornecedor is not None and not fornecedor.bloqueado:
-            dados["emitente"] = pk_texto
+            dados["emitente"] = str(pk)
 
     def _revisar(self, request, cabecalho_form, item_formset):
         dados_informados = montar_entrada_informada(cabecalho_form, item_formset)

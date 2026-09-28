@@ -209,7 +209,5 @@ def test_detalhe_nao_mostra_acao_de_estornar_quando_ja_estornada(
 
     conteudo = resposta.content.decode()
     url_estorno = reverse("estoque:entrada_estorno", args=[entrada.pk])
-    # A rota pode continuar existindo para GET direto, mas o detalhe não deve
-    # oferecer a ação como link/form de ação principal numa entrada já
-    # estornada.
-    assert f'action="{url_estorno}"' not in conteudo
+    assert f'href="{url_estorno}"' not in conteudo
+    assert resposta.context["pode_estornar"] is False

@@ -8,7 +8,7 @@ Nada é guardado no servidor antes da confirmação (FR-008).
 | Campo | Controle | Validação no "Revisar" e na confirmação |
 |---|---|---|
 | `chave_confirmacao` | oculto | UUID válido; gerado no GET e preservado em todos os POSTs |
-| `motivo` | seleção de `MotivoEntrada`, sem valor inicial | obrigatório; fora da lista → "Escolha um motivo da lista." |
+| `motivo` | seleção de `MotivoEntrada`, sem valor inicial | obrigatório ("Escolha o motivo da entrada."); fora da lista → recusa |
 | `tipo_documento` | seleção de `TipoDocumentoEntrada`, sem valor inicial; quando o motivo é `COMPRA` e o tipo ainda está vazio, passa a "Nota fiscal", que o usuário pode trocar (decisão do dono do produto no gate visual, 2026-09-27) | obrigatório; fora da lista → recusa |
 | `numero_documento` | texto | obrigatório após `strip()`; só espaços = ausente |
 | `emitente` | oculto (`pk` do fornecedor escolhido) + nome, código e documento exibidos | obrigatório em `COMPRA` e `DEVOLUCAO_FORNECEDOR_GARANTIA`; precisa existir e não estar bloqueado |

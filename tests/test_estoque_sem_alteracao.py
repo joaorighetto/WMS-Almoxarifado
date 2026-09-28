@@ -52,17 +52,20 @@ def _registrar(autor, material, quantidade):
         pytest.param("estoque:entrada_estorno", {"args": [1]}, id="entrada_estorno"),
     ],
 )
-def test_nenhuma_rota_aceita_metodos_de_edicao_direta(client, nome_rota, kwargs):
+def test_nenhuma_rota_aceita_metodos_de_edicao_direta(
+    client, chefe_almoxarifado, nome_rota, kwargs
+):
     """`PUT`/`PATCH`/`DELETE` não são métodos suportados por nenhuma rota de
     `estoque` — todas são Django `View`s comuns (GET/POST), sem rota de
-    edição dedicada."""
+    edição dedicada. O chefe do almoxarifado passa na checagem de papel de
+    todas as rotas, então a recusa vem do próprio despacho de método (405)."""
+    client.force_login(chefe_almoxarifado)
     url = reverse(nome_rota, **kwargs)
 
     for metodo in ("put", "patch", "delete"):
         resposta = getattr(client, metodo)(url)
-        assert resposta.status_code in (302, 403, 404, 405), (
-            f"{metodo.upper()} {nome_rota} deveria ser recusado (login, autorização, "
-            f"não encontrado ou 405), recebeu {resposta.status_code}"
+        assert resposta.status_code == 405, (
+            f"{metodo.upper()} {nome_rota} deveria responder 405, recebeu {resposta.status_code}"
         )
 
 

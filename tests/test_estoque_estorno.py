@@ -17,6 +17,7 @@ from decimal import Decimal
 
 import pytest
 from django.utils import timezone
+
 from estoque.entradas import (
     EntradaInformada,
     EntradaJaEstornada,
@@ -26,7 +27,6 @@ from estoque.entradas import (
     estornar_entrada,
     registrar_entrada,
 )
-
 from estoque.models import (
     Entrada,
     EstornoEntrada,

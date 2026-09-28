@@ -366,12 +366,21 @@ def test_saldo_posterior_inconsistente_com_saldo_anterior_mais_variacao_e_rejeit
             )
 
 
-def test_saldo_posterior_negativo_e_rejeitado_pelo_banco(funcionario_almoxarifado, criar_material):
+def test_saldo_posterior_negativo_e_rejeitado_pelo_banco(
+    funcionario_almoxarifado, chefe_almoxarifado, criar_material
+):
     """`INV-STOCK-001` também garantida na própria movimentação, não só em
-    `Material.saldo`."""
-    entrada = _criar_entrada(funcionario_almoxarifado)
+    `Material.saldo`. A origem é válida (estorno real), então o saldo negativo
+    é a única constraint violada."""
+    entrada = _criar_entrada(funcionario_almoxarifado, estornada=True)
     material = criar_material("111.111.115", Decimal("10.000"))
     item = _criar_item(entrada, material, quantidade=Decimal("15.000"))
+    estorno = EstornoEntrada.objects.create(
+        entrada=entrada,
+        justificativa="Erro de digitação.",
+        estornada_por=chefe_almoxarifado,
+        estornada_em=timezone.now(),
+    )
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
@@ -384,7 +393,7 @@ def test_saldo_posterior_negativo_e_rejeitado_pelo_banco(funcionario_almoxarifad
                 registrada_por=funcionario_almoxarifado,
                 registrada_em=timezone.now(),
                 item_entrada=item,
-                estorno_entrada=None,  # já viola a origem, mas o saldo é o alvo deste teste
+                estorno_entrada=estorno,
             )
 
 

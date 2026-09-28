@@ -1024,3 +1024,21 @@ def test_montar_entrada_informada_recusa_total_forms_acima_do_teto_com_linhas_va
 
     assert montar_entrada_informada(cabecalho, itens) is None
     assert itens.non_form_errors()
+
+
+@pytest.mark.parametrize("campo", ["adicionar_material", "escolher_emitente"])
+@pytest.mark.parametrize("valor", ["²", "٣", "+1", " 1", "1_0", "0"])
+def test_pk_nao_ascii_ou_malformado_nos_botoes_nao_derruba_o_servidor(
+    client, funcionario_almoxarifado, campo, valor
+):
+    """`str.isdigit()` aceitava dígitos Unicode que o ORM recusa com
+    `ValueError` (500); o `pk` dos botões só aceita dígitos ASCII."""
+    from estoque.models import Entrada
+
+    client.force_login(funcionario_almoxarifado)
+    chave = _obter_chave_confirmacao(client)
+
+    resposta = client.post(reverse("estoque:entrada_nova"), _payload_base(chave, **{campo: valor}))
+
+    assert resposta.status_code == 200
+    assert Entrada.objects.count() == 0

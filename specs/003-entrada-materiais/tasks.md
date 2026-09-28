@@ -375,8 +375,8 @@ recebe 403.
   nenhum modelo de `estoque` registrado no admin; as rotas de `estoque` só aceitam os métodos de
   `contracts/rotas-e-autorizacao.md`; nenhuma rota altera ou exclui entrada, item, estorno ou
   movimentação
-- [x] T032 (coordenador) Rodar `make verify` e o roteiro de `quickstart.md` (§1 a §5), cronometrando
-  SC-007
+- [x] T032 (coordenador) Rodar `make verify` e o roteiro de `quickstart.md` (§1 a §5); a
+  cronometragem de SC-007 fica em T038
 - [x] T033 (coordenador) Acionar o `code-reviewer` com o escopo da feature, `spec.md`, `plan.md`,
   as matrizes canônicas e o "Não inclui" da linha ENT do roadmap; tratar P0/P1 pelo fluxo de
   findings

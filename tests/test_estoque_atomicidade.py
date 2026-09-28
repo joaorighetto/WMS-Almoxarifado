@@ -18,13 +18,13 @@ from decimal import Decimal
 from unittest import mock
 
 import pytest
+
 from estoque.entradas import (
     EntradaInformada,
     ItemInformado,
     estornar_entrada,
     registrar_entrada,
 )
-
 from estoque.models import (
     Entrada,
     EstornoEntrada,
