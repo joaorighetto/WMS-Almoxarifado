@@ -160,7 +160,9 @@ cria, de forma idempotente (`CREATE OR REPLACE FUNCTION`, `DROP TRIGGER IF EXIST
 - `ItemEntrada`, `EstornoEntrada`, `MovimentacaoEstoque`: qualquer `UPDATE` ou `DELETE` levanta erro;
 - `Entrada`: `DELETE` levanta erro; `UPDATE` só é aceito quando a única mudança é
   `estornada` de `false` para `true` (comparação de `to_jsonb(OLD) - 'estornada'` com
-  `to_jsonb(NEW) - 'estornada'`).
+  `to_jsonb(NEW) - 'estornada'`) e o `EstornoEntrada` dela já existe. `estornar_entrada`
+  cria o estorno antes de marcar a entrada, na mesma transação, e a situação "estornada"
+  nunca fica sem autor, momento e justificativa.
 
 `EstornoEntrada.entrada` é `OneToOneField(PROTECT)`: o banco garante no máximo um estorno por
 entrada (`INV-ENT-001`). Todas as FKs usam `PROTECT`.

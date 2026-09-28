@@ -27,6 +27,7 @@ from estoque.entradas import (
     ItemInformado,
     ReferenciaJaUsada,
     SaldoAcimaDoLimite,
+    estornar_entrada,
     registrar_entrada,
     validar_entrada,
 )
@@ -462,7 +463,7 @@ def test_referencia_e_reutilizavel_depois_de_estornada(
         ),
         funcionario_almoxarifado,
     )
-    Entrada.objects.filter(pk=primeira.pk).update(estornada=True)
+    estornar_entrada(primeira.pk, "Erro de digitação.", funcionario_almoxarifado)
 
     segunda = registrar_entrada(
         _entrada_informada(

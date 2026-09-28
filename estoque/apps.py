@@ -9,8 +9,9 @@ def criar_triggers_imutabilidade(using, **kwargs):
 
     `ItemEntrada`, `EstornoEntrada` e `MovimentacaoEstoque` recusam qualquer
     `UPDATE` ou `DELETE`. `Entrada` recusa qualquer `DELETE` e só aceita um
-    `UPDATE` que mude exclusivamente `estornada` de `False` para `True`
-    (o estorno em si é um `EstornoEntrada` próprio, também imutável).
+    `UPDATE` que mude exclusivamente `estornada` de `False` para `True`, e só
+    quando o `EstornoEntrada` dela já existe (o estorno em si é esse registro
+    próprio, também imutável).
 
     `CREATE OR REPLACE FUNCTION` e `DROP TRIGGER IF EXISTS` antes de
     `CREATE TRIGGER` tornam a criação idempotente: o `flush` dos testes
@@ -53,8 +54,13 @@ def criar_triggers_imutabilidade(using, **kwargs):
 
         # Função específica de Entrada: DELETE sempre recusado; UPDATE só
         # aceito quando a única mudança é `estornada` de false para true.
+        # O estorno só vale com o registro de `EstornoEntrada` já existente —
+        # `estornar_entrada` o cria antes de marcar a entrada, na mesma
+        # transação —, para que a situação da entrada nunca diga "estornada"
+        # sem autor, momento e justificativa do estorno.
+        coluna_entrada_do_estorno = EstornoEntrada._meta.get_field("entrada").column
         cursor.execute(
-            """
+            f"""
             CREATE OR REPLACE FUNCTION estoque_entrada_recusar_alteracao()
             RETURNS trigger AS $$
             BEGIN
@@ -68,10 +74,15 @@ def criar_triggers_imutabilidade(using, **kwargs):
                     NOT OLD.estornada
                     AND NEW.estornada
                     AND (to_jsonb(OLD) - 'estornada') = (to_jsonb(NEW) - 'estornada')
+                    AND EXISTS (
+                        SELECT 1 FROM "{tabela_estorno}"
+                        WHERE "{coluna_entrada_do_estorno}" = NEW.id
+                    )
                 ) THEN
                     RAISE EXCEPTION
                         'Registro imutável: em %, só é aceito o estorno '
-                        '(estornada de false para true, sem outra mudança)',
+                        '(estornada de false para true, sem outra mudança, '
+                        'com o registro de estorno já criado)',
                         TG_TABLE_NAME;
                 END IF;
 

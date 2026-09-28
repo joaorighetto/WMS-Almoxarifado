@@ -66,6 +66,18 @@ def _criar_entrada(
     )
 
 
+def _estornar_no_banco(entrada, autor):
+    """Cria o `EstornoEntrada` e marca a entrada, na ordem que o trigger exige
+    (o mesmo mecanismo de `estornar_entrada`, sem mexer em saldo)."""
+    EstornoEntrada.objects.create(
+        entrada=entrada,
+        justificativa="Erro de digitação.",
+        estornada_por=autor,
+        estornada_em=timezone.now(),
+    )
+    Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
+
+
 def _criar_item(entrada, material, quantidade=Decimal("5.000")):
     return ItemEntrada.objects.create(entrada=entrada, material=material, quantidade=quantidade)
 
@@ -210,10 +222,9 @@ def test_mesma_referencia_e_aceita_depois_que_a_entrada_original_foi_estornada(
         numero_documento="NF-1111",
         emitente=fornecedor,
     )
-    # Marca como estornada por escrita direta (não é o fluxo real de
-    # `estornar_entrada`, mas o suficiente para exercitar
-    # `condition=Q(estornada=False)` do índice único, isoladamente).
-    Entrada.objects.filter(pk=original.pk).update(estornada=True)
+    # Estorno por escrita direta (sem mexer em saldo), o suficiente para
+    # exercitar `condition=Q(estornada=False)` do índice único, isoladamente.
+    _estornar_no_banco(original, funcionario_almoxarifado)
 
     nova = _criar_entrada(
         funcionario_almoxarifado,
@@ -664,6 +675,13 @@ def test_update_combinando_estornada_com_outro_campo_e_rejeitado_pelo_trigger(
     outro campo muda junto (mesmo dentro do mesmo `UPDATE`), o trigger
     recusa a linha inteira."""
     entrada = _criar_entrada(funcionario_almoxarifado, numero_documento="NF-ORIGINAL")
+    # Com o estorno já criado, a única causa da recusa é a outra mudança.
+    EstornoEntrada.objects.create(
+        entrada=entrada,
+        justificativa="Erro de digitação.",
+        estornada_por=funcionario_almoxarifado,
+        estornada_em=timezone.now(),
+    )
 
     with pytest.raises(Error):
         with transaction.atomic():
@@ -678,12 +696,26 @@ def test_update_combinando_estornada_com_outro_campo_e_rejeitado_pelo_trigger(
 
 def test_update_de_estornada_de_false_para_true_e_aceito_pelo_trigger(funcionario_almoxarifado):
     """A única transição de `Entrada` que o trigger permite (research R7) —
-    o próprio mecanismo de `estornar_entrada`."""
+    o próprio mecanismo de `estornar_entrada`: estorno criado, depois a marca."""
     entrada = _criar_entrada(funcionario_almoxarifado, estornada=False)
 
-    Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
+    _estornar_no_banco(entrada, funcionario_almoxarifado)
 
     assert Entrada.objects.get(pk=entrada.pk).estornada is True
+
+
+def test_update_de_estornada_sem_registro_de_estorno_e_rejeitado_pelo_trigger(
+    funcionario_almoxarifado,
+):
+    """A situação "estornada" nunca existe sem o `EstornoEntrada` (autor,
+    momento e justificativa), nem por escrita direta no banco."""
+    entrada = _criar_entrada(funcionario_almoxarifado, estornada=False)
+
+    with pytest.raises(Error):
+        with transaction.atomic():
+            Entrada.objects.filter(pk=entrada.pk).update(estornada=True)
+
+    assert Entrada.objects.get(pk=entrada.pk).estornada is False
 
 
 # ---------------------------------------------------------------------------

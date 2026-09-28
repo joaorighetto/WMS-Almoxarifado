@@ -49,7 +49,7 @@ Constraints adicionais:
   (FR-007a).
 
 Ordenação padrão: `-registrada_em`, `-pk`. Trigger: nenhum `DELETE`; `UPDATE` só de `estornada`
-`false → true`.
+`false → true`, e só com o `EstornoEntrada` da entrada já criado.
 
 ## ItemEntrada
 
