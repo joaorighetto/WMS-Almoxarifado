@@ -77,6 +77,14 @@
   --color-danger: #9E2019;
   --color-danger-surface: #FBEAE8;
   --color-danger-border: #C9756C;
+  /* Hover/pressionado do botão Destrutivo (correção do gate visual, P2,
+     2026-09-27): `.btn-danger:hover` usava `--color-danger-border` — o tom
+     CLARO reservado à borda/família de estado, não um fundo sólido —, e
+     texto `surface` sobre ele media só 3,36:1. Um passo mais escuro que
+     `--color-danger`, na mesma proporção de escurecimento de `--color-primary`
+     → `--color-primary-hover` (~62% da luminância relativa), devolve texto
+     `surface` a ~10,3:1, acima do piso de 4,5:1. */
+  --color-danger-hover: #7F1812;
 
   /* Azul-petróleo, não azul: fora do eixo do Azul Ação Obrigatória, "contexto neutro" e
      "ação" continuam sem se confundir. */

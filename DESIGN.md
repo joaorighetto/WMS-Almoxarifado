@@ -24,6 +24,7 @@ colors:
   danger: "#9E2019"
   danger-surface: "#FBEAE8"
   danger-border: "#C9756C"
+  danger-hover: "#7F1812"
   info: "#1F6572"
   info-surface: "#E3F1F3"
   info-border: "#56949D"
@@ -150,6 +151,27 @@ components:
     height: "44px"
   button-secondary-disabled:
     backgroundColor: "{colors.surface}"
+    textColor: "{colors.disabled-text}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    height: "44px"
+  button-danger:
+    backgroundColor: "{colors.danger}"
+    textColor: "{colors.surface}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    height: "44px"
+  button-danger-hover:
+    backgroundColor: "{colors.danger-hover}"
+    textColor: "{colors.surface}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    height: "44px"
+  button-danger-disabled:
+    backgroundColor: "{colors.disabled-surface}"
     textColor: "{colors.disabled-text}"
     typography: "{typography.label}"
     rounded: "{rounded.sm}"
@@ -454,7 +476,7 @@ Estratégia **Restrained** dentro de uma gramática de sinalização industrial:
 Cada estado é uma família de três papéis (texto, superfície, borda), não texto colorido sobre o cinza comum; os pares texto/superfície medem entre 5,53:1 e 6,74:1.
 - **Verde Condição Segura** (`success`): operação concluída.
 - **Âmbar Atenção** (`warning`): condição que merece atenção sem bloquear. Inclui a rejeição de linhas numa importação (decisão do dono do produto: rejeição é atenção, não erro): o total de rejeitados diferente de zero aparece em `warning` semibold no resumo da prévia e da execução e na célula do histórico, ao lado do selo "Com rejeições" (`badge-warning`). Como texto, mede 6,10:1 sobre a folha e 4,80:1 sobre o piso.
-- **Vermelho Perigo** (`danger`): erro, recusa, ação destrutiva.
+- **Vermelho Perigo** (`danger`): erro, recusa, ação destrutiva. `danger-hover` (#7F1812) é o hover/pressionado do botão Destrutivo, escurecido na mesma proporção de `primary` → `primary-hover` (texto `surface` a ~10,3:1); `danger-border` é tom de borda da família, nunca fundo sólido.
 - **Petróleo Informação** (`info`): contexto neutro. Petróleo, não azul, para "contexto" e "ação" não se confundirem.
 - **Seleção** (`selected`): hoje só no `::selection` de texto; reservado a linha selecionada e item de navegação ativo quando existirem.
 
@@ -541,6 +563,7 @@ Nesta ordem: (1) preservar toda coluna operacionalmente relevante; (2) ajustar l
 - A composição do mundo novo está implementada e revisada na Home (desktop e celular, chefe e requisitante) e nas cinco telas do catálogo: consulta, envio, prévia, histórico e execução. Todas recebem a barra de trabalho; prévia e execução, os marcadores de tubulação e o retorno contextual.
 - O login está recomposto e revisado (desktop 1440 e celular 390 com toque; vazio, erro de credencial, erro de campo, "Entrando…" e foco): faixa de identidade no topo, caixa ao topo como folha emoldurada, matrícula em Mono. Depois de um erro de credencial, a orientação de recuperação nomeia o Setor de Almoxarifado e o e-mail dele (`mailto:`, em `primary` e sublinhado).
 - A densidade das tabelas foi medida com a Atkinson: linha simples de ~38px, linha composta de ~62px, Filter Bar alinhada e cabeçalhos sem quebra a 1440px.
+- As telas de estoque (composição e resumo da entrada, lista, detalhe e estorno) passaram pelo gate visual em 2026-09-27 (23/40 na primeira crítica). As cinco questões prioritárias foram corrigidas na mesma entrega, sem nova pontuação. A verificação foi em desktop e em largura estreita do painel; celular com toque ainda não foi conferido nelas.
 - Tablet continua em aberto: nem a composição das telas densas nem o app shell foram validados nesse contexto. A navegação de Solicitante/Chefe de setor com mais destinos também não está definida.
 
 ## Elevation & Depth
@@ -565,7 +588,7 @@ Primitivos compartilhados vivem em `static/css/components.css` e nunca são dupl
 - **Forma:** 4px, altura mínima de 44px, rótulo em peso médio, sem sublinhado mesmo quando é `<a>`.
 - **Primário:** fundo `primary`, rótulo `surface`, borda da mesma cor; hover/pressionado em `primary-hover`. Uma por contexto (The One Accent Rule). Desabilitado: `disabled-surface` + `disabled-text`, `cursor: not-allowed`.
 - **Secundário:** fundo `surface`, moldura `border-frame`, texto `text`; hover em `surface-subtle`. Lê como controle tanto sobre a folha quanto sobre o piso. Também é a aparência de link-ação e do gatilho do File Upload.
-- **Destrutivo:** `danger`, reservado a ação de impacto real (nenhuma especificada ainda).
+- **Destrutivo** (`.btn-danger`): fundo e borda `danger`, rótulo `surface`; hover/pressionado em `danger-hover`; desabilitado como o primário. Reservado ao passo de confirmação de uma ação irreversível (hoje, a barra de confirmação do estorno de entrada: "Estornar entrada: N itens" + "Cancelar" secundário), nunca ao lado de um primário no mesmo par. O convite que leva ao fluxo destrutivo (ex.: "Estornar entrada" no detalhe) é botão secundário com texto em `danger`, não preenchido: a gravidade se concentra na tela de confirmação. Quando a ação está impedida (ex.: algum item ficaria com saldo negativo), o botão não é renderizado: a página explica o motivo e oferece só o retorno.
 - **Foco:** anel de 2px em `focus`, afastado 2px, em todo controle; sobre `ink`, o anel vira `on-ink-accent`.
 - **Processando:** o botão de envio de efeito real fica desabilitado e troca o rótulo pelo gerúndio ("Enviando…", "Confirmando…", "Entrando…"). Sem JS, o formulário envia normalmente.
 
@@ -632,6 +655,7 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 ### Filter Bar
 - Antes do conteúdo que afeta. Campos crescem lado a lado (base 220px, mínimo 160px), ações ao fim (primária "Buscar" + secundária "Limpar"); quebra por `flex-wrap`; até 640px vira coluna única de largura total.
 - Alinhamento pelo topo; a partir de 641px as ações recebem compensação de topo igual a uma linha de rótulo + gap. Nunca coluna lateral, nunca esconder filtro essencial.
+- **Busca como ferramenta dentro de formulário:** quando a busca não é a ação da página, mas um meio de preencher um formulário cuja ação principal é outra (ex.: buscar material e emitente na composição da entrada, cuja ação é "Revisar"), "Buscar" é botão **secundário**, preservando o único primário do contexto (The One Accent Rule). Os resultados são uma tabela logo abaixo, com a coluna de ação ("Adicionar", "Escolher") **primeiro**, para ser alcançável a 390px sem rolagem lateral; item indisponível mostra o motivo e "Indisponível" no lugar da ação. Enter no campo de busca aciona a busca daquele campo, nunca a ação principal.
 
 ### Alert
 - `.alert` + `-danger`/`-warning`/`-info`/`-success`: superfície, borda de 1px e texto da família, padding 12px, 4px, conteúdo sempre em frase explícita e curta. A faixa ocupa a largura da coluna e o parágrafo acompanha a faixa, sem teto de 72ch (limitar só o texto deixaria faixa tingida vazia). Sem barra lateral colorida.
@@ -652,6 +676,13 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 ### Confirmação
 - Ação de impacto exige confirmação explícita que reitera o resultado. Hoje sem modal: a prévia é o contexto, e o botão primário repete o resultado com plural correto ("Confirmar importação: 1 inserido, 12 atualizados"), acrescentando "(N rejeitados ficam de fora)" só quando N > 0, ao lado de "Cancelar".
 - **Barra de confirmação persistente:** o **único** par Confirmar/Cancelar da página, sem seção "Confirmação" separada e sem marcador próprio. É o último elemento da coluna: `sticky; bottom: 0` (nunca `fixed`) a mantém grudada ao rodapé da viewport durante a rolagem, e ela assenta na própria posição no fim da página. Fica dentro da coluna de conteúdo, sem sangrar além dela. Fundo `surface`, borda superior em `border-frame`, padding 12 × 16px, 24px acima, sem sombra; abaixo de 480px os botões empilham em largura total. Enquanto ela está grudada, a página ganha `scroll-padding-bottom` (80px; 160px abaixo de 480px, onde a barra chega a ~141px), o espelho do `scroll-padding-top` da barra de trabalho: foco de teclado e âncora nunca param sob ela.
+
+### Composição de documento (cabeçalho + itens)
+- Registro operacional que espelha um documento físico (hoje, a entrada de materiais: motivo, tipo, número e emitente da nota + linhas de material e quantidade). Uma só folha, um só `<form>`: seções com marcador de leitura, cabeçalho em grade de campos e, abaixo, a tabela de itens editável (Código em Mono, Descrição, Quantidade com Unidade adjacente, Remover por linha com `aria-label` que nomeia o item). O estado vive no próprio formulário e cada ação é um submit comum; HTMX só troca a região do formulário.
+- O primeiro submit da árvore é um botão neutro oculto que só re-renderiza, para que Enter em qualquer campo nunca dispare ação destrutiva nem a ação principal.
+- Escolha feita num campo de busca recolhe a busca: o valor escolhido aparece como dado, e "Trocar …" (secundário, `<details>` nativo) reabre a busca; ela reabre sozinha quando há resultado ou erro naquele campo.
+- "Revisar" leva a um resumo antes de gravar (ver Confirmação): pares rótulo/valor do cabeçalho, marcador "Itens (N)" e tabela com saldo atual → resultante. Os erros de cabeçalho e de itens aparecem juntos numa só resposta, cada um no seu campo ou linha; depois da troca, o foco vai ao primeiro campo inválido.
+- `select` e `textarea` seguem o estilo de Inputs / Fields. Hoje vivem em `estoque.css`; sobem para `components.css` quando outra feature os usar.
 
 ### Resumo de totais e nota explicativa
 - Pares rótulo/valor lado a lado: rótulo em metadado acima do valor em `metric`, separados por divisor vertical fino e 24px; até 640px os pares quebram em duas colunas e perdem o divisor vertical (o gap separa). Detalhe secundário em metadado; valor que não entra na soma fica separado por espaço **e** explicado por extenso. Rejeitados diferente de zero: rótulo e valor em `warning` semibold (ver Colors → Estados semânticos).

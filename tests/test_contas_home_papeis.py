@@ -36,7 +36,6 @@ TITULO_ADMINISTRACAO = "Administração de usuários e setores"
 TITULOS_CHEFE_ALMOXARIFADO = [
     TITULO_SOLICITAR_MATERIAL,
     TITULO_AUTORIZAR_REQUISICOES,
-    TITULO_REGISTRAR_ENTRADA,
     TITULO_ATENDER_REQUISICOES,
     TITULO_HISTORICO_MOVIMENTACOES,
     TITULO_SAIDAS_EXCEPCIONAIS,
@@ -47,7 +46,6 @@ TITULOS_CHEFE_ALMOXARIFADO = [
 
 TITULOS_FUNCIONARIO_ALMOXARIFADO = [
     TITULO_SOLICITAR_MATERIAL,
-    TITULO_REGISTRAR_ENTRADA,
     TITULO_ATENDER_REQUISICOES,
     TITULO_HISTORICO_MOVIMENTACOES,
     TITULO_SAIDAS_EXCEPCIONAIS,
@@ -127,7 +125,8 @@ def test_chefe_almoxarifado_ve_os_tres_links_de_catalogo(
     # `chefe_almoxarifado` também tem `ROLE-WAREHOUSE-HEAD` e `ROLE-WAREHOUSE-
     # STAFF` (`pode_importar_fornecedores` e `pode_consultar_fornecedores`,
     # feature 004/T019 e T024/T027): além dos três links de catálogo, vê os
-    # três de fornecedores (consulta, importação e histórico).
+    # três de fornecedores (consulta, importação e histórico) e os dois de
+    # estoque (registrar entrada e consultar entradas, feature 003/T019/T024).
     assert hrefs == {
         reverse("catalogo:consulta"),
         reverse("catalogo:importacao_envio"),
@@ -135,6 +134,8 @@ def test_chefe_almoxarifado_ve_os_tres_links_de_catalogo(
         reverse("fornecedores:consulta"),
         reverse("fornecedores:importacao_envio"),
         reverse("fornecedores:historico"),
+        reverse("estoque:entrada_nova"),
+        reverse("estoque:entradas"),
     }
 
 
@@ -177,9 +178,9 @@ def test_titulos_de_capacidades_planejadas_nao_aparecem_como_links(
 
     hrefs_de_negocio = _hrefs_de_negocio(conteudo)
     # Os únicos hrefs de negócio permitidos continuam sendo os atalhos reais
-    # de `chefe_almoxarifado` (três de catálogo + três de fornecedores, ver
-    # `test_chefe_almoxarifado_ve_os_tres_links_de_catalogo`) — nenhum
-    # placeholder amplia esse conjunto.
+    # de `chefe_almoxarifado` (três de catálogo + três de fornecedores + dois
+    # de estoque, ver `test_chefe_almoxarifado_ve_os_tres_links_de_catalogo`)
+    # — nenhum placeholder amplia esse conjunto.
     assert hrefs_de_negocio == {
         reverse("catalogo:consulta"),
         reverse("catalogo:importacao_envio"),
@@ -187,6 +188,8 @@ def test_titulos_de_capacidades_planejadas_nao_aparecem_como_links(
         reverse("fornecedores:consulta"),
         reverse("fornecedores:importacao_envio"),
         reverse("fornecedores:historico"),
+        reverse("estoque:entrada_nova"),
+        reverse("estoque:entradas"),
     }
 
     for tag_abertura in re.finditer(r"<a\b[^>]*>(.*?)</a>", conteudo, re.DOTALL):
@@ -459,3 +462,78 @@ def test_requisitante_nao_tem_nenhuma_flag_de_fornecedores(client, requisitante,
 
     assert response.context["pode_importar_fornecedores"] is False
     assert response.context["pode_consultar_fornecedores"] is False
+
+
+# ---------------------------------------------------------------------------
+# 9. Atalhos de estoque (spec 003 — entrada de materiais, T019/T021/T024):
+# `pode_registrar_entrada` (ROLE-WAREHOUSE-STAFF, PERM-STOCK-ENTRY-CREATE) e
+# `pode_consultar_entradas` (ROLE-WAREHOUSE-STAFF ou ROLE-AUDITOR, recorte de
+# PERM-STOCK-HISTORY-VIEW fixado por FR-021). Acréscimo do test-engineer
+# (T004/T021) — os links reais (`estoque:entrada_nova`/`estoque:entradas`) e
+# a saída do item ENT de `CAPACIDADES_PLANEJADAS` são do `task-implementer`
+# (T019/T024); até lá, estes testes falham por rota inexistente
+# (`NoReverseMatch`), o que é esperado (TDD).
+#
+# Resolvido pelo `task-implementer` (T019/T024): `TITULO_REGISTRAR_ENTRADA`
+# saiu de `TITULOS_CHEFE_ALMOXARIFADO`/`TITULOS_FUNCIONARIO_ALMOXARIFADO` (a
+# capacidade agora tem link real, não é mais planejada) e os testes de hrefs
+# das seções 1 e 2 acima já contam `estoque:entrada_nova`/`estoque:entradas`.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_funcionario_almoxarifado_tem_as_duas_flags_de_estoque(
+    client, funcionario_almoxarifado, senha_valida
+):
+    _login(client, funcionario_almoxarifado, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["pode_registrar_entrada"] is True
+    assert response.context["pode_consultar_entradas"] is True
+
+
+@pytest.mark.django_db
+def test_auditor_so_tem_a_flag_de_consulta_de_entradas(client, auditor, senha_valida):
+    _login(client, auditor, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["pode_registrar_entrada"] is False
+    assert response.context["pode_consultar_entradas"] is True
+
+
+@pytest.mark.django_db
+def test_requisitante_nao_tem_nenhuma_flag_de_estoque(client, requisitante, senha_valida):
+    _login(client, requisitante, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["pode_registrar_entrada"] is False
+    assert response.context["pode_consultar_entradas"] is False
+
+
+@pytest.mark.django_db
+def test_funcionario_almoxarifado_ve_os_links_reais_de_registrar_e_consultar_entradas(
+    client, funcionario_almoxarifado, senha_valida
+):
+    _login(client, funcionario_almoxarifado, senha_valida)
+
+    response = client.get(reverse("home"))
+    hrefs = _hrefs_de_negocio(response.content.decode())
+
+    assert reverse("estoque:entrada_nova") in hrefs
+    assert reverse("estoque:entradas") in hrefs
+
+
+@pytest.mark.django_db
+def test_auditor_ve_apenas_o_link_de_consultar_entradas_nao_o_de_registrar(
+    client, auditor, senha_valida
+):
+    _login(client, auditor, senha_valida)
+
+    response = client.get(reverse("home"))
+    hrefs = _hrefs_de_negocio(response.content.decode())
+
+    assert reverse("estoque:entradas") in hrefs
+    assert reverse("estoque:entrada_nova") not in hrefs

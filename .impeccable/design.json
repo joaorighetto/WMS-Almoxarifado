@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T21:00:00Z",
+  "generatedAt": "2026-09-27T19:00:00Z",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -531,6 +531,22 @@
           "#F3C305",
           "#FFEEBE"
         ]
+      },
+      "danger-hover": {
+        "role": "semantic",
+        "displayName": "Vermelho Perigo Pressionado",
+        "canonical": "#7F1812",
+        "purpose": "Hover/pressionado do botão Destrutivo (~10,3:1 com branco).",
+        "tonalRamp": [
+          "#1F0000",
+          "#4D0001",
+          "#810002",
+          "#AA2D24",
+          "#D25346",
+          "#FA7868",
+          "#FDB4A9",
+          "#FFE9E5"
+        ]
       }
     },
     "typographyMeta": {
@@ -668,6 +684,14 @@
       "description": "Folha branca com moldura; legível sobre folha e piso.",
       "html": "<button class=\"ds-btn-secondary\">Limpar</button>",
       "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height,44px);padding:var(--space-2) var(--space-4);background:var(--color-surface);border:1px solid var(--color-border-frame);border-radius:var(--radius-sm);color:var(--color-text);font-family: var(--font-family-base);font-size:var(--font-size-body);font-weight:var(--font-weight-medium);cursor:pointer}.ds-btn-secondary:hover{background:var(--color-surface-subtle)}.ds-btn-secondary:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Confirmação de ação irreversível (estorno); nunca ao lado de um primário; o convite ao fluxo é secundário com texto danger.",
+      "html": "<button class=\"ds-btn ds-btn-danger\">Estornar entrada: 3 itens</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height,44px);padding:var(--space-2) var(--space-4);border:1px solid transparent;border-radius:var(--radius-sm);font-family: var(--font-family-base);font-size:var(--font-size-body);font-weight:var(--font-weight-medium);text-decoration:none;cursor:pointer}.ds-btn-danger{background:var(--color-danger);border-color:var(--color-danger);color:var(--color-surface)}.ds-btn-danger:hover,.ds-btn-danger:active{background:var(--color-danger-hover);border-color:var(--color-danger-hover)}"
     },
     {
       "name": "Text Field",

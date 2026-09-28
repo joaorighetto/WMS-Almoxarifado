@@ -48,12 +48,29 @@
           </svg>
         </h2>
 
-        {% if pode_consultar_catalogo or pode_importar_catalogo or pode_consultar_fornecedores or pode_importar_fornecedores %}
+        {% if pode_consultar_catalogo or pode_importar_catalogo or pode_consultar_fornecedores or pode_importar_fornecedores or pode_registrar_entrada or pode_consultar_entradas %}
         {% comment %}
         Links de conveniência — cada rota já verifica seu papel exigido no
         servidor (o esconder do link não é a autorização, Constitution VI).
         {% endcomment %}
         <ul class="home-task-list">
+          {% if pode_registrar_entrada %}
+          <li class="home-task-item">
+            <a href="{% url 'estoque:entrada_nova' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Registrar entrada de materiais</span>
+                <span class="home-task-desc">
+                  Lance recebimentos com motivo e referência, com efeito no saldo.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          {% endif %}
           {% if pode_consultar_catalogo %}
           <li class="home-task-item">
             <a href="{% url 'catalogo:consulta' %}" class="home-task-link">
@@ -110,6 +127,23 @@
                 <span class="home-task-title">Consultar fornecedores</span>
                 <span class="home-task-desc">
                   Localize um fornecedor por código, nome ou documento e confira a situação de bloqueio.
+                </span>
+              </span>
+              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
+                   fill="none" aria-hidden="true">
+                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </li>
+          {% endif %}
+          {% if pode_consultar_entradas %}
+          <li class="home-task-item">
+            <a href="{% url 'estoque:entradas' %}" class="home-task-link">
+              <span class="home-task-text">
+                <span class="home-task-title">Consultar entradas</span>
+                <span class="home-task-desc">
+                  Veja as entradas registradas, da mais recente para a mais antiga, e abra o detalhe de cada uma.
                 </span>
               </span>
               <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"

@@ -244,7 +244,12 @@ def test_apenas_os_campos_minimos_sao_gravados_em_fornecedor(
         "tipo", "bloqueado", "motivo_bloqueio", "tipo_bloqueio", "nome_busca",
         "execucao_origem",
     }
-    assert campos_do_model == campos_de_identificacao_e_derivados | {"alteracoes"}, (
+    # "entradas" é a relação reversa de `estoque.Entrada.emitente`
+    # (spec 003-entrada-materiais, T005): um FK de outro app apontando PARA
+    # `Fornecedor`, não um campo gravado NELE — não fere `INV-SUPPLIER-004`
+    # (que trata do que é lido do CSV e persistido no próprio `Fornecedor`).
+    # Revisão deliberada deste guard, como o comentário acima pede.
+    assert campos_do_model == campos_de_identificacao_e_derivados | {"alteracoes", "entradas"}, (
         "Fornecedor não pode ganhar nenhum campo além da projeção mínima "
         "(INV-SUPPLIER-004) sem que este teste seja revisado deliberadamente"
     )

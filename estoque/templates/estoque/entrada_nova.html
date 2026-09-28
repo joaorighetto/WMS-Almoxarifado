@@ -1,0 +1,419 @@
+{% extends "contas/base.html" %}
+{% load static %}
+{% load catalogo_extras %}
+
+{% block title %}Registrar entrada de materiais — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estoque/css/estoque.css' %}">
+{% endblock %}
+
+{% comment %}
+`defaultSettleDelay: 0` pela mesma razão de `catalogo/templates/catalogo/consulta.html`
+(HTMX 4.0.0: sem isto, um `<input>` trocado por `innerHTML` com o mesmo `id` fica com o
+`.value` do nó antigo depois do "settle" — relevante aqui porque `busca_material`,
+`busca_emitente`, `numero_documento` e a quantidade de cada linha são todos campos de
+texto recriados a cada troca). O `<script>` do HTMX fica em `extra_head` pelo mesmo
+motivo documentado lá (evita recriar a instância numa restauração de histórico via
+`<body>` inteiro).
+{% endcomment %}
+{% block extra_head %}
+<meta name="htmx-config" content='{"defaultSettleDelay":0}'>
+<script src="{% static 'vendor/htmx/htmx-4.0.0.min.js' %}" defer></script>
+{% endblock %}
+
+{% comment %}
+Contrato de contexto: ver docstring de `estoque/views.py` (`_ComposicaoEntradaBase`).
+
+Estado sem rascunho (research R3, `contracts/composicao-entrada.md`): um único
+`<form>` reúne cabeçalho, busca de emitente, itens e busca de material — toda ação
+de composição (`buscar_material`, `adicionar_material`, `remover_item`,
+`buscar_emitente`, `escolher_emitente`, `acao=limpar_emitente`, `acao=revisar`) posta
+para a mesma rota `entrada_nova`, identificada pelo botão acionado. Nenhum campo é
+HTML-`required` — obrigatoriedade é regra de negócio, aplicada no backend por
+`estoque.entradas.validar_entrada`, para não travar um botão de busca enquanto o
+cabeçalho ainda está incompleto.
+
+HTMX troca só `#entrada-composicao` (`hx-target`/`hx-swap="innerHTML"`), nunca a
+página inteira: `EntradaNovaView._renderizar` já decide o fragmento
+("formulario"/"resumo") pelo cabeçalho `HX-Request`. Funciona sem JS: sem HTMX
+carregado, os dois `<form>` fazem um POST comum e a página inteira recarrega com o
+mesmo conteúdo. "Confirmar entrada" (form de baixo, ação `entrada_confirmar`) e a
+confirmação do estorno propositalmente NÃO são HTMX — o redirect de sucesso/aviso
+precisa carregar a página de detalhe inteira.
+
+Enter num campo de busca (achado do code-reviewer): o primeiro botão de envio do
+`<form>` é `acao=manter_dados` — oculto, sem efeito (`EntradaNovaView.post` trata
+qualquer `acao` não reconhecida como um simples re-render, sem gravar e sem alterar
+emitente/itens). Isso garante, mesmo sem JS, que Enter em QUALQUER campo (quantidade,
+número do documento, busca) nunca aciona algo destrutivo (limpar emitente, remover
+item) nem "Revisar". Com JS, `estoque/static/estoque/js/estoque.js` intercepta o Enter
+dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
+{% endcomment %}
+
+{% block content %}
+<main class="estoque-page">
+  <div class="estoque-container">
+    {% include "estoque/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Registrar entrada de materiais</h1>
+        <p class="page-header-description">
+          Escolha o motivo, informe a referência e adicione os materiais recebidos.
+        </p>
+      </div>
+    </header>
+
+    <p id="entrada-indicador" class="htmx-indicator loading-indicator estoque-indicador" role="status">
+      <span class="loading-indicator-spinner" aria-hidden="true"></span>
+      Atualizando…
+    </p>
+
+    <div id="entrada-composicao">
+      {% if modo == "resumo" %}
+      {% partialdef resumo inline %}
+      <section aria-labelledby="resumo-heading">
+        <h2 class="section-marker" id="resumo-heading">
+          <span class="section-marker-label">Resumo da entrada</span>
+        </h2>
+        <p class="estoque-nota">
+          Confira os dados antes de confirmar. Os saldos abaixo são os deste momento; o
+          registro usa o saldo efetivo no momento da confirmação.
+        </p>
+
+        <dl class="estoque-dados-grid">
+          <div><dt>Motivo</dt><dd>{{ motivo_label }}</dd></div>
+          <div><dt>Tipo de documento</dt><dd>{{ tipo_documento_label }}</dd></div>
+          <div><dt>Número do documento</dt><dd>{{ cabecalho_form.numero_documento.value }}</dd></div>
+          <div>
+            <dt>Emitente</dt>
+            <dd>
+              {% if emitente_escolhido %}
+              {{ emitente_escolhido.nome }} — código <span class="table-cell-code">{{ emitente_escolhido.codif }}</span>{% if emitente_escolhido.documento %} — {{ emitente_escolhido.documento }}{% endif %}
+              {% else %}
+              Sem emitente
+              {% endif %}
+            </dd>
+          </div>
+        </dl>
+
+        <h3 class="section-marker{% if itens_resumo %} section-marker-attached{% endif %}">
+          <span class="section-marker-label">Itens{% if itens_resumo %} ({{ itens_resumo|length }}){% endif %}</span>
+        </h3>
+        <div class="table-wrapper{% if itens_resumo %} table-wrapper-marker-attached{% endif %}">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Descrição</th>
+                <th scope="col">Quantidade</th>
+                <th scope="col">Unidade</th>
+                <th scope="col" class="table-cell-numeric">Saldo atual</th>
+                <th scope="col" class="table-cell-numeric">Saldo resultante</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for linha in itens_resumo %}
+              <tr>
+                <td class="table-cell-code">{{ linha.material.cadpro }}</td>
+                <td>{{ linha.material.descricao }}</td>
+                <td class="table-cell-numeric">{{ linha.quantidade }}</td>
+                <td>{{ linha.material.unidade }}</td>
+                <td class="table-cell-numeric">{{ linha.saldo_atual }}</td>
+                <td class="table-cell-numeric">{{ linha.saldo_resultante }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="estoque-confirmacao-sticky">
+          <form
+            method="post"
+            action="{% url 'estoque:entrada_confirmar' %}"
+            data-processing-form
+            data-processing-label="Confirmando…"
+          >
+            {% csrf_token %}
+            {{ cabecalho_form.chave_confirmacao.as_hidden }}
+            {{ cabecalho_form.motivo.as_hidden }}
+            {{ cabecalho_form.tipo_documento.as_hidden }}
+            {{ cabecalho_form.numero_documento.as_hidden }}
+            {{ cabecalho_form.emitente.as_hidden }}
+            {{ item_formset.management_form }}
+            {% for linha_form in item_formset.forms %}
+            {{ linha_form.material.as_hidden }}
+            {{ linha_form.quantidade.as_hidden }}
+            {% endfor %}
+            <button type="submit" class="btn btn-primary" data-processing-submit>
+              <span data-processing-submit-label>Confirmar entrada: {{ total_itens }} ite{{ total_itens|pluralize:"m,ns" }}</span>
+            </button>
+          </form>
+          <form method="post" action="{% url 'estoque:entrada_nova' %}">
+            {% csrf_token %}
+            {{ cabecalho_form.chave_confirmacao.as_hidden }}
+            {{ cabecalho_form.motivo.as_hidden }}
+            {{ cabecalho_form.tipo_documento.as_hidden }}
+            {{ cabecalho_form.numero_documento.as_hidden }}
+            {{ cabecalho_form.emitente.as_hidden }}
+            {{ item_formset.management_form }}
+            {% for linha_form in item_formset.forms %}
+            {{ linha_form.material.as_hidden }}
+            {{ linha_form.quantidade.as_hidden }}
+            {% endfor %}
+            <input type="hidden" name="acao" value="voltar">
+            <button type="submit" class="btn btn-secondary">Voltar e corrigir</button>
+          </form>
+        </div>
+      </section>
+      {% endpartialdef %}
+      {% else %}
+      {% partialdef formulario inline %}
+      {% if erros_gerais %}
+      <div class="alert alert-danger" role="alert">
+        <ul class="estoque-erros-lista">
+          {% for erro in erros_gerais %}
+          <li>{{ erro }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <form
+        method="post"
+        action="{% url 'estoque:entrada_nova' %}"
+        class="estoque-formulario"
+        hx-post="{% url 'estoque:entrada_nova' %}"
+        hx-target="#entrada-composicao"
+        hx-swap="innerHTML"
+        hx-indicator="#entrada-indicador"
+      >
+        {% csrf_token %}
+        {{ cabecalho_form.chave_confirmacao }}
+
+        {% comment %}
+        Botão neutro, primeiro da árvore (achado do code-reviewer): é o botão
+        padrão de envio implícito do `<form>` inteiro (o que o navegador aciona
+        quando Enter é pressionado num campo sem tratamento próprio em JS) —
+        `acao=manter_dados` não corresponde a nenhum ramo reconhecido por
+        `EntradaNovaView.post`, que cai no re-render simples (nada gravado,
+        emitente e itens preservados). `aria-hidden`/`tabindex="-1"`: não é uma
+        ação para o usuário descobrir navegando, só uma rede de segurança
+        técnica contra o botão padrão do navegador ser, por acidente, algo
+        destrutivo ("Remover emitente", "Remover item").
+        {% endcomment %}
+        <button type="submit" name="acao" value="manter_dados" class="visually-hidden" tabindex="-1" aria-hidden="true">Manter dados preenchidos</button>
+
+        <section class="estoque-section">
+          <h2 class="section-marker">
+            <span class="section-marker-label">Motivo e referência</span>
+          </h2>
+
+          <div class="estoque-cabecalho-grid">
+            <div class="field{% if cabecalho_form.motivo.errors %} field-has-error{% endif %}">
+              <label for="{{ cabecalho_form.motivo.id_for_label }}">Motivo</label>
+              {{ cabecalho_form.motivo }}
+              {% if cabecalho_form.motivo.errors %}<p class="field-error" id="{{ cabecalho_form.motivo.auto_id }}_error">{{ cabecalho_form.motivo.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="field{% if cabecalho_form.tipo_documento.errors %} field-has-error{% endif %}">
+              <label for="{{ cabecalho_form.tipo_documento.id_for_label }}">Tipo de documento</label>
+              {{ cabecalho_form.tipo_documento }}
+              {% if cabecalho_form.tipo_documento.errors %}<p class="field-error" id="{{ cabecalho_form.tipo_documento.auto_id }}_error">{{ cabecalho_form.tipo_documento.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="field{% if cabecalho_form.numero_documento.errors %} field-has-error{% endif %}">
+              <label for="{{ cabecalho_form.numero_documento.id_for_label }}">Número do documento</label>
+              {{ cabecalho_form.numero_documento }}
+              {% if cabecalho_form.numero_documento.errors %}
+              <p class="field-error" id="{{ cabecalho_form.numero_documento.auto_id }}_error">
+                {{ cabecalho_form.numero_documento.errors.0 }}
+                {% if entrada_existente %}
+                <a href="{% url 'estoque:entrada_detalhe' pk=entrada_existente.pk %}">Ver entrada existente</a>
+                {% endif %}
+              </p>
+              {% endif %}
+            </div>
+          </div>
+
+          {% comment %}
+          Sem `.field-has-error` aqui de propósito: o campo de negócio
+          (`emitente`) é oculto, sem borda visível para marcar — e
+          `.field-has-error input[type="text"]` (`static/css/components.css`)
+          é um seletor descendente que bordaria em `danger`, por engano, o
+          campo de BUSCA (`busca_emitente`, outro `.field` aninhado logo
+          abaixo) se a classe estivesse neste wrapper. O erro continua
+          explícito pelo texto do parágrafo abaixo (The No Color-Only State
+          Rule não exige borda quando já há texto).
+          {% endcomment %}
+          <div class="field">
+            <span class="field-label">Emitente</span>
+            {{ cabecalho_form.emitente }}
+            {% if cabecalho_form.emitente.errors %}<p class="field-error" id="{{ cabecalho_form.emitente.auto_id }}_error">{{ cabecalho_form.emitente.errors.0 }}</p>{% endif %}
+
+            {% comment %}
+            One Accent Rule (achado do gate visual, P1): com um emitente já
+            escolhido, a busca fica recolhida atrás de "Trocar emitente" — um
+            `<details>` nativo, sem JS: `open` só quando uma busca já foi
+            feita (`resultados_emitente`) ou há erro no campo, para o
+            resultado/erro não sumir num re-render. `<summary>` estilizado
+            como `.btn-secondary` (marcador nativo escondido em
+            `estoque.css`).
+            {% endcomment %}
+            {% if emitente_escolhido %}
+            <div class="estoque-emitente-escolhido">
+              <p>
+                <strong>{{ emitente_escolhido.nome }}</strong> — código <span class="table-cell-code">{{ emitente_escolhido.codif }}</span>{% if emitente_escolhido.documento %} — {{ emitente_escolhido.documento }}{% endif %}
+              </p>
+              <button type="submit" name="acao" value="limpar_emitente" class="btn btn-secondary">Remover emitente</button>
+            </div>
+
+            <details class="estoque-busca-recolhida"{% if resultados_emitente or cabecalho_form.emitente.errors %} open{% endif %}>
+              <summary class="btn btn-secondary">Trocar emitente</summary>
+              <div class="filter-bar estoque-busca-emitente">
+                <div class="field filter-bar-field">
+                  <label for="{{ cabecalho_form.busca_emitente.id_for_label }}">Buscar emitente</label>
+                  {{ cabecalho_form.busca_emitente }}
+                  <p class="field-hint">Código, CNPJ/CPF ou nome.</p>
+                </div>
+                <div class="filter-bar-actions">
+                  <button type="submit" name="acao" value="buscar_emitente" class="btn btn-secondary">Buscar emitente</button>
+                </div>
+              </div>
+              {% include "estoque/_resultados_emitente.html" %}
+            </details>
+            {% else %}
+            <p class="empty-state-description">Nenhum emitente escolhido.</p>
+
+            <div class="filter-bar estoque-busca-emitente">
+              <div class="field filter-bar-field">
+                <label for="{{ cabecalho_form.busca_emitente.id_for_label }}">Buscar emitente</label>
+                {{ cabecalho_form.busca_emitente }}
+                <p class="field-hint">Código, CNPJ/CPF ou nome.</p>
+              </div>
+              <div class="filter-bar-actions">
+                <button type="submit" name="acao" value="buscar_emitente" class="btn btn-secondary">Buscar emitente</button>
+              </div>
+            </div>
+            {% include "estoque/_resultados_emitente.html" %}
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="estoque-section">
+          <h2 class="section-marker{% if linhas_itens %} section-marker-attached{% endif %}">
+            <span class="section-marker-label">Materiais{% if linhas_itens %} ({{ linhas_itens|length }}){% endif %}</span>
+          </h2>
+
+          {{ item_formset.management_form }}
+          <p class="field-hint estoque-quantidade-hint">Use vírgula para decimais, até 3 casas.</p>
+
+          <div class="table-wrapper{% if linhas_itens %} table-wrapper-marker-attached{% endif %}">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Código</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Quantidade recebida</th>
+                  <th scope="col">Unidade</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for linha in linhas_itens %}
+                <tr{% if linha.form.non_field_errors %} class="table-row-error"{% endif %}>
+                  <td class="table-cell-code">{{ linha.material.cadpro|default:"—" }}</td>
+                  <td>{{ linha.material.descricao|default:"Material não encontrado" }}</td>
+                  <td class="table-cell-numeric{% if linha.form.quantidade.errors %} field-has-error{% endif %}">
+                    {{ linha.form.material }}
+                    {{ linha.form.quantidade }}
+                    {% if linha.form.quantidade.errors %}<p class="field-error" id="{{ linha.form.quantidade.auto_id }}_error">{{ linha.form.quantidade.errors.0 }}</p>{% endif %}
+                    {% if linha.form.non_field_errors %}<p class="field-error">{{ linha.form.non_field_errors.0 }}</p>{% endif %}
+                  </td>
+                  <td>{{ linha.material.unidade|default:"—" }}</td>
+                  <td>
+                    <button type="submit" name="remover_item" value="{{ linha.posicao }}" class="btn btn-secondary" aria-label="Remover {{ linha.material.cadpro|default:"item" }}">Remover</button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr class="table-empty-row" data-estado="vazio">
+                  <td colspan="5">
+                    <p class="empty-state-title">Nenhum material incluído.</p>
+                    <p class="empty-state-description">Busque um material abaixo e adicione à entrada.</p>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="filter-bar estoque-busca-material">
+            <div class="field filter-bar-field">
+              <label for="{{ cabecalho_form.busca_material.id_for_label }}">Buscar material</label>
+              {{ cabecalho_form.busca_material }}
+              <p class="field-hint">Código CADPRO exato ou palavras da descrição.</p>
+            </div>
+            <div class="filter-bar-actions">
+              <button type="submit" name="acao" value="buscar_material" class="btn btn-secondary">Buscar material</button>
+            </div>
+          </div>
+
+          {% if resultados_material %}
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Unidade</th>
+                  <th scope="col" class="table-cell-numeric">Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for resultado in resultados_material.itens %}
+                <tr>
+                  <td>
+                    {% if resultado.ja_incluido %}
+                    <span class="badge badge-neutral">Já incluído</span>
+                    {% else %}
+                    <button type="submit" name="adicionar_material" value="{{ resultado.material.pk }}" class="btn btn-secondary" aria-label="Adicionar {{ resultado.material.cadpro }}">Adicionar</button>
+                    {% endif %}
+                  </td>
+                  <td class="table-cell-code">{{ resultado.material.cadpro }}</td>
+                  <td>{{ resultado.material.descricao }}</td>
+                  <td>{{ resultado.material.unidade }}</td>
+                  <td class="table-cell-numeric">{{ resultado.material.saldo }}</td>
+                </tr>
+                {% empty %}
+                <tr class="table-empty-row" data-estado="vazio">
+                  <td colspan="5">
+                    <p class="empty-state-title">Nenhum material encontrado.</p>
+                    <p class="empty-state-description">Ajuste o código ou a descrição e tente novamente.</p>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% if resultados_material.excedeu %}
+            <p class="estoque-refinar">{{ resultados_material.total|separador_milhar }} resultados — refine a busca para ver todos.</p>
+            {% endif %}
+          </div>
+          {% endif %}
+        </section>
+
+        <div class="estoque-confirmacao-sticky">
+          <button type="submit" name="acao" value="revisar" class="btn btn-primary">Revisar</button>
+        </div>
+      </form>
+      {% endpartialdef %}
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'estoque/js/estoque.js' %}" defer></script>
+{% endblock %}

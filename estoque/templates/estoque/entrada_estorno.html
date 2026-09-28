@@ -1,0 +1,152 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% block title %}Estornar entrada #{{ entrada.pk }} — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estoque/css/estoque.css' %}">
+{% endblock %}
+
+{% comment %}
+Contrato de contexto: ver docstring de `estoque/views.py` (`EntradaEstornoView`).
+Retorno contextual para o detalhe (`.back-link`). Envio comum (sem HTMX): o
+redirect de sucesso/aviso precisa carregar o detalhe inteiro.
+
+Correção do gate visual (P1, "Reconhecer em vez de lembrar"): a tela mostra o
+mesmo bloco de identificação do detalhe (motivo, tipo e número do documento,
+emitente, registrada por/em) — o usuário decide o estorno sem precisar abrir
+outra aba para conferir a NF/emitente. Com `algum_bloqueado`, a ação
+destrutiva nem aparece: só o alerta e "Voltar" (achado "Prevenção de erros" —
+um estado que o servidor já recusaria não pode ficar oferecido como botão
+ativo na interface).
+{% endcomment %}
+
+{% block content %}
+<main class="estoque-page">
+  <div class="estoque-container">
+    <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="back-link">
+      <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
+           fill="none" aria-hidden="true">
+        <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Entrada #{{ entrada.pk }}</span>
+    </a>
+
+    {% include "estoque/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Estornar entrada #{{ entrada.pk }}</h1>
+        <p class="page-header-description estoque-estorno-descricao">
+          O estorno é total e não pode ser desfeito: todos os itens voltam ao
+          saldo anterior e a entrada continua registrada, marcada como
+          estornada.
+        </p>
+      </div>
+    </header>
+
+    <section class="estoque-section">
+      <h2 class="section-marker">
+        <span class="section-marker-label">Registro</span>
+      </h2>
+      <dl class="estoque-dados-grid">
+        <div><dt>Motivo</dt><dd>{{ entrada.get_motivo_display }}</dd></div>
+        <div><dt>Tipo de documento</dt><dd>{{ entrada.get_tipo_documento_display }}</dd></div>
+        <div><dt>Número do documento</dt><dd>{{ entrada.numero_documento }}</dd></div>
+        <div>
+          <dt>Emitente</dt>
+          <dd>
+            {% if entrada.emitente %}
+            {{ entrada.emitente.nome }} — código <span class="table-cell-code">{{ entrada.emitente.codif }}</span>
+            {% else %}
+            Sem emitente
+            {% endif %}
+          </dd>
+        </div>
+        <div><dt>Registrada por</dt><dd class="table-cell-code">{{ entrada.registrada_por.matricula }}</dd></div>
+        <div><dt>Registrada em</dt><dd>{{ entrada.registrada_em }}</dd></div>
+      </dl>
+    </section>
+
+    {% if algum_bloqueado %}
+    <div class="alert alert-danger" role="alert">
+      <p>O estorno foi bloqueado: algum item abaixo ficaria com saldo negativo. Corrija o saldo do material antes de tentar novamente.</p>
+    </div>
+    {% endif %}
+
+    <section class="estoque-section">
+      <h2 class="section-marker{% if linhas %} section-marker-attached{% endif %}">
+        <span class="section-marker-label">Itens{% if linhas %} ({{ linhas|length }}){% endif %}</span>
+      </h2>
+      {% comment %}
+      Ordem de colunas (achado do gate visual, "no celular, saldo atual/
+      resultante visíveis sem depender de scroll lateral"): Saldo atual e
+      Saldo resultante decidem se a linha está bloqueada, e vêm logo após o
+      Código — a Descrição, mais larga e sem função na decisão, fica por
+      último (mesmo princípio de DESIGN.md → Layout → Tabelas: "o dado que
+      decide o fluxo vem cedo").
+      {% endcomment %}
+      <div class="table-wrapper{% if linhas %} table-wrapper-marker-attached{% endif %}">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col" class="table-cell-numeric">Saldo atual</th>
+              <th scope="col" class="table-cell-numeric">Saldo resultante</th>
+              <th scope="col" class="table-cell-numeric">Quantidade a estornar</th>
+              <th scope="col">Unidade</th>
+              <th scope="col">Descrição</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for linha in linhas %}
+            <tr{% if linha.bloqueado %} class="table-row-error"{% endif %}>
+              <td class="table-cell-code">{{ linha.item.material.cadpro }}</td>
+              <td class="table-cell-numeric">{{ linha.saldo_atual }}</td>
+              <td class="table-cell-numeric">
+                {{ linha.saldo_resultante }}
+                {% if linha.bloqueado %}<p class="estoque-estorno-motivo">Ficaria negativo.</p>{% endif %}
+              </td>
+              <td class="table-cell-numeric">{{ linha.item.quantidade }}</td>
+              <td>{{ linha.item.material.unidade }}</td>
+              <td>{{ linha.item.material.descricao }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {% if algum_bloqueado %}
+    <div class="estoque-confirmacao-sticky">
+      <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="btn btn-secondary">Voltar</a>
+    </div>
+    {% else %}
+    <form method="post" action="{% url 'estoque:entrada_estorno' pk=entrada.pk %}" data-processing-form data-processing-label="Estornando…">
+      {% csrf_token %}
+      <div class="field estoque-justificativa{% if form.justificativa.errors %} field-has-error{% endif %}">
+        <label for="{{ form.justificativa.id_for_label }}">Justificativa</label>
+        {{ form.justificativa }}
+        {% if form.justificativa.errors %}
+        <p class="field-error" id="{{ form.justificativa.auto_id }}_error">{{ form.justificativa.errors.0 }}</p>
+        {% else %}
+        <p class="field-hint">Obrigatória: explique o motivo do estorno.</p>
+        {% endif %}
+      </div>
+
+      <div class="estoque-confirmacao-sticky">
+        <button type="submit" class="btn btn-danger" data-processing-submit>
+          <span data-processing-submit-label>Estornar entrada: {{ linhas|length }} ite{{ linhas|length|pluralize:"m,ns" }}</span>
+        </button>
+        <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'estoque/js/estoque.js' %}" defer></script>
+{% endblock %}

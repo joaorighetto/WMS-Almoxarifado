@@ -83,12 +83,6 @@ CAPACIDADES_PLANEJADAS = (
         "titulo": "Autorizar requisições do setor",
         "descricao": "Decida as solicitações criadas pela equipe do setor que você chefia.",
     },
-    # ENT — PERM-STOCK-ENTRY-CREATE
-    {
-        "papeis": (Papel.FUNCIONARIO_ALMOXARIFADO,),
-        "titulo": "Registrar entrada de materiais",
-        "descricao": "Lance recebimentos com motivo e referência, com efeito no saldo.",
-    },
     # ATE — PERM-REQUEST-FULFILL
     {
         "papeis": (Papel.FUNCIONARIO_ALMOXARIFADO,),
@@ -164,9 +158,13 @@ class HomeView(LoginRequiredMixin, TemplateView):
         toda identidade de negócio). `pode_importar_fornecedores` cobre
         `PERM-SUPPLIER-IMPORT-EXECUTE` (`ROLE-WAREHOUSE-HEAD`) e `pode_consultar_fornecedores`
         cobre `PERM-SUPPLIER-VIEW` (`ROLE-WAREHOUSE-STAFF`) — feature 004
-        (`specs/004-importacao-fornecedores/contracts/rotas-e-autorizacao.md`). Os links são
-        conveniência de navegação — a autorização efetiva continua nas próprias rotas
-        (Constitution VI).
+        (`specs/004-importacao-fornecedores/contracts/rotas-e-autorizacao.md`).
+        `pode_registrar_entrada` cobre `PERM-STOCK-ENTRY-CREATE` (`ROLE-WAREHOUSE-STAFF`) e
+        `pode_consultar_entradas` cobre o recorte de `PERM-STOCK-HISTORY-VIEW` aplicado à
+        entrada (`ROLE-WAREHOUSE-STAFF` ou `ROLE-AUDITOR`) — feature 003
+        (`specs/003-entrada-materiais/contracts/rotas-e-autorizacao.md`, research R12). Os
+        links são conveniência de navegação — a autorização efetiva continua nas próprias
+        rotas (Constitution VI).
 
         `setor` e `papeis` são só apresentação. `capacidades_planejadas` filtra
         `CAPACIDADES_PLANEJADAS` pelos papéis do usuário e é puramente informativo: nenhum item
@@ -184,6 +182,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
         contexto["pode_consultar_catalogo"] = Papel.REQUISITANTE in codigos_papeis
         contexto["pode_importar_fornecedores"] = Papel.CHEFE_ALMOXARIFADO in codigos_papeis
         contexto["pode_consultar_fornecedores"] = Papel.FUNCIONARIO_ALMOXARIFADO in codigos_papeis
+        contexto["pode_registrar_entrada"] = Papel.FUNCIONARIO_ALMOXARIFADO in codigos_papeis
+        contexto["pode_consultar_entradas"] = bool(
+            codigos_papeis & {Papel.FUNCIONARIO_ALMOXARIFADO, Papel.AUDITOR}
+        )
         contexto["setor"] = usuario.setor
         contexto["papeis"] = [
             Papel(codigo).label for codigo in Papel.values if codigo in codigos_papeis
