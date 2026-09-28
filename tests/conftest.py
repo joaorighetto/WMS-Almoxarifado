@@ -4,11 +4,22 @@ Mantidas deliberadamente mínimas: apenas o necessário para criar um `Setor`
 válido (`INV-ORG-001`) e usuários de teste através do manager real
 (`User.objects.create_user`), nunca construindo instâncias manualmente ou
 ignorando `set_password()`.
+
+A seção final (`execucao_catalogo`, `criar_material`, `execucao_fornecedores`,
+`criar_fornecedor`) foi acrescentada pelo `test-engineer` (T003, spec
+003-entrada-materiais) para popular `catalogo.Material` e
+`fornecedores.Fornecedor` diretamente pelo ORM nos testes de `estoque` — não é
+caminho de produto (só `catalogo.importacao`/`fornecedores.importacao` criam
+esses registros de verdade; `INV-CATALOG-003`, `INV-SUPPLIER-003`), apenas
+dados fictícios para exercitar `estoque.entradas` sem depender do parser CSV.
 """
 
 import pathlib
+import uuid
+from decimal import Decimal
 
 import pytest
+from django.utils import timezone
 
 from contas.models import Papel, PapelUsuario, Setor, User
 
@@ -169,3 +180,126 @@ def csv_fornecedores():
         return (FIXTURES_FORNECEDORES_DIR / nome).read_bytes()
 
     return _csv_fornecedores
+
+
+# ---------------------------------------------------------------------------
+# Dados de estoque (spec 003 — entrada de materiais): Material/Fornecedor
+# criados diretamente pelo ORM, sem passar pelo parser CSV nem por
+# `aplicar_plano`. Servem só para popular as FKs que `estoque.entradas`
+# consome; a criação real de Material/Fornecedor é exclusiva das importações
+# (`INV-CATALOG-003`, `INV-SUPPLIER-003` — ver `tests/test_catalogo_sem_
+# criacao_manual.py`/`tests/test_fornecedores_sem_criacao_manual.py`, que
+# continuam sendo a defesa real dessas invariantes).
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def execucao_catalogo(criar_usuario):
+    """Uma `catalogo.ExecucaoImportacao` mínima e válida (totais zerados,
+    identidade fechada respeitada), só para servir de `execucao_origem` aos
+    materiais criados por `criar_material`."""
+    from catalogo.models import ExecucaoImportacao
+
+    return ExecucaoImportacao.objects.create(
+        token_previa=uuid.uuid4(),
+        executada_por=criar_usuario(matricula="EXEC-CATALOGO-ESTOQUE"),
+        concluida_em=timezone.now(),
+        nome_arquivo="fixture_estoque.csv",
+        tamanho_arquivo=1,
+        sha256_arquivo="0" * 64,
+        total_recebidos=0,
+        total_inseridos=0,
+        total_atualizados=0,
+        total_atualizados_com_alteracao=0,
+        total_rejeitados=0,
+        total_divergencias=0,
+        total_ausentes_no_arquivo=0,
+    )
+
+
+@pytest.fixture
+def criar_material(execucao_catalogo):
+    """Factory `catalogo.Material` para os testes de `estoque`.
+
+    `descricao_busca` é derivado por `normalizar_para_busca`, exatamente como
+    `catalogo.importacao.aplicar_plano` faz — a busca de material da
+    composição da entrada (`contracts/composicao-entrada.md`, R9) depende
+    dessa mesma normalização.
+    """
+    from catalogo.leitura_scpi import normalizar_para_busca
+    from catalogo.models import Material
+
+    def _criar_material(cadpro, saldo, unidade="UN", descricao=None):
+        if descricao is None:
+            descricao = f"Material de teste {cadpro}"
+        saldo = Decimal(saldo)
+        return Material.objects.create(
+            cadpro=cadpro,
+            descricao=descricao,
+            descricao_busca=normalizar_para_busca(descricao),
+            unidade=unidade,
+            detalhamento="",
+            grupo="",
+            subgrupo="",
+            nome_grupo="",
+            nome_subgrupo="",
+            saldo=saldo,
+            saldo_inicial=saldo,
+            execucao_origem=execucao_catalogo,
+        )
+
+    return _criar_material
+
+
+@pytest.fixture
+def execucao_fornecedores(criar_usuario):
+    """Uma `fornecedores.ExecucaoImportacaoFornecedores` mínima e válida, só
+    para servir de `execucao_origem` aos fornecedores de `criar_fornecedor`."""
+    from fornecedores.models import ExecucaoImportacaoFornecedores
+
+    return ExecucaoImportacaoFornecedores.objects.create(
+        token_previa=uuid.uuid4(),
+        executada_por=criar_usuario(matricula="EXEC-FORNECEDORES-ESTOQUE"),
+        concluida_em=timezone.now(),
+        nome_arquivo="fixture_estoque.csv",
+        tamanho_arquivo=1,
+        sha256_arquivo="0" * 64,
+        total_recebidos=0,
+        total_inseridos=0,
+        total_atualizados=0,
+        total_atualizados_com_alteracao=0,
+        total_rejeitados=0,
+        total_ausentes_no_arquivo=0,
+    )
+
+
+@pytest.fixture
+def criar_fornecedor(execucao_fornecedores):
+    """Factory `fornecedores.Fornecedor` para os testes de `estoque`.
+
+    `documento_digitos` e `nome_busca` derivados exatamente como
+    `fornecedores.importacao.aplicar_plano` faz, para que a busca de emitente
+    da composição da entrada (`contracts/composicao-entrada.md`, R9) encontre
+    os fornecedores de fixture do mesmo jeito que encontraria um fornecedor
+    importado de verdade.
+    """
+    from catalogo.leitura_scpi import normalizar_para_busca
+    from fornecedores.leitura_fornecedores import somente_digitos
+    from fornecedores.models import Fornecedor
+
+    def _criar_fornecedor(codif, nome, bloqueado=False, documento=""):
+        return Fornecedor.objects.create(
+            codif=codif,
+            nome=nome,
+            nome_fantasia="",
+            documento=documento,
+            documento_digitos=somente_digitos(documento),
+            tipo="",
+            bloqueado=bloqueado,
+            motivo_bloqueio="Bloqueado no SCPI (fixture de teste)." if bloqueado else "",
+            tipo_bloqueio="B" if bloqueado else "",
+            nome_busca=normalizar_para_busca(nome),
+            execucao_origem=execucao_fornecedores,
+        )
+
+    return _criar_fornecedor

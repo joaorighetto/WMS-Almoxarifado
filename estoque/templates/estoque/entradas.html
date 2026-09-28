@@ -1,0 +1,80 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% block title %}Consulta de entradas — WMS-Almoxarifado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estoque/css/estoque.css' %}">
+{% endblock %}
+
+{% comment %}
+Contrato de contexto: `pagina` — `Page` de `Entrada` (50/página,
+`select_related("registrada_por", "emitente")`, `annotate(total_itens=Count("itens"))`),
+ver `estoque/views.py` (`EntradasView`). Linha clicável com `<a>` real na coluna
+"Entrada" (DESIGN.md → Components → Table: "a navegação é sempre um `<a>` real numa
+célula"), mesmo padrão de `catalogo/templates/catalogo/historico.html`.
+{% endcomment %}
+
+{% block content %}
+<main class="estoque-page">
+  <div class="estoque-container">
+    {% include "estoque/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Consulta de entradas</h1>
+        <p class="page-header-description">Da mais recente para a mais antiga.</p>
+      </div>
+    </header>
+
+    <section class="estoque-section">
+      {% if pagina.object_list %}
+      <div class="table-wrapper table-sticky-header">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Entrada</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Referência</th>
+              <th scope="col">Registrada em</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Autor</th>
+              <th scope="col" class="table-cell-numeric">Itens</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entrada in pagina %}
+            <tr class="table-row-clickable">
+              <td><a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="estoque-entrada-link">#{{ entrada.pk }}</a></td>
+              <td>
+                {% if entrada.estornada %}
+                <span class="badge badge-danger">Estornada</span>
+                {% else %}
+                <span class="badge badge-success">Registrada</span>
+                {% endif %}
+              </td>
+              <td>
+                {{ entrada.get_tipo_documento_display }} {{ entrada.numero_documento }}
+                {% if entrada.emitente %}— {{ entrada.emitente.nome }}{% else %}— Sem emitente{% endif %}
+              </td>
+              <td class="estoque-data-registro">{{ entrada.registrada_em|date:"d/m/Y H:i" }}</td>
+              <td>{{ entrada.get_motivo_display }}</td>
+              <td class="table-cell-code">{{ entrada.registrada_por.matricula }}</td>
+              <td class="table-cell-numeric">{{ entrada.total_itens }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% include "catalogo/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de entradas" rotulo_item="entrada" rotulo_item_plural="entradas" %}
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">Nenhuma entrada registrada.</p>
+        <p class="empty-state-description">Registre a primeira entrada de materiais para vê-la aqui.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

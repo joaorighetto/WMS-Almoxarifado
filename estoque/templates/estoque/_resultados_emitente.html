@@ -1,0 +1,57 @@
+{% load catalogo_extras %}
+{% comment %}
+Resultados da busca de emitente (`entrada_nova.html`, dois pontos de inclusão:
+emitente já escolhido, dentro do `<details>` de troca, e emitente ainda não
+escolhido, direto no formulário). Coluna de ação primeiro (achado do gate
+visual, P2 — "Escolher"/"Indisponível" visíveis a 390px sem scroll lateral,
+antes de código/nome/documento/situação).
+{% endcomment %}
+{% if resultados_emitente %}
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col"></th>
+        <th scope="col">Código</th>
+        <th scope="col">Nome</th>
+        <th scope="col">Documento</th>
+        <th scope="col">Situação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fornecedor in resultados_emitente.itens %}
+      <tr>
+        <td>
+          {% if fornecedor.bloqueado %}
+          <span class="badge badge-neutral">Indisponível</span>
+          {% else %}
+          <button type="submit" name="escolher_emitente" value="{{ fornecedor.pk }}" class="btn btn-secondary" aria-label="Escolher {{ fornecedor.nome }}">Escolher</button>
+          {% endif %}
+        </td>
+        <td class="table-cell-code">{{ fornecedor.codif }}</td>
+        <td>{{ fornecedor.nome }}</td>
+        <td>{{ fornecedor.documento|default:"—" }}</td>
+        <td>
+          {% if fornecedor.bloqueado %}
+          <span class="badge badge-warning">Bloqueado</span>
+          {% if fornecedor.motivo_bloqueio %}<span class="estoque-motivo-bloqueio">{{ fornecedor.motivo_bloqueio }}</span>{% endif %}
+          {% else %}
+          Liberado
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr class="table-empty-row" data-estado="vazio">
+        <td colspan="5">
+          <p class="empty-state-title">Nenhum fornecedor encontrado.</p>
+          <p class="empty-state-description">Ajuste o código, o documento ou o nome e tente novamente.</p>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if resultados_emitente.excedeu %}
+  <p class="estoque-refinar">{{ resultados_emitente.total|separador_milhar }} resultados — refine a busca para ver todos.</p>
+  {% endif %}
+</div>
+{% endif %}

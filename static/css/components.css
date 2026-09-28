@@ -101,6 +101,40 @@
   cursor: not-allowed;
 }
 
+/* Destrutivo (DESIGN.md → Components → Buttons → Destrutivo): reservado a ação de
+   impacto real — primeiro uso no estorno de entrada (`estoque/templates/estoque/
+   entrada_estorno.html`, feature 003). Mesma forma dos demais botões (4px, 44px,
+   rótulo em peso médio); fundo/borda em `danger`, texto `surface` (mesmo par de
+   contraste do primário, trocando só a família de cor) — reservado à ação
+   destrutiva dominante de cada contexto, nunca ao lado de um `.btn-primary` no
+   mesmo par de ações (a barra de confirmação do estorno usa Destrutivo + Secundário
+   "Cancelar", nunca Destrutivo + Primário). */
+.btn-danger {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-surface);
+}
+
+/* Correção do gate visual (P2, 2026-09-27): `--color-danger-border` é o tom
+   claro da família (borda/estado), não um fundo sólido — usado aqui media só
+   3,36:1 com o rótulo `surface`. `--color-danger-hover` (`tokens.css`)
+   escurece a partir de `--color-danger`, na mesma lógica de
+   `--color-primary-hover`, e mede ~10,3:1. */
+.btn-danger:hover:not(:disabled),
+.btn-danger:active:not(:disabled) {
+  background-color: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
+}
+
+/* Mesma convenção de contraste de `.btn-primary:disabled`/`.btn-secondary:disabled`
+   acima — superfície clara + rótulo escuro, legível durante "Estornando…". */
+.btn-danger:disabled {
+  background-color: var(--color-disabled-surface);
+  border-color: var(--color-disabled-surface);
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+}
+
 /* ---------------------------------------------------------------------
  * Alert (DESIGN.md → Components → Alert): texto explícito de erro, nunca só cor
  * (The No Color-Only State Rule) — o conteúdo do próprio erro já é a pista textual.

@@ -1,0 +1,400 @@
+/*
+ * Estoque — composição das telas de entrada de materiais (T018/T023/T030)
+ *
+ * Consome exclusivamente os tokens de static/css/tokens.css e os primitivos de
+ * static/css/components.css (Page Header, Filter Bar, Table, Chips (Badge), Alert,
+ * Empty State, Pagination, Buttons, Inputs/Fields, Back Link) — nenhum deles é
+ * redefinido aqui. Mesmo modelo de página/container de `catalogo.css`
+ * (`.catalogo-page`/`.catalogo-container`): superfícies operacionais densas do
+ * almoxarifado são desktop-first (DESIGN.md → Layout), sem contenção estreita de
+ * página de marketing.
+ *
+ * Padrão novo desta feature (a registrar em DESIGN.md por `impeccable document`,
+ * conforme `research.md` R13): composição da entrada com cabeçalho e tabela de
+ * itens editável na mesma folha (um único `<form>`, sem rascunho — o estado viaja
+ * nele mesmo, `contracts/composicao-entrada.md`), e o primeiro uso do botão
+ * Destrutivo (`.btn-danger`, `static/css/components.css`) no estorno.
+ */
+
+.estoque-page {
+  padding-block: var(--space-6) var(--space-8);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
+    max(var(--space-4), env(safe-area-inset-right, 0px));
+}
+
+.estoque-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.estoque-messages {
+  margin-bottom: var(--space-2);
+}
+
+/* Selo de situação no título do detalhe (mesma convenção de
+   `.catalogo-page-header-badge`, `catalogo.css`): a mensagem de sucesso some
+   na próxima navegação, o selo "Registrada"/"Estornada" no título permanece
+   legível a qualquer momento. */
+.estoque-page-header-badge {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}
+
+/* Seções da composição (cabeçalho/referência, materiais) separadas só por
+   espaçamento — o próprio marcador de tubulação já é o separador (mesma
+   convenção de `.catalogo-section`, `catalogo.css`). */
+.estoque-section {
+  margin-top: var(--space-6);
+}
+
+.estoque-section:first-of-type {
+  margin-top: 0;
+}
+
+/* Grade dos três campos de referência (motivo, tipo de documento, número) —
+   mesma convenção de `.catalogo-meta` (colunas que se ajustam à largura
+   disponível, sem quebrar um campo maior que o necessário no desktop). */
+.estoque-cabecalho-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 var(--space-4);
+}
+
+/* `<select>` do motivo/tipo de documento (`forms.ChoiceField`, `estoque/forms.py`):
+   primeiro uso de select no sistema. Mesma forma dos campos de texto (DESIGN.md →
+   Components → Inputs/Fields) — replicado aqui, e não em `static/css/
+   components.css`, porque só o botão Destrutivo é primitivo compartilhado novo
+   nesta entrega (o resto da composição fica no CSS da própria feature); promover
+   para components.css quando outra feature também precisar de um select. */
+.field select {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+}
+
+@media (pointer: coarse) {
+  .field select {
+    font-size: var(--font-size-section-title);
+  }
+}
+
+/* Erro de motivo/tipo de documento (`.field-has-error` no wrapper) — mesma
+   convenção de `.field-has-error input[type="text"]`
+   (`static/css/components.css`), estendida ao `<select>` que só existe
+   nesta feature. */
+.field-has-error select {
+  border-color: var(--color-danger);
+}
+
+/* Justificativa do estorno (`EstornoEntradaForm.justificativa`, `Textarea`):
+   primeiro uso de textarea no sistema — mesma forma dos campos de texto,
+   sem altura mínima fixa de controle (a altura vem de `rows="4"`, definido
+   no widget) e com redimensionamento vertical apenas. */
+.field textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  resize: vertical;
+}
+
+.field-has-error textarea {
+  border-color: var(--color-danger);
+}
+
+/* Rótulo de um grupo de controles sem um único `<input>` para associar via
+   `<label for>` (Emitente: campo oculto + busca + resultado escolhido) —
+   token `field-label` do frontmatter de DESIGN.md, mesmo par
+   tipografia/cor de `.field label` (`static/css/components.css`), só que
+   como classe própria porque aqui o rótulo não é de um `<label>` real. */
+.field-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+/* Emitente: campo oculto (`emitente`) some do layout — a busca e o resultado
+   escolhido ocupam o espaço visual. */
+.estoque-busca-emitente,
+.estoque-busca-material {
+  margin-top: var(--space-3);
+}
+
+/* Emitente escolhido: nome, código e documento numa linha, com "Remover
+   emitente" ao lado — nunca dependente só do preenchimento do campo oculto
+   (o texto por extenso já diz qual é o emitente). */
+.estoque-emitente-escolhido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.estoque-emitente-escolhido p {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+/* Motivo do bloqueio do fornecedor, ao lado do selo "Bloqueado"
+   (`INV-SUPPLIER-005`) — texto explícito, nunca só a cor do selo (DESIGN.md →
+   The No Color-Only State Rule). */
+.estoque-motivo-bloqueio {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+/* "N resultados — refine a busca": mesma convenção de metadado atenuado de
+   `.field-hint`. */
+.estoque-refinar {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+/* Quantidade digitada por linha (`ItemEntradaForm.quantidade`,
+   `inputmode="decimal"`): campo de texto renderizado direto na célula
+   numérica da tabela (fora de um `.field`, que estica a 100% — errado numa
+   coluna estreita), com a mesma forma dos demais campos. Seletor por
+   `inputmode` (e não uma classe própria): o widget é definido em
+   `estoque/forms.py`, fora do escopo desta entrega. */
+.table td input[type="text"][inputmode="decimal"] {
+  width: 100%;
+  max-width: 10rem;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (pointer: coarse) {
+  .table td input[type="text"][inputmode="decimal"] {
+    font-size: var(--font-size-section-title);
+  }
+}
+
+/* Erro de quantidade (`.field-has-error` na própria `<td>`,
+   `entrada_nova.html`): sem este reforço, `.field-has-error input[type="text"]`
+   (`static/css/components.css`, especificidade 0,2,1) perderia para o
+   seletor acima (0,3,2, mais específico por causa de `.table`/`[inputmode]`)
+   e a borda de erro nunca apareceria neste campo específico. */
+.table td.field-has-error input[type="text"][inputmode="decimal"] {
+  border-color: var(--color-danger);
+}
+
+/* Lista de erros gerais dentro do `.alert` (ex.: "Inclua ao menos um
+   material.") — sem marcador (`list-style`), já dentro de uma faixa que já
+   sinaliza o estado de erro; só o espaçamento entre itens precisa de regra
+   própria (`base.css` já zera margin/padding do `<ul>`). */
+.estoque-erros-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.estoque-erros-lista li + li {
+  margin-top: var(--space-1);
+}
+
+/* Resumo e detalhe: pares rótulo/valor em grade — mesma convenção de
+   `.catalogo-meta`. */
+.estoque-dados-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4) var(--space-6);
+  margin: var(--space-4) 0;
+}
+
+.estoque-dados-grid dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.estoque-dados-grid dd {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.estoque-nota {
+  max-width: 72ch;
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+/* Barra de confirmação persistente (DESIGN.md → Components → Confirmação),
+   mesma implementação de `.catalogo-confirmacao-sticky` — único par de ações
+   da página, grudado ao rodapé da viewport durante a rolagem e assentado na
+   própria posição no fim do fluxo. Reaproveitada pela composição ("Revisar"),
+   pelo resumo ("Confirmar entrada"/"Voltar e corrigir") e pelo estorno
+   ("Estornar entrada"/"Cancelar"). */
+.estoque-confirmacao-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border-frame);
+}
+
+.estoque-confirmacao-sticky form {
+  margin: 0;
+  display: flex;
+}
+
+@media (max-width: 480px) {
+  .estoque-confirmacao-sticky {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .estoque-confirmacao-sticky .btn {
+    width: 100%;
+  }
+}
+
+/* Espelho do `scroll-padding-top` da barra de trabalho (base.css) — foco de
+   teclado e âncora não ficam escondidos sob a barra de confirmação enquanto
+   ela está grudada no rodapé (mesma técnica de `catalogo.css`). */
+html:has(.estoque-confirmacao-sticky) {
+  scroll-padding-bottom: 5rem;
+}
+
+@media (max-width: 480px) {
+  html:has(.estoque-confirmacao-sticky) {
+    scroll-padding-bottom: 10rem;
+  }
+}
+
+/* Indicador de carregamento das trocas HTMX da composição (busca, adicionar,
+   remover, revisar/voltar) — local à região `#entrada-composicao`, nunca
+   bloqueio de página (DESIGN.md → Components → Loading Indicator). Reserva
+   altura para não "pular" o restante da página ao aparecer/sumir (mesma
+   técnica de `.catalogo-consulta-status`). */
+.estoque-indicador {
+  min-height: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+/* Item bloqueado no estorno (saldo atual insuficiente): mesma família de
+   `.table-row-error` (borda lateral) — o motivo em texto explícito fica na
+   própria célula (template), nunca só a borda. */
+.estoque-estorno-motivo {
+  margin: var(--space-1) 0 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-meta);
+}
+
+/* Correção do gate visual (P1, "line-length marginal ~86 car."): mesma medida
+   de leitura de `.page-header-description` (70ch), reduzida — o detector
+   mediu ~86 caracteres reais por linha com 70ch porque a métrica `ch` (largura
+   do dígito "0" da Atkinson) é mais larga que a média dos caracteres do
+   texto corrido; 60ch aproxima o alvo de ~75 caracteres reais pedido. */
+.estoque-estorno-descricao {
+  max-width: 60ch;
+}
+
+/* One Accent Rule (achado do gate visual, P1): busca de emitente recolhida
+   atrás de "Trocar emitente" depois de uma escolha — `<details>` nativo,
+   sem JS. `<summary>` com a MESMA forma de `.btn-secondary` (aplicada junto
+   no template): aqui só o necessário para que o elemento nativo, que por
+   padrão é `display: list-item` com um marcador triangular, deixe de
+   parecer um item de lista e leia como o próprio botão. */
+.estoque-busca-recolhida > summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  list-style: none;
+  cursor: pointer;
+}
+
+.estoque-busca-recolhida > summary::-webkit-details-marker {
+  display: none;
+}
+
+.estoque-busca-recolhida[open] > summary {
+  margin-bottom: var(--space-3);
+}
+
+/* "Estornar entrada" no detalhe (achado do gate visual, P2): o botão
+   preenchido de `danger` fica reservado à barra de confirmação do estorno —
+   aqui é `.btn-secondary` comum (fundo `surface`, moldura `border-frame`),
+   só com o texto na própria família semântica da ação, para continuar
+   legível como "isto é destrutivo" sem competir como segunda ação
+   preenchida da página (The One Accent Rule já reserva o azul; isto evita
+   um segundo preenchimento de `danger` fora do contexto de confirmação). */
+.estoque-btn-estornar {
+  color: var(--color-danger);
+}
+
+/* Data de registro na lista de entradas (achado do gate visual, "Mundo
+   real"): número comparável, sem quebra de linha no desktop mesmo com o
+   texto de "Referência" ao lado disputando espaço (DESIGN.md → Typography →
+   Mono-Is-Data Rule não se aplica a data — não é identificador opaco —, mas
+   `tabular-nums` é o mesmo tratamento de qualquer dado numérico comparável). */
+.estoque-data-registro {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Link "#N" da lista de entradas (achado do gate visual, "azul do
+   navegador"): mesma técnica de `.catalogo-historico-link`
+   (`catalogo/static/catalogo/css/catalogo.css`) — cor herdada da célula,
+   sublinhado só no hover/foco — mais o mesmo alvo de toque de
+   `.pagination-link` (`--control-height-compact`: 36px no desktop, 44px sob
+   `pointer: coarse`), para o link ficar folgado sem inflar a altura da
+   linha no desktop. */
+.estoque-entrada-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-compact);
+  color: inherit;
+  text-decoration: none;
+}
+
+.estoque-entrada-link:hover {
+  text-decoration: underline;
+}
+
+/* Justificativa do estorno (achado do gate visual, P1): respiro em relação
+   à tabela de itens acima — não usa `.estoque-section` aqui porque, como
+   único elemento do tipo dentro do `<form>`, `:first-of-type` zeraria a
+   margem (a regra existe para a PRIMEIRA seção da página, não a primeira de
+   cada `<form>`). */
+.estoque-justificativa {
+  margin-top: var(--space-6);
+}
+
+/* Dica geral da tabela de Materiais (achado do gate visual, "Ajuda e
+   documentação"): formato aceito pela quantidade, antes da tabela — mesmo
+   texto que `estoque.quantidade.interpretar_quantidade_recebida` aceita. */
+.estoque-quantidade-hint {
+  margin: 0 0 var(--space-2);
+}
