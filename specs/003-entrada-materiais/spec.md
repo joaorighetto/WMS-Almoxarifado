@@ -324,7 +324,7 @@ como estornada, e que o estorno exibe autor, momento e justificativa.
 ### Key Entities
 
 - **Entrada**: operação de recebimento de materiais no almoxarifado. Tem motivo, referência (tipo
-  de documento e número), autor e momento; contém um ou mais itens (FR-004). Seus fatos são
+  de documento, número e emitente, quando houver), autor e momento; contém um ou mais itens (FR-004). Seus fatos são
   imutáveis depois de registrada; sua situação passa de registrada a estornada no máximo uma vez.
 - **Item da entrada**: um material do catálogo e a quantidade recebida dele na entrada.
 - **Motivo de entrada**: valor de lista fechada — compra, doação recebida, devolução de
