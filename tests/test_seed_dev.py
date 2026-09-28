@@ -68,12 +68,9 @@ MODELOS_FORNECEDORES = (
 @pytest.fixture(autouse=True)
 def ambiente_dev(monkeypatch, senha_valida):
     monkeypatch.setenv("SEED_DEV_PASSWORD", senha_valida)
-    # Cada override cria UserSettingsHolder, cujo SETTINGS_MODULE padrão é
-    # None: aplicar as duas opções juntas evita mascarar o módulo selecionado.
-    with override_settings(
-        SETTINGS_MODULE="config.settings.development",
-        PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
-    ):
+    # O hasher rápido já vem de config.settings.test; aqui só se simula o
+    # módulo de settings de desenvolvimento que o seed_dev exige.
+    with override_settings(SETTINGS_MODULE="config.settings.development"):
         yield
 
 

@@ -27,6 +27,7 @@ DJANGO_ALLOWED_HOSTS="verify.invalid" \
 # de testes direto dos models, então um model que não materializa falha ali.
 
 # --ds fixa as settings de teste: sem ele, um DJANGO_SETTINGS_MODULE no .env ou
-# no shell venceria o pyproject.toml.
+# no shell venceria o pyproject.toml. --durations deixa no log os testes mais
+# lentos, para que uma regressão de tempo da suíte apareça no CI.
 echo "==> pytest"
-uv run --frozen --env-file .env pytest --ds=config.settings.test
+uv run --frozen --env-file .env pytest --ds=config.settings.test --durations=10

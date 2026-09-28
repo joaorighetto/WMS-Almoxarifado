@@ -29,6 +29,8 @@ seria exercida em produção — foi exatamente esse gap que deixou
 """
 
 import pytest
+from django.conf import global_settings
+from django.test import override_settings
 from django.urls import reverse
 
 from contas.admin import ContaAlteracaoForm, ContaCriacaoForm
@@ -67,6 +69,10 @@ def admin_logado(client, django_user_model):
 
 
 @pytest.mark.django_db
+# `config.settings.test` troca o hasher por MD5 para acelerar a suíte; aqui o
+# padrão do Django (o mesmo de development/production) é restaurado para
+# provar que o formulário grava com o hasher nativo real.
+@override_settings(PASSWORD_HASHERS=global_settings.PASSWORD_HASHERS)
 def test_criacao_via_admin_grava_senha_com_hash_nunca_crua():
     setor = Setor.objects.create(nome="Almoxarifado")
 
