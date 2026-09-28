@@ -59,6 +59,18 @@ USUARIOS = (
     ("obras.tecnico.inativo", "obras", (), False),
 )
 
+# Conta do seed que o login simulado (`contas/login_simulado.py`) autentica para cada papel.
+# É uma conta real, com exatamente os papéis acima: a autorização continua sendo a das rotas.
+CONTA_POR_PAPEL = {
+    "requisitante": "requisitante",
+    "auxiliar-setor": "eta.auxiliar",
+    "chefe-setor": "eta.chefe",
+    "funcionario-almoxarifado": "funcionario",
+    "chefe-almoxarifado": "chefe",
+    "auditor": "auditor",
+    "administrador-sistema": "administrador",
+}
+
 
 def _linha(registro: RegistroAceito) -> str:
     return ";".join((
