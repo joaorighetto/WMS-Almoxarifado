@@ -66,6 +66,9 @@ Todas usam a senha definida em `SEED_DEV_PASSWORD`. A conta técnica acessa
 `/admin/`; as contas de negócio acessam `/login/`. Os demais perfis e matrículas
 estão declarados em `contas/dev_seed/dados.py` e podem ser consultados no Admin.
 
+No servidor de desenvolvimento, essas contas também são usadas sem senha pelo
+[login simulado por papel](login-simulado.md) (`?dev_como=<papel>`).
+
 ## Catálogo e histórico
 
 São executadas três importações pelo processamento existente da aplicação:

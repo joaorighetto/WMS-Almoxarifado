@@ -468,6 +468,12 @@ avaliações isoladas (revisão de design e evidência do detector/navegador), e
 subagents paralelos. Executado por um agente que não delega, ele cai no modo degradado de
 contexto único. Se o relatório vier marcado como degradado, informe o usuário.
 
+No servidor de desenvolvimento, as avaliações não passam pelo formulário de login: o login
+simulado autentica uma conta real do `seed_dev`. Para cada tela, indique às avaliações o papel
+cujo contexto deve ser criticado e a URL com `?dev_como=<papel>` (ou `anonimo` para telas
+públicas, como `/login/`) — ver `docs/development/login-simulado.md`. Uma tela sensível a papel
+é criticada no papel que a usa, não no papel padrão por conveniência.
+
 Quando o `critique` reportar três ou mais Priority Issues, o próprio contrato dele para na
 entrega do relatório e exige perguntas direcionadas ao usuário antes de qualquer correção.
 Nesse caso, aguarde a seleção do usuário e encaminhe ao `frontend_implementer` somente os

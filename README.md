@@ -26,6 +26,10 @@ make run     # aplicação em http://127.0.0.1:8000/
 O `setup` verifica a senha e o CSV antes de apagar o banco. Os dados e as contas
 disponíveis estão em [Dados de desenvolvimento](docs/development/seed-dev.md).
 
+Em desenvolvimento o app autentica sozinho uma conta real do seed, sem o
+formulário de login; troque o papel com `?dev_como=<papel>` em qualquer URL
+(ver [Login simulado por papel](docs/development/login-simulado.md)).
+
 ### Dia a dia
 
 ```bash
