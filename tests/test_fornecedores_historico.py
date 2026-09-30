@@ -22,7 +22,7 @@ ordenáveis do histórico de fornecedores) — o implementador de T026 precisa
 seguir, por analogia direta a `HistoricoImportacoesView` do catálogo, sem
 `divergencias` (fornecedores não tem esse conceito):
 - **Parâmetro de página**: `pagina` (mesmo da consulta e de
-  `catalogo/_paginacao.html`).
+  `interface/_paginacao.html`).
 - **Colunas ordenáveis**: `concluida` (`concluida_em`, padrão, decrescente),
   `executor` (`executada_por__matricula`), `recebidos` (`total_recebidos`),
   `rejeitados` (`total_rejeitados`). Desempate: `-pk` (execução mais
@@ -177,6 +177,127 @@ def test_cada_execucao_do_historico_leva_ao_detalhe(client, chefe_almoxarifado, 
 
     href_esperado = reverse("fornecedores:execucao_detalhe", args=[execucao.pk])
     assert href_esperado in resposta.content.decode("utf-8")
+
+
+def test_link_da_execucao_e_um_a_real_com_nome_acessivel_contextualizado(
+    client, chefe_almoxarifado, criar_usuario
+):
+    """Mesmo contrato de linha clicável do histórico do catálogo
+    (`static/js/linha-clicavel.js`, `data-linha-clicavel`/`data-linha-link`),
+    prefixo "Execução " (`visually-hidden`) no nome acessível."""
+    usuario = criar_usuario()
+    execucao = _criar_execucao(executada_por=usuario)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("fornecedores:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    href = reverse("fornecedores:execucao_detalhe", args=[execucao.pk])
+    link_esperado = (
+        f'<a href="{href}" class="table-row-link" data-linha-link>'
+        f'<span class="visually-hidden">Execução </span>#{execucao.pk}</a>'
+    )
+    assert link_esperado in conteudo
+    assert "<tr data-linha-clicavel>" in conteudo
+
+
+def test_pagina_do_historico_carrega_o_script_de_linha_clicavel(client, chefe_almoxarifado):
+    client.force_login(chefe_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:historico"))
+
+    assert "js/linha-clicavel.js" in resposta.content.decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Coluna "Arquivo": mesmo contrato do histórico do catálogo
+# (`table-cell-filename`, `truncar_meio:20`, Fase C) — até 20 caracteres,
+# texto simples; 21 ou mais, `<details>` com o `<summary>` cortado no meio e
+# o nome completo sempre no DOM.
+# ---------------------------------------------------------------------------
+
+_LIMITE_NOME_ARQUIVO = 20
+
+
+def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
+    client, chefe_almoxarifado, criar_usuario
+):
+    nome = "a" * 16 + ".csv"  # 20 caracteres exatos — não passa do limite.
+    assert len(nome) == _LIMITE_NOME_ARQUIVO
+    usuario = criar_usuario()
+    _criar_execucao(executada_por=usuario, nome_arquivo=nome)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("fornecedores:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    assert f'<span class="table-cell-filename-nome">{nome}</span>' in conteudo
+    assert "<details" not in conteudo
+
+
+def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_dom(
+    client, chefe_almoxarifado, criar_usuario
+):
+    from interface.templatetags.interface_extras import truncar_meio
+
+    nome = "a" * 17 + ".csv"  # 21 caracteres — 1 a mais que o limite de 20.
+    assert len(nome) == _LIMITE_NOME_ARQUIVO + 1
+    usuario = criar_usuario()
+    _criar_execucao(executada_por=usuario, nome_arquivo=nome)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("fornecedores:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    assert '<details class="table-cell-filename-detalhe">' in conteudo
+    assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
+    bloco_details = re.search(r"<details\b[^>]*>", conteudo).group()
+    assert " open" not in bloco_details
+    resumo = re.search(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
+    assert resumo is not None
+    assert resumo.group(1) == truncar_meio(nome, _LIMITE_NOME_ARQUIVO)
+    assert len(resumo.group(1)) == _LIMITE_NOME_ARQUIVO
+    assert resumo.group(1).endswith(".csv")
+
+
+def test_dois_arquivos_de_mesmo_prefixo_tem_resumos_distintos_e_nomes_completos_no_dom(
+    client, chefe_almoxarifado, criar_usuario
+):
+    prefixo = "cadastro_de_fornecedores_scpi_completo_"
+    nomes = [f"{prefixo}v1.csv", f"{prefixo}v2.csv"]
+    usuario = criar_usuario()
+    for nome in nomes:
+        _criar_execucao(executada_por=usuario, nome_arquivo=nome)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("fornecedores:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    resumos = re.findall(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
+    assert len(resumos) == 2
+    assert len(set(resumos)) == 2, f"resumos indistinguíveis: {resumos}"
+    for nome in nomes:
+        assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
+
+
+def test_cabecalho_executor_tem_rotulo_curto_e_continua_ordenavel(
+    client, chefe_almoxarifado, criar_usuario
+):
+    """Rótulo visível "Executor" (Fase C; antes "Executada por"): a chave
+    lógica (`?ordem=executor`) e o `aria-sort` não mudam."""
+    usuario = criar_usuario()
+    _criar_execucao(executada_por=usuario)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("fornecedores:historico"), {"ordem": "executor"})
+
+    conteudo = resposta.content.decode("utf-8")
+    th_executor = next(
+        bloco for bloco in re.findall(r"<th\b.*?</th>", conteudo, re.S) if "Executor" in bloco
+    )
+    assert 'aria-sort="ascending"' in th_executor
+    assert 'aria-label="Ordenar por executor, decrescente"' in th_executor
+    assert "Executada por" not in conteudo
 
 
 # ---------------------------------------------------------------------------

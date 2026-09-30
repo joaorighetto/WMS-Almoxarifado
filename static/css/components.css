@@ -158,6 +158,15 @@
   margin-top: var(--space-1);
 }
 
+/* Contêiner de `django.contrib.messages` (`interface/_mensagens.html`):
+   respiro abaixo do bloco de alerts, antes do page header — regra perdida
+   na consolidação de UX da Fase A (`.catalogo-messages`/`.estoque-messages`
+   tinham `margin-bottom: var(--space-2)`; a promoção para `.messages`
+   ficou sem essa regra, achado P3 do code-reviewer). */
+.messages {
+  margin-bottom: var(--space-2);
+}
+
 .alert-danger {
   background-color: var(--color-danger-surface);
   border: 1px solid var(--color-danger-border);
@@ -358,6 +367,17 @@
 .table-cell-code {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-code);
+  white-space: nowrap;
+}
+
+/* Data comparável (ex. "Concluída em" do histórico de importações): dígitos
+   alinhados entre linhas, sem quebra — mesmo tratamento que `estoque-data-
+   registro` (`estoque/static/estoque/css/estoque.css`) dá à data de
+   registro de uma entrada, promovido aqui por ser usado por mais de um app
+   (catálogo, fornecedores). Data não é identificador opaco (Mono-Is-Data
+   Rule não se aplica), só um número comparável como outro qualquer. */
+.table-cell-date {
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -1343,4 +1363,443 @@ a.appbar-brand:focus-visible {
   margin-bottom: 0;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Page (composição de página — consolidação de UX, Fase A)
+ *
+ * Promovido de `catalogo-page`/`fornecedores-page`/`estoque-page` (e
+ * `-container`/`-container-narrow`/`-section`), idênticos entre os três
+ * apps salvo o prefixo. Mesmo modelo de `.home-page`/`.home-container`
+ * (contas/static/contas/css/home.css): o teto de 1120px é do CONTEÚDO, não
+ * da caixa que também carrega o padding lateral — `.page` fica sem
+ * max-width, só com padding-inline, e quem centraliza a 1120px é
+ * `.page-container`, filha dela.
+ *
+ * Superfícies operacionais densas do almoxarifado são desktop-first
+ * (DESIGN.md → Layout): páginas ocupam a largura disponível (sem contenção
+ * estreita de página de marketing), separadas por estrutura/divisor/spacing
+ * — nunca cards empilhados (DESIGN.md → Layout → Estrutura de página).
+ * ------------------------------------------------------------------- */
+.page {
+  padding-block: var(--space-6) var(--space-8);
+  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
+    max(var(--space-4), env(safe-area-inset-right, 0px));
+}
+
+.page-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* Formulário isolado (envio), não superfície densa de comparação — largura
+   mais contida favorece leitura, sem virar "card". Modificador do
+   CONTAINER, mesma lógica acima. */
+.page-container-narrow {
+  max-width: 640px;
+}
+
+/* Seções separadas por espaçamento: o próprio marcador de tubulação
+   (`.section-marker`, faixa `ink` cheia) que abre cada seção já funciona
+   como separador — sobra só o espaço entre seções; a primeira não recebe
+   nem isso, já separada do page header pela borda dele. */
+.page-section {
+  margin-top: var(--space-6);
+}
+
+.page-section:first-of-type {
+  margin-top: 0;
+}
+
+/* Estado vazio alinhado à coluna: `.empty-state` carrega padding-inline
+   próprio para quando é usada como card isolado (ex.: Home, dentro de uma
+   superfície com moldura) — aqui ela é filha direta de `.page-section`, sem
+   moldura nenhuma, e esse padding só empurraria o texto para dentro da
+   coluna, fora do alinhamento do marcador/tabela acima dela. Vale para todo
+   estado vazio solto numa seção, sem moldura própria — DESIGN.md prescreve
+   isso para o caso geral, não só para quem já existia quando a regra foi
+   escrita; alcança também `estoque/templates/estoque/entradas.html`
+   (decisão do coordenador, revisão do code-reviewer P3: manter, não
+   restringir por seletor de app). */
+.page-section > .empty-state {
+  padding-inline: 0;
+  padding-block: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Summary (resumo de totais — consolidação de UX, Fase A)
+ *
+ * Promovido de `catalogo-summary*`/`fornecedores-summary*` (idênticos).
+ * Números como o elemento de maior peso da seção — hierarquia por
+ * tamanho/peso, não por card ou cor (DESIGN.md → Typography; Elevation &
+ * Depth).
+ * ------------------------------------------------------------------- */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: 0;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--color-border);
+}
+
+.summary-item:last-child {
+  padding-right: 0;
+  border-right: none;
+}
+
+.summary-item dt {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+/* O número é o elemento de maior peso da seção. `--font-size-metric` é o
+   passo acima do título de página, reservado a total de operação —
+   hierarquia por tipografia, sem card nem cor. */
+.summary-item dd {
+  margin: 0;
+  font-size: var(--font-size-metric);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* Detalhe secundário de um total (ex.: "N com alteração" dentro de
+   "Atualizados") — mesmo número em destaque, complemento em peso/tamanho
+   menor e cor atenuada, nunca um segundo total do mesmo peso visual. */
+.summary-detail {
+  margin-left: var(--space-1);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
+/* Celular: os itens do resumo deixam de caber numa linha só e quebram por
+   `flex-wrap` — sem divisor vertical nenhum abaixo de 640px; o gap entre
+   linhas/colunas já separa. */
+@media (max-width: 640px) {
+  .summary {
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .summary-item {
+    flex: 1 1 40%;
+    padding-right: 0;
+    border-right: none;
+  }
+}
+
+/* Item que não entra na soma dos demais (ex. "Ausentes do arquivo") — gap
+   adicional detacha esse item do grupo que soma entre si; a nota textual
+   abaixo (`.text-note`) declara a relação por extenso, sem depender só do
+   espaçamento. */
+.summary-item-detached {
+  margin-left: var(--space-4);
+}
+
+/* Família âmbar/warning (decisão do dono do produto: rejeição é atenção,
+   não erro). Aplicado ao elemento PAI de um par `<dt>`/`<dd>` OU direto
+   numa célula numérica (`<td class="table-cell-numeric emphasis-warning">`)
+   — os dois contextos em uso (Resumo da prévia/execução; histórico de
+   importações de catálogo e de fornecedores). Nunca só a cor, nunca a
+   linha/área inteira. */
+.emphasis-warning,
+.emphasis-warning dt,
+.emphasis-warning dd {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------------------------------------------------------------------
+ * Metadata / hash / muted / note (consolidação de UX, Fase A)
+ *
+ * Promovido de `catalogo-meta`/`fornecedores-meta` (`.meta-grid`),
+ * `catalogo-hash`/`fornecedores-hash` (`.data-hash`),
+ * `catalogo-muted`/`fornecedores-muted` (`.text-muted`) e
+ * `catalogo-divergencia-nota`/`fornecedores-nota`/`estoque-nota`
+ * (`.text-note`) — idênticos entre os apps.
+ * ------------------------------------------------------------------- */
+/* Metadados textuais (quem, quando, arquivo) — rótulo muted acima do
+   valor, sem função numérica comparável (sem tabular-nums). */
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4) var(--space-6);
+  margin: 0;
+}
+
+.meta-grid dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.meta-grid dd {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* SHA-256 do arquivo e identificadores técnicos opacos semelhantes: mesma
+   convenção visual de `.table-cell-code` (DESIGN.md → Typography → Fonte de
+   dado/identificador). */
+.data-hash {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+/* Nota de convenção/ressalva acima ou abaixo de uma seção/resumo — texto
+   corrido, não um alerta de página: não exige ação nem é um erro, só
+   informação complementar. Margem padrão "depois do conteúdo" (bottom);
+   `fornecedores-nota` sobrepõe para "antes do conteúdo seguinte" (top,
+   `fornecedores/static/fornecedores/css/fornecedores.css`) e
+   `catalogo-resumo-nota` ajusta o espaço acima quando a nota vem logo após
+   o Resumo (`catalogo/static/catalogo/css/catalogo.css`). */
+.text-note {
+  max-width: 72ch;
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Confirmation bar (barra de confirmação persistente — consolidação de UX,
+ * Fase A)
+ *
+ * Promovido de `catalogo-confirmacao-sticky`/`fornecedores-confirmacao-
+ * sticky`/`estoque-confirmacao-sticky` (idênticos). ÚNICO par de
+ * ações/botões da página, último elemento do container principal: colada
+ * ao rodapé da viewport durante a rolagem (`position: sticky`, nunca
+ * `fixed` — Elevation & Depth) e assentada na própria posição no fim do
+ * fluxo quando o usuário chega lá.
+ * ------------------------------------------------------------------- */
+.confirmation-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border-frame);
+}
+
+@media (max-width: 480px) {
+  .confirmation-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .confirmation-bar .btn {
+    width: 100%;
+  }
+}
+
+/* Folga inferior de rolagem enquanto a barra de confirmação está grudada no
+   rodapé: foco por teclado (ex.: links de paginação das exceções) e âncoras
+   não ficam escondidos sob ela — o espelho do `scroll-padding-top` da barra
+   de trabalho (base.css). Só nas páginas que têm a barra. */
+html:has(.confirmation-bar) {
+  scroll-padding-bottom: 5rem;
+}
+
+@media (max-width: 480px) {
+  html:has(.confirmation-bar) {
+    scroll-padding-bottom: 10rem;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Page header badge (selo de estado no título — consolidação de UX, Fase A)
+ *
+ * Promovido de `catalogo-page-header-badge`/`fornecedores-page-header-
+ * badge`/`estoque-page-header-badge` (idênticos) — DESIGN.md → Components →
+ * Page Header. A mensagem de sucesso some na próxima navegação; o selo no
+ * título permanece legível a qualquer momento.
+ * ------------------------------------------------------------------- */
+.page-header-badge {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------------
+ * Status line (linha de status/carregamento — consolidação de UX, Fase A)
+ *
+ * Promovido de `catalogo-consulta-status`/`fornecedores-consulta-status`/
+ * `estoque-indicador` (idênticos). Reserva altura permanentemente para o
+ * Loading Indicator (`role="status"`) que só fica visível via opacidade
+ * durante a requisição HTMX — sem essa altura mínima reservada, o restante
+ * da página "pularia" verticalmente sempre que ele aparecesse/sumisse.
+ * ------------------------------------------------------------------- */
+.status-line {
+  min-height: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+/* ---------------------------------------------------------------------
+ * Form frame (formulário isolado — consolidação de UX, Fase A)
+ *
+ * Promovido de `catalogo-form`/`fornecedores-form` (idênticos). Mesma
+ * moldura da tabela (`surface` + 1px `border-frame`, sem sombra —
+ * Flat-By-Default), com o raio `md` de container isolado (DESIGN.md →
+ * Shapes; Components → Cards / Containers, formulário isolado).
+ * ------------------------------------------------------------------- */
+.form-frame {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-4);
+}
+
+.form-frame-submit {
+  margin-top: var(--space-2);
+}
+
+/* ---------------------------------------------------------------------
+ * Table row link / filename column (link e coluna de arquivo do histórico —
+ * consolidação de UX, Fase A; alvo de toque e coluna Arquivo revisados na
+ * Fase B, achados do gate visual)
+ *
+ * Promovido de `catalogo-historico-link`/`fornecedores-historico-link`
+ * (`.table-row-link`) e `catalogo-historico-arquivo`/`fornecedores-
+ * historico-arquivo` (`.table-cell-filename`), idênticos. Consumidores:
+ * `estoque/templates/estoque/entradas.html` (coluna "Entrada") e
+ * `catalogo`/`fornecedores` `historico.html` (coluna "Execução").
+ * ------------------------------------------------------------------- */
+/* Cor herdada da célula, sublinhado só no hover/foco — nunca o azul padrão
+   do navegador para um link que é, na prática, a linha inteira da tabela
+   (aprimorada por `static/js/linha-clicavel.js` quando a linha carrega
+   `data-linha-clicavel`). O link é sempre texto inline no fluxo, alinhado
+   ao topo das células irmãs (achado do gate visual, Fases B e C: a versão
+   `inline-flex` + `min-height` — primeiro só na lista de entradas, depois
+   estendida a `pointer: coarse` — descentralizava o texto ~8–12px para baixo
+   em relação às células irmãs). O realce de hover fica em `hover: hover`
+   (DESIGN.md → Layout → Touch, The No Hover Dependency Rule): não "prende"
+   depois de um toque; o foco de teclado (`:focus-visible`, `base.css`)
+   sublinha à parte. */
+.table-row-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.table-row-link:focus-visible {
+  text-decoration: underline;
+}
+
+@media (hover: hover) {
+  .table-row-link:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Alvo de toque ≥44px em ambos os eixos (DESIGN.md → Layout → Touch), só
+   sob `pointer: coarse` e SEM mexer no texto: um `::after` absoluto de
+   44px de altura, centrado na linha de texto, e de largura `max(100%,
+   44px)` — parte do próprio `<a>`, então tocar nele ativa o link —, cresce
+   só a área de toque; o texto continua no fluxo, no topo da célula, e a
+   altura da linha continua sendo a que o padding de toque da célula já dá
+   (`--table-cell-pad-y` 12px, tokens.css: 12 + ~20 + 12 ≈ 44px). */
+@media (pointer: coarse) {
+  .table-row-link {
+    position: relative;
+  }
+
+  .table-row-link::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: max(100%, var(--control-height));
+    height: var(--control-height);
+    transform: translateY(-50%);
+  }
+}
+
+/* Cabeçalhos numa linha só (DESIGN.md → Table: "cabeçalhos sem quebra a
+   1440px"), para tabelas de muitas colunas curtas — os históricos de
+   importação, com dez colunas: com a quebra de linha padrão, "Executada por"
+   (hoje "Executor") virava duas linhas (th de 53px contra 35px numa linha só). Opt-in por
+   modificador: `.table` continua quebrando rótulos longos de duas linhas
+   ("Código (CADPRO)", "Classificação (SCPI)") nas consultas. */
+.table-nowrap-headers thead th {
+  white-space: nowrap;
+}
+
+/* Colunas mais juntas (Fase C, achado do gate visual: o histórico do
+   catálogo media 1259px numa área de 1118px a 1440px — só 12px de
+   "Divergências" ficavam visíveis, o resto na rolagem horizontal): a
+   densidade horizontal vem do MESMO token de densidade (`--table-cell-pad-x`,
+   tokens.css, 12px → `space-2`, 8px — ainda na escala de 4px), aplicado só a
+   esta tabela; o link de ordenação do `<th>` (`.table-sort-link`) já lê o
+   mesmo token, então acompanha. O tracking da caixa-alta dos cabeçalhos NÃO
+   muda (0.04em, DESIGN.md → Table): a largura restante vem do rótulo curto
+   "Executor" e do corte do nome de arquivo (`truncar_meio:20`) — medido: 1106px
+   numa área de 1118px a 1440px. Composição, não fundação: os papéis
+   semânticos continuam os mesmos. */
+.table-dense-x {
+  --table-cell-pad-x: var(--space-2);
+}
+
+/* Coluna Arquivo do histórico (achado do gate visual, Fase B: linhas de
+   144–152px por nomes do `seed_dev`, como
+   "seed_dev_03_restauracao_carga_inicial_valida.csv", quebrando em várias
+   linhas; Fase C: a solução da Fase B — 24ch fixos + `truncatechars` —
+   empurrou a tabela para 1259px numa área de 1118px a 1440px, e os nomes
+   cortados só no fim ficavam todos "seed_dev_0…"). Agora: nome numa linha
+   só, cortado NO MEIO por `truncar_meio` (`interface_extras.py`: começo +
+   "…" + final com a extensão, 20 caracteres), com forma previsível de ver o
+   nome inteiro quando ele não cabe (`<details>` nativo, DESIGN.md → Table).
+   `catalogo`/`fornecedores` `historico.html` comparam `nome_arquivo` com o
+   resultado do filtro e só usam `<details>` quando o nome foi cortado; um
+   nome que já cabe fica como texto simples. O nome completo está sempre no
+   DOM, aberto ou fechado (acessível sem JS). Sem largura fixa: a coluna é
+   do tamanho do texto (no máximo 20 caracteres) — não é mais o "fiel da
+   balança" da largura da tabela. */
+.table-cell-filename {
+  white-space: nowrap;
+}
+
+/* Sem `text-overflow: ellipsis` de propósito: `truncar_meio` já garante o
+   comprimento, e o corte no meio é uma decisão de conteúdo, não de CSS. */
+.table-cell-filename-nome {
+  white-space: nowrap;
+}
+
+.table-cell-filename-detalhe > summary {
+  cursor: pointer;
+  color: var(--color-text);
+  list-style-position: inside;
+}
+
+.table-cell-filename-detalhe > summary::-webkit-details-marker {
+  color: var(--color-text-muted);
+}
+
+/* Nome completo, revelado ao abrir: quebra em qualquer ponto (mesmo
+   tratamento que a versão anterior dava à célula inteira) — aqui sem
+   consequência para a altura das OUTRAS linhas, já que só a própria linha
+   aberta cresce. */
+.table-cell-filename-completo {
+  width: 22ch;
+  margin-top: var(--space-1);
+  overflow-wrap: anywhere;
+  white-space: normal;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
 }

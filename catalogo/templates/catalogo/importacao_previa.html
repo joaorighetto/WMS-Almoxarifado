@@ -1,15 +1,15 @@
 {% extends "contas/base.html" %}
-{% load static %}
+{% load static interface_extras %}
 
-{% block title %}Prévia da importação — WMS-Almoxarifado{% endblock %}
+{% block title %}Prévia da importação do catálogo — WMS-Almoxarifado{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'catalogo/css/catalogo.css' %}">
 {% endblock %}
 
 {% block content %}
-<main class="catalogo-page">
-  <div class="catalogo-container">
+<main class="page">
+  <div class="page-container">
     <a href="{% url 'catalogo:importacao_envio' %}" class="back-link">
       <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
            fill="none" aria-hidden="true">
@@ -19,11 +19,11 @@
       <span>Envio</span>
     </a>
 
-    {% include "catalogo/_mensagens.html" %}
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
-        <h1 class="page-header-title">Prévia da importação</h1>
+        <h1 class="page-header-title">Prévia da importação do catálogo</h1>
         <p class="page-header-description">
           Arquivo <strong>{{ pedido.nome_arquivo }}</strong> ({{ pedido.tamanho|filesizeformat }})
         </p>
@@ -37,36 +37,36 @@
       </p>
     </div>
 
-    <section class="catalogo-section">
+    <section class="page-section">
       <h2 class="section-marker">
         <span class="section-marker-label">Resumo</span>
       </h2>
-      <dl class="catalogo-summary">
-        <div class="catalogo-summary-item">
+      <dl class="summary">
+        <div class="summary-item">
           <dt>Recebidos</dt>
-          <dd>{{ plano.total_recebidos }}</dd>
+          <dd>{{ plano.total_recebidos|separador_milhar }}</dd>
         </div>
-        <div class="catalogo-summary-item">
+        <div class="summary-item">
           <dt>Serão inseridos</dt>
-          <dd>{{ plano.total_inseridos }}</dd>
+          <dd>{{ plano.total_inseridos|separador_milhar }}</dd>
         </div>
-        <div class="catalogo-summary-item">
+        <div class="summary-item">
           <dt>Serão atualizados</dt>
           <dd>
-            {{ plano.total_atualizados }}
-            <span class="catalogo-summary-detail">({{ plano.total_atualizados_com_alteracao }} com alteração)</span>
+            {{ plano.total_atualizados|separador_milhar }}
+            <span class="summary-detail">({{ plano.total_atualizados_com_alteracao|separador_milhar }} com alteração)</span>
           </dd>
         </div>
-        <div class="catalogo-summary-item{% if plano.total_rejeitados %} catalogo-rejeitados-emphasis{% endif %}">
+        <div class="summary-item{% if plano.total_rejeitados %} emphasis-warning{% endif %}">
           <dt>Rejeitados</dt>
-          <dd>{{ plano.total_rejeitados }}</dd>
+          <dd>{{ plano.total_rejeitados|separador_milhar }}</dd>
         </div>
-        <div class="catalogo-summary-item catalogo-summary-item-separado">
+        <div class="summary-item summary-item-detached">
           <dt>Ausentes do arquivo</dt>
-          <dd>{{ plano.total_ausentes_no_arquivo }}</dd>
+          <dd>{{ plano.total_ausentes_no_arquivo|separador_milhar }}</dd>
         </div>
       </dl>
-      <p class="catalogo-divergencia-nota catalogo-resumo-nota">
+      <p class="text-note catalogo-resumo-nota">
         "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
         Rejeitados: são materiais já cadastrados no WMS que não vieram neste CSV. Esta
         importação <strong>não altera nem remove</strong> esses materiais — eles
@@ -74,11 +74,11 @@
       </p>
     </section>
 
-    <section class="catalogo-section" id="divergencias" data-secao="divergencias">
+    <section class="page-section" id="divergencias" data-secao="divergencias">
       <h2 class="section-marker">
         <span class="section-marker-label">Divergências de saldo ({{ plano.total_divergencias }})</span>
       </h2>
-      <p class="catalogo-divergencia-nota">
+      <p class="text-note">
         Divergência: diferença entre o saldo no arquivo do SCPI e o saldo atual no WMS
         (diferença = saldo no arquivo − saldo no WMS). É só informativa — esta importação
         <strong>não altera o saldo do WMS</strong>; o ajuste, quando necessário, é feito pelo
@@ -99,15 +99,15 @@
             {% for divergencia in divergencias_pagina %}
             <tr>
               <td class="table-cell-code">{{ divergencia.cadpro }}</td>
-              <td class="table-cell-numeric">{{ divergencia.saldo_wms|floatformat:"-3" }}</td>
-              <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|floatformat:"-3" }}</td>
-              <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|floatformat:"-3" }}</td>
+              <td class="table-cell-numeric">{{ divergencia.saldo_wms|quantidade }}</td>
+              <td class="table-cell-numeric">{{ divergencia.saldo_arquivo|quantidade }}</td>
+              <td class="table-cell-numeric catalogo-diferenca">{% if divergencia.diferenca > 0 %}+{% endif %}{{ divergencia.diferenca|quantidade }}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      {% include "catalogo/_paginacao.html" with pagina=divergencias_pagina parametro="pagina_divergencias" rotulo="Paginação de divergências" ancora="divergencias" %}
+      {% include "interface/_paginacao.html" with pagina=divergencias_pagina parametro="pagina_divergencias" rotulo="Paginação de divergências" rotulo_item="divergência" rotulo_item_plural="divergências" ancora="divergencias" %}
       {% else %}
       <div class="empty-state" data-estado="vazio">
         <p class="empty-state-title">Nenhuma divergência de saldo.</p>
@@ -118,7 +118,7 @@
       {% endif %}
     </section>
 
-    <section class="catalogo-section" id="excecoes">
+    <section class="page-section" id="excecoes">
       <h2 class="section-marker{% if excecoes_pagina.object_list %} section-marker-attached{% endif %}">
         <span class="section-marker-label">Exceções ({{ plano.total_rejeitados }})</span>
       </h2>
@@ -144,7 +144,7 @@
                 {% endif %}
               </td>
               <td class="table-cell-code">
-                {% if excecao.cadpro %}{{ excecao.cadpro }}{% else %}<span class="catalogo-muted">—</span>{% endif %}
+                {% if excecao.cadpro %}{{ excecao.cadpro }}{% else %}<span class="text-muted">—</span>{% endif %}
               </td>
               <td>{{ excecao.motivo_label }}</td>
               <td>{{ excecao.detalhe|default:""|linebreaksbr }}</td>
@@ -153,7 +153,7 @@
           </tbody>
         </table>
       </div>
-      {% include "catalogo/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" ancora="excecoes" %}
+      {% include "interface/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" rotulo_item="exceção" rotulo_item_plural="exceções" ancora="excecoes" %}
       {% else %}
       <div class="empty-state">
         <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
@@ -166,10 +166,10 @@
     Barra de confirmação (revisão do gate visual P1, propagação ao catálogo): ÚNICO
     par de botões da página, no lugar da antiga seção "Confirmação" — grudada ao
     rodapé da viewport durante a rolagem (`position: sticky`,
-    `catalogo/static/catalogo/css/catalogo.css`) e assentada no fim quando o
-    usuário chega lá, por ser literalmente o último elemento de `.catalogo-container`.
+    `.confirmation-bar`, `static/css/components.css`) e assentada no fim quando o
+    usuário chega lá, por ser literalmente o último elemento de `.page-container`.
     {% endcomment %}
-    <div class="catalogo-confirmacao-sticky">
+    <div class="confirmation-bar">
       <form
         method="post"
         action="{% url 'catalogo:importacao_confirmar' %}"
@@ -181,7 +181,7 @@
         <input type="hidden" name="impressao_digital" value="{{ impressao_digital }}">
         <button type="submit" class="btn btn-primary" data-processing-submit>
           <span data-processing-submit-label
-            >Confirmar importação: {{ plano.total_inseridos }} inserido{{ plano.total_inseridos|pluralize }}, {{ plano.total_atualizados }} atualizado{{ plano.total_atualizados|pluralize }}{% if plano.total_rejeitados %} ({{ plano.total_rejeitados }} rejeitado{{ plano.total_rejeitados|pluralize }} fic{{ plano.total_rejeitados|pluralize:"a,am" }} de fora){% endif %}</span
+            >Confirmar importação: {{ plano.total_inseridos|separador_milhar }} inserido{{ plano.total_inseridos|pluralize }}, {{ plano.total_atualizados|separador_milhar }} atualizado{{ plano.total_atualizados|pluralize }}{% if plano.total_rejeitados %} ({{ plano.total_rejeitados|separador_milhar }} rejeitado{{ plano.total_rejeitados|pluralize }} fic{{ plano.total_rejeitados|pluralize:"a,am" }} de fora){% endif %}</span
           >
         </button>
       </form>
@@ -195,5 +195,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'catalogo/js/envio.js' %}" defer></script>
+<script src="{% static 'js/envio.js' %}" defer></script>
 {% endblock %}

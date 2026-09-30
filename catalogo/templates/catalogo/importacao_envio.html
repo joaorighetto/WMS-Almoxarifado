@@ -8,9 +8,9 @@
 {% endblock %}
 
 {% block content %}
-<main class="catalogo-page">
-  <div class="catalogo-container catalogo-container-narrow">
-    {% include "catalogo/_mensagens.html" %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
@@ -19,6 +19,9 @@
           Envie o arquivo CSV exportado do SCPI. Antes de qualquer material ser
           gravado, você verá uma prévia do resultado para conferir e confirmar.
         </p>
+      </div>
+      <div class="page-header-actions">
+        <a href="{% url 'catalogo:historico' %}" class="btn btn-secondary">Histórico de importações</a>
       </div>
     </header>
 
@@ -35,7 +38,7 @@
     <form
       method="post"
       enctype="multipart/form-data"
-      class="catalogo-form"
+      class="form-frame"
       data-processing-form
       data-processing-label="Enviando…"
     >
@@ -62,7 +65,7 @@
         {% endif %}
       </div>
 
-      <button type="submit" class="btn btn-primary catalogo-form-submit" data-processing-submit>
+      <button type="submit" class="btn btn-primary form-frame-submit" data-processing-submit>
         <span data-processing-submit-label>Enviar arquivo</span>
       </button>
     </form>
@@ -71,5 +74,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'catalogo/js/envio.js' %}" defer></script>
+<script src="{% static 'js/envio.js' %}" defer></script>
 {% endblock %}

@@ -308,7 +308,7 @@ def test_confirmacao_valida_emite_mensagem_de_sucesso_com_os_totais(
 ):
     """Revisão do gate visual (achado P1): a confirmação — irreversível —
     não podia mais terminar em silêncio. A mensagem segue `django.contrib.
-    messages` (`catalogo/templates/catalogo/_mensagens.html`, já testado à
+    messages` (`interface/templates/interface/_mensagens.html`, já testado à
     parte); aqui só o conteúdo (os totais da própria execução) importa."""
     client_autenticado = _cliente_autenticado(chefe_almoxarifado)
     _enviar(client_autenticado, csv_fixture("carga_inicial_valida.csv"))
@@ -857,3 +857,25 @@ def test_rotulo_do_botao_de_confirmar_sem_rejeitados_nao_menciona_fora_e_usa_sin
     assert re.search(r"\b1\s+inserido\b", conteudo_html), (
         "com exatamente 1 inserido, o rótulo deveria usar o singular"
     )
+
+
+# ---------------------------------------------------------------------------
+# Ação secundária "Histórico de importações" no Page Header do envio
+# (test-engineer, alinhamento de UX, Fase B) — mesmo padrão já usado em
+# `fornecedores/importacao_envio.html`.
+# ---------------------------------------------------------------------------
+
+
+def test_envio_tem_acao_secundaria_para_o_historico_de_importacoes(chefe_almoxarifado):
+    client_autenticado = _cliente_autenticado(chefe_almoxarifado)
+
+    resposta = client_autenticado.get(reverse("catalogo:importacao_envio"))
+
+    assert resposta.status_code == 200
+    conteudo_html = resposta.content.decode("utf-8")
+    bloco_acoes = re.search(
+        r'<div class="page-header-actions">.*?</div>', conteudo_html, re.S
+    )
+    assert bloco_acoes is not None, "page-header-actions não encontrado"
+    assert f'href="{reverse("catalogo:historico")}"' in bloco_acoes.group()
+    assert "Histórico de importações" in bloco_acoes.group()

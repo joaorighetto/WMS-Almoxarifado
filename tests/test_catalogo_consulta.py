@@ -212,9 +212,11 @@ def test_codigo_exato_retorna_material_com_todos_os_campos_exibidos(
     assert "Aço inox, cabeça sextavada" in conteudo
     assert "Ferragens" in conteudo
     assert "Parafusos" in conteudo
-    # Formato numérico exato (separador decimal) não é fixado pelo contrato;
-    # aceita-se qualquer representação usual de 3 casas do valor gravado.
-    assert "53,400" in conteudo or "53.400" in conteudo
+    # Saldo em pt-BR só com as casas significativas (filtro `quantidade`,
+    # Fase C): 53.400 gravado aparece como "53,4", nunca "53,400"/"53.400".
+    assert re.search(r'<td class="table-cell-numeric">\s*53,4\s*</td>', conteudo)
+    assert "53,400" not in conteudo
+    assert "53.400" not in conteudo
 
 
 def test_cadpro_e_exibido_sem_nenhuma_transformacao(client, requisitante, criar_material):
@@ -891,6 +893,18 @@ def test_script_htmx_fica_no_head_nao_no_body(client, requisitante, criar_materi
     assert posicao_script < posicao_body_inicio
 
 
+def _valor_hx_on(bloco, evento):
+    """Valor do atributo `hx-on::{evento}="..."` dentro de `bloco` (a tag de
+    abertura de um elemento, como `<body ...>`/`<section ...>`) — escopa a
+    asserção ao HANDLER certo, não à tag inteira: `<section>` tem tanto
+    `hx-on::before:request` quanto `hx-on::response:error`, e os dois citam
+    os dois ids de alerta (um para ocultar, outro para revelar só um deles)
+    — checar a tag inteira não provaria QUAL alerta cada handler revela."""
+    match = re.search(rf'hx-on::{re.escape(evento)}="([^"]*)"', bloco)
+    assert match is not None, f"hx-on::{evento} não encontrado no bloco"
+    return match.group(1)
+
+
 def test_hx_on_usa_os_nomes_de_evento_do_htmx_4(client, requisitante, criar_material):
     """`htmx:sendError`/`htmx:responseError` foram renomeados no HTMX 4 para
     `htmx:error`/`htmx:response:error` — o atalho `hx-on::x` correspondente
@@ -914,14 +928,23 @@ def test_erro_de_rede_na_restauracao_de_historico_e_tratado_no_body(
 ):
     """A restauração do HTMX 4 inicia o GET no body, fora da seção da
     consulta. O handler no body também recebe os erros da busca e paginação
-    por bubbling."""
+    por bubbling — e revela SÓ o alerta de rede (`#resultados-erro-rede`),
+    nunca o de servidor (achado do code-reviewer: este teste passava mesmo
+    revelando o alerta errado, porque só checava a presença do handler, não
+    qual alerta ele revela)."""
     criar_material(cadpro="000.006.010", descricao="Erro de rede no histórico")
     client.force_login(requisitante)
 
     conteudo = client.get(reverse("catalogo:consulta")).content.decode("utf-8")
     match_body = re.search(r"<body\b[^>]*>", conteudo, re.S)
     assert match_body is not None
-    assert "hx-on::error=" in match_body.group()
+    tag_body = match_body.group()
+    assert "hx-on::error=" in tag_body
+
+    valor_error = _valor_hx_on(tag_body, "error")
+    assert "resultados-erro-rede" in valor_error
+    assert "resultados-erro-servidor" not in valor_error
+    assert "hidden = false" in valor_error
 
 
 def test_hx_on_response_error_neutraliza_swap_historico_titulo_e_oob(
@@ -932,7 +955,10 @@ def test_hx_on_response_error_neutraliza_swap_historico_titulo_e_oob(
     erro — e `swap:none` só suprime a troca do alvo. O handler
     `hx-on::response:error` é o único mecanismo que protege os resultados:
     `ctx.swap`, `ctx.push` e `ctx.text` neutralizam cada efeito (confirmado
-    no browser)."""
+    no browser), e revela SÓ o alerta de servidor (`#resultados-erro-
+    servidor`), nunca o de rede (achado do code-reviewer: este teste
+    passava mesmo revelando `#resultados-erro-rede` — a separação entre os
+    dois alertas não tinha nenhuma asserção)."""
     criar_material(cadpro="000.006.009", descricao="Neutraliza swap de erro")
 
     client.force_login(requisitante)
@@ -942,9 +968,59 @@ def test_hx_on_response_error_neutraliza_swap_historico_titulo_e_oob(
     match_section = re.search(r"<section\b[^>]*>", conteudo, re.S)
     assert match_section is not None
     tag_section = match_section.group()
-    assert "ctx.swap = 'none'" in tag_section
-    assert "ctx.push = false" in tag_section
-    assert "ctx.text = ''" in tag_section
+
+    valor_response_error = _valor_hx_on(tag_section, "response:error")
+    assert "ctx.swap = 'none'" in valor_response_error
+    assert "ctx.push = false" in valor_response_error
+    assert "ctx.text = ''" in valor_response_error
+    assert "resultados-erro-servidor" in valor_response_error
+    assert "resultados-erro-rede" not in valor_response_error
+    assert "hidden = false" in valor_response_error
+
+
+def test_hx_on_before_request_oculta_os_dois_alertas(client, requisitante, criar_material):
+    """Antes de qualquer nova tentativa (busca, paginação, ordenação), os
+    dois alertas de falha voltam ao estado oculto — um erro de uma
+    tentativa anterior não pode continuar visível durante a próxima."""
+    criar_material(cadpro="000.006.011", descricao="Oculta os dois alertas")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    match_section = re.search(r"<section\b[^>]*>", conteudo, re.S)
+    assert match_section is not None
+    tag_section = match_section.group()
+
+    valor_before_request = _valor_hx_on(tag_section, "before:request")
+    assert "resultados-erro-rede" in valor_before_request
+    assert "resultados-erro-servidor" in valor_before_request
+    assert valor_before_request.count("hidden = true") == 2
+
+
+def test_alertas_de_rede_e_servidor_ficam_ocultos_por_padrao_fora_dos_resultados(
+    client, requisitante, criar_material
+):
+    """Os dois alertas (`interface/_consulta_falha.html`) precisam sobreviver
+    a um `ctx.swap = 'none'`/à ausência de resposta — por isso ficam sempre
+    FORA de `#resultados-consulta` (a região trocada a cada resposta HTMX),
+    e ocultos (`hidden`) por padrão, antes de qualquer falha ocorrer."""
+    criar_material(cadpro="000.006.012", descricao="Alertas ocultos por padrão")
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    posicao_rede = conteudo.index('id="resultados-erro-rede"')
+    posicao_servidor = conteudo.index('id="resultados-erro-servidor"')
+    posicao_resultados = conteudo.index('id="resultados-consulta"')
+    assert posicao_rede < posicao_resultados
+    assert posicao_servidor < posicao_resultados
+
+    bloco_rede = re.search(r'<div id="resultados-erro-rede"[^>]*>', conteudo).group()
+    bloco_servidor = re.search(r'<div id="resultados-erro-servidor"[^>]*>', conteudo).group()
+    assert "hidden" in bloco_rede
+    assert "hidden" in bloco_servidor
 
 
 # ---------------------------------------------------------------------------
@@ -1446,3 +1522,201 @@ def test_fragmento_htmx_emite_copia_oob_do_anuncio_de_ordem(
         '<p id="resultados-anuncio" hx-swap-oob="innerHTML">'
         "Ordenado por saldo, decrescente.</p>" in conteudo
     )
+
+
+# ---------------------------------------------------------------------------
+# Saldo em pt-BR (Fase C, filtro `quantidade`): milhar "." e decimal ",", só
+# as casas significativas. O algoritmo em si é
+# `tests/test_catalogo_templatetags.py`; aqui, que a célula usa o filtro.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "saldo, esperado",
+    [
+        (Decimal("27000.000"), "27.000"),
+        (Decimal("32.500"), "32,5"),
+        (Decimal("6.000"), "6"),
+        (Decimal("0.125"), "0,125"),
+        (Decimal("0.001"), "0,001"),
+    ],
+)
+def test_saldo_e_exibido_em_pt_br_so_com_as_casas_significativas(
+    client, requisitante, criar_material, saldo, esperado
+):
+    criar_material(cadpro="000.050.001", descricao="Saldo formatado", saldo=saldo)
+
+    client.force_login(requisitante)
+    resposta = client.get(reverse("catalogo:consulta"), {"codigo": "000.050.001"})
+
+    conteudo = resposta.content.decode("utf-8")
+    assert re.search(
+        rf'<td class="table-cell-numeric">\s*{re.escape(esperado)}\s*</td>', conteudo
+    ), f"saldo {saldo} deveria aparecer como {esperado!r}"
+
+
+# ---------------------------------------------------------------------------
+# Erro de campo (Fase C, C4, achado P3): o erro de `codigo` aparece SÓ no
+# campo — `data-estado="codigo-invalido"` fica no wrapper `#campo-codigo`, o
+# `<p class="field-error" id="id_codigo_error">` é o alvo do
+# `aria-describedby` do input, e `#resultados-consulta` mostra um estado
+# neutro sem repetir a mensagem. Antes o erro aparecia duas vezes (campo +
+# alerta com o mesmo texto) e `data-estado` ficava no alerta.
+# ---------------------------------------------------------------------------
+
+_MENSAGEM_CODIGO_INVALIDO = "informe o código completo no formato xxx.yyy.zzz"
+
+
+def _tag_input(conteudo, name):
+    match = re.search(rf'<input\b[^>]*name="{re.escape(name)}"[^>]*>', conteudo)
+    assert match is not None, f"<input name={name!r}> não encontrado"
+    return match.group()
+
+
+def _ids_de_aria_describedby(tag):
+    match = re.search(r'aria-describedby="([^"]*)"', tag)
+    assert match is not None, f"aria-describedby ausente em {tag}"
+    return match.group(1).split()
+
+
+@pytest.mark.parametrize("via_htmx", [False, True], ids=["pagina_inteira", "copia_oob"])
+def test_aria_describedby_do_codigo_aponta_para_o_erro_existente_do_campo(
+    client, requisitante, via_htmx
+):
+    """Na página inteira e na cópia OOB (resposta HTMX, que reenvia o campo):
+    o `id` referenciado por `aria-describedby` existe de fato e é o do
+    `<p class="field-error">` — sem isso o leitor de tela lê o campo sem o
+    erro."""
+    client.force_login(requisitante)
+    extra = {"HTTP_HX_REQUEST": "true"} if via_htmx else {}
+
+    resposta = client.get(reverse("catalogo:consulta"), {"codigo": "abc"}, **extra)
+
+    conteudo = resposta.content.decode("utf-8")
+    ids = _ids_de_aria_describedby(_tag_input(conteudo, "codigo"))
+    assert "id_codigo_error" in ids
+    assert '<p class="field-error" id="id_codigo_error">' in conteudo
+    assert conteudo.count('id="id_codigo_error"') == 1
+
+
+def test_codigo_invalido_sem_htmx_marca_o_wrapper_e_nao_repete_o_erro_nos_resultados(
+    client, requisitante
+):
+    client.force_login(requisitante)
+
+    resposta = client.get(reverse("catalogo:consulta"), {"codigo": "abc"})
+
+    conteudo = resposta.content.decode("utf-8")
+    wrapper = re.search(r'<div\b[^>]*id="campo-codigo"[^>]*>', conteudo)
+    assert wrapper is not None
+    assert 'data-estado="codigo-invalido"' in wrapper.group()
+    assert "field-has-error" in wrapper.group()
+
+    regiao_resultados = conteudo[conteudo.index('id="resultados-consulta"') :]
+    assert _MENSAGEM_CODIGO_INVALIDO not in regiao_resultados.lower()
+    assert 'data-estado="codigo-invalido"' not in regiao_resultados
+    assert 'role="alert"' not in regiao_resultados
+    assert conteudo.lower().count(_MENSAGEM_CODIGO_INVALIDO) == 1, (
+        "o erro deve aparecer uma única vez na página (só no campo)"
+    )
+
+
+def test_codigo_invalido_via_htmx_marca_o_wrapper_da_copia_oob(client, requisitante):
+    client.force_login(requisitante)
+
+    resposta = client.get(
+        reverse("catalogo:consulta"), {"codigo": "abc"}, HTTP_HX_REQUEST="true"
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    wrapper = re.search(r'<div\b[^>]*id="campo-codigo"[^>]*>', conteudo)
+    assert wrapper is not None
+    assert 'hx-swap-oob="true"' in wrapper.group()
+    assert 'data-estado="codigo-invalido"' in wrapper.group()
+
+
+def test_hx_on_before_request_limpa_a_marcacao_de_erro_do_campo(
+    client, requisitante, criar_material
+):
+    """Sem isto, uma nova busca que FALHA (500/rede) deixaria o erro antigo do
+    campo junto do alerta de falha. O efeito em si (a marcação sumindo do DOM)
+    só é verificável no browser; aqui, que o handler cobre os quatro sinais do
+    erro: classe, `data-estado`, mensagem e `aria-invalid`."""
+    criar_material(cadpro="000.050.002", descricao="Limpa marcação de erro")
+
+    client.force_login(requisitante)
+    conteudo = client.get(reverse("catalogo:consulta")).content.decode("utf-8")
+
+    tag_section = re.search(r"<section\b[^>]*>", conteudo, re.S).group()
+    valor = _valor_hx_on(tag_section, "before:request")
+    assert "field-has-error" in valor
+    assert "data-estado" in valor
+    assert "field-error" in valor
+    assert "aria-invalid" in valor
+
+
+# ---------------------------------------------------------------------------
+# Paginação via HTMX (Fase C, C1, achado P1): no celular a página 2 começava
+# ~3.700px acima da área visível. Os links de página rolam o alvo até o topo
+# (`hx-swap="innerHTML show:top"`) e o foco vai à tabela
+# (`<table tabindex="-1">`). Ordenação e formulário NÃO rolam. O efeito de
+# rolagem/foco em si só é verificável no browser.
+# ---------------------------------------------------------------------------
+
+
+def test_links_de_pagina_htmx_rolam_ao_topo_e_casam_com_o_seletor_do_handler(
+    client, requisitante, execucao
+):
+    _bulk_criar_materiais(execucao, 120, prefixo="860")  # 3 páginas de 50
+
+    client.force_login(requisitante)
+    conteudo = client.get(reverse("catalogo:consulta"), {"pagina": "2"}).content.decode("utf-8")
+
+    # O handler `hx-on::before:request` decide "veio da paginação?" por este
+    # seletor — se a classe/atributo dos links mudar, a rolagem/foco morre em
+    # silêncio.
+    tag_section = re.search(r"<section\b[^>]*>", conteudo, re.S).group()
+    assert "a.pagination-link[hx-get]" in _valor_hx_on(tag_section, "before:request")
+
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    links = re.findall(r'<a\b[^>]*class="pagination-link"[^>]*hx-get=[^>]*>', nav)
+    assert len(links) >= 4, "esperava Anterior, Próxima e números de página com hx-get"
+    for link in links:
+        assert 'hx-swap="innerHTML show:top"' in link, link
+
+
+def test_ordenacao_e_formulario_de_filtros_nao_rolam_ao_topo(client, requisitante, criar_material):
+    criar_material(cadpro="000.050.003", descricao="Sem rolagem na ordenação")
+
+    client.force_login(requisitante)
+    conteudo = client.get(reverse("catalogo:consulta")).content.decode("utf-8")
+
+    ths_htmx = [
+        bloco
+        for bloco in re.findall(r"<th\b.*?</th>", conteudo, re.S)
+        if "hx-get" in bloco
+    ]
+    assert ths_htmx, "esperava cabeçalhos ordenáveis com hx-get"
+    for bloco in ths_htmx:
+        assert "hx-swap" not in bloco
+        assert "show:" not in bloco
+
+    form = re.search(r'<form\b[^>]*class="filter-bar"[^>]*>', conteudo)
+    assert form is not None
+    assert "hx-get" in form.group()
+    assert "hx-swap" not in form.group()
+    assert "show:" not in form.group()
+
+
+def test_tabela_populada_de_resultados_e_focavel_por_script(client, requisitante, criar_material):
+    """`hx-on::after:swap` foca `#resultados-consulta table`; um `<table>` sem
+    `tabindex="-1"` não recebe foco por script."""
+    criar_material(cadpro="000.050.004", descricao="Tabela focável")
+
+    client.force_login(requisitante)
+    conteudo = client.get(reverse("catalogo:consulta")).content.decode("utf-8")
+
+    regiao = conteudo[conteudo.index('id="resultados-consulta"') :]
+    assert re.search(r'<table\b[^>]*tabindex="-1"', regiao)
+    tag_section = re.search(r"<section\b[^>]*>", conteudo, re.S).group()
+    assert "#resultados-consulta table" in _valor_hx_on(tag_section, "after:swap")

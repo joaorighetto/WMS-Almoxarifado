@@ -23,7 +23,7 @@ class ColunaOrdenacao:
     por comporem uma única ordenação lógica — nunca cada um isoladamente.
 
     `rotulo`: texto em pt-BR, minúsculo, usado por `rotulo_ordenacao`
-    (`catalogo/templatetags/catalogo_extras.py`) numa frase corrida (ex.
+    (`interface/templatetags/interface_extras.py`) numa frase corrida (ex.
     "ordenado por saldo, decrescente").
     """
 

@@ -8,9 +8,9 @@
 {% endblock %}
 
 {% block content %}
-<main class="fornecedores-page">
-  <div class="fornecedores-container fornecedores-container-narrow">
-    {% include "catalogo/_mensagens.html" %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
@@ -39,7 +39,7 @@
     <form
       method="post"
       enctype="multipart/form-data"
-      class="fornecedores-form"
+      class="form-frame"
       data-processing-form
       data-processing-label="Enviando…"
     >
@@ -69,7 +69,7 @@
         {% endif %}
       </div>
 
-      <button type="submit" class="btn btn-primary fornecedores-form-submit" data-processing-submit>
+      <button type="submit" class="btn btn-primary form-frame-submit" data-processing-submit>
         <span data-processing-submit-label>Enviar arquivo</span>
       </button>
     </form>
@@ -78,5 +78,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'catalogo/js/envio.js' %}" defer></script>
+<script src="{% static 'js/envio.js' %}" defer></script>
 {% endblock %}

@@ -1,11 +1,18 @@
-{% load catalogo_extras %}
+{% load interface_extras %}
 {% comment %}
 Cabeçalho de coluna ordenável (FR-042a, DESIGN.md → Components → Table,
 coluna ordenável). Independente de tela — uma inclusão por coluna
 ordenável. Usado pelo partial `resultados_consulta` da consulta do catálogo
 (`consulta.html`, com `htmx_alvo`/`htmx_indicador`) e pelo histórico de
 importações (`historico.html`, FR-037a, sem `htmx_alvo`/`htmx_indicador` —
-navegação normal de página inteira).
+navegação normal de página inteira), tanto de `catalogo` quanto de
+`fornecedores`.
+
+Movido de `catalogo/templates/catalogo/_th_ordenavel.html` (consolidação de
+UX, Fase A) — contrato e parâmetros inalterados. Consumidores: templates de
+`catalogo` e `fornecedores` (`{% include "interface/_th_ordenavel.html" %}`)
+— `estoque` não tem nenhuma coluna ordenável (achado do code-reviewer, P3:
+o comentário chegou a listar `estoque` aqui por engano).
 
 Parâmetros:
 - `coluna`: chave lógica aceita por `?ordem=` — uma chave de
@@ -39,7 +46,7 @@ pela seta (SVG, `aria-hidden`, nunca a única pista de direção — DESIGN.md �
 The No Color-Only State Rule). A ordem vigente também é dita em texto no
 resumo da paginação (`_paginacao.html`, parâmetro `ordem_texto`) e num
 anúncio a leitor de tela (`#resultados-anuncio`, `consulta.html`) — os dois
-via `rotulo_ordenacao` (`catalogo_extras.py`), para continuar comunicada
+via `rotulo_ordenacao` (`interface_extras.py`), para continuar comunicada
 quando a coluna estiver fora da tela.
 
 Indicador de direção (revisão do gate visual, achado 2026-09-22: os glifos

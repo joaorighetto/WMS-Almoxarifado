@@ -1,5 +1,5 @@
 {% extends "contas/base.html" %}
-{% load static %}
+{% load static interface_extras %}
 
 {% block title %}Estornar entrada #{{ entrada.pk }} — WMS-Almoxarifado{% endblock %}
 
@@ -22,8 +22,8 @@ ativo na interface).
 {% endcomment %}
 
 {% block content %}
-<main class="estoque-page">
-  <div class="estoque-container">
+<main class="page">
+  <div class="page-container">
     <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="back-link">
       <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
            fill="none" aria-hidden="true">
@@ -33,7 +33,7 @@ ativo na interface).
       <span>Entrada #{{ entrada.pk }}</span>
     </a>
 
-    {% include "estoque/_mensagens.html" %}
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
@@ -46,11 +46,11 @@ ativo na interface).
       </div>
     </header>
 
-    <section class="estoque-section">
+    <section class="page-section">
       <h2 class="section-marker">
         <span class="section-marker-label">Registro</span>
       </h2>
-      <dl class="estoque-dados-grid">
+      <dl class="meta-grid estoque-dados-grid">
         <div><dt>Motivo</dt><dd>{{ entrada.get_motivo_display }}</dd></div>
         <div><dt>Tipo de documento</dt><dd>{{ entrada.get_tipo_documento_display }}</dd></div>
         <div><dt>Número do documento</dt><dd>{{ entrada.numero_documento }}</dd></div>
@@ -75,7 +75,7 @@ ativo na interface).
     </div>
     {% endif %}
 
-    <section class="estoque-section">
+    <section class="page-section">
       <h2 class="section-marker{% if linhas %} section-marker-attached{% endif %}">
         <span class="section-marker-label">Itens{% if linhas %} ({{ linhas|length }}){% endif %}</span>
       </h2>
@@ -103,12 +103,12 @@ ativo na interface).
             {% for linha in linhas %}
             <tr{% if linha.bloqueado %} class="table-row-error"{% endif %}>
               <td class="table-cell-code">{{ linha.item.material.cadpro }}</td>
-              <td class="table-cell-numeric">{{ linha.saldo_atual }}</td>
+              <td class="table-cell-numeric">{{ linha.saldo_atual|quantidade }}</td>
               <td class="table-cell-numeric">
-                {{ linha.saldo_resultante }}
+                {{ linha.saldo_resultante|quantidade }}
                 {% if linha.bloqueado %}<p class="estoque-estorno-motivo">Ficaria negativo.</p>{% endif %}
               </td>
-              <td class="table-cell-numeric">{{ linha.item.quantidade }}</td>
+              <td class="table-cell-numeric">{{ linha.item.quantidade|quantidade }}</td>
               <td>{{ linha.item.material.unidade }}</td>
               <td>{{ linha.item.material.descricao }}</td>
             </tr>
@@ -119,7 +119,7 @@ ativo na interface).
     </section>
 
     {% if algum_bloqueado %}
-    <div class="estoque-confirmacao-sticky">
+    <div class="confirmation-bar estoque-confirmacao-sticky">
       <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="btn btn-secondary">Voltar</a>
     </div>
     {% else %}
@@ -135,7 +135,7 @@ ativo na interface).
         {% endif %}
       </div>
 
-      <div class="estoque-confirmacao-sticky">
+      <div class="confirmation-bar estoque-confirmacao-sticky">
         <button type="submit" class="btn btn-danger" data-processing-submit>
           <span data-processing-submit-label>Estornar entrada: {{ linhas|length }} ite{{ linhas|length|pluralize:"m,ns" }}</span>
         </button>

@@ -281,6 +281,10 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.code}"
     padding: "8px 12px"
+  table-cell-dense:
+    textColor: "{colors.text}"
+    typography: "{typography.body}"
+    padding: "8px 8px"
   table-row-clickable-hover:
     backgroundColor: "{colors.surface-subtle}"
   table-empty-row:
@@ -509,9 +513,11 @@ Ambas auto-hospedadas em `static/vendor/fonts/` (woff2 variável, subset latino,
 - **Cabeçalho de tabela** (semibold, 0.75rem, 1.25, tracking +0.04em, caixa-alta, `text-muted`): rótulo, não dado; no máximo ~3 palavras.
 - **Metadado** (regular, 0.8125rem, 1.5, `text-muted`): dica, erro de campo, resumo de paginação, rótulo da placa de identificação, descrição de item planejado.
 - **Estado / badge** (semibold, 0.75rem, 1.25).
-- **Código** (Mono, 0.875rem): CADPRO, SHA-256, matrícula na placa e o texto digitado no campo de matrícula do login (só a família muda; tamanho e altura seguem o campo). **Código compacto** (Mono, 0.8125rem): matrícula na barra de trabalho.
+- **Código** (Mono, 0.875rem): CADPRO, CODIF, documento (CNPJ/CPF) e tipo do fornecedor, SHA-256, matrícula na placa e o texto digitado no campo de matrícula do login (só a família muda; tamanho e altura seguem o campo). **Código compacto** (Mono, 0.8125rem): matrícula na barra de trabalho.
 
 Sob `pointer: coarse`, o texto digitado nos campos sobe para 1rem (evita o zoom automático do Safari); o resto da escala não muda.
+
+**Números exibidos em pt-BR.** Contagem e total passam por `separador_milhar` ("1.588", "10.035"), inclusive no rótulo do botão de confirmar; a concordância (`pluralize`) é decidida sobre o valor bruto. Quantidade de material (saldo, quantidade recebida, diferença, variação) passa por `quantidade`: milhar com ponto, decimal com vírgula e só as casas significativas, até as 3 do modelo ("27.000", "32,5", "6", "0,125"). Os dois filtros vivem em `interface/templatetags/interface_extras.py` e formatam só a exibição: nunca o `value` de um campo nem um `hidden` reenviado, que continuam no formato canônico.
 
 ### Named Rules
 
@@ -544,7 +550,7 @@ A barra de trabalho grafite no topo (ver Components → Navigation) **substitui 
 
 ### Estrutura de página
 
-Todas as telas seguem o mesmo modelo de duas caixas (Home, catálogo e login): a página carrega só o respiro, 16px lateral (respeitando `safe-area-inset`) e 24px no topo / 32px no fim, sem teto; um container filho centraliza o conteúdo com teto de 1120px, ou 640px para formulário simples e isolado (envio do CSV), ou 360px para a caixa de login. O conteúdo começa sempre 24px abaixo da faixa, nunca centralizado na vertical: no celular o teclado virtual não reduz o viewport de layout, e uma caixa centralizada nele ficaria sob o teclado. O teto é do conteúdo, não da caixa com padding: a barra de trabalho embute o mesmo cálculo, e por isso o título de página das telas largas começa exatamente no mesmo x da marca. Page header: título/contexto à esquerda e ações à direita no desktop; abaixo de 480px as ações ganham linha própria e dividem a largura. Filtros ficam próximos e antes do conteúdo que afetam, nunca em coluna lateral.
+Todas as telas seguem o mesmo modelo de duas caixas (Home, catálogo e login): a página carrega só o respiro, 16px lateral (respeitando `safe-area-inset`) e 24px no topo / 32px no fim, sem teto; um container filho centraliza o conteúdo com teto de 1120px, ou 640px para formulário simples e isolado (envio do CSV), ou 360px para a caixa de login. O conteúdo começa sempre 24px abaixo da faixa, nunca centralizado na vertical: no celular o teclado virtual não reduz o viewport de layout, e uma caixa centralizada nele ficaria sob o teclado. O teto é do conteúdo, não da caixa com padding: a barra de trabalho embute o mesmo cálculo, e por isso o título de página das telas largas começa exatamente no mesmo x da marca. Page header: título/contexto à esquerda e ações à direita no desktop; abaixo de 480px as ações ganham linha própria e dividem a largura. Filtros ficam próximos e antes do conteúdo que afetam, nunca em coluna lateral. As duas caixas e as seções são primitivos de `components.css` (`.page` > `.page-container`, ou `.page-container-narrow` para o formulário isolado, com `.page-section` por bloco), iguais em catálogo, fornecedores e estoque; nenhuma feature redefine a própria estrutura de página.
 
 Páginas densas se dividem em seções separadas só por 24px de espaço; a primeira não recebe nem isso, já separada do page header pela borda dele. Onde a seção abre com marcador de tubulação, a própria faixa grafite é o separador: não há divisor fino entre seções, e nunca cards empilhados. Estado vazio solto numa seção (fora de moldura) perde o padding próprio, lateral e vertical: alinha com o marcador e a tabela, e o ritmo até a próxima seção continua em 24px.
 
@@ -553,6 +559,8 @@ Na Home: título, depois uma grade de uma coluna que a partir de 900px vira `con
 ### Tabelas: responsividade
 
 Nesta ordem: (1) preservar toda coluna operacionalmente relevante; (2) ajustar largura de coluna; (3) scroll horizontal; (4) reorganizar controles externos; (5) ocultar coluna só com evidência de baixa prioridade para aquele fluxo. Tabela nunca vira card por breakpoint. O passo 2 inclui a ordem das colunas: o dado que decide o fluxo vem cedo, para ficar visível antes do scroll no celular. Na consulta do catálogo a ordem é Código, Descrição, Saldo, Unidade, Classificação, Detalhamento: o Saldo vem logo após a identificação do material porque é o que o requisitante procura no celular.
+
+Tabela de muitas colunas curtas (os históricos de importação, com nove ou dez) resolve o passo 2 antes de cair no 3: `.table-nowrap-headers` impede o cabeçalho de quebrar, `.table-dense-x` reduz só o padding lateral das células para 8px (`--space-2`, tracking do cabeçalho inalterado), o rótulo de cabeçalho fica curto ("Executor") e o texto longo que não decide o fluxo (o nome do arquivo) é abreviado com o todo acessível. Medido a 1440: os dois históricos cabem nos 1118px sem rolagem, cabeçalho numa linha (35px) e linha simples de 42px.
 
 ### Touch
 
@@ -564,7 +572,8 @@ Nesta ordem: (1) preservar toda coluna operacionalmente relevante; (2) ajustar l
 - O login está recomposto e revisado (desktop 1440 e celular 390 com toque; vazio, erro de credencial, erro de campo, "Entrando…" e foco): faixa de identidade no topo, caixa ao topo como folha emoldurada, matrícula em Mono. Depois de um erro de credencial, a orientação de recuperação nomeia o Setor de Almoxarifado e o e-mail dele (`mailto:`, em `primary` e sublinhado).
 - A densidade das tabelas foi medida com a Atkinson: linha simples de ~38px, linha composta de ~62px, Filter Bar alinhada e cabeçalhos sem quebra a 1440px.
 - As telas de estoque (composição e resumo da entrada, lista, detalhe e estorno) passaram pelo gate visual em 2026-09-27 (23/40 na primeira crítica). As cinco questões prioritárias foram corrigidas na mesma entrega, sem nova pontuação. A verificação foi em desktop e em largura estreita do painel; celular com toque ainda não foi conferido nelas.
-- Tablet continua em aberto: nem a composição das telas densas nem o app shell foram validados nesse contexto. A navegação de Solicitante/Chefe de setor com mais destinos também não está definida.
+- As superfícies de importação, histórico e consulta do catálogo, de fornecedores e de entradas passaram por dois gates visuais em 2026-09-28 (25/40 → 29/40), a 1440, 768 e 375 com toque, nos papéis que usam cada tela. As questões aprovadas das duas rodadas foram corrigidas e conferidas no navegador; as prévias de importação só foram avaliadas pelo código.
+- Tablet continua em aberto: nem a composição das telas densas nem o app shell foram validados nesse contexto (o preset de 768px não emula toque). A navegação de Solicitante/Chefe de setor com mais destinos também não está definida.
 
 ## Elevation & Depth
 
@@ -582,7 +591,9 @@ Bordas de 1px separam; exceções deliberadas: a borda de 2px do cabeçalho de t
 
 ## Components
 
-Primitivos compartilhados vivem em `static/css/components.css` e nunca são duplicados por tela. Padrões de composição usados por uma só feature vivem no CSS dela (`catalogo.css`, `home.css`) e sobem para `components.css` sem mudar de forma quando outra feature os reutilizar.
+Primitivos compartilhados vivem em `static/css/components.css` e nunca são duplicados por tela. Padrões de composição usados por uma só feature vivem no CSS dela (`catalogo.css`, `home.css`) e sobem para `components.css` sem mudar de forma quando outra feature os reutilizar. Os nomes dos primitivos são neutros (`.page`, `.summary`, `.confirmation-bar`, `.table-row-link`), nunca prefixados por feature.
+
+O mesmo vale fora do CSS. Parciais e filtros usados por mais de uma feature vivem no app `interface`, que não tem regra de domínio: `interface/_mensagens.html`, `_paginacao.html`, `_th_ordenavel.html` e `_consulta_falha.html`, e os filtros de `interface_extras` (`querystring_pagina`, `querystring_ordenacao`, `intervalo_paginas`, `rotulo_ordenacao`, `separador_milhar`, `quantidade`, `truncar_meio`). Comportamento genérico em JavaScript vive em `static/js/` (`linha-clicavel.js`, `envio.js`), acionado por `data-*`, nunca por classe de feature.
 
 ### Buttons
 - **Forma:** 4px, altura mínima de 44px, rótulo em peso médio, sem sublinhado mesmo quando é `<a>`.
@@ -603,12 +614,12 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 ### Inputs / Fields
 - **Estilo:** label acima (peso médio), campo `surface` com borda `border`, 4px, padding 8 × 12px, altura mínima de 44px; dica abaixo em metadado `text-muted`.
 - **Foco:** anel `focus` sempre visível.
-- **Erro:** texto em `danger` abaixo do campo e borda `danger` no campo (via `.field-has-error` no wrapper), nunca só a borda.
+- **Erro:** texto em `danger` abaixo do campo e borda `danger` no campo (via `.field-has-error` no wrapper), nunca só a borda. O parágrafo de erro tem o id que o `aria-describedby` do campo referencia (`<auto_id>_error`). O erro de um campo de filtro aparece só no campo: a região de resultados não o repete num alert, e mostra um estado neutro dizendo o que corrigir.
 - **Largura:** no desktop reflete o comprimento esperado do dado; no celular ocupa a largura do container.
 
 ### Navigation
 - **Barra de trabalho** (`.appbar`, parcial `contas/_barra_trabalho.html`): faixa `ink` sticky no topo, linha de corredor de 4px em `signal` na borda inferior, conteúdo com o mesmo teto de 1120px da página. Marca "Almoxarifado SAEP" em `on-ink`, título de seção; na Home ela é o item atual (`aria-current`, sem link), em outras telas vira link para a Home, sublinhado no hover/foco. À direita, matrícula em Mono 13px `on-ink-muted` (páginas com placa própria a ocultam abaixo de 900px, via `esconde_matricula_compacta`) e "Sair": botão de formulário POST + CSRF, contorno de 1px em `border-strong`, texto `on-ink`, 4px, alvo de 44px, hover em `ink-raised`. Nunca preenchido de `primary` nem de amarelo. Presente em toda tela autenticada (ver Layout → App shell).
-- **Retorno contextual** (`.back-link`, em `components.css`): link acima do page header para a tela de origem quando ela **não** é a Home (prévia → "Envio"; execução → "Histórico de importações"). Texto em metadado `primary`, seta para a esquerda em SVG desenhado (14px, traço 1.75, o mesmo traço da seta de fluxo espelhado, `aria-hidden`), 4px entre os dois, alvo de 44px de altura sem inflar o texto, 16px abaixo antes do page header, sublinhado no hover e no foco. Não é botão. O retorno à Home é sempre a marca da barra, nunca um back-link.
+- **Retorno contextual** (`.back-link`, em `components.css`): link acima do page header para a tela de origem quando ela **não** é a Home (prévia → "Envio"; execução → "Histórico de importações do catálogo" ou "… de fornecedores"). Texto em metadado `primary`, seta para a esquerda em SVG desenhado (14px, traço 1.75, o mesmo traço da seta de fluxo espelhado, `aria-hidden`), 4px entre os dois, alvo de 44px de altura sem inflar o texto, 16px abaixo antes do page header, sublinhado no hover e no foco. Não é botão. O retorno à Home é sempre a marca da barra, nunca um back-link.
 - **Faixa de identidade** (login, `.appbar.login-band`): a mesma faixa `ink` com linha de corredor `signal`, altura e x da marca da barra de trabalho, reaproveitando os primitivos `.appbar`/`.appbar-inner`/`.appbar-brand`. Só a marca, como texto: nunca link, nunca `aria-current`, sem matrícula, sem "Sair" e sem seta de fluxo (não leva a lugar algum). Não é sticky: no login nada rola por baixo dela. É o que ancora a tela anônima no mesmo mundo da Home, sem logo nem identidade inventada.
 - Destinos adicionais na barra, estado ativo por item e comportamento com muitos destinos ainda não existem.
 
@@ -643,26 +654,33 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 - `.table-empty-row`: linha única com `colspan` total, padding 24 × 12px, título e descrição do Empty State.
 - Coluna ordenável: rótulo é link real que cobre o `th`; `aria-sort` na vigente; indicador SVG de par de setas (neutras na não vigente; a da direção atual em `primary`, a outra a 40%); borda inferior de 2px em `primary` no `th` vigente; ordem também dita em texto no resumo da paginação.
 - Coluna de estado com `.badge` e texto explícito perto do início da linha. Conteúdo longo truncado só com forma previsível de ver o todo (`<details>` nativo).
-- `.table-row-clickable`: `cursor: pointer`, hover em `surface-subtle` só dentro de `@media (hover: hover)`, a navegação é sempre um `<a>` real numa célula.
+- **Nome de arquivo** (`.table-cell-filename`, sem quebra): até 20 caracteres, texto simples; acima disso, `<details>` fechado cujo `<summary>` corta no meio com `truncar_meio:20` (começo + "…" + fim com a extensão, para nomes de mesmo prefixo continuarem distintos) e cujo corpo traz o nome completo, sempre no DOM.
+- **Data de registro** (`.table-cell-date`): `d/m/Y H:i`, `tabular-nums`, sem quebra.
+- **Linha clicável** (aprimoramento progressivo, `static/js/linha-clicavel.js`): a linha é `<tr data-linha-clicavel>` e contém um `<a data-linha-link class="table-row-link">` real, que funciona sozinho sem JS. O nome acessível do link diz o que ele abre, por um prefixo oculto ("Entrada #3", "Execução #2"). O script é quem aplica `.table-row-clickable` (`cursor: pointer`, hover em `surface-subtle` só dentro de `@media (hover: hover)`), então a linha só promete clique quando ele existe. Clique dentro de elemento interativo ou expansível (`a`, `summary`, `details`, `button`, campo, `label`), clique com modificador ou botão não primário, e clique com texto selecionado ficam com o navegador. O link é texto no fluxo, alinhado ao topo da célula; sob `pointer: coarse`, só a área de toque cresce para 44 × 44px, por um `::after` absoluto.
 - Número de atenção numa célula (rejeitados diferente de zero no histórico): `warning` semibold na própria célula numérica, acompanhado do selo `badge-warning` na coluna de situação; zero fica sem ênfase.
 
 ### Pagination
 - Anterior / números / Próxima, com reticências nos intervalos distantes; primeira e última sempre acessíveis. Resumo em metadado à esquerda ("Página X de Y — N no total", separador de milhar, plural correto).
 - Links com borda fina, 4px, mínimo de 36px (44px sob toque). Página atual: semibold + borda e texto `primary`, não clicável, `aria-current`. Indisponível: `disabled-text`, sem ação. Reticência é texto, não controle.
 - Até 640px: um vizinho de cada lado, números numa linha e Anterior/Próxima juntos embaixo dividindo a largura. Uma página só: só o resumo.
-- Um parcial único (`_paginacao.html`) preserva os demais parâmetros da URL e pode ancorar na própria seção.
+- Um parcial único (`interface/_paginacao.html`) preserva os demais parâmetros da URL (filtros, ordem e a página de outras seções) e pode ancorar na própria seção. O resumo sempre nomeia o que conta (`rotulo_item`/`rotulo_item_plural`: "2 divergências no total") e, onde há ordenação, diz a ordem vigente.
+- Paginação que troca só a região de resultados via HTMX (as consultas) leva a vista e o foco ao início da tabela depois da troca, para a página nova nunca começar acima da tela no celular. Numa falha, o alerta é trazido à vista. A busca pelo formulário e a ordenação não mexem na rolagem.
 
 ### Filter Bar
 - Antes do conteúdo que afeta. Campos crescem lado a lado (base 220px, mínimo 160px), ações ao fim (primária "Buscar" + secundária "Limpar"); quebra por `flex-wrap`; até 640px vira coluna única de largura total.
 - Alinhamento pelo topo; a partir de 641px as ações recebem compensação de topo igual a uma linha de rótulo + gap. Nunca coluna lateral, nunca esconder filtro essencial.
 - **Busca como ferramenta dentro de formulário:** quando a busca não é a ação da página, mas um meio de preencher um formulário cuja ação principal é outra (ex.: buscar material e emitente na composição da entrada, cuja ação é "Revisar"), "Buscar" é botão **secundário**, preservando o único primário do contexto (The One Accent Rule). Os resultados são uma tabela logo abaixo, com a coluna de ação ("Adicionar", "Escolher") **primeiro**, para ser alcançável a 390px sem rolagem lateral; item indisponível mostra o motivo e "Indisponível" no lugar da ação. Enter no campo de busca aciona a busca daquele campo, nunca a ação principal.
+- **Consulta filtrada via HTMX** (consulta do catálogo e de fornecedores): filtros por GET, com "Buscar" e "Limpar" (navegação para a URL limpa). O formulário e a paginação trocam só `#resultados-consulta` e empurram a URL. Mudar a ordem preserva os filtros e volta à página 1, e a coluna ordenável vem de uma lista branca da view. O catálogo ordena pela mesma troca parcial, com cópias OOB do campo oculto `ordem` e do anúncio da ordem. Fornecedores ordena por navegação completa, que recarrega o formulário inteiro já coerente com a ordem, sem precisar dessas cópias. As duas telas são coerentes; a diferença é só técnica. Filtro inválido vindo de HTMX não troca os resultados (`HX-Reswap: none`) e marca o campo por OOB.
+- **Falha da consulta** (`interface/_consulta_falha.html`): dois alertas ocultos fora da região trocada, um para falta de resposta (rede) e outro para erro do servidor (4xx/5xx). Os dois dizem que o que aparece abaixo ainda é da consulta anterior. Em erro, os resultados anteriores, o título e a URL ficam intactos, e a requisição seguinte oculta os alertas.
 
 ### Alert
 - `.alert` + `-danger`/`-warning`/`-info`/`-success`: superfície, borda de 1px e texto da família, padding 12px, 4px, conteúdo sempre em frase explícita e curta. A faixa ocupa a largura da coluna e o parágrafo acompanha a faixa, sem teto de 72ch (limitar só o texto deixaria faixa tingida vazia). Sem barra lateral colorida.
-- Mensagens de sistema ficam visíveis até a próxima navegação; nunca somem por tempo e nunca viram toast para resultado já visível.
+- Mensagens de sistema ficam visíveis até a próxima navegação; nunca somem por tempo e nunca viram toast para resultado já visível. Vêm de um parcial único (`interface/_mensagens.html`, contêiner `.messages`, 8px antes do page header).
 
 ### Page Header
 - Título, descrição opcional (corpo `text-muted`, até 70ch) e ações. Separado do conteúdo por borda inferior em `border-frame` + 24px. Um badge de estado pode acompanhar o título. A Home usa o mesmo estilo de título sem a faixa do page header.
+- As ações levam aos vizinhos do fluxo, não só à Home. O envio de uma importação oferece "Histórico de importações" (secundário), e o histórico oferece a nova importação (primário). A consulta de entradas oferece "Registrar entrada" (primário) só a quem tem a permissão, e a rota continua autorizando. Visibilidade de ação nunca substitui a autorização, e o estado vazio também muda por papel: não convida a registrar quem não pode.
+- O título diz o domínio quando dois fluxos têm telas homônimas ("Histórico de importações do catálogo", "Resultado da importação de fornecedores #N"), e o retorno contextual repete o mesmo nome.
 
 ### Empty State
 - Nunca uma lista vazia sem explicação. `.empty-state`: padding 32 × 16px, título em tamanho de título de seção (peso médio, `text`) + descrição (até 72ch) dizendo por que está vazio ou o que fazer. Dentro de tabela com filtros, `.table-empty-row`.
@@ -675,7 +693,7 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 
 ### Confirmação
 - Ação de impacto exige confirmação explícita que reitera o resultado. Hoje sem modal: a prévia é o contexto, e o botão primário repete o resultado com plural correto ("Confirmar importação: 1 inserido, 12 atualizados"), acrescentando "(N rejeitados ficam de fora)" só quando N > 0, ao lado de "Cancelar".
-- **Barra de confirmação persistente:** o **único** par Confirmar/Cancelar da página, sem seção "Confirmação" separada e sem marcador próprio. É o último elemento da coluna: `sticky; bottom: 0` (nunca `fixed`) a mantém grudada ao rodapé da viewport durante a rolagem, e ela assenta na própria posição no fim da página. Fica dentro da coluna de conteúdo, sem sangrar além dela. Fundo `surface`, borda superior em `border-frame`, padding 12 × 16px, 24px acima, sem sombra; abaixo de 480px os botões empilham em largura total. Enquanto ela está grudada, a página ganha `scroll-padding-bottom` (80px; 160px abaixo de 480px, onde a barra chega a ~141px), o espelho do `scroll-padding-top` da barra de trabalho: foco de teclado e âncora nunca param sob ela.
+- **Barra de confirmação persistente** (`.confirmation-bar`): o **único** par Confirmar/Cancelar da página, sem seção "Confirmação" separada e sem marcador próprio. É o último elemento da coluna: `sticky; bottom: 0` (nunca `fixed`) a mantém grudada ao rodapé da viewport durante a rolagem, e ela assenta na própria posição no fim da página. Fica dentro da coluna de conteúdo, sem sangrar além dela. Fundo `surface`, borda superior em `border-frame`, padding 12 × 16px, 24px acima, sem sombra; abaixo de 480px os botões empilham em largura total. Enquanto ela está grudada, a página ganha `scroll-padding-bottom` (80px; 160px abaixo de 480px, onde a barra chega a ~141px), o espelho do `scroll-padding-top` da barra de trabalho: foco de teclado e âncora nunca param sob ela.
 
 ### Composição de documento (cabeçalho + itens)
 - Registro operacional que espelha um documento físico (hoje, a entrada de materiais: motivo, tipo, número e emitente da nota + linhas de material e quantidade). Uma só folha, um só `<form>`: seções com marcador de leitura, cabeçalho em grade de campos e, abaixo, a tabela de itens editável (Código em Mono, Descrição, Quantidade com Unidade adjacente, Remover por linha com `aria-label` que nomeia o item). O estado vive no próprio formulário e cada ação é um submit comum; HTMX só troca a região do formulário.
@@ -685,7 +703,7 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 - `select` e `textarea` seguem o estilo de Inputs / Fields. Hoje vivem em `estoque.css`; sobem para `components.css` quando outra feature os usar.
 
 ### Resumo de totais e nota explicativa
-- Pares rótulo/valor lado a lado: rótulo em metadado acima do valor em `metric`, separados por divisor vertical fino e 24px; até 640px os pares quebram em duas colunas e perdem o divisor vertical (o gap separa). Detalhe secundário em metadado; valor que não entra na soma fica separado por espaço **e** explicado por extenso. Rejeitados diferente de zero: rótulo e valor em `warning` semibold (ver Colors → Estados semânticos).
+- Pares rótulo/valor lado a lado (`.summary` > `.summary-item`, com `<dt>`/`<dd>`; ênfase de atenção em `.emphasis-warning`): rótulo em metadado acima do valor em `metric` (com separador de milhar), separados por divisor vertical fino e 24px; até 640px os pares quebram em duas colunas e perdem o divisor vertical (o gap separa). Detalhe secundário em metadado; valor que não entra na soma fica separado por espaço **e** explicado por extenso. Rejeitados diferente de zero: rótulo e valor em `warning` semibold (ver Colors → Estados semânticos).
 - Nota explicativa: corpo `text-muted`, até 72ch, antes do conteúdo que explica; não é alert.
 
 ## Do's and Don'ts
@@ -705,7 +723,9 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 - **Do** preservar coluna de tabela e usar scroll horizontal antes de ocultar dado.
 - **Do** dar a cada estado semântico a família completa (texto + superfície + borda) e texto explícito.
 - **Do** reconferir contraste de borda, texto atenuado e rótulo desabilitado contra a folha **e** o piso sempre que a rampa neutra mudar.
-- **Do** reutilizar os primitivos de `components.css` e o parcial de paginação em vez de recompor por tela.
+- **Do** reutilizar os primitivos de `components.css` e os parciais de `interface/` (mensagens, paginação, cabeçalho ordenável, falha de consulta) em vez de recompor por tela; o que uma segunda feature reutilizar sobe para lá com nome neutro.
+- **Do** formatar números só na exibição: `separador_milhar` para contagem e total, `quantidade` para saldo e quantidade.
+- **Do** dar a toda linha clicável um `<a>` real com nome acessível que diga o que abre, deixando a affordance da linha inteira para o script que a torna verdadeira.
 
 ### Don't:
 - **Don't** colocar eyebrow, kicker ou rótulo em caixa-alta acima de um título; o marcador de seção é o próprio título.
@@ -724,3 +744,6 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 - **Don't** marcar toda linha de uma tabela com selo ou borda de erro; ênfase universal se anula.
 - **Don't** deixar erro de importação sumir sozinho nem usar toast para resultado já visível.
 - **Don't** esconder ação frequente (buscar, filtrar, confirmar) atrás de menu de três pontos.
+- **Don't** marcar uma linha como clicável (cursor, hover) sem o comportamento que a torna clicável, nem deixar o clique na linha engolir um `summary`, botão ou campo dentro dela.
+- **Don't** aplicar formatação de exibição (milhar, casas) ao `value` de um campo ou a um `hidden` reenviado: "1.500" relido pelo servidor vira 1,5.
+- **Don't** deixar uma falha de consulta HTMX substituir os resultados pela página de erro, nem apresentar resultados antigos como se fossem da consulta nova.

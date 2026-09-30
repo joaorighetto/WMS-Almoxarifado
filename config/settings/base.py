@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "contas",
     "django.contrib.postgres",
+    "interface",
     "catalogo",
     "fornecedores",
     "estoque",

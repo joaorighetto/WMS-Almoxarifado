@@ -525,8 +525,21 @@ class ConsultaFornecedoresView(OrdenacaoMixin, ExigePapelMixin, View):
     - `codigo_invalido`/`documento_invalido`: `bool` — quando `True`,
       **nenhuma** query é feita em `Fornecedor` e `pagina` é `None`;
     - `pagina`: `Page` de `Fornecedor` (50/página) ou `None`;
+    - `veio_de_htmx`: `bool`, requisição com `HX-Request` (e sem
+      `HX-History-Restore-Request`) — mesmo critério de
+      `ConsultaCatalogoView.get` (`catalogo/views.py`);
     - `ordem`/`ordenacao_rotulos`: mesma convenção de `OrdenacaoMixin`
       (`catalogo/ordenacao.py`), sempre presentes.
+
+    Revisão do gate visual (mesmo achado P2 de `ConsultaCatalogoView`): um
+    código ou documento fora do formato não pode substituir a última tabela
+    de resultados visível pelo alerta de erro. Quando `veio_de_htmx` e
+    (`codigo_invalido` ou `documento_invalido`), a resposta leva
+    `HX-Reswap: none` (o htmx não troca `#resultados-consulta` — o template,
+    feito pelo `frontend-implementer`, sinaliza o campo à parte via swap
+    out-of-band) e `HX-Push-Url: false` (sem trocar os resultados, a URL não
+    passa a mostrar o filtro inválido). Sem HTMX (página inteira), nada
+    muda.
 
     `codigo` filtra por `codif=` exato — nunca completa zeros
     (`INV-SUPPLIER-001`). `nome` é normalizado (`normalizar_para_busca`) e
@@ -632,6 +645,12 @@ class ConsultaFornecedoresView(OrdenacaoMixin, ExigePapelMixin, View):
             else self.template_name
         )
         resposta = render(request, template_name, contexto)
+        if (codigo_invalido or documento_invalido) and veio_de_htmx:
+            # Revisão do gate visual (achado P2, mesmo padrão de
+            # `ConsultaCatalogoView.get`): não trocar a tabela de resultados
+            # anterior nem empurrar a URL quando o filtro é inválido.
+            resposta["HX-Reswap"] = "none"
+            resposta["HX-Push-Url"] = "false"
         patch_vary_headers(resposta, ["HX-Request", "HX-History-Restore-Request"])
         return resposta
 

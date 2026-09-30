@@ -164,8 +164,8 @@
   });
 
   /* Estado "Processando" dos envios de efeito real (Confirmar entrada,
-     Estornar entrada) — mesmo padrão de `catalogo/static/catalogo/js/
-     envio.js`/`contas/static/contas/js/login.js` (Constitution, Princípio
+     Estornar entrada) — mesmo padrão de `static/js/envio.js`/
+     `contas/static/contas/js/login.js` (Constitution, Princípio
      VIII), sem a parte de file upload (não usada aqui). Nenhum dos dois
      formulários é HTMX em si (`entrada_confirmar`/`entrada_estorno`
      continuam envios comuns, para o redirect de sucesso/aviso carregar a
