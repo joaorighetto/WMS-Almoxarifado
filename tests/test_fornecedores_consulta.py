@@ -632,11 +632,14 @@ def test_hx_on_response_error_neutraliza_swap_e_revela_o_alerta_de_servidor(
 
     resposta = client.get(reverse("fornecedores:consulta"))
 
-    bloco = _bloco_section_principal(resposta.content.decode("utf-8"))
-    assert "ctx.swap = 'none'" in bloco
-    assert "ctx.push = false" in bloco
-    assert "ctx.text = ''" in bloco
-    assert "resultados-erro-servidor" in bloco
+    valor = _valor_hx_on(
+        _bloco_section_principal(resposta.content.decode("utf-8")), "response:error"
+    )
+    assert "ctx.swap = 'none'" in valor
+    assert "ctx.push = false" in valor
+    assert "ctx.text = ''" in valor
+    assert "resultados-erro-servidor" in valor
+    assert "resultados-erro-rede" not in valor
 
 
 def test_hx_on_before_request_oculta_os_dois_alertas(client, funcionario_almoxarifado):
@@ -644,9 +647,12 @@ def test_hx_on_before_request_oculta_os_dois_alertas(client, funcionario_almoxar
 
     resposta = client.get(reverse("fornecedores:consulta"))
 
-    bloco = _bloco_section_principal(resposta.content.decode("utf-8"))
-    assert "resultados-erro-rede" in bloco
-    assert "resultados-erro-servidor" in bloco
+    valor = _valor_hx_on(
+        _bloco_section_principal(resposta.content.decode("utf-8")), "before:request"
+    )
+    assert "resultados-erro-rede" in valor
+    assert "resultados-erro-servidor" in valor
+    assert valor.count("hidden = true") == 2
 
 
 def test_alertas_de_rede_e_servidor_ficam_ocultos_por_padrao_fora_dos_resultados(
