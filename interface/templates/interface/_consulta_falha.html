@@ -1,0 +1,37 @@
+{% comment %}
+Falha de uma atualização HTMX de resultados de consulta (Fase B, achado do
+gate visual) — usado por `catalogo/templates/catalogo/consulta.html` e
+`fornecedores/templates/fornecedores/consulta.html`. Dois alertas, sempre
+FORA da região trocada (`#resultados-consulta`), para sobreviver a um
+`ctx.swap = 'none'`/à ausência de resposta:
+
+- `#resultados-erro-rede`: sem resposta alguma (falha de rede/timeout,
+  evento `htmx:error` — tratado no bloco `body_attrs` do `<body>` de cada
+  consulta, porque a restauração de histórico do HTMX 4 inicia o GET a
+  partir do `<body>`, fora da `<section>` da consulta).
+- `#resultados-erro-servidor`: o servidor respondeu, mas com 4xx/5xx
+  (evento `htmx:response:error` — tratado no `hx-on::response:error` da
+  `<section>` de cada consulta, que também neutraliza o swap/push/title da
+  resposta de erro).
+
+Causas diferentes continuam com mensagens diferentes — nunca uma genérica
+"não foi possível atualizar" que misturaria "sem internet" com "o servidor
+recusou" — mas terminam na mesma garantia: os resultados abaixo ainda são
+os da última consulta bem-sucedida, não foram apagados nem substituídos.
+
+Cada consulta escode os dois (`hidden`) em `hx-on::before:request`, antes de
+qualquer nova tentativa, e revela só o que corresponde à falha ocorrida.
+{% endcomment %}
+<div id="resultados-erro-rede" class="alert alert-danger" role="alert" hidden>
+  <p>
+    Não foi possível atualizar os resultados: o servidor não respondeu.
+    Verifique a conexão e tente de novo. O que aparece abaixo ainda é da
+    consulta anterior.
+  </p>
+</div>
+<div id="resultados-erro-servidor" class="alert alert-danger" role="alert" hidden>
+  <p>
+    O servidor não conseguiu concluir esta consulta. Tente de novo em
+    instantes. O que aparece abaixo ainda é da consulta anterior.
+  </p>
+</div>

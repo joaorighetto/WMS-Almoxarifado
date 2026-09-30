@@ -1,12 +1,22 @@
 /*
  * Estado de processamento das telas de importação (T029)
  *
+ * Movido de `catalogo/static/catalogo/js/envio.js` para `static/js/` (nome
+ * neutro, consolidação de UX, Fase A): já era carregado também pelas telas
+ * de envio/prévia de `fornecedores` (cópia por `<script src>`, sem app
+ * "dono"). Contrato inalterado — tudo por atributos `data-*`.
+ *
  * Mesmo padrão de contas/static/contas/js/login.js (Constitution, Princípio VIII):
  * botão desabilitado, rótulo "Processando…", `aria-busy`, bloqueio de duplo envio e
  * reset no `pageshow` (bfcache). Aqui generalizado por atributos `data-*` para valer
  * em mais de um formulário na mesma página (envio; confirmação e, opcionalmente,
  * cancelamento, na prévia). Tudo funciona sem este script: sem JS, os formulários
  * continuam submetendo normalmente.
+ *
+ * Consumidores: catalogo/templates/catalogo/importacao_envio.html,
+ * catalogo/templates/catalogo/importacao_previa.html,
+ * fornecedores/templates/fornecedores/importacao_envio.html,
+ * fornecedores/templates/fornecedores/importacao_previa.html.
  */
 (() => {
   "use strict";

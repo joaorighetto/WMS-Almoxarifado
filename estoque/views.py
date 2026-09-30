@@ -578,7 +578,20 @@ class ConsultaEntradasMixin(ExigePapelMixin):
 
 
 class EntradasView(ConsultaEntradasMixin, View):
-    """Lista de entradas (`entradas`), da mais recente para a mais antiga."""
+    """Lista de entradas (`entradas`), da mais recente para a mais antiga.
+
+    `pode_registrar_entrada` cobre `PERM-STOCK-ENTRY-CREATE`
+    (`ROLE-WAREHOUSE-STAFF`, que o chefe do almoxarifado também possui) —
+    usado pelo template para mostrar a ação "Registrar entrada" no page
+    header e variar o estado vazio. O auditor acessa esta lista via
+    `ConsultaEntradasMixin` (`PERM-STOCK-HISTORY-VIEW`) mas não tem esse
+    papel, então a flag fica `False` para ele. A autorização efetiva de
+    registrar continua na rota `entrada_nova`
+    (`_ComposicaoEntradaBase`/`ExigePapelMixin`) — este contexto é só
+    apresentação (Constitution VI), mesmo padrão de `pode_estornar`
+    (`EntradaDetalheView`, abaixo) e de `pode_registrar_entrada`
+    (`contas/views.py`, `HomeView`).
+    """
 
     template_name = "estoque/entradas.html"
 
@@ -590,7 +603,12 @@ class EntradasView(ConsultaEntradasMixin, View):
         )
         paginador = Paginator(entradas, TAMANHO_PAGINA_ENTRADAS)
         pagina = paginador.get_page(request.GET.get("pagina"))
-        return render(request, self.template_name, {"pagina": pagina})
+        pode_registrar_entrada = request.user.tem_papel(Papel.FUNCIONARIO_ALMOXARIFADO)
+        contexto = {
+            "pagina": pagina,
+            "pode_registrar_entrada": pode_registrar_entrada,
+        }
+        return render(request, self.template_name, contexto)
 
 
 class EntradaDetalheView(ConsultaEntradasMixin, View):

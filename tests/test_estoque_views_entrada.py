@@ -21,6 +21,7 @@ espera-se falha (por rota ausente, campo ausente ou comportamento ainda não
 implementado) até a implementação estar completa.
 """
 
+import re
 import signal
 import uuid
 from decimal import Decimal
@@ -322,6 +323,138 @@ def test_voltar_do_resumo_devolve_o_formulario_preenchido(
 
     assert resposta.status_code == 200
     assert "TD-0003" in resposta.content.decode()
+
+
+# ---------------------------------------------------------------------------
+# Formato de EXIBIÇÃO x formato de ENTRADA (Fase C, filtro `quantidade`): o
+# resumo mostra "1.500", mas o que o navegador ENVIA (campos ocultos do resumo,
+# `<input>` de quantidade da composição) nunca pode ser o texto de exibição —
+# "1.500" enviado seria lido como 1,5, não 1500 (`estoque.quantidade.
+# interpretar_quantidade_recebida`). Regressão silenciosa e cara: quantidade
+# errada gravada por um filtro de apresentação.
+# ---------------------------------------------------------------------------
+
+
+def _campos_ocultos(html):
+    """`{name: value}` de todos os `<input type="hidden">` do HTML — o que o
+    navegador reenviaria ao confirmar."""
+    campos = {}
+    for tag in re.findall(r'<input\b[^>]*type="hidden"[^>]*>', html):
+        nome = re.search(r'name="([^"]*)"', tag)
+        valor = re.search(r'value="([^"]*)"', tag)
+        if nome:
+            campos[nome.group(1)] = valor.group(1) if valor else ""
+    return campos
+
+
+def _valor_do_input(html, name):
+    tag = re.search(rf'<input\b[^>]*name="{re.escape(name)}"[^>]*>', html)
+    assert tag is not None, f"<input name={name!r}> não encontrado"
+    valor = re.search(r'value="([^"]*)"', tag.group())
+    return valor.group(1) if valor else ""
+
+
+def _revisar(client, chave, material, quantidade):
+    from estoque.models import MotivoEntrada, TipoDocumentoEntrada
+
+    payload = _payload_base(
+        chave,
+        total_itens=1,
+        acao="revisar",
+        motivo=MotivoEntrada.DOACAO_RECEBIDA,
+        tipo_documento=TipoDocumentoEntrada.NOTA_FISCAL,
+        numero_documento=f"TD-{uuid.uuid4()}",
+    )
+    payload.update(_payload_item(0, material.pk, quantidade))
+    return client.post(reverse("estoque:entrada_nova"), payload)
+
+
+@pytest.mark.parametrize(
+    "digitado, exibido",
+    [("1500", "1.500"), ("6,000", "6"), ("1234,5", "1.234,5")],
+)
+def test_resumo_formata_so_a_exibicao_e_preserva_o_valor_enviado_nos_campos_ocultos(
+    client, funcionario_almoxarifado, criar_material, digitado, exibido
+):
+    material = criar_material("700.000.030", Decimal("10.000"))
+    client.force_login(funcionario_almoxarifado)
+    chave = _obter_chave_confirmacao(client)
+
+    resposta = _revisar(client, chave, material, digitado)
+
+    assert resposta.status_code == 200
+    conteudo = resposta.content.decode()
+    assert re.search(
+        rf'<td class="table-cell-numeric">\s*{re.escape(exibido)}\s*</td>', conteudo
+    ), f"resumo deveria exibir {digitado!r} como {exibido!r}"
+    hidden = _campos_ocultos(conteudo)
+    assert hidden["itens-0-quantidade"] == digitado, (
+        "o campo oculto que será reenviado não pode carregar o formato de exibição"
+    )
+
+
+def test_confirmar_com_os_campos_ocultos_do_resumo_registra_a_quantidade_digitada(
+    client, funcionario_almoxarifado, criar_material
+):
+    """Ida e volta real: o que o navegador reenviaria a partir do resumo
+    renderizado (com "1.500" na tela) grava 1500, não 1,5."""
+    from estoque.models import Entrada
+
+    material = criar_material("700.000.031", Decimal("10.000"))
+    client.force_login(funcionario_almoxarifado)
+    chave = _obter_chave_confirmacao(client)
+    resumo = _revisar(client, chave, material, "1500")
+    assert "1.500" in resumo.content.decode(), "pré-condição: exibição formatada"
+
+    reenvio = _campos_ocultos(resumo.content.decode())
+    reenvio.pop("acao", None)  # pertence ao formulário "Voltar e corrigir"
+    resposta = client.post(reverse("estoque:entrada_confirmar"), reenvio)
+
+    assert resposta.status_code == 302
+    entrada = Entrada.objects.get()
+    assert entrada.itens.get().quantidade == Decimal("1500.000")
+    material.refresh_from_db()
+    assert material.saldo == Decimal("1510.000")
+
+
+@pytest.mark.parametrize("digitado", ["1500", "6,000", "1234,5"])
+def test_voltar_do_resumo_devolve_a_quantidade_como_digitada(
+    client, funcionario_almoxarifado, criar_material, digitado
+):
+    from estoque.models import MotivoEntrada, TipoDocumentoEntrada
+
+    material = criar_material("700.000.032", Decimal("10.000"))
+    client.force_login(funcionario_almoxarifado)
+    chave = _obter_chave_confirmacao(client)
+    payload = _payload_base(
+        chave,
+        total_itens=1,
+        acao="voltar",
+        motivo=MotivoEntrada.DOACAO_RECEBIDA,
+        tipo_documento=TipoDocumentoEntrada.NOTA_FISCAL,
+        numero_documento="TD-VOLTAR-QTD",
+    )
+    payload.update(_payload_item(0, material.pk, digitado))
+
+    resposta = client.post(reverse("estoque:entrada_nova"), payload)
+
+    assert resposta.status_code == 200
+    assert _valor_do_input(resposta.content.decode(), "itens-0-quantidade") == digitado
+
+
+def test_busca_de_material_exibe_o_saldo_em_pt_br(client, funcionario_almoxarifado, criar_material):
+    material = criar_material("700.000.033", Decimal("27000.000"))
+    client.force_login(funcionario_almoxarifado)
+    chave = _obter_chave_confirmacao(client)
+
+    resposta = client.post(
+        reverse("estoque:entrada_nova"),
+        _payload_base(chave, acao="buscar_material", busca_material=material.cadpro),
+    )
+
+    assert re.search(
+        r'<td class="table-cell-numeric">\s*27\.000\s*</td>', resposta.content.decode()
+    )
 
 
 # ---------------------------------------------------------------------------

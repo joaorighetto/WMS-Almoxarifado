@@ -9,8 +9,14 @@ dados do estorno. Os dados de entrada/estorno são criados diretamente por
 composição em si é `tests/test_estoque_views_entrada.py`).
 
 TDD: escrito antes de `estoque/views.py` existir.
+
+Seção acrescentada pelo `test-engineer` (alinhamento de UX, Fase B):
+"Ação 'Registrar entrada' no Page Header" (`PERM-STOCK-ENTRY-CREATE`,
+`pode_registrar_entrada`) e "Linha clicável" (`data-linha-clicavel`/
+`data-linha-link`, `static/js/linha-clicavel.js`).
 """
 
+import re
 import uuid
 from decimal import Decimal
 
@@ -166,3 +172,167 @@ def test_detalhe_de_pk_inexistente_e_404_para_autorizado(client, funcionario_alm
     resposta = client.get(reverse("estoque:entrada_detalhe", args=[999999]))
 
     assert resposta.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Ação "Registrar entrada" no Page Header — `PERM-STOCK-ENTRY-CREATE`
+# (`EntradasView.pode_registrar_entrada`, `estoque/views.py`). O auditor está
+# no recorte de `PERM-STOCK-HISTORY-VIEW` (FR-021, vê a lista) mas não tem
+# `PERM-STOCK-ENTRY-CREATE` — a ação não pode aparecer para ele. A
+# autorização real da rota `entrada_nova` já é garantida por
+# `tests/test_estoque_permissoes.py::
+# test_usuario_sem_role_warehouse_staff_recebe_403_no_registro`
+# (parametrizado com "auditor" em `USUARIOS_SEM_PAPEL_DE_REGISTRO`) — os
+# testes abaixo cobrem só a apresentação, nunca em substituição a esse 403
+# (regra 6 da matriz de permissões: ocultar botão não constitui
+# autorização).
+# ---------------------------------------------------------------------------
+
+
+def _bloco_page_header(conteudo):
+    match = re.search(r'<header class="page-header">.*?</header>', conteudo, re.S)
+    assert match is not None, "page header não encontrado"
+    return match.group()
+
+
+def test_funcionario_almoxarifado_ve_acao_registrar_entrada(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("estoque:entradas"))
+
+    bloco = _bloco_page_header(resposta.content.decode())
+    assert f'href="{reverse("estoque:entrada_nova")}"' in bloco
+    assert "Registrar entrada" in bloco
+
+
+def test_chefe_almoxarifado_ve_acao_registrar_entrada(client, chefe_almoxarifado):
+    """`chefe_almoxarifado` acumula `ROLE-WAREHOUSE-STAFF`
+    (`PERM-STOCK-ENTRY-CREATE`) além de `ROLE-WAREHOUSE-HEAD`."""
+    client.force_login(chefe_almoxarifado)
+
+    resposta = client.get(reverse("estoque:entradas"))
+
+    bloco = _bloco_page_header(resposta.content.decode())
+    assert f'href="{reverse("estoque:entrada_nova")}"' in bloco
+
+
+def test_auditor_nao_ve_acao_registrar_entrada(client, auditor):
+    client.force_login(auditor)
+
+    resposta = client.get(reverse("estoque:entradas"))
+
+    bloco = _bloco_page_header(resposta.content.decode())
+    assert reverse("estoque:entrada_nova") not in bloco
+    assert "Registrar entrada" not in bloco
+
+
+def test_acao_escondida_nao_dispensa_o_403_real_da_rota(client, auditor):
+    """Par explícito com o teste acima: ausência do botão não é a
+    autorização em si. A garantia de fundo já existe em `tests/
+    test_estoque_permissoes.py`; este teste só documenta o par no mesmo
+    arquivo que prova a ausência do botão para o auditor."""
+    client.force_login(auditor)
+
+    resposta = client.get(reverse("estoque:entrada_nova"))
+
+    assert resposta.status_code == 403
+
+
+def test_estado_vazio_com_permissao_convida_a_registrar(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("estoque:entradas"))
+
+    conteudo = resposta.content.decode()
+    assert 'data-estado="vazio"' in conteudo
+    assert "Registre a primeira entrada de materiais para vê-la aqui." in conteudo
+
+
+def test_estado_vazio_sem_permissao_nao_convida_a_registrar(client, auditor):
+    client.force_login(auditor)
+
+    resposta = client.get(reverse("estoque:entradas"))
+
+    conteudo = resposta.content.decode()
+    assert 'data-estado="vazio"' in conteudo
+    assert "Registre" not in conteudo
+    assert "As entradas registradas pela equipe do almoxarifado aparecerão aqui." in conteudo
+
+
+# ---------------------------------------------------------------------------
+# Linha clicável — `<a>` real por linha, com nome acessível contextualizado
+# (`static/js/linha-clicavel.js`, contrato `data-linha-clicavel`/
+# `data-linha-link`). O aprimoramento em si (clique fora do link navegando)
+# só é verificável no browser; aqui só o que garante o funcionamento sem JS.
+# ---------------------------------------------------------------------------
+
+
+def test_cada_entrada_tem_link_real_com_nome_acessivel_contextualizado(
+    client, funcionario_almoxarifado, criar_material
+):
+    material = criar_material("800.000.010", Decimal("0.000"))
+    entrada = _registrar(funcionario_almoxarifado, material, Decimal("1.000"))
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("estoque:entradas"))
+
+    conteudo = resposta.content.decode()
+    href = reverse("estoque:entrada_detalhe", args=[entrada.pk])
+    link_esperado = (
+        f'<a href="{href}" class="table-row-link" data-linha-link>'
+        f'<span class="visually-hidden">Entrada </span>#{entrada.pk}</a>'
+    )
+    assert link_esperado in conteudo, "link real da linha, com nome acessível contextualizado"
+    assert "<tr data-linha-clicavel>" in conteudo
+
+
+def test_pagina_de_entradas_carrega_o_script_de_linha_clicavel(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("estoque:entradas"))
+
+    assert "js/linha-clicavel.js" in resposta.content.decode()
+
+
+# ---------------------------------------------------------------------------
+# Quantidade no detalhe da entrada (Fase C, filtro `quantidade`): antes o
+# detalhe mostrava "6,000" sem filtro algum, ao lado de saldos formatados de
+# outro jeito. Só exibição; o algoritmo é `tests/test_catalogo_templatetags.py`.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "quantidade, esperado",
+    [
+        (Decimal("6.000"), "6"),
+        (Decimal("1500.500"), "1.500,5"),
+        (Decimal("0.125"), "0,125"),
+    ],
+)
+def test_detalhe_exibe_a_quantidade_em_pt_br_so_com_as_casas_significativas(
+    client, funcionario_almoxarifado, criar_material, quantidade, esperado
+):
+    material = criar_material("800.000.020", Decimal("0.000"))
+    entrada = _registrar(funcionario_almoxarifado, material, quantidade)
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("estoque:entrada_detalhe", args=[entrada.pk]))
+
+    conteudo = resposta.content.decode()
+    assert re.search(
+        rf'<td class="table-cell-numeric">\s*{re.escape(esperado)}\s*</td>', conteudo
+    ), f"quantidade {quantidade} deveria aparecer como {esperado!r}"
+
+
+def test_detalhe_de_item_de_6_unidades_mostra_6_e_nao_6_virgula_000(
+    client, funcionario_almoxarifado, criar_material
+):
+    material = criar_material("800.000.021", Decimal("0.000"))
+    entrada = _registrar(funcionario_almoxarifado, material, Decimal("6.000"))
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("estoque:entrada_detalhe", args=[entrada.pk]))
+
+    conteudo = resposta.content.decode()
+    assert "6,000" not in conteudo
+    assert "6.000" not in conteudo

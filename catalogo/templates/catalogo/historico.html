@@ -1,5 +1,5 @@
 {% extends "contas/base.html" %}
-{% load static catalogo_extras %}
+{% load static interface_extras %}
 
 {% comment %}
 Histórico de importações do catálogo (US3, FR-033–FR-037, FR-037a,
@@ -13,8 +13,8 @@ Pagination e Empty State (`static/css/components.css`,
 `catalogo/static/catalogo/css/catalogo.css`).
 
 Ordenação por coluna (FR-037a, emenda de 2026-09-22, `OrdenacaoMixin`,
-`catalogo/ordenacao.py`): "Concluída em", "Executada por", "Recebidos",
-"Rejeitados" e "Divergências" usam `catalogo/_th_ordenavel.html`, sem
+`catalogo/ordenacao.py`): "Concluída em", "Executor", "Recebidos",
+"Rejeitados" e "Divergências" usam `interface/_th_ordenavel.html`, sem
 `htmx_alvo`/`htmx_indicador` — o histórico é navegação normal de página
 inteira, sem troca parcial HTMX (diferente da consulta do catálogo).
 "Execução", "Arquivo", "Inseridos" e "Atualizados" continuam `<th>` simples,
@@ -33,7 +33,7 @@ real na coluna "Execução" — funciona sozinho, sem nenhum JS. Revisão do gat
 visual (achados menores 9a/9c/9d): (a) "Concluída em" usa formato curto
 (`d/m/Y H:i`) em vez do formato por extenso do L10N pt-BR, que empurrava as
 colunas numéricas para fora da tela no celular; (c)
-`catalogo/static/catalogo/js/historico.js` estende o clique para a linha
+`static/js/linha-clicavel.js` estende o clique para a linha
 inteira como aprimoramento progressivo, sem o overlay CSS anterior que
 impedia selecionar texto das outras células; (d) a coluna "Execução"
 (`#{{ e.pk }}`) mostra o mesmo número usado como título em
@@ -48,7 +48,7 @@ novo). O par de rótulos não diz "Concluída" porque esta tela só lista
 execuções confirmadas: a palavra não distinguiria nenhuma linha das outras
 e custava a largura que quebrava o próprio selo em três linhas dentro da
 borda. O número em si (célula "Rejeitados") continua a pista primária: quando diferente de zero, ganha peso semibold + âmbar/warning
-(`.catalogo-rejeitados-emphasis`, `catalogo.css` — "rejeição é atenção, não
+(`.emphasis-warning`, `static/css/components.css` — "rejeição é atenção, não
 erro", decisão do dono do produto; compartilhada com o Resumo da
 prévia/execução) — nunca só a cor, nunca a linha inteira. Colunas numéricas passam pelo filtro
 `separador_milhar` (mesmo usado no resumo da paginação), para "8536" e
@@ -63,35 +63,44 @@ Atualizados/Rejeitados logo depois — fiquem visíveis sem rolagem; só
 "Divergências", ao final, cai na rolagem horizontal residual (mecanismo já
 existente do `.table-wrapper`, nunca conteúdo inacessível). É o nível 3 da
 regra de responsividade de tabela (DESIGN.md → Layout → Tabelas: responsividade), preferível a
-ocultar coluna (nível 5) ou a espremer o selo de estado em três linhas. "Arquivo"
-ganhou `.catalogo-historico-arquivo` (largura fixa em 15ch, `catalogo.css`)
-para não ser o fiel-da-balança que a tabela toda usa como largura mínima.
-Sublinhado não é ponto de quebra do navegador (só hífen é): nomes gerados
-pelo `seed_dev` como "seed_dev_03_restauracao_carga_inicial_valida.csv"
-transbordavam por cima da coluna seguinte. A correção quebra o nome dentro da
-célula (`overflow-wrap: anywhere`) e segura a coluna em 15ch com `width`,
-`min-width` e `max-width`: o piso impede que a tabela esprema a coluna e
-quebre nomes curtos em qualquer ponto (ex. "MOTHERLODE.CSV" →
-"MOTHE"/"RLODE.CSV"), e o `width` impede que ela receba a sobra quando a
-tabela é mais estreita que o wrapper, o que o `max-width` em célula de tabela
-(efeito indefinido no CSS 2.1) não garante. O nome completo continua visível,
-sem truncamento.
+ocultar coluna (nível 5) ou a espremer o selo de estado em três linhas.
+
+"Arquivo" (revisão do gate visual, Fases B e C — achado: nomes gerados pelo
+`seed_dev`, como "seed_dev_03_restauracao_carga_inicial_valida.csv",
+quebravam em várias linhas e inflavam a linha para 144–152px; a correção da
+Fase B, 24ch fixos, empurrou a tabela para 1259px numa área de 1118px a
+1440px). O nome vai numa linha só, cortado NO MEIO por `truncar_meio:20`
+(`interface_extras.py`: começo + "…" + final com a extensão): o template
+compara `nome_arquivo` com o resultado — quando cabe, texto simples; quando
+não, um `<details>` nativo (DESIGN.md → Table: "conteúdo longo truncado só
+com forma previsível de ver o todo") com o nome cortado no `<summary>` e o
+nome completo — sempre no DOM, aberto ou fechado — num `<div>` revelado ao
+abrir. O nome nunca é alterado, só a exibição; abrir o detalhe cresce apenas
+a própria linha.
+
+Largura a 1440px (Fase C, medido em navegador headless): `.table-nowrap-headers`
+mantém os cabeçalhos numa linha (th de 35px, antes 53px com "Executada por" —
+hoje "Executor" — em duas linhas) e `.table-dense-x` (`static/css/components.css`) aperta o padding
+horizontal (`--table-cell-pad-x` 12px → 8px; o tracking dos cabeçalhos fica
+no 0.04em do DESIGN.md), com o rótulo curto "Executor" e o corte
+`truncar_meio:20`: a tabela passa de 1259px para 1106px numa área de 1118px —
+as dez colunas cabem sem rolagem, linha de 42px.
 {% endcomment %}
 
-{% block title %}Histórico de importações — WMS-Almoxarifado{% endblock %}
+{% block title %}Histórico de importações do catálogo — WMS-Almoxarifado{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'catalogo/css/catalogo.css' %}">
 {% endblock %}
 
 {% block content %}
-<main class="catalogo-page">
-  <div class="catalogo-container">
-    {% include "catalogo/_mensagens.html" %}
+<main class="page">
+  <div class="page-container">
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
-        <h1 class="page-header-title">Histórico de importações</h1>
+        <h1 class="page-header-title">Histórico de importações do catálogo</h1>
         <p class="page-header-description">
           Execuções de importação do catálogo confirmadas.
         </p>
@@ -101,29 +110,29 @@ sem truncamento.
       </div>
     </header>
 
-    <section class="catalogo-section">
+    <section class="page-section">
       {% if execucoes %}
       <div class="table-wrapper table-sticky-header">
-        <table class="table">
+        <table class="table table-nowrap-headers table-dense-x">
           <thead>
             <tr>
               <th scope="col">Execução</th>
               <th scope="col">Situação</th>
-              {% include "catalogo/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="executor" rotulo="Executada por" rotulo_acao="executor" %}
-              <th scope="col" class="catalogo-historico-arquivo">Arquivo</th>
-              {% include "catalogo/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
+              {% include "interface/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
+              {% include "interface/_th_ordenavel.html" with coluna="executor" rotulo="Executor" rotulo_acao="executor" %}
+              <th scope="col" class="table-cell-filename">Arquivo</th>
+              {% include "interface/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
               <th scope="col" class="table-cell-numeric">Inseridos</th>
               <th scope="col" class="table-cell-numeric">Atualizados</th>
-              {% include "catalogo/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="divergencias" rotulo="Divergências" rotulo_acao="divergências" extra_class="table-cell-numeric" %}
+              {% include "interface/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
+              {% include "interface/_th_ordenavel.html" with coluna="divergencias" rotulo="Divergências" rotulo_acao="divergências" extra_class="table-cell-numeric" %}
             </tr>
           </thead>
           <tbody>
             {% for e in execucoes %}
-            <tr class="table-row-clickable catalogo-historico-row">
+            <tr data-linha-clicavel>
               <td>
-                <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="catalogo-historico-link">#{{ e.pk }}</a>
+                <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="table-row-link" data-linha-link><span class="visually-hidden">Execução </span>#{{ e.pk }}</a>
               </td>
               <td class="catalogo-historico-situacao">
                 {% if e.total_rejeitados %}
@@ -132,20 +141,29 @@ sem truncamento.
                 <span class="badge badge-success">Sem rejeições</span>
                 {% endif %}
               </td>
-              <td>{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
+              <td class="table-cell-date">{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
               <td>{{ e.executada_por.matricula }}</td>
-              <td class="catalogo-historico-arquivo">{{ e.nome_arquivo }}</td>
+              <td class="table-cell-filename">
+                {% if e.nome_arquivo|truncar_meio:20 == e.nome_arquivo %}
+                <span class="table-cell-filename-nome">{{ e.nome_arquivo }}</span>
+                {% else %}
+                <details class="table-cell-filename-detalhe">
+                  <summary class="table-cell-filename-nome">{{ e.nome_arquivo|truncar_meio:20 }}</summary>
+                  <div class="table-cell-filename-completo">{{ e.nome_arquivo }}</div>
+                </details>
+                {% endif %}
+              </td>
               <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
               <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
               <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
-              <td class="table-cell-numeric{% if e.total_rejeitados %} catalogo-rejeitados-emphasis{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
+              <td class="table-cell-numeric{% if e.total_rejeitados %} emphasis-warning{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
               <td class="table-cell-numeric">{{ e.total_divergencias|separador_milhar }}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
+      {% include "interface/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
       {% else %}
       <div class="empty-state" data-estado="vazio">
         <p class="empty-state-title">Nenhuma importação registrada.</p>
@@ -158,5 +176,5 @@ sem truncamento.
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'catalogo/js/historico.js' %}" defer></script>
+<script src="{% static 'js/linha-clicavel.js' %}" defer></script>
 {% endblock %}

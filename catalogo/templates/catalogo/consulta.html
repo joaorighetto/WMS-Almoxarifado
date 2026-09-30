@@ -1,5 +1,5 @@
 {% extends "contas/base.html" %}
-{% load static catalogo_extras %}
+{% load static interface_extras %}
 
 {% block title %}Consulta do catálogo — WMS-Almoxarifado{% endblock %}
 
@@ -39,17 +39,20 @@ carrega só uma vez.
 
 {% comment %}
 Na restauração de histórico o HTMX 4 faz o GET a partir do `<body>`, fora
-da seção da consulta. O erro de rede precisa ser tratado no `<body>` para
-alcançar também esse caso; o mesmo evento das buscas e da paginação sobe
-até aqui por bubbling. Ao restaurar outra página, o novo `<body>` substitui
-este atributo junto com o restante do conteúdo.
+da seção da consulta. O erro de REDE (sem resposta alguma — `htmx:error`)
+precisa ser tratado no `<body>` para alcançar também esse caso; o mesmo
+evento das buscas e da paginação sobe até aqui por bubbling. O erro de
+SERVIDOR (resposta 4xx/5xx) é um evento diferente (`htmx:response:error`),
+tratado abaixo na própria `<section>` — os dois alertas ficam em
+`interface/_consulta_falha.html`. Ao restaurar outra página, o novo
+`<body>` substitui este atributo junto com o restante do conteúdo.
 {% endcomment %}
-{% block body_attrs %} hx-on::error="document.getElementById('resultados-erro-rede').hidden = false"{% endblock %}
+{% block body_attrs %} hx-on::error="document.getElementById('resultados-erro-rede').hidden = false; const secao = document.getElementById('resultados-consulta')?.closest('section'); if (secao?.dataset.paginacaoPendente === '1') { secao.dataset.paginacaoPendente = ''; document.getElementById('resultados-erro-rede').scrollIntoView(); }"{% endblock %}
 
 {% block content %}
-<main class="catalogo-page">
-  <div class="catalogo-container">
-  {% include "catalogo/_mensagens.html" %}
+<main class="page">
+  <div class="page-container">
+  {% include "interface/_mensagens.html" %}
 
   <header class="page-header">
     <div>
@@ -66,7 +69,8 @@ este atributo junto com o restante do conteúdo.
   disparado pelo formulário ou por qualquer link de paginação (dentro de
   `#resultados-consulta`, descendente desta seção) sobe por bubbling até aqui.
   Falha de rede/timeout dispara `htmx:error`, tratado no `<body>` acima para
-  incluir também voltar/avançar.
+  incluir também voltar/avançar — os dois alertas (rede/servidor) vêm de
+  `interface/_consulta_falha.html`, ver comentário lá.
 
   No HTMX 4 uma resposta 4xx/5xx é tratada como qualquer outra: troca o alvo,
   empurra a URL no histórico (`hx-push-url`), troca `document.title` pelo
@@ -76,12 +80,44 @@ este atributo junto com o restante do conteúdo.
   handlers `hx-on`) e neutraliza tudo, confirmado no browser: `ctx.swap =
   'none'` mantém os resultados anteriores visíveis, `ctx.push = false` evita a
   entrada no histórico e `ctx.text = ''` descarta título e OOB do corpo de
-  erro. O alerta aparece junto dos resultados anteriores, como no HTMX 2.
+  erro. O alerta de servidor aparece junto dos resultados anteriores, como no
+  HTMX 2.
+  {% endcomment %}
+  {% comment %}
+  Rolagem e foco depois da PAGINAÇÃO via HTMX (revisão do gate visual, Fase C,
+  achado P1: no celular a página 2 começava ~3.700px acima da área visível, com
+  o alerta de falha e o indicador de carregamento fora da tela). Só os links de
+  página (`interface/_paginacao.html`, `a.pagination-link[hx-get]`) acionam isto:
+  `hx-on::before:request` guarda a origem em `dataset.paginacaoPendente` ('1' só
+  para esses links — não para o envio do formulário, que já está perto dos
+  resultados e desorientaria se rolasse, nem para os cabeçalhos de ordenação,
+  que mantêm a própria devolução de foco por `#ordenar-*`); `hx-on::after:swap`
+  lê e limpa a flag. `event.target` em `htmx:before:request` ainda é o link
+  original (nada foi trocado); em `htmx:after:swap` o HTMX redireciona o evento
+  para o alvo quando o link foi destruído pela troca, e ele borbulha até esta
+  `<section>` do mesmo jeito.
+
+  - Sucesso: a rolagem até o topo de `#resultados-consulta` é do próprio HTMX
+    (`hx-swap="innerHTML show:top"` nos links de página, respeita o
+    `scroll-padding-top` da barra sticky); aqui só o FOCO vai à tabela de resultados
+    (`<table tabindex="-1">`, `preventScroll`, já à vista) — não ao resumo "Página
+    X de Y", que fica DEPOIS da tabela e rolaria a tela de volta ao fim da
+    página (medido: 3.800px acima da área visível). Roda depois da
+    restauração de foco por `id` do HTMX (que devolve o foco ao link de
+    paginação, agora o `<span>` da página atual), então quem prevalece é a tabela.
+  - Falha (`hx-on::response:error` acima neutraliza o swap; o HTMX não executa
+    `show` com `swap: none`): rola até o alerta que ficou visível, que está fora
+    da região trocada e, no celular, fora da viewport. Erro de rede não passa por
+    `after:swap` — ver o `hx-on::error` do `<body>`, que faz o mesmo.
+  Nenhum `behavior: "smooth"` (nem aqui, nem no `show:top`): `scroll-behavior` não é
+  redefinido em `base.css`, o padrão já é instantâneo — nada a desligar sob
+  `prefers-reduced-motion`.
   {% endcomment %}
   <section
-    class="catalogo-section"
-    hx-on::before:request="document.getElementById('resultados-erro-rede').hidden = true"
-    hx-on::response:error="ctx.swap = 'none'; ctx.push = false; ctx.text = ''; document.getElementById('resultados-erro-rede').hidden = false"
+    class="page-section"
+    hx-on::before:request="document.getElementById('resultados-erro-rede').hidden = true; document.getElementById('resultados-erro-servidor').hidden = true; this.dataset.paginacaoPendente = event.target.closest('a.pagination-link[hx-get]') ? '1' : ''; this.querySelectorAll('.field-has-error').forEach(function (campo) { campo.classList.remove('field-has-error'); campo.removeAttribute('data-estado'); campo.querySelector('[aria-invalid]')?.removeAttribute('aria-invalid'); let erro = campo.querySelector('.field-error'); if (erro) { let dica = document.createElement('p'); dica.className = 'field-hint'; dica.textContent = campo.dataset.dica; erro.replaceWith(dica); } })"
+    hx-on::response:error="ctx.swap = 'none'; ctx.push = false; ctx.text = ''; document.getElementById('resultados-erro-servidor').hidden = false"
+    hx-on::after:swap="if (this.dataset.paginacaoPendente === '1') { this.dataset.paginacaoPendente = ''; let erroVisivel = [document.getElementById('resultados-erro-rede'), document.getElementById('resultados-erro-servidor')].find(function (alerta) { return !alerta.hidden; }); if (erroVisivel) { erroVisivel.scrollIntoView(); } else { document.querySelector('#resultados-consulta table')?.focus({ preventScroll: true }); } }"
   >
     <form
       method="get"
@@ -97,27 +133,39 @@ este atributo junto com o restante do conteúdo.
       `resultados_consulta` abaixo — que emite uma segunda cópia, marcada
       `oob=True`, via out-of-band swap (`hx-swap-oob`) sempre que uma troca
       HTMX pelo cabeçalho de ordenação (dentro de `#resultados-consulta`,
-      fora deste `<form>`) muda o filtro `codigo`. `oob` (contexto do
-      partial) também controla o marcador `data-estado="codigo-invalido"`,
-      que só aparece na cópia OOB — na renderização normal da página, o
-      estado de "código inválido" já é comunicado pelo alerta emitido pelo
-      partial `resultados_consulta` (revisão do gate visual, achado P2).
+      fora deste `<form>`) muda o filtro `codigo`. `data-estado="codigo-invalido"`
+      fica no wrapper do campo SEMPRE que o código é inválido — na página
+      inteira e na cópia OOB (Fase C, achado P3: antes o erro aparecia duas
+      vezes na página inteira, no campo e num alerta com o mesmo texto em
+      `#resultados-consulta`; o padrão do DESIGN.md → Inputs é o erro só no
+      campo, com `id="<auto_id>_error"` — o `aria-describedby` do widget
+      aponta para ele). O `<p class="field-error">` some no início de cada
+      requisição HTMX (`hx-on::before:request` da `<section>`), sem apagar o
+      valor digitado: o handler REMOVE o `<p class="field-error">` (esconder com
+      `hidden` não basta, o `aria-describedby` do input ainda o leria) e o troca
+      pela dica normal, cujo texto vem de `data-dica` (a mesma variável `dica`
+      que a renderização sem erro usa). Se a resposta seguinte falhar
+      (500/rede), o campo não fica com o erro antigo junto do alerta de falha;
+      se ainda for inválida, a cópia OOB remarca.
       {% endcomment %}
       {% partialdef campo_codigo inline %}
+      {% with dica="Formato completo XXX.YYY.ZZZ." %}
       <div
         id="campo-codigo"
         {% if oob %}hx-swap-oob="true"{% endif %}
         class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}"
-        {% if oob and codigo_invalido %}data-estado="codigo-invalido"{% endif %}
+        data-dica="{{ dica }}"
+        {% if codigo_invalido %}data-estado="codigo-invalido"{% endif %}
       >
         <label for="{{ form.codigo.id_for_label }}">Código (CADPRO)</label>
         {{ form.codigo }}
         {% if form.codigo.errors %}
-        <p class="field-error">{{ form.codigo.errors.0 }}</p>
+        <p class="field-error" id="{{ form.codigo.auto_id }}_error">{{ form.codigo.errors.0 }}</p>
         {% else %}
-        <p class="field-hint">Formato completo XXX.YYY.ZZZ.</p>
+        <p class="field-hint">{{ dica }}</p>
         {% endif %}
       </div>
+      {% endwith %}
       {% endpartialdef %}
       <div class="field filter-bar-field">
         <label for="{{ form.descricao.id_for_label }}">Descrição</label>
@@ -151,7 +199,7 @@ este atributo junto com o restante do conteúdo.
       </div>
     </form>
 
-    <div class="catalogo-consulta-status">
+    <div class="status-line">
       <p id="resultados-indicador" class="htmx-indicator loading-indicator" role="status">
         <span class="loading-indicator-spinner" aria-hidden="true"></span>
         Carregando resultados…
@@ -181,9 +229,7 @@ este atributo junto com o restante do conteúdo.
       {% endpartialdef %}
     </div>
 
-    <div id="resultados-erro-rede" class="alert alert-danger" role="alert" hidden>
-      <p>Não foi possível atualizar os resultados agora. Verifique a conexão e tente novamente.</p>
-    </div>
+    {% include "interface/_consulta_falha.html" %}
 
     <div id="resultados-consulta">
       {% comment %}
@@ -202,7 +248,7 @@ este atributo junto com o restante do conteúdo.
       fixo, nunca classe CSS ou texto): `data-estado="codigo-invalido"` e
       `data-estado="vazio"`.
 
-      Paginação via `catalogo/_paginacao.html` (revisão T051): os links
+      Paginação via `interface/_paginacao.html` (revisão T051): os links
       Anterior/Próxima usam `hx-get`/`hx-target="#resultados-consulta"`
       (mesma região desta inclusão) para permanecer uma atualização parcial,
       e a tag `querystring_pagina` lê `request.GET` para preservar
@@ -212,7 +258,7 @@ este atributo junto com o restante do conteúdo.
       Descrição, Saldo, Unidade e Classificação (ordem das colunas revisada no
       gate visual P2 da propagação ao catálogo — Saldo sobe para logo depois
       de Descrição, mais perto do que se busca primeiro no celular) são inclusões de
-      `catalogo/_th_ordenavel.html` (um link real por coluna, `aria-sort` na
+      `interface/_th_ordenavel.html` (um link real por coluna, `aria-sort` na
       coluna vigente, `htmx_alvo`/`htmx_indicador` apontando para esta mesma
       região); Detalhamento não é ordenável e continua um `<th>` simples. A
       coluna/direção vigente vem do contexto `ordem` (sempre presente, mesmo
@@ -228,7 +274,7 @@ este atributo junto com o restante do conteúdo.
       contexto.
 
       A mesma frase (`ordem|rotulo_ordenacao:ordenacao_rotulos`) é passada a
-      `catalogo/_paginacao.html` como `ordem_texto`, para o resumo da
+      `interface/_paginacao.html` como `ordem_texto`, para o resumo da
       paginação dizer "· ordenado por saldo, decrescente" — só esta consulta
       passa esse parâmetro (as demais listas que usam o mesmo parcial não
       têm ordenação por coluna). `rotulo_item`/`rotulo_item_plural="material"`/
@@ -237,19 +283,15 @@ este atributo junto com o restante do conteúdo.
 
       Revisão do gate visual (achado P2): um `codigo` fora do formato, vindo
       de uma troca HTMX (`veio_de_htmx`), não pode mais substituir a última
-      tabela visível pelo alerta de erro — o usuário perde os resultados que
-      estava lendo. Nesse caso a view acrescenta o cabeçalho de resposta
-      `HX-Reswap: none`, então o htmx não troca `#resultados-consulta`
-      usando o que está abaixo (o conteúdo desta região nem chega a
-      importar); em vez disso, a cópia OOB de `campo_codigo` é atualizada à
-      parte, marcando o campo com borda de erro (`.field-has-error`,
-      `static/css/components.css`) e a mensagem de validação junto dele. A
-      mesma cópia também é emitida (revertendo para o estado normal) em toda
-      resposta HTMX válida, para limpar um erro de uma tentativa anterior.
-      Sem HTMX (navegação normal ou primeiro carregamento da página), o
-      campo já é marcado inline pela cópia normal de `campo_codigo` acima —
-      o alerta abaixo cobre só esse caso, quando não há nenhum resultado
-      anterior na página para preservar.
+      tabela visível — o usuário perde os resultados que estava lendo. Nesse
+      caso a view acrescenta `HX-Reswap: none`, então o htmx não troca
+      `#resultados-consulta`; a cópia OOB de `campo_codigo` é atualizada à
+      parte, marcando o campo (`.field-has-error`, `static/css/components.css`)
+      e a mensagem junto dele. A mesma cópia também é emitida (revertendo ao
+      estado normal) em toda resposta HTMX válida, para limpar um erro
+      anterior. Sem HTMX (página inteira), o erro já está no campo; esta
+      região mostra um estado neutro ("Nenhuma consulta feita."), sem repetir
+      a mensagem — e sem `data-estado`, que é do wrapper do campo.
       {% endcomment %}
       {% partialdef resultados_consulta inline %}
       {% if veio_de_htmx %}
@@ -261,20 +303,21 @@ este atributo junto com o restante do conteúdo.
       {% endif %}
       {% if codigo_invalido %}
       {% if not veio_de_htmx %}
-      <div class="alert alert-danger" role="alert" data-estado="codigo-invalido">
-        <p>{{ form.codigo.errors.0 }}</p>
+      <div class="empty-state">
+        <p class="empty-state-title">Nenhuma consulta feita.</p>
+        <p class="empty-state-description">Corrija o código (CADPRO) acima e busque de novo.</p>
       </div>
       {% endif %}
       {% elif pagina.object_list %}
       <div class="table-wrapper table-sticky-header">
-        <table class="table">
+        <table class="table" tabindex="-1">
           <thead>
             <tr>
-              {% include "catalogo/_th_ordenavel.html" with coluna="cadpro" rotulo="Código (CADPRO)" rotulo_acao="código (CADPRO)" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="descricao" rotulo="Descrição" rotulo_acao="descrição" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="saldo" rotulo="Saldo" rotulo_acao="saldo" extra_class="table-cell-numeric" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="unidade" rotulo="Unidade" rotulo_acao="unidade" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="classificacao" rotulo="Classificação (SCPI)" rotulo_acao="classificação" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "interface/_th_ordenavel.html" with coluna="cadpro" rotulo="Código (CADPRO)" rotulo_acao="código (CADPRO)" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "interface/_th_ordenavel.html" with coluna="descricao" rotulo="Descrição" rotulo_acao="descrição" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "interface/_th_ordenavel.html" with coluna="saldo" rotulo="Saldo" rotulo_acao="saldo" extra_class="table-cell-numeric" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "interface/_th_ordenavel.html" with coluna="unidade" rotulo="Unidade" rotulo_acao="unidade" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+              {% include "interface/_th_ordenavel.html" with coluna="classificacao" rotulo="Classificação (SCPI)" rotulo_acao="classificação" htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
               <th scope="col">Detalhamento</th>
             </tr>
           </thead>
@@ -283,13 +326,13 @@ este atributo junto com o restante do conteúdo.
             <tr>
               <td class="table-cell-code">{{ material.cadpro }}</td>
               <td class="catalogo-descricao-cell">{{ material.descricao }}</td>
-              <td class="table-cell-numeric">{{ material.saldo|floatformat:"-3" }}</td>
+              <td class="table-cell-numeric">{{ material.saldo|quantidade }}</td>
               <td>{{ material.unidade }}</td>
               <td>
                 {% if material.nome_grupo or material.nome_subgrupo %}
                 <span class="catalogo-classificacao-nome">{{ material.nome_grupo }}{% if material.nome_grupo and material.nome_subgrupo %} / {% endif %}{{ material.nome_subgrupo }}</span>
                 {% else %}
-                <span class="catalogo-classificacao-nome catalogo-muted">Sem classificação no SCPI</span>
+                <span class="catalogo-classificacao-nome text-muted">Sem classificação no SCPI</span>
                 {% endif %}
                 {% if material.grupo or material.subgrupo %}
                 <span class="catalogo-classificacao-codigo">{{ material.grupo }}{% if material.grupo and material.subgrupo %}.{% endif %}{{ material.subgrupo }}</span>
@@ -302,7 +345,7 @@ este atributo junto com o restante do conteúdo.
                   <div class="catalogo-detalhamento-completo">{{ material.detalhamento }}</div>
                 </details>
                 {% else %}
-                <span class="catalogo-muted">—</span>
+                <span class="text-muted">—</span>
                 {% endif %}
               </td>
             </tr>
@@ -311,7 +354,7 @@ este atributo junto com o restante do conteúdo.
         </table>
       </div>
 
-      {% include "catalogo/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de materiais" rotulo_item="material" rotulo_item_plural="materiais" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+      {% include "interface/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de materiais" rotulo_item="material" rotulo_item_plural="materiais" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
       {% else %}
       <div class="table-wrapper">
         <table class="table">

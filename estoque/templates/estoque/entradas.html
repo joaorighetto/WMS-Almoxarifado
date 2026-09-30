@@ -9,25 +9,39 @@
 
 {% comment %}
 Contrato de contexto: `pagina` — `Page` de `Entrada` (50/página,
-`select_related("registrada_por", "emitente")`, `annotate(total_itens=Count("itens"))`),
-ver `estoque/views.py` (`EntradasView`). Linha clicável com `<a>` real na coluna
-"Entrada" (DESIGN.md → Components → Table: "a navegação é sempre um `<a>` real numa
-célula"), mesmo padrão de `catalogo/templates/catalogo/historico.html`.
+`select_related("registrada_por", "emitente")`, `annotate(total_itens=Count("itens"))`)
+— e `pode_registrar_entrada` (`bool`, `PERM-STOCK-ENTRY-CREATE`), ver
+`estoque/views.py` (`EntradasView`). Usado só para apresentação (a ação
+"Registrar entrada" no page header e a variação do estado vazio): a
+autorização efetiva continua checada no servidor pela rota `entrada_nova`.
+
+Linha clicável com `<a>` real na coluna "Entrada" (DESIGN.md → Components →
+Table: "a navegação é sempre um `<a>` real numa célula"), aprimorada pelo
+mesmo script genérico de `catalogo`/`fornecedores` `historico.html`
+(`static/js/linha-clicavel.js`, contrato `data-linha-clicavel`/
+`data-linha-link`) — sem JS a linha continua navegável só pelo link. O
+nome acessível do link leva o prefixo "Entrada " (`visually-hidden`) para
+não ler só "cerquilha 12" para quem usa leitor de tela.
 {% endcomment %}
 
 {% block content %}
-<main class="estoque-page">
-  <div class="estoque-container">
-    {% include "estoque/_mensagens.html" %}
+<main class="page">
+  <div class="page-container">
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
         <h1 class="page-header-title">Consulta de entradas</h1>
         <p class="page-header-description">Da mais recente para a mais antiga.</p>
       </div>
+      {% if pode_registrar_entrada %}
+      <div class="page-header-actions">
+        <a href="{% url 'estoque:entrada_nova' %}" class="btn btn-primary">Registrar entrada</a>
+      </div>
+      {% endif %}
     </header>
 
-    <section class="estoque-section">
+    <section class="page-section">
       {% if pagina.object_list %}
       <div class="table-wrapper table-sticky-header">
         <table class="table">
@@ -44,8 +58,10 @@ célula"), mesmo padrão de `catalogo/templates/catalogo/historico.html`.
           </thead>
           <tbody>
             {% for entrada in pagina %}
-            <tr class="table-row-clickable">
-              <td><a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="estoque-entrada-link">#{{ entrada.pk }}</a></td>
+            <tr data-linha-clicavel>
+              <td>
+                <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="table-row-link" data-linha-link><span class="visually-hidden">Entrada </span>#{{ entrada.pk }}</a>
+              </td>
               <td>
                 {% if entrada.estornada %}
                 <span class="badge badge-danger">Estornada</span>
@@ -67,14 +83,22 @@ célula"), mesmo padrão de `catalogo/templates/catalogo/historico.html`.
         </table>
       </div>
 
-      {% include "catalogo/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de entradas" rotulo_item="entrada" rotulo_item_plural="entradas" %}
+      {% include "interface/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de entradas" rotulo_item="entrada" rotulo_item_plural="entradas" %}
       {% else %}
       <div class="empty-state" data-estado="vazio">
         <p class="empty-state-title">Nenhuma entrada registrada.</p>
+        {% if pode_registrar_entrada %}
         <p class="empty-state-description">Registre a primeira entrada de materiais para vê-la aqui.</p>
+        {% else %}
+        <p class="empty-state-description">As entradas registradas pela equipe do almoxarifado aparecerão aqui.</p>
+        {% endif %}
       </div>
       {% endif %}
     </section>
   </div>
 </main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/linha-clicavel.js' %}" defer></script>
 {% endblock %}

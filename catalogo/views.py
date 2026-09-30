@@ -78,11 +78,11 @@ class ConsultaCatalogoView(OrdenacaoMixin, ExigePapelMixin, View):
       mesmo sem resultado (FR-042a, `OrdenacaoMixin.resolver_ordenacao`);
     - `ordenacao_rotulos`: `dict[str, str]` de `OrdenacaoMixin.ordenacao_rotulos`,
       os rótulos em pt-BR das colunas ordenáveis desta tela, usado por
-      `rotulo_ordenacao` (`catalogo/templatetags/catalogo_extras.py`).
+      `rotulo_ordenacao` (`interface/templatetags/interface_extras.py`).
 
-    Os links de paginação (`catalogo/_paginacao.html`, revisão T051) montam a
+    Os links de paginação (`interface/_paginacao.html`, revisão T051) montam a
     querystring a partir de `request.GET` diretamente (tag `querystring_pagina`,
-    `catalogo/templatetags/catalogo_extras.py`) — não precisam de um valor
+    `interface/templatetags/interface_extras.py`) — não precisam de um valor
     calculado à parte no contexto para preservar `codigo`/`descricao`. Os
     links de ordenação do cabeçalho usam `querystring_ordenacao`, que também
     lê `ordem` do contexto para decidir se alterna para decrescente.
@@ -464,7 +464,7 @@ class HistoricoImportacoesView(OrdenacaoMixin, ExigePapelMixin, ListView):
     `execucoes` (lista de `ExecucaoImportacao` da página atual, via
     `ListView`): paginação de 20/página, parametrizada por `?pagina=`
     (`tests/test_catalogo_historico.py`, mesmo nome de parâmetro da consulta
-    e do parcial `catalogo/_paginacao.html`).
+    e do parcial `interface/_paginacao.html`).
 
     Ordenação por coluna (FR-037a, emenda de 2026-09-22), via
     `OrdenacaoMixin` (`catalogo/ordenacao.py`) — mesma infraestrutura da

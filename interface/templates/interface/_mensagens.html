@@ -8,9 +8,17 @@ Django emite `message.tags == "error"` para `messages.error(...)`, mas o primiti
 Alert usa `alert-danger` (DESIGN.md → Colors → Estados semânticos). O mapeamento fica
 neste partial em vez de `MESSAGE_TAGS` (settings) para manter a mudança restrita aos
 arquivos desta task.
+
+Movido de `catalogo/templates/catalogo/_mensagens.html` (consolidação de UX,
+Fase A): substitui também a cópia `estoque/templates/estoque/_mensagens.html`
+(idêntica, salvo o comentário). Classe `.messages` (`static/css/components.css`)
+neutra entre apps — antes `.catalogo-messages`/`.estoque-messages`.
+
+Consumidores: templates de `catalogo`, `fornecedores` e `estoque`
+(`{% include "interface/_mensagens.html" %}`).
 {% endcomment %}
 {% if messages %}
-<div class="catalogo-messages">
+<div class="messages">
   {% for message in messages %}
   <div
     class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}"

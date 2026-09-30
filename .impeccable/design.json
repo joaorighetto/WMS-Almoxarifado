@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-27T19:00:00Z",
+  "generatedAt": "2026-09-29T12:00:00Z",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -761,9 +761,9 @@
       "name": "Tabela operacional",
       "kind": "custom",
       "refersTo": "table",
-      "description": "Moldura em border-frame, cabeçalho como rótulo, CADPRO em Mono, números tabulares.",
-      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th>CADPRO</th><th>Descrição</th><th class=\"ds-num\">Saldo</th></tr></thead><tbody><tr><td class=\"ds-code\">0012345</td><td>Papel A4 75g, resma</td><td class=\"ds-num\">1.240</td></tr><tr><td class=\"ds-code\">0010O1l</td><td>Caneta esferográfica azul</td><td class=\"ds-num\">722</td></tr></tbody></table></div>",
-      "css": ".ds-table-wrap{overflow-x:auto;border:1px solid var(--color-border-frame);border-radius:var(--radius-sm)}.ds-table{width:100%;border-collapse:collapse;background:var(--color-surface);font-family: var(--font-family-base);font-size:var(--font-size-body);color:var(--color-text)}.ds-table th,.ds-table td{padding:var(--table-cell-pad-y,8px) var(--table-cell-pad-x,12px);text-align:left;vertical-align:top;border-bottom:1px solid var(--color-border)}.ds-table thead th{font-size:var(--font-size-table-header);font-weight:var(--font-weight-semibold);letter-spacing:var(--letter-spacing-caps);text-transform:uppercase;color:var(--color-text-muted);background:var(--color-surface-subtle);border-bottom:2px solid var(--color-border-strong)}.ds-table tbody tr:last-child td{border-bottom:none}.ds-table .ds-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ds-code{font-family:var(--font-family-mono);white-space:nowrap}"
+      "description": "Moldura em border-frame, cabeçalho como rótulo, CADPRO em Mono, quantidade em pt-BR com casas significativas; linha clicável com <a> real e nome acessível.",
+      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th>Entrada</th><th>CADPRO</th><th>Descrição</th><th class=\"ds-num\">Saldo</th></tr></thead><tbody><tr><td><a class=\"ds-row-link\" href=\"#\"><span class=\"ds-vh\">Entrada </span>#3</a></td><td class=\"ds-code\">001.002.003</td><td>Papel A4 75g, resma</td><td class=\"ds-num\">27.000</td></tr><tr><td><a class=\"ds-row-link\" href=\"#\"><span class=\"ds-vh\">Entrada </span>#2</a></td><td class=\"ds-code\">001.002.010</td><td>Caneta esferográfica azul</td><td class=\"ds-num\">32,5</td></tr></tbody></table></div>",
+      "css": ".ds-table-wrap{overflow-x:auto;border:1px solid var(--color-border-frame);border-radius:var(--radius-sm)}.ds-table{width:100%;border-collapse:collapse;background:var(--color-surface);font-family: var(--font-family-base);font-size:var(--font-size-body);color:var(--color-text)}.ds-table th,.ds-table td{padding:var(--table-cell-pad-y,8px) var(--table-cell-pad-x,12px);text-align:left;vertical-align:top;border-bottom:1px solid var(--color-border)}.ds-table thead th{font-size:var(--font-size-table-header);font-weight:var(--font-weight-semibold);letter-spacing:var(--letter-spacing-caps);text-transform:uppercase;color:var(--color-text-muted);background:var(--color-surface-subtle);border-bottom:2px solid var(--color-border-strong)}.ds-table tbody tr:last-child td{border-bottom:none}.ds-table .ds-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ds-code{font-family:var(--font-family-mono);white-space:nowrap}.ds-row-link{color:inherit;text-decoration:none}.ds-row-link:focus-visible{text-decoration:underline}@media (hover:hover){.ds-row-link:hover{text-decoration:underline}.ds-table tbody tr:hover{background:var(--color-surface-subtle)}}.ds-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}"
     },
     {
       "name": "Alert",
@@ -856,7 +856,9 @@
       "**Do** preservar coluna de tabela e usar scroll horizontal antes de ocultar dado.",
       "**Do** dar a cada estado semântico a família completa (texto + superfície + borda) e texto explícito.",
       "**Do** reconferir contraste de borda, texto atenuado e rótulo desabilitado contra a folha **e** o piso sempre que a rampa neutra mudar.",
-      "**Do** reutilizar os primitivos de `components.css` e o parcial de paginação em vez de recompor por tela."
+      "**Do** reutilizar os primitivos de `components.css` e os parciais de `interface/` (mensagens, paginação, cabeçalho ordenável, falha de consulta) em vez de recompor por tela; o que uma segunda feature reutilizar sobe para lá com nome neutro.",
+      "**Do** formatar números só na exibição: `separador_milhar` para contagem e total, `quantidade` para saldo e quantidade.",
+      "**Do** dar a toda linha clicável um `<a>` real com nome acessível que diga o que abre, deixando a affordance da linha inteira para o script que a torna verdadeira."
     ],
     "donts": [
       "**Don't** colocar eyebrow, kicker ou rótulo em caixa-alta acima de um título; o marcador de seção é o próprio título.",
@@ -874,7 +876,10 @@
       "**Don't** usar barra lateral colorida acima de 1px em alert, callout ou item de lista; a lateral de 3px é exclusiva da linha de exceção.",
       "**Don't** marcar toda linha de uma tabela com selo ou borda de erro; ênfase universal se anula.",
       "**Don't** deixar erro de importação sumir sozinho nem usar toast para resultado já visível.",
-      "**Don't** esconder ação frequente (buscar, filtrar, confirmar) atrás de menu de três pontos."
+      "**Don't** esconder ação frequente (buscar, filtrar, confirmar) atrás de menu de três pontos.",
+      "**Don't** marcar uma linha como clicável (cursor, hover) sem o comportamento que a torna clicável, nem deixar o clique na linha engolir um `summary`, botão ou campo dentro dela.",
+      "**Don't** aplicar formatação de exibição (milhar, casas) ao `value` de um campo ou a um `hidden` reenviado: \"1.500\" relido pelo servidor vira 1,5.",
+      "**Don't** deixar uma falha de consulta HTMX substituir os resultados pela página de erro, nem apresentar resultados antigos como se fossem da consulta nova."
     ]
   }
 }

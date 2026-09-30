@@ -1,6 +1,10 @@
-{% load catalogo_extras %}
+{% load interface_extras %}
 {% comment %}
 Paginação (DESIGN.md → Components → Pagination; `static/css/components.css`).
+
+Movido de `catalogo/templates/catalogo/_paginacao.html` (consolidação de UX,
+Fase A) — contrato e parâmetros inalterados. Consumidores: templates de
+`catalogo`, `fornecedores` e `estoque` (`{% include "interface/_paginacao.html" %}`).
 
 Parâmetros esperados:
 - `pagina`: um `Page` de `django.core.paginator.Paginator`.
@@ -10,25 +14,27 @@ Parâmetros esperados:
 Parâmetros opcionais:
 - `rotulo_item`/`rotulo_item_plural`: substantivo do total, no singular e no
   plural, para o resumo dizer "N <rotulo_item(_plural)> no total" em vez de
-  só "N no total" (usado pela consulta do catálogo, com `rotulo_item="material"`
-  `rotulo_item_plural="materiais"`). Dois parâmetros explícitos — não
+  só "N no total" — a consulta do catálogo e de fornecedores (ex.
+  `rotulo_item="material"`/`"materiais"`) e, desde a Fase B, também as
+  seções de prévia/execução de catálogo e fornecedores (divergências,
+  exceções, alterações cadastrais). Dois parâmetros explícitos — não
   `pluralize:"s"` sobre `rotulo_item` — porque a regra de plural de "s" é
   frágil para substantivo em português (produzia "materials" a partir de
   "material"; revisão do gate visual, achado "Mundo real", 2026-09-22).
   `rotulo_item_plural` sem `rotulo_item` não tem efeito.
 - `ordem_texto`: frase pronta da ordenação vigente (ex. "saldo, decrescente",
   de `rotulo_ordenacao`), acrescentada ao resumo como "· ordenado por
-  saldo, decrescente" (revisão do gate visual, achado P1, 2026-09-22) — usado
-  pela consulta do catálogo e pelo histórico de importações (FR-037a); as
-  demais listas (prévia, resultado da execução) não têm ordenação por
-  coluna e não passam este parâmetro.
+  saldo, decrescente" (revisão do gate visual, achado P1, 2026-09-22) — a
+  consulta e o histórico de importações, tanto de `catalogo` (FR-037a)
+  quanto de `fornecedores` (Fase B); as demais listas (prévia, resultado da
+  execução) não têm ordenação por coluna e não passam este parâmetro.
 - `htmx_alvo`/`htmx_indicador`: quando os dois são passados, Anterior/Próxima
   e os números de página viram atualização HTMX parcial (`hx-get`/
   `hx-target`/`hx-push-url`/`hx-indicator`) em vez de navegação de página
-  inteira — usado pela consulta do catálogo, cujo `#resultados-consulta` já
-  é atualizado via HTMX no envio do formulário de filtro. Sem esses
-  parâmetros, os links são navegação normal (usado no detalhe da execução,
-  na prévia e no histórico).
+  inteira — a consulta do catálogo e a de fornecedores, cujo
+  `#resultados-consulta` já é atualizado via HTMX no envio do formulário de
+  filtro. Sem esses parâmetros, os links são navegação normal (usado no
+  detalhe da execução, na prévia e no histórico).
 - `ancora`: id de seção (ex.: "divergencias") acrescentado como fragmento
   (`#ancora`) só ao `href` de navegação normal (revisão do gate visual,
   achado P1) — paginar uma seção não joga mais o usuário para o topo da
@@ -63,7 +69,7 @@ parte do range que muda de largura, e duplicá-los duplicaria `id` (ver
 abaixo).
 
 `href`/`hx-get` usam as tags `querystring_pagina`/`intervalo_paginas`
-(`catalogo/templatetags/catalogo_extras.py`): a primeira substitui só
+(`interface/templatetags/interface_extras.py`): a primeira substitui só
 `parametro` na querystring atual da requisição, preservando os demais
 parâmetros — inclusive os de outras seções paginadas na mesma página
 (revisão T051, achado P3) e os filtros/ordenação da consulta; a segunda
@@ -83,6 +89,22 @@ ativado vira, depois do swap, o `<span>` da página atual com o MESMO `id` e
 `tabindex="-1"` (focável só por script), então o foco de quem usa teclado
 cai na página em que acabou de entrar, em vez do `<body>` (re-revisão,
 achado P3).
+
+Rolagem e foco depois da paginação HTMX (revisão do gate visual, Fase C,
+achado P1: no celular a página 2 começava ~3.700px acima da área visível).
+Os links `hx-get` levam `hx-swap="innerHTML show:top"`: o HTMX 4 rola o alvo
+(`#resultados-consulta`) até o topo como parte da troca, respeitando o
+`scroll-padding-top` da barra sticky (`base.css`), e só numa troca de
+verdade (com `ctx.swap = 'none'`, que cada consulta usa para neutralizar uma
+resposta de erro, o HTMX pula `show`). O FOCO vai à tabela de resultados
+(`<table tabindex="-1">` nas consultas, `hx-on::after:swap`, com
+`preventScroll`) — NÃO a este resumo: ele fica DEPOIS da tabela, e focá-lo
+rolaria a tela de volta para o fim da página (medido: a página 2 voltava a
+ficar 3.800px acima da área visível). Nas consultas via HTMX, o
+`hx-on::after:swap` da `<section>` roda DEPOIS dessa devolução de foco por `id`
+e a sobrepõe: o foco final fica na tabela, não no `<span>` da página atual.
+Os links de ordenação
+(`_th_ordenavel.html`) e o envio do formulário NÃO ganham `show`.
 {% endcomment %}
 <nav class="pagination" aria-label="{{ rotulo }}">
   <p class="pagination-summary">
@@ -100,6 +122,7 @@ achado P3).
         {% if htmx_alvo %}
         hx-get="{{ href_anterior }}"
         hx-target="{{ htmx_alvo }}"
+        hx-swap="innerHTML show:top"
         hx-push-url="true"
         hx-indicator="{{ htmx_indicador }}"
         {% endif %}
@@ -125,6 +148,7 @@ achado P3).
         {% if htmx_alvo %}
         hx-get="{{ href_pagina }}"
         hx-target="{{ htmx_alvo }}"
+        hx-swap="innerHTML show:top"
         hx-push-url="true"
         hx-indicator="{{ htmx_indicador }}"
         {% endif %}
@@ -149,6 +173,7 @@ achado P3).
         {% if htmx_alvo %}
         hx-get="{{ href_pagina }}"
         hx-target="{{ htmx_alvo }}"
+        hx-swap="innerHTML show:top"
         hx-push-url="true"
         hx-indicator="{{ htmx_indicador }}"
         {% endif %}
@@ -166,6 +191,7 @@ achado P3).
         {% if htmx_alvo %}
         hx-get="{{ href_proxima }}"
         hx-target="{{ htmx_alvo }}"
+        hx-swap="innerHTML show:top"
         hx-push-url="true"
         hx-indicator="{{ htmx_indicador }}"
         {% endif %}

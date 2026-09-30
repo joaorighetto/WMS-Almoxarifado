@@ -3,11 +3,24 @@
  *
  * Consome exclusivamente os tokens de static/css/tokens.css e os primitivos de
  * static/css/components.css (Page Header, Filter Bar, Table, Chips (Badge), Alert,
- * Empty State, Pagination, Buttons, Inputs/Fields, Back Link) — nenhum deles é
- * redefinido aqui. Mesmo modelo de página/container de `catalogo.css`
- * (`.catalogo-page`/`.catalogo-container`): superfícies operacionais densas do
- * almoxarifado são desktop-first (DESIGN.md → Layout), sem contenção estreita de
- * página de marketing.
+ * Empty State, Pagination, Buttons, Inputs/Fields, Back Link, Page, Metadata/Hash/
+ * Muted/Note, Confirmation Bar, Status Line, Table Row Link) — nenhum deles é
+ * redefinido aqui. Superfícies operacionais densas do almoxarifado são
+ * desktop-first (DESIGN.md → Layout), sem contenção estreita de página de
+ * marketing.
+ *
+ * Consolidação de UX (Fase A): `.estoque-page`/`.estoque-container`/
+ * `.estoque-section`/`.estoque-page-header-badge`/`.estoque-confirmacao-sticky`/
+ * `.estoque-indicador`/`.estoque-nota` (idênticos a `catalogo`/`fornecedores`)
+ * migraram para `static/css/components.css` como `.page`/`.page-container`/
+ * `.page-section`/`.page-header-badge`/`.confirmation-bar`/`.status-line`/
+ * `.text-note`. Este arquivo mantém só o que é específico do estoque e as
+ * extensões abaixo (`.estoque-dados-grid`, `.estoque-confirmacao-sticky form`).
+ * `.estoque-entrada-link` (Fase A) foi removida na Fase B: o link "#N" da
+ * lista de entradas usa direto o primitivo `.table-row-link`
+ * (`static/css/components.css`), que já cobre o alvo de toque sob
+ * `pointer: coarse` — ver o comentário ali (achado do gate visual, "azul do
+ * navegador"/alinhamento).
  *
  * Padrão novo desta feature (a registrar em DESIGN.md por `impeccable document`,
  * conforme `research.md` R13): composição da entrada com cabeçalho e tabela de
@@ -16,43 +29,8 @@
  * Destrutivo (`.btn-danger`, `static/css/components.css`) no estorno.
  */
 
-.estoque-page {
-  padding-block: var(--space-6) var(--space-8);
-  padding-inline: max(var(--space-4), env(safe-area-inset-left, 0px))
-    max(var(--space-4), env(safe-area-inset-right, 0px));
-}
-
-.estoque-container {
-  max-width: 1120px;
-  margin: 0 auto;
-}
-
-.estoque-messages {
-  margin-bottom: var(--space-2);
-}
-
-/* Selo de situação no título do detalhe (mesma convenção de
-   `.catalogo-page-header-badge`, `catalogo.css`): a mensagem de sucesso some
-   na próxima navegação, o selo "Registrada"/"Estornada" no título permanece
-   legível a qualquer momento. */
-.estoque-page-header-badge {
-  margin-left: var(--space-2);
-  vertical-align: middle;
-}
-
-/* Seções da composição (cabeçalho/referência, materiais) separadas só por
-   espaçamento — o próprio marcador de tubulação já é o separador (mesma
-   convenção de `.catalogo-section`, `catalogo.css`). */
-.estoque-section {
-  margin-top: var(--space-6);
-}
-
-.estoque-section:first-of-type {
-  margin-top: 0;
-}
-
 /* Grade dos três campos de referência (motivo, tipo de documento, número) —
-   mesma convenção de `.catalogo-meta` (colunas que se ajustam à largura
+   mesma convenção de `.meta-grid` (colunas que se ajustam à largura
    disponível, sem quebrar um campo maior que o necessário no desktop). */
 .estoque-cabecalho-grid {
   display: grid;
@@ -218,89 +196,24 @@
 }
 
 /* Resumo e detalhe: pares rótulo/valor em grade — mesma convenção de
-   `.catalogo-meta`. */
+   `.meta-grid` (`static/css/components.css`, que já cobre grid/dt/dd), com
+   uma única divergência: aqui o grid carrega respiro próprio em vez de
+   `margin: 0` (contexto sem `<h2 class="section-marker">` logo acima, ao
+   contrário de `catalogo`/`fornecedores`). */
 .estoque-dados-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4) var(--space-6);
   margin: var(--space-4) 0;
 }
 
-.estoque-dados-grid dt {
-  margin: 0 0 var(--space-1);
-  font-size: var(--font-size-meta);
-  color: var(--color-text-muted);
-}
-
-.estoque-dados-grid dd {
-  margin: 0;
-  font-size: var(--font-size-body);
-  color: var(--color-text);
-}
-
-.estoque-nota {
-  max-width: 72ch;
-  margin: 0 0 var(--space-4);
-  color: var(--color-text-muted);
-}
-
-/* Barra de confirmação persistente (DESIGN.md → Components → Confirmação),
-   mesma implementação de `.catalogo-confirmacao-sticky` — único par de ações
-   da página, grudado ao rodapé da viewport durante a rolagem e assentado na
-   própria posição no fim do fluxo. Reaproveitada pela composição ("Revisar"),
-   pelo resumo ("Confirmar entrada"/"Voltar e corrigir") e pelo estorno
-   ("Estornar entrada"/"Cancelar"). */
-.estoque-confirmacao-sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  align-items: center;
-  margin-top: var(--space-6);
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--color-surface);
-  border-top: 1px solid var(--color-border-frame);
-}
-
+/* Barra de confirmação persistente (DESIGN.md → Components → Confirmação):
+   `.confirmation-bar` (`static/css/components.css`) cobre a moldura;
+   `.estoque-confirmacao-sticky` é mantida como classe adicional só para
+   este seletor — o resumo da composição ("Confirmar entrada") é o único uso
+   com um `<form>` como filho direto da barra (os demais usos têm `<button>`/
+   `<a>` diretos), e sem esta regra o form herdaria `display: block` e
+   quebraria o alinhamento em linha dos botões. */
 .estoque-confirmacao-sticky form {
   margin: 0;
   display: flex;
-}
-
-@media (max-width: 480px) {
-  .estoque-confirmacao-sticky {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .estoque-confirmacao-sticky .btn {
-    width: 100%;
-  }
-}
-
-/* Espelho do `scroll-padding-top` da barra de trabalho (base.css) — foco de
-   teclado e âncora não ficam escondidos sob a barra de confirmação enquanto
-   ela está grudada no rodapé (mesma técnica de `catalogo.css`). */
-html:has(.estoque-confirmacao-sticky) {
-  scroll-padding-bottom: 5rem;
-}
-
-@media (max-width: 480px) {
-  html:has(.estoque-confirmacao-sticky) {
-    scroll-padding-bottom: 10rem;
-  }
-}
-
-/* Indicador de carregamento das trocas HTMX da composição (busca, adicionar,
-   remover, revisar/voltar) — local à região `#entrada-composicao`, nunca
-   bloqueio de página (DESIGN.md → Components → Loading Indicator). Reserva
-   altura para não "pular" o restante da página ao aparecer/sumir (mesma
-   técnica de `.catalogo-consulta-status`). */
-.estoque-indicador {
-  min-height: var(--space-6);
-  margin-bottom: var(--space-2);
 }
 
 /* Item bloqueado no estorno (saldo atual insuficiente): mesma família de
@@ -364,27 +277,8 @@ html:has(.estoque-confirmacao-sticky) {
   white-space: nowrap;
 }
 
-/* Link "#N" da lista de entradas (achado do gate visual, "azul do
-   navegador"): mesma técnica de `.catalogo-historico-link`
-   (`catalogo/static/catalogo/css/catalogo.css`) — cor herdada da célula,
-   sublinhado só no hover/foco — mais o mesmo alvo de toque de
-   `.pagination-link` (`--control-height-compact`: 36px no desktop, 44px sob
-   `pointer: coarse`), para o link ficar folgado sem inflar a altura da
-   linha no desktop. */
-.estoque-entrada-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--control-height-compact);
-  color: inherit;
-  text-decoration: none;
-}
-
-.estoque-entrada-link:hover {
-  text-decoration: underline;
-}
-
 /* Justificativa do estorno (achado do gate visual, P1): respiro em relação
-   à tabela de itens acima — não usa `.estoque-section` aqui porque, como
+   à tabela de itens acima — não usa `.page-section` aqui porque, como
    único elemento do tipo dentro do `<form>`, `:first-of-type` zeraria a
    margem (a regra existe para a PRIMEIRA seção da página, não a primeira de
    cada `<form>`). */

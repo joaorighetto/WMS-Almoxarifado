@@ -34,8 +34,17 @@ implementador de T022–T024 precisa seguir:
   `documento_invalido=True`. O contrato não fixa o texto da mensagem — este
   arquivo verifica só que HÁ um erro no campo (`data-estado`/contexto), nunca
   um texto inventado.
+
+Seções acrescentadas pelo `test-engineer` (alinhamento de UX, Fase B), no
+molde de `tests/test_catalogo_consulta.py`: "Falha de uma troca HTMX"
+(`interface/templates/interface/_consulta_falha.html`, hooks `hx-on`, meta
+`htmx-config`), "Validação via HTMX" (OOB dos campos `campo-codigo`/
+`campo-documento`, `HX-Reswap`/`HX-Push-Url`) e "Preservação de query
+params" (ordenação volta à página 1 preservando filtros; paginação preserva
+filtro e ordem).
 """
 
+import json
 import re
 import uuid
 
@@ -552,6 +561,505 @@ def test_numero_de_queries_de_fornecedor_e_constante_entre_10_e_50_por_pagina(
     queries_50 = _contar_queries_fornecedor(com_50.captured_queries)
     assert queries_10 > 0
     assert queries_10 == queries_50
+
+
+# ---------------------------------------------------------------------------
+# Falha de uma troca HTMX (Fase B, `interface/_consulta_falha.html`) — mesmo
+# molde de `tests/test_catalogo_consulta.py`. Cobre só o que é verificável no
+# servidor: os hooks `hx-on`, os dois alertas ocultos por padrão e fora de
+# `#resultados-consulta`, e a meta `htmx-config`. O efeito real de runtime
+# (alerta aparecendo, resultados anteriores preservados na tela) só é
+# verificável no browser.
+# ---------------------------------------------------------------------------
+
+
+def _bloco_body(conteudo):
+    match = re.search(r"<body\b[^>]*>", conteudo, re.S)
+    assert match is not None, "<body> não encontrado"
+    return match.group()
+
+
+def _bloco_section_principal(conteudo):
+    match = re.search(r"<section\b[^>]*>", conteudo, re.S)
+    assert match is not None, "<section> principal não encontrada"
+    return match.group()
+
+
+def test_meta_htmx_config_desliga_o_settle(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    match_meta = re.search(r'<meta name="htmx-config" content=\'([^\']*)\'>', conteudo)
+    assert match_meta is not None, "meta htmx-config não encontrada"
+    config = json.loads(match_meta.group(1))
+    assert config["defaultSettleDelay"] == 0
+
+
+def test_hx_on_usa_os_nomes_de_evento_do_htmx_4(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    assert "hx-on::before:request=" in conteudo
+    assert "hx-on::error=" in conteudo
+    assert "hx-on::response:error=" in conteudo
+    assert "send-error" not in conteudo
+    assert "response-error" not in conteudo
+
+
+def test_erro_de_rede_e_tratado_no_body_e_revela_o_alerta_de_rede(
+    client, funcionario_almoxarifado
+):
+    """A restauração de histórico do HTMX 4 inicia o GET a partir do
+    `<body>`, fora da `<section>` da consulta — por isso o erro de REDE
+    precisa estar tratado ali (mesmo padrão de `catalogo/consulta.html`)."""
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"))
+
+    bloco = _bloco_body(resposta.content.decode("utf-8"))
+    assert "hx-on::error=" in bloco
+    assert "resultados-erro-rede" in bloco
+
+
+def test_hx_on_response_error_neutraliza_swap_e_revela_o_alerta_de_servidor(
+    client, funcionario_almoxarifado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"))
+
+    valor = _valor_hx_on(
+        _bloco_section_principal(resposta.content.decode("utf-8")), "response:error"
+    )
+    assert "ctx.swap = 'none'" in valor
+    assert "ctx.push = false" in valor
+    assert "ctx.text = ''" in valor
+    assert "resultados-erro-servidor" in valor
+    assert "resultados-erro-rede" not in valor
+
+
+def test_hx_on_before_request_oculta_os_dois_alertas(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"))
+
+    valor = _valor_hx_on(
+        _bloco_section_principal(resposta.content.decode("utf-8")), "before:request"
+    )
+    assert "resultados-erro-rede" in valor
+    assert "resultados-erro-servidor" in valor
+    assert valor.count("hidden = true") == 2
+
+
+def test_alertas_de_rede_e_servidor_ficam_ocultos_por_padrao_fora_dos_resultados(
+    client, funcionario_almoxarifado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"))
+
+    conteudo = resposta.content.decode("utf-8")
+    posicao_rede = conteudo.index('id="resultados-erro-rede"')
+    posicao_servidor = conteudo.index('id="resultados-erro-servidor"')
+    posicao_resultados = conteudo.index('id="resultados-consulta"')
+    assert posicao_rede < posicao_resultados
+    assert posicao_servidor < posicao_resultados
+    bloco_rede = re.search(r'<div id="resultados-erro-rede"[^>]*>', conteudo).group()
+    bloco_servidor = re.search(r'<div id="resultados-erro-servidor"[^>]*>', conteudo).group()
+    assert "hidden" in bloco_rede
+    assert "hidden" in bloco_servidor
+
+
+# ---------------------------------------------------------------------------
+# Validação via HTMX: código/documento inválidos chegam com `HX-Reswap:
+# none`/`HX-Push-Url: false` e marcam só o campo por cópia OOB, sem apagar a
+# tabela de resultados anterior — mesmo padrão de `ConsultaCatalogoView`
+# (`tests/test_catalogo_consulta.py`).
+# ---------------------------------------------------------------------------
+
+
+def test_codigo_invalido_via_htmx_define_hx_reswap_none_e_push_url_false(
+    client, funcionario_almoxarifado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {"codigo": "12a"}, HTTP_HX_REQUEST="true"
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.headers.get("HX-Reswap") == "none"
+    assert resposta.headers.get("HX-Push-Url") == "false"
+
+
+def test_documento_invalido_via_htmx_define_hx_reswap_none_e_push_url_false(
+    client, funcionario_almoxarifado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {"documento": "12"}, HTTP_HX_REQUEST="true"
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.headers.get("HX-Reswap") == "none"
+    assert resposta.headers.get("HX-Push-Url") == "false"
+
+
+def test_codigo_invalido_via_htmx_marca_so_o_campo_codigo_por_oob(
+    client, funcionario_almoxarifado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {"codigo": "12a"}, HTTP_HX_REQUEST="true"
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    assert 'id="campo-codigo"' in conteudo
+    assert 'hx-swap-oob="true"' in conteudo
+    assert 'data-estado="codigo-invalido"' in conteudo
+    assert "field-has-error" in conteudo
+    # a cópia OOB do campo documento também é emitida (sincronização), mas
+    # sem `data-estado` — só o campo realmente inválido nesta resposta.
+    assert 'data-estado="documento-invalido"' not in conteudo
+
+
+def test_documento_invalido_via_htmx_marca_so_o_campo_documento_por_oob(
+    client, funcionario_almoxarifado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {"documento": "12"}, HTTP_HX_REQUEST="true"
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    assert 'id="campo-documento"' in conteudo
+    assert 'hx-swap-oob="true"' in conteudo
+    assert 'data-estado="documento-invalido"' in conteudo
+    assert 'data-estado="codigo-invalido"' not in conteudo
+
+
+def test_consulta_valida_via_htmx_nao_define_hx_reswap_e_reseta_os_dois_campos(
+    client, funcionario_almoxarifado, criar_fornecedor
+):
+    criar_fornecedor(codif="900001", nome="Fornecedor Válido Via HTMX")
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {"codigo": "900001"}, HTTP_HX_REQUEST="true"
+    )
+
+    assert resposta.status_code == 200
+    assert "HX-Reswap" not in resposta.headers
+    conteudo = resposta.content.decode("utf-8")
+    assert 'id="campo-codigo"' in conteudo
+    assert 'hx-swap-oob="true"' in conteudo
+    assert "field-has-error" not in conteudo
+    assert 'data-estado="codigo-invalido"' not in conteudo
+    assert 'data-estado="documento-invalido"' not in conteudo
+
+
+def test_codigo_invalido_em_pagina_inteira_nao_emite_copia_oob(client, funcionario_almoxarifado):
+    """Sem `HX-Request`, o campo já é marcado inline (`campo_codigo` sem
+    `oob`, via `field-has-error`) — a cópia OOB só existe numa troca HTMX, ou
+    `id="campo-codigo"` apareceria duplicado."""
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"), {"codigo": "12a"})
+
+    assert resposta.status_code == 200
+    assert "HX-Reswap" not in resposta.headers
+    conteudo = resposta.content.decode("utf-8")
+    assert conteudo.count('id="campo-codigo"') == 1
+    assert "hx-swap-oob" not in conteudo
+    assert 'data-estado="codigo-invalido"' in conteudo
+
+
+def test_documento_invalido_em_pagina_inteira_nao_emite_copia_oob(
+    client, funcionario_almoxarifado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"), {"documento": "12"})
+
+    assert resposta.status_code == 200
+    assert "HX-Reswap" not in resposta.headers
+    conteudo = resposta.content.decode("utf-8")
+    assert conteudo.count('id="campo-documento"') == 1
+    assert "hx-swap-oob" not in conteudo
+    assert 'data-estado="documento-invalido"' in conteudo
+
+
+# ---------------------------------------------------------------------------
+# Preservação de query params: ordenar volta à página 1 preservando os
+# filtros vigentes; paginar preserva filtro e ordem (mesmo padrão de
+# `tests/test_catalogo_consulta.py`, seções "Cabeçalho ordenável"/"Campo
+# oculto de ordem").
+# ---------------------------------------------------------------------------
+
+
+def _th(conteudo, texto_visivel):
+    for bloco in re.findall(r"<th\b.*?</th>", conteudo, re.S):
+        if texto_visivel in bloco:
+            return bloco
+    raise AssertionError(f"cabeçalho com {texto_visivel!r} não encontrado")
+
+
+def test_link_de_ordenacao_preserva_filtro_e_volta_a_pagina_1(
+    client, funcionario_almoxarifado, criar_fornecedor
+):
+    criar_fornecedor(codif="910001", nome="Fornecedor Filtro Preservado")
+
+    client.force_login(funcionario_almoxarifado)
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {"nome": "filtro preservado", "pagina": "1"}
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    th_codigo = _th(conteudo, "Código")
+    link = re.search(r'href="([^"]*)"', th_codigo).group(1)
+    assert "nome=filtro" in link
+    assert "pagina=" not in link
+    assert "ordem=codigo" in link
+
+
+def test_paginacao_preserva_filtro_e_ordem(client, funcionario_almoxarifado, execucao):
+    _bulk_criar_fornecedores(execucao, 60, prefixo="93")
+
+    client.force_login(funcionario_almoxarifado)
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {"nome": "fornecedor em lote", "ordem": "-nome"}
+    )
+
+    conteudo = resposta.content.decode("utf-8")
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    href_proxima = re.search(r'id="pagina-proxima-pagina"[^>]*href="([^"]*)"', nav)
+    assert href_proxima is not None, "link 'Próxima' não encontrado"
+    href = href_proxima.group(1)
+    assert "nome=fornecedor" in href
+    assert "ordem=-nome" in href
+    assert "pagina=2" in href
+
+
+def test_resumo_da_paginacao_informa_a_ordem_vigente(
+    client, funcionario_almoxarifado, criar_fornecedor
+):
+    criar_fornecedor(codif="920001", nome="Fornecedor Ordem No Resumo")
+
+    client.force_login(funcionario_almoxarifado)
+    resposta = client.get(reverse("fornecedores:consulta"), {"ordem": "-nome"})
+
+    conteudo = resposta.content.decode("utf-8")
+    assert "· ordenado por nome, decrescente" in conteudo
+
+
+def test_estado_vazio_e_uma_linha_table_empty_row(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"), {"nome": "NadaAquiNoCadastro"})
+
+    conteudo = resposta.content.decode("utf-8")
+    assert '<tr class="table-empty-row" data-estado="vazio">' in conteudo
+
+
+# ---------------------------------------------------------------------------
+# Erro de campo (Fase C, C4, achado P3) — mesmo contrato da consulta do
+# catálogo: o erro de `codigo`/`documento` aparece SÓ no campo.
+# `data-estado="codigo-invalido"`/`"documento-invalido"` fica no wrapper
+# (`#campo-codigo`/`#campo-documento`), o `<p class="field-error"
+# id="id_<campo>_error">` é o alvo do `aria-describedby` do input, e
+# `#resultados-consulta` mostra um estado neutro sem repetir a mensagem.
+# ---------------------------------------------------------------------------
+
+_CAMPOS_COM_VALIDACAO = [
+    pytest.param("codigo", "12a", "campo-codigo", "codigo-invalido", id="codigo"),
+    pytest.param("documento", "12", "campo-documento", "documento-invalido", id="documento"),
+]
+
+
+def _valor_hx_on(bloco, evento):
+    """Valor do atributo `hx-on::{evento}="..."` da tag de abertura `bloco` —
+    escopa a asserção ao handler certo (mesmo helper de
+    `tests/test_catalogo_consulta.py`)."""
+    match = re.search(rf'hx-on::{re.escape(evento)}="([^"]*)"', bloco)
+    assert match is not None, f"hx-on::{evento} não encontrado no bloco"
+    return match.group(1)
+
+
+def _tag_input(conteudo, name):
+    match = re.search(rf'<input\b[^>]*name="{re.escape(name)}"[^>]*>', conteudo)
+    assert match is not None, f"<input name={name!r}> não encontrado"
+    return match.group()
+
+
+def _wrapper_do_campo(conteudo, id_wrapper):
+    match = re.search(rf'<div\b[^>]*id="{re.escape(id_wrapper)}"[^>]*>', conteudo)
+    assert match is not None, f"wrapper #{id_wrapper} não encontrado"
+    return match.group()
+
+
+@pytest.mark.parametrize("campo, valor_invalido, id_wrapper, estado", _CAMPOS_COM_VALIDACAO)
+@pytest.mark.parametrize("via_htmx", [False, True], ids=["pagina_inteira", "copia_oob"])
+def test_aria_describedby_aponta_para_o_erro_existente_do_campo(
+    client, funcionario_almoxarifado, campo, valor_invalido, id_wrapper, estado, via_htmx
+):
+    """Na página inteira e na cópia OOB: o `id` referenciado por
+    `aria-describedby` existe de fato e é o do `<p class="field-error">`."""
+    client.force_login(funcionario_almoxarifado)
+    extra = {"HTTP_HX_REQUEST": "true"} if via_htmx else {}
+
+    resposta = client.get(reverse("fornecedores:consulta"), {campo: valor_invalido}, **extra)
+
+    conteudo = resposta.content.decode("utf-8")
+    tag = _tag_input(conteudo, campo)
+    match = re.search(r'aria-describedby="([^"]*)"', tag)
+    assert match is not None, f"aria-describedby ausente em {tag}"
+    id_erro = f"id_{campo}_error"
+    assert id_erro in match.group(1).split()
+    assert f'<p class="field-error" id="{id_erro}">' in conteudo
+    assert conteudo.count(f'id="{id_erro}"') == 1
+
+
+@pytest.mark.parametrize("campo, valor_invalido, id_wrapper, estado", _CAMPOS_COM_VALIDACAO)
+def test_erro_sem_htmx_marca_o_wrapper_e_nao_repete_a_mensagem_nos_resultados(
+    client, funcionario_almoxarifado, campo, valor_invalido, id_wrapper, estado
+):
+    from django.utils.html import escape
+
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(reverse("fornecedores:consulta"), {campo: valor_invalido})
+
+    conteudo = resposta.content.decode("utf-8")
+    mensagem = escape(resposta.context["form"].errors[campo][0])
+    wrapper = _wrapper_do_campo(conteudo, id_wrapper)
+    assert f'data-estado="{estado}"' in wrapper
+    assert "field-has-error" in wrapper
+
+    regiao_resultados = conteudo[conteudo.index('id="resultados-consulta"') :]
+    assert mensagem not in regiao_resultados
+    assert f'data-estado="{estado}"' not in regiao_resultados
+    assert 'role="alert"' not in regiao_resultados
+    assert conteudo.count(mensagem) == 1, "o erro deve aparecer uma única vez (só no campo)"
+
+
+@pytest.mark.parametrize("campo, valor_invalido, id_wrapper, estado", _CAMPOS_COM_VALIDACAO)
+def test_erro_via_htmx_marca_o_wrapper_da_copia_oob(
+    client, funcionario_almoxarifado, campo, valor_invalido, id_wrapper, estado
+):
+    client.force_login(funcionario_almoxarifado)
+
+    resposta = client.get(
+        reverse("fornecedores:consulta"), {campo: valor_invalido}, HTTP_HX_REQUEST="true"
+    )
+
+    wrapper = _wrapper_do_campo(resposta.content.decode("utf-8"), id_wrapper)
+    assert 'hx-swap-oob="true"' in wrapper
+    assert f'data-estado="{estado}"' in wrapper
+    assert "field-has-error" in wrapper
+
+
+def test_hx_on_before_request_limpa_a_marcacao_de_erro_dos_campos(
+    client, funcionario_almoxarifado, criar_fornecedor
+):
+    """Sem isto, uma nova busca que FALHA (500/rede) deixaria o erro antigo
+    do campo junto do alerta de falha. O efeito no DOM só é verificável no
+    browser; aqui, que o handler cobre classe, `data-estado`, mensagem e
+    `aria-invalid`."""
+    criar_fornecedor(codif="930001", nome="Limpa Marcação De Erro")
+
+    client.force_login(funcionario_almoxarifado)
+    conteudo = client.get(reverse("fornecedores:consulta")).content.decode("utf-8")
+
+    valor = _valor_hx_on(_bloco_section_principal(conteudo), "before:request")
+    assert "field-has-error" in valor
+    assert "data-estado" in valor
+    assert "field-error" in valor
+    assert "aria-invalid" in valor
+
+
+# ---------------------------------------------------------------------------
+# Paginação via HTMX (Fase C, C1, achado P1) — mesmo contrato da consulta do
+# catálogo: links de página rolam o alvo ao topo (`show:top`) e o foco vai à
+# tabela (`tabindex="-1"`); a ORDENAÇÃO daqui é navegação de página inteira
+# (sem `hx-get`) e o formulário não rola. Rolagem/foco em si: só no browser.
+# ---------------------------------------------------------------------------
+
+
+def test_links_de_pagina_htmx_rolam_ao_topo_e_casam_com_o_seletor_do_handler(
+    client, funcionario_almoxarifado, execucao
+):
+    _bulk_criar_fornecedores(execucao, 120, prefixo="94")  # 3 páginas de 50
+
+    client.force_login(funcionario_almoxarifado)
+    conteudo = client.get(reverse("fornecedores:consulta"), {"pagina": "2"}).content.decode(
+        "utf-8"
+    )
+
+    valor_before = _valor_hx_on(_bloco_section_principal(conteudo), "before:request")
+    assert "a.pagination-link[hx-get]" in valor_before
+
+    nav = re.search(r'<nav class="pagination".*?</nav>', conteudo, re.S).group()
+    links = re.findall(r'<a\b[^>]*class="pagination-link"[^>]*hx-get=[^>]*>', nav)
+    assert len(links) >= 4, "esperava Anterior, Próxima e números de página com hx-get"
+    for link in links:
+        assert 'hx-swap="innerHTML show:top"' in link, link
+
+
+def test_ordenacao_e_navegacao_de_pagina_inteira_sem_hx_get(
+    client, funcionario_almoxarifado, criar_fornecedor
+):
+    """Ordenar recarrega o `<form>` inteiro (campo oculto `ordem` sempre em
+    dia, sem cópia OOB) — por isso os cabeçalhos NÃO levam `hx-get`/`hx-swap`,
+    ao contrário dos links de página."""
+    criar_fornecedor(codif="930002", nome="Ordenação Em Página Inteira")
+
+    client.force_login(funcionario_almoxarifado)
+    conteudo = client.get(reverse("fornecedores:consulta")).content.decode("utf-8")
+
+    ths_ordenaveis = [
+        bloco
+        for bloco in re.findall(r"<th\b.*?</th>", conteudo, re.S)
+        if "table-sort-link" in bloco
+    ]
+    assert len(ths_ordenaveis) == 3, "Código, Nome e Documento são ordenáveis"
+    for bloco in ths_ordenaveis:
+        assert "hx-get" not in bloco
+        assert "hx-swap" not in bloco
+
+
+def test_formulario_de_filtros_nao_rola_ao_topo(client, funcionario_almoxarifado):
+    client.force_login(funcionario_almoxarifado)
+
+    conteudo = client.get(reverse("fornecedores:consulta")).content.decode("utf-8")
+
+    form = re.search(r'<form\b[^>]*class="filter-bar"[^>]*>', conteudo)
+    assert form is not None
+    assert "hx-get" in form.group()
+    assert "hx-swap" not in form.group()
+    assert "show:" not in form.group()
+
+
+def test_tabela_populada_de_resultados_e_focavel_por_script(
+    client, funcionario_almoxarifado, criar_fornecedor
+):
+    """`hx-on::after:swap` foca `#resultados-consulta table`; um `<table>` sem
+    `tabindex="-1"` não recebe foco por script."""
+    criar_fornecedor(codif="930003", nome="Tabela Focável")
+
+    client.force_login(funcionario_almoxarifado)
+    conteudo = client.get(reverse("fornecedores:consulta")).content.decode("utf-8")
+
+    regiao = conteudo[conteudo.index('id="resultados-consulta"') :]
+    assert re.search(r'<table\b[^>]*tabindex="-1"', regiao)
+    valor_after = _valor_hx_on(_bloco_section_principal(conteudo), "after:swap")
+    assert "#resultados-consulta table" in valor_after
 
 
 # ---------------------------------------------------------------------------

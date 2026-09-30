@@ -1,5 +1,5 @@
 {% extends "contas/base.html" %}
-{% load static catalogo_extras %}
+{% load static interface_extras %}
 
 {% comment %}
 Histórico de importações de fornecedores (US3, `contracts/rotas-e-
@@ -15,7 +15,7 @@ dela.
 
 Cada execução leva ao detalhe (`fornecedores:execucao_detalhe`, pk) por um
 `<a>` real na coluna "Execução" — funciona sozinho, sem nenhum JS;
-`fornecedores/static/fornecedores/js/historico.js` estende o clique para a
+`static/js/linha-clicavel.js` estende o clique para a
 linha inteira como aprimoramento progressivo, mesmo padrão do catálogo.
 {% endcomment %}
 
@@ -26,9 +26,9 @@ linha inteira como aprimoramento progressivo, mesmo padrão do catálogo.
 {% endblock %}
 
 {% block content %}
-<main class="fornecedores-page">
-  <div class="fornecedores-container">
-    {% include "catalogo/_mensagens.html" %}
+<main class="page">
+  <div class="page-container">
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
@@ -40,28 +40,28 @@ linha inteira como aprimoramento progressivo, mesmo padrão do catálogo.
       </div>
     </header>
 
-    <section class="fornecedores-section">
+    <section class="page-section">
       {% if execucoes %}
       <div class="table-wrapper table-sticky-header">
-        <table class="table">
+        <table class="table table-nowrap-headers table-dense-x">
           <thead>
             <tr>
               <th scope="col">Execução</th>
               <th scope="col">Situação</th>
-              {% include "catalogo/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
-              {% include "catalogo/_th_ordenavel.html" with coluna="executor" rotulo="Executada por" rotulo_acao="executor" %}
-              <th scope="col" class="fornecedores-historico-arquivo">Arquivo</th>
-              {% include "catalogo/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
+              {% include "interface/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
+              {% include "interface/_th_ordenavel.html" with coluna="executor" rotulo="Executor" rotulo_acao="executor" %}
+              <th scope="col" class="table-cell-filename">Arquivo</th>
+              {% include "interface/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
               <th scope="col" class="table-cell-numeric">Inseridos</th>
               <th scope="col" class="table-cell-numeric">Atualizados</th>
-              {% include "catalogo/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
+              {% include "interface/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
             </tr>
           </thead>
           <tbody>
             {% for e in execucoes %}
-            <tr class="table-row-clickable fornecedores-historico-row">
+            <tr data-linha-clicavel>
               <td>
-                <a href="{% url 'fornecedores:execucao_detalhe' e.pk %}" class="fornecedores-historico-link">#{{ e.pk }}</a>
+                <a href="{% url 'fornecedores:execucao_detalhe' e.pk %}" class="table-row-link" data-linha-link><span class="visually-hidden">Execução </span>#{{ e.pk }}</a>
               </td>
               <td>
                 {% if e.total_rejeitados %}
@@ -70,19 +70,28 @@ linha inteira como aprimoramento progressivo, mesmo padrão do catálogo.
                 <span class="badge badge-success">Sem rejeições</span>
                 {% endif %}
               </td>
-              <td>{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
+              <td class="table-cell-date">{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
               <td>{{ e.executada_por.matricula }}</td>
-              <td class="fornecedores-historico-arquivo">{{ e.nome_arquivo }}</td>
+              <td class="table-cell-filename">
+                {% if e.nome_arquivo|truncar_meio:20 == e.nome_arquivo %}
+                <span class="table-cell-filename-nome">{{ e.nome_arquivo }}</span>
+                {% else %}
+                <details class="table-cell-filename-detalhe">
+                  <summary class="table-cell-filename-nome">{{ e.nome_arquivo|truncar_meio:20 }}</summary>
+                  <div class="table-cell-filename-completo">{{ e.nome_arquivo }}</div>
+                </details>
+                {% endif %}
+              </td>
               <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
               <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
               <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
-              <td class="table-cell-numeric{% if e.total_rejeitados %} fornecedores-rejeitados-emphasis{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
+              <td class="table-cell-numeric{% if e.total_rejeitados %} emphasis-warning{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      {% include "catalogo/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
+      {% include "interface/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
       {% else %}
       <div class="empty-state" data-estado="vazio">
         <p class="empty-state-title">Nenhuma importação registrada.</p>
@@ -95,5 +104,5 @@ linha inteira como aprimoramento progressivo, mesmo padrão do catálogo.
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'fornecedores/js/historico.js' %}" defer></script>
+<script src="{% static 'js/linha-clicavel.js' %}" defer></script>
 {% endblock %}

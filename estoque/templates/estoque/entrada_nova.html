@@ -1,6 +1,6 @@
 {% extends "contas/base.html" %}
 {% load static %}
-{% load catalogo_extras %}
+{% load interface_extras %}
 
 {% block title %}Registrar entrada de materiais — WMS-Almoxarifado{% endblock %}
 
@@ -52,9 +52,9 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
 {% endcomment %}
 
 {% block content %}
-<main class="estoque-page">
-  <div class="estoque-container">
-    {% include "estoque/_mensagens.html" %}
+<main class="page">
+  <div class="page-container">
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
@@ -65,7 +65,7 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
       </div>
     </header>
 
-    <p id="entrada-indicador" class="htmx-indicator loading-indicator estoque-indicador" role="status">
+    <p id="entrada-indicador" class="htmx-indicator loading-indicator status-line" role="status">
       <span class="loading-indicator-spinner" aria-hidden="true"></span>
       Atualizando…
     </p>
@@ -77,12 +77,12 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
         <h2 class="section-marker" id="resumo-heading">
           <span class="section-marker-label">Resumo da entrada</span>
         </h2>
-        <p class="estoque-nota">
+        <p class="text-note estoque-nota">
           Confira os dados antes de confirmar. Os saldos abaixo são os deste momento; o
           registro usa o saldo efetivo no momento da confirmação.
         </p>
 
-        <dl class="estoque-dados-grid">
+        <dl class="meta-grid estoque-dados-grid">
           <div><dt>Motivo</dt><dd>{{ motivo_label }}</dd></div>
           <div><dt>Tipo de documento</dt><dd>{{ tipo_documento_label }}</dd></div>
           <div><dt>Número do documento</dt><dd>{{ cabecalho_form.numero_documento.value }}</dd></div>
@@ -107,7 +107,7 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
               <tr>
                 <th scope="col">Código</th>
                 <th scope="col">Descrição</th>
-                <th scope="col">Quantidade</th>
+                <th scope="col" class="table-cell-numeric">Quantidade</th>
                 <th scope="col">Unidade</th>
                 <th scope="col" class="table-cell-numeric">Saldo atual</th>
                 <th scope="col" class="table-cell-numeric">Saldo resultante</th>
@@ -118,17 +118,17 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
               <tr>
                 <td class="table-cell-code">{{ linha.material.cadpro }}</td>
                 <td>{{ linha.material.descricao }}</td>
-                <td class="table-cell-numeric">{{ linha.quantidade }}</td>
+                <td class="table-cell-numeric">{{ linha.quantidade|quantidade }}</td>
                 <td>{{ linha.material.unidade }}</td>
-                <td class="table-cell-numeric">{{ linha.saldo_atual }}</td>
-                <td class="table-cell-numeric">{{ linha.saldo_resultante }}</td>
+                <td class="table-cell-numeric">{{ linha.saldo_atual|quantidade }}</td>
+                <td class="table-cell-numeric">{{ linha.saldo_resultante|quantidade }}</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
 
-        <div class="estoque-confirmacao-sticky">
+        <div class="confirmation-bar estoque-confirmacao-sticky">
           <form
             method="post"
             action="{% url 'estoque:entrada_confirmar' %}"
@@ -205,7 +205,7 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
         {% endcomment %}
         <button type="submit" name="acao" value="manter_dados" class="visually-hidden" tabindex="-1" aria-hidden="true">Manter dados preenchidos</button>
 
-        <section class="estoque-section">
+        <section class="page-section">
           <h2 class="section-marker">
             <span class="section-marker-label">Motivo e referência</span>
           </h2>
@@ -301,7 +301,7 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
           </div>
         </section>
 
-        <section class="estoque-section">
+        <section class="page-section">
           <h2 class="section-marker{% if linhas_itens %} section-marker-attached{% endif %}">
             <span class="section-marker-label">Materiais{% if linhas_itens %} ({{ linhas_itens|length }}){% endif %}</span>
           </h2>
@@ -384,7 +384,7 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
                   <td class="table-cell-code">{{ resultado.material.cadpro }}</td>
                   <td>{{ resultado.material.descricao }}</td>
                   <td>{{ resultado.material.unidade }}</td>
-                  <td class="table-cell-numeric">{{ resultado.material.saldo }}</td>
+                  <td class="table-cell-numeric">{{ resultado.material.saldo|quantidade }}</td>
                 </tr>
                 {% empty %}
                 <tr class="table-empty-row" data-estado="vazio">
@@ -403,7 +403,7 @@ dentro de `busca_emitente`/`busca_material` e aciona a busca correspondente.
           {% endif %}
         </section>
 
-        <div class="estoque-confirmacao-sticky">
+        <div class="confirmation-bar estoque-confirmacao-sticky">
           <button type="submit" name="acao" value="revisar" class="btn btn-primary">Revisar</button>
         </div>
       </form>

@@ -1,26 +1,41 @@
-"""Testes das template tags de `catalogo/templatetags/catalogo_extras.py`
+"""Testes das template tags de `interface/templatetags/interface_extras.py`
 (FR-042a, FR-042b — emenda de 2026-09-22, `spec.md`, Clarifications; e a
 revisão do gate visual de 2026-09-22 sobre a mesma superfície: total/plural
 do resumo, ordem em texto, lista compacta de paginação).
 
+Movidas de `catalogo/templatetags/catalogo_extras.py` para `interface`
+(consolidação de UX, Fase A) — mesmo comportamento, import atualizado.
+
 Unitários: exercitam as funções das tags diretamente, sem view nem
 renderização de template — o contrato de marcação (`_paginacao.html` e o
 cabeçalho ordenável da consulta) é coberto por `tests/test_catalogo_consulta.py`
-e é responsabilidade do `frontend-implementer`. `querystring_pagina`, já em
-uso desde a entrega original da feature, não é reexercitada.
+e é responsabilidade do `frontend-implementer`.
+
+`querystring_pagina` ganhou um teste direto (`test-engineer`, alinhamento de
+UX, Fase B): a consolidação (Fase A) passou a compartilhar `_paginacao.html`
+entre `catalogo`, `fornecedores` e `estoque`, e páginas com mais de uma seção
+paginada (`catalogo/fornecedores execucao_detalhe.html`, com
+`pagina_excecoes`/`pagina_divergencias`/`pagina_alteracoes`) dependem desta
+tag para não zerar as demais seções ao avançar uma delas (revisão T051,
+achado P3) — vale travar o contrato na própria tag, não só via integração.
 """
 
 import re
+from decimal import Decimal
 
+import pytest
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 
-from catalogo.templatetags.catalogo_extras import (
+from interface.templatetags.interface_extras import (
     intervalo_paginas,
+    quantidade,
     querystring_ordenacao,
+    querystring_pagina,
     rotulo_ordenacao,
     separador_milhar,
+    truncar_meio,
 )
 
 _rf = RequestFactory()
@@ -32,6 +47,50 @@ def _contexto(get_params, ordem=""):
     resolvida pela view, como `ConsultaCatalogoView` a expõe)."""
     request = _rf.get("/catalogo/", get_params)
     return {"request": request, "ordem": ordem}
+
+
+# ---------------------------------------------------------------------------
+# querystring_pagina (revisão T051, achado P3; contrato reforçado pela
+# consolidação de UX, Fase A — `interface/_paginacao.html` compartilhado)
+# ---------------------------------------------------------------------------
+
+
+def test_querystring_pagina_substitui_so_o_proprio_parametro():
+    request = _rf.get("/qualquer/", {"pagina": "1"})
+    contexto = {"request": request}
+
+    href = querystring_pagina(contexto, "pagina", 3)
+
+    assert "pagina=3" in href
+    assert "pagina=1" not in href
+
+
+def test_querystring_pagina_preserva_parametros_de_outras_secoes_paginadas():
+    """Uma página com mais de uma seção paginada (ex.
+    `execucao_detalhe.html`, com `pagina_excecoes`/`pagina_divergencias`/
+    `pagina_alteracoes`) não pode zerar as demais ao avançar uma delas."""
+    request = _rf.get(
+        "/qualquer/",
+        {"pagina_excecoes": "1", "pagina_divergencias": "2", "pagina_alteracoes": "4"},
+    )
+    contexto = {"request": request}
+
+    href = querystring_pagina(contexto, "pagina_excecoes", 3)
+
+    assert "pagina_excecoes=3" in href
+    assert "pagina_divergencias=2" in href
+    assert "pagina_alteracoes=4" in href
+
+
+def test_querystring_pagina_preserva_filtros_de_busca():
+    request = _rf.get("/qualquer/", {"codigo": "000.000.001", "descricao": "parafuso"})
+    contexto = {"request": request}
+
+    href = querystring_pagina(contexto, "pagina", 2)
+
+    assert "codigo=000.000.001" in href
+    assert "descricao=parafuso" in href
+    assert "pagina=2" in href
 
 
 # ---------------------------------------------------------------------------
@@ -228,7 +287,7 @@ def test_resolver_ordenacao_descricao_usa_campo_normalizado():
 
 
 # ---------------------------------------------------------------------------
-# catalogo/_th_ordenavel.html (frontend, FR-042a): cabeçalho ordenável
+# interface/_th_ordenavel.html (frontend, FR-042a): cabeçalho ordenável
 # independente de tela — `htmx_alvo`/`htmx_indicador` opcionais (mesmo
 # padrão de `_paginacao.html`); sem eles, o `<a>` é só navegação normal.
 # Testado com uma declaração fictícia, sem nenhuma ligação com a consulta do
@@ -247,7 +306,7 @@ def _renderizar_th_ficticio(ordem, **extra):
         "ordem": ordem,
         **extra,
     }
-    return render_to_string("catalogo/_th_ordenavel.html", contexto)
+    return render_to_string("interface/_th_ordenavel.html", contexto)
 
 
 def test_th_ordenavel_sem_htmx_alvo_e_navegacao_normal_sem_hx_get():
@@ -297,3 +356,147 @@ def test_th_ordenavel_ordem_padrao_decrescente_indica_descending_e_clique_volta_
     assert "ordem=coluna_ficticia" in href
     assert "ordem=-coluna_ficticia" not in href
     assert 'aria-label="Ordenar por coluna fictícia, crescente"' in html
+
+
+# ---------------------------------------------------------------------------
+# quantidade (Fase C, decisão do usuário): formato de EXIBIÇÃO de saldo/
+# quantidade/diferença em pt-BR — milhar ".", decimal ",", só as casas
+# significativas (até 3, o `decimal_places` dos models). Antes, "32,500" ao
+# lado de "27000" lia como 32 mil. O filtro nunca vale para `value` de
+# `<input>`/hidden (ver `tests/test_estoque_views_entrada.py`): "1.500" de
+# exibição não é um formato de entrada aceito como 1500.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "valor, esperado",
+    [
+        (27000, "27.000"),
+        (Decimal("27000.000"), "27.000"),
+        (Decimal("32.500"), "32,5"),
+        (Decimal("6.000"), "6"),
+        (0.125, "0,125"),
+        (-1234.5, "-1.234,5"),
+        (0, "0"),
+        (Decimal("0.000"), "0"),
+        (1234567.891, "1.234.567,891"),
+        (Decimal("999.999"), "999,999"),
+        (Decimal("1000"), "1.000"),
+    ],
+)
+def test_quantidade_formata_em_pt_br_so_com_as_casas_significativas(valor, esperado):
+    assert quantidade(valor) == esperado
+
+
+def test_quantidade_zero_negativo_nao_vira_menos_zero():
+    assert quantidade(-0.0) == "0"
+    assert quantidade(Decimal("-0.000")) == "0"
+
+
+def test_quantidade_nao_arredonda_para_menos_de_3_casas():
+    """A exibição nunca esconde saldo: 0,001 continua 0,001 (não vira "0")."""
+    assert quantidade(Decimal("0.001")) == "0,001"
+    assert quantidade(Decimal("-0.001")) == "-0,001"
+    assert quantidade(Decimal("12.345")) == "12,345"
+
+
+def test_quantidade_float_e_lido_pela_representacao_decimal_nao_pelo_binario():
+    """`0.1` como float não pode vazar "0,1000000000000000055…"."""
+    assert quantidade(0.1) == "0,1"
+
+
+def test_quantidade_none_e_vazio_viram_string_vazia():
+    assert quantidade(None) == ""
+    assert quantidade("") == ""
+
+
+@pytest.mark.parametrize("valor", ["abc", "12,5x", Decimal("NaN"), Decimal("Infinity")])
+def test_quantidade_valor_nao_numerico_e_devolvido_como_esta(valor):
+    resultado = quantidade(valor)
+
+    assert resultado is valor or resultado == valor
+
+
+# ---------------------------------------------------------------------------
+# truncar_meio (Fase C): encurta cortando NO MEIO, preservando começo e fim
+# (com a extensão). Só exibição — quem usa mantém o valor completo acessível
+# (histórico de importações: `<details>`).
+# ---------------------------------------------------------------------------
+
+_NOME_LONGO = "seed_dev_03_restauracao_carga_inicial_valida.csv"
+
+
+def test_truncar_meio_preserva_inicio_e_fim_com_a_extensao():
+    resultado = truncar_meio(_NOME_LONGO, 20)
+
+    assert resultado.startswith(_NOME_LONGO[:4])
+    assert resultado.endswith(".csv")
+    assert "…" in resultado
+    assert resultado != _NOME_LONGO
+
+
+def test_truncar_meio_nao_corta_quando_cabe():
+    assert truncar_meio("carga.csv", 20) == "carga.csv"
+
+
+def test_truncar_meio_no_limite_exato_nao_corta():
+    nome = "a" * 16 + ".csv"
+    assert len(nome) == 20
+
+    assert truncar_meio(nome, 20) == nome
+
+
+def test_truncar_meio_um_caractere_acima_do_limite_corta():
+    nome = "a" * 17 + ".csv"
+    assert len(nome) == 21
+
+    resultado = truncar_meio(nome, 20)
+
+    assert resultado != nome
+    assert "…" in resultado
+
+
+@pytest.mark.parametrize(
+    "nome",
+    [
+        _NOME_LONGO,
+        "a" * 40,
+        "relatorio_importacao_scpi_2026_01_carga_completa.csv",
+        "sem_extensao_mas_com_nome_bem_comprido_mesmo",
+        "muitos.pontos.no.nome.do.arquivo.exportado.csv",
+    ],
+)
+@pytest.mark.parametrize("limite", [8, 12, 20, 30])
+def test_truncar_meio_resultado_tem_exatamente_o_limite(nome, limite):
+    assert len(nome) > limite, "pré-condição: o nome precisa exceder o limite"
+
+    resultado = truncar_meio(nome, limite)
+
+    assert len(resultado) == limite
+    assert resultado.count("…") == 1
+
+
+def test_truncar_meio_nomes_com_mesmo_prefixo_e_fim_diferente_resultam_em_cortes_diferentes():
+    """O motivo de existir (achado do gate visual): `truncatechars` cortava só
+    o fim e deixava vários arquivos como "seed_dev_0…", indistinguíveis. O que
+    diferencia um arquivo do outro está no fim/extensão."""
+    prefixo = "importacao_do_catalogo_scpi_completo_"
+    a = truncar_meio(f"{prefixo}v1.csv", 20)
+    b = truncar_meio(f"{prefixo}v2.csv", 20)
+    c = truncar_meio(f"{prefixo}v1.txt", 20)
+
+    assert len({a, b, c}) == 3
+
+
+def test_truncar_meio_sem_extensao_ainda_preserva_o_fim_do_nome():
+    nome = "a" * 30 + "final"
+
+    resultado = truncar_meio(nome, 20)
+
+    assert resultado.endswith("final")
+    assert len(resultado) == 20
+
+
+@pytest.mark.parametrize("limite", [0, 1, 2, -5, "abc", None])
+def test_truncar_meio_limite_invalido_devolve_o_valor_sem_alteracao(limite):
+    assert truncar_meio(_NOME_LONGO, limite) == _NOME_LONGO

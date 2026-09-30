@@ -1,5 +1,5 @@
 {% extends "contas/base.html" %}
-{% load static %}
+{% load static interface_extras %}
 
 {% block title %}Entrada #{{ entrada.pk }} — WMS-Almoxarifado{% endblock %}
 
@@ -14,8 +14,8 @@ usado sempre que o destino de origem não é a Home).
 {% endcomment %}
 
 {% block content %}
-<main class="estoque-page">
-  <div class="estoque-container">
+<main class="page">
+  <div class="page-container">
     <a href="{% url 'estoque:entradas' %}" class="back-link">
       <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
            fill="none" aria-hidden="true">
@@ -25,16 +25,16 @@ usado sempre que o destino de origem não é a Home).
       <span>Entradas</span>
     </a>
 
-    {% include "estoque/_mensagens.html" %}
+    {% include "interface/_mensagens.html" %}
 
     <header class="page-header">
       <div>
         <h1 class="page-header-title">
           Entrada #{{ entrada.pk }}
           {% if entrada.estornada %}
-          <span class="badge badge-danger estoque-page-header-badge">Estornada</span>
+          <span class="badge badge-danger page-header-badge">Estornada</span>
           {% else %}
-          <span class="badge badge-success estoque-page-header-badge">Registrada</span>
+          <span class="badge badge-success page-header-badge">Registrada</span>
           {% endif %}
         </h1>
       </div>
@@ -45,11 +45,11 @@ usado sempre que o destino de origem não é a Home).
       {% endif %}
     </header>
 
-    <section class="estoque-section">
+    <section class="page-section">
       <h2 class="section-marker">
         <span class="section-marker-label">Registro</span>
       </h2>
-      <dl class="estoque-dados-grid">
+      <dl class="meta-grid estoque-dados-grid">
         <div><dt>Motivo</dt><dd>{{ entrada.get_motivo_display }}</dd></div>
         <div><dt>Tipo de documento</dt><dd>{{ entrada.get_tipo_documento_display }}</dd></div>
         <div><dt>Número do documento</dt><dd>{{ entrada.numero_documento }}</dd></div>
@@ -74,11 +74,11 @@ usado sempre que o destino de origem não é a Home).
     estorno é o fato mais recente e relevante — vem antes dos Itens, não
     depois.
     {% endcomment %}
-    <section class="estoque-section">
+    <section class="page-section">
       <h2 class="section-marker">
         <span class="section-marker-label">Estorno</span>
       </h2>
-      <dl class="estoque-dados-grid">
+      <dl class="meta-grid estoque-dados-grid">
         <div><dt>Estornada por</dt><dd class="table-cell-code">{{ estorno.estornada_por.matricula }}</dd></div>
         <div><dt>Estornada em</dt><dd>{{ estorno.estornada_em }}</dd></div>
         <div><dt>Justificativa</dt><dd>{{ estorno.justificativa }}</dd></div>
@@ -86,7 +86,7 @@ usado sempre que o destino de origem não é a Home).
     </section>
     {% endif %}
 
-    <section class="estoque-section">
+    <section class="page-section">
       <h2 class="section-marker{% if itens %} section-marker-attached{% endif %}">
         <span class="section-marker-label">Itens{% if itens %} ({{ itens|length }}){% endif %}</span>
       </h2>
@@ -96,7 +96,7 @@ usado sempre que o destino de origem não é a Home).
             <tr>
               <th scope="col">Código</th>
               <th scope="col">Descrição</th>
-              <th scope="col">Quantidade recebida</th>
+              <th scope="col" class="table-cell-numeric">Quantidade recebida</th>
               <th scope="col">Unidade</th>
             </tr>
           </thead>
@@ -105,7 +105,7 @@ usado sempre que o destino de origem não é a Home).
             <tr>
               <td class="table-cell-code">{{ item.material.cadpro }}</td>
               <td>{{ item.material.descricao }}</td>
-              <td class="table-cell-numeric">{{ item.quantidade }}</td>
+              <td class="table-cell-numeric">{{ item.quantidade|quantidade }}</td>
               <td>{{ item.material.unidade }}</td>
             </tr>
             {% empty %}

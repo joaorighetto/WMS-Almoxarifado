@@ -14,7 +14,7 @@ sempre `chefe_almoxarifado`, e o foco é o comportamento observável.
 Decisões documentadas para os implementadores de T038/T040:
 
 - **Parâmetro de página**: `pagina`, o mesmo da consulta (`contracts/rotas-e-autorizacao.md`)
-  e o que `catalogo/_paginacao.html` recebe como `parametro`. Decisão do
+  e o que `interface/_paginacao.html` recebe como `parametro`. Decisão do
   coordenador: T038 declara `page_kwarg = "pagina"` no `ListView`.
 - **Estado vazio**: sem nenhuma execução, o template (T040) DEVE emitir um
   elemento com `data-estado="vazio"` na região da lista, seguindo o mesmo
@@ -201,7 +201,7 @@ def test_historico_lista_da_mais_recente_para_a_mais_antiga_com_dados_essenciais
     linha_recente = conteudo[posicao_recente:posicao_antiga]
     for total_esperado in ("22", "9", "13"):
         # `class="table-cell-numeric"` pode vir seguida de um modificador
-        # (ex.: `catalogo-rejeitados-emphasis`, quando o total for
+        # (ex.: `emphasis-warning`, quando o total for
         # "Rejeitados" e diferente de zero — revisão do gate visual, achado
         # P1, 2026-09-22) — o teste verifica a classe base, não a ausência de
         # outras.
@@ -232,6 +232,119 @@ def test_cada_execucao_do_historico_leva_ao_detalhe(client, chefe_almoxarifado, 
 
     href_esperado = reverse("catalogo:execucao_detalhe", args=[execucao.pk])
     assert href_esperado in resposta.content.decode("utf-8")
+
+
+def test_link_da_execucao_e_um_a_real_com_nome_acessivel_contextualizado(
+    client, chefe_almoxarifado, criar_usuario
+):
+    """Contrato de linha clicável (`static/js/linha-clicavel.js`,
+    `data-linha-clicavel`/`data-linha-link`), compartilhado com o histórico
+    de fornecedores e com a consulta de entradas: o `<a>` real funciona
+    sozinho, sem nenhum JS, e seu nome acessível traz o prefixo "Execução "
+    (`visually-hidden`) — sem ele, um leitor de tela leria só "cerquilha N"."""
+    usuario = criar_usuario()
+    execucao = _criar_execucao(executada_por=usuario)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("catalogo:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    href = reverse("catalogo:execucao_detalhe", args=[execucao.pk])
+    link_esperado = (
+        f'<a href="{href}" class="table-row-link" data-linha-link>'
+        f'<span class="visually-hidden">Execução </span>#{execucao.pk}</a>'
+    )
+    assert link_esperado in conteudo
+    assert "<tr data-linha-clicavel>" in conteudo
+
+
+def test_pagina_do_historico_carrega_o_script_de_linha_clicavel(client, chefe_almoxarifado):
+    client.force_login(chefe_almoxarifado)
+
+    resposta = client.get(reverse("catalogo:historico"))
+
+    assert "js/linha-clicavel.js" in resposta.content.decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Coluna "Arquivo": nome completo sempre acessível, mesmo quando a exibição é
+# encurtada (`table-cell-filename`, `truncar_meio:20`, Fase C). Nomes de até
+# 20 caracteres ficam como texto simples; os de 21 ou mais ficam num
+# `<details>` nativo, com o `<summary>` cortado NO MEIO (começo + "…" + fim,
+# extensão preservada) e o nome completo sempre no DOM (aberto ou fechado) —
+# o nome em si nunca é alterado, só a apresentação.
+# ---------------------------------------------------------------------------
+
+_LIMITE_NOME_ARQUIVO = 20
+
+
+def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
+    client, chefe_almoxarifado, criar_usuario
+):
+    nome = "a" * 16 + ".csv"  # 20 caracteres exatos — não passa do limite.
+    assert len(nome) == _LIMITE_NOME_ARQUIVO
+    usuario = criar_usuario()
+    _criar_execucao(executada_por=usuario, nome_arquivo=nome)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("catalogo:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    assert f'<span class="table-cell-filename-nome">{nome}</span>' in conteudo
+    assert "<details" not in conteudo
+
+
+def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_dom(
+    client, chefe_almoxarifado, criar_usuario
+):
+    from interface.templatetags.interface_extras import truncar_meio
+
+    nome = "a" * 17 + ".csv"  # 21 caracteres — 1 a mais que o limite de 20.
+    assert len(nome) == _LIMITE_NOME_ARQUIVO + 1
+    usuario = criar_usuario()
+    _criar_execucao(executada_por=usuario, nome_arquivo=nome)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("catalogo:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    assert '<details class="table-cell-filename-detalhe">' in conteudo
+    # O nome completo precisa estar no DOM mesmo com o `<details>` fechado
+    # (contrato: "nome completo sempre presente no DOM, aberto ou fechado") —
+    # a resposta do servidor nunca abre `<details>` por padrão (sem `open`).
+    assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
+    bloco_details = re.search(r"<details\b[^>]*>", conteudo).group()
+    assert " open" not in bloco_details
+    # O `<summary>` traz o corte NO MEIO com exatamente o limite (fixa o "20"
+    # do template; o algoritmo em si é `test_catalogo_templatetags.py`).
+    resumo = re.search(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
+    assert resumo is not None
+    assert resumo.group(1) == truncar_meio(nome, _LIMITE_NOME_ARQUIVO)
+    assert len(resumo.group(1)) == _LIMITE_NOME_ARQUIVO
+    assert resumo.group(1).endswith(".csv")
+
+
+def test_dois_arquivos_de_mesmo_prefixo_tem_resumos_distintos_e_nomes_completos_no_dom(
+    client, chefe_almoxarifado, criar_usuario
+):
+    """Motivo do corte no meio (achado do gate visual): nomes gerados pelo
+    `seed_dev` cortados só no fim ficavam todos "seed_dev_0…", sem como
+    distinguir uma linha da outra sem abrir o `<details>`."""
+    prefixo = "importacao_do_catalogo_scpi_completo_"
+    nomes = [f"{prefixo}v1.csv", f"{prefixo}v2.csv"]
+    usuario = criar_usuario()
+    for nome in nomes:
+        _criar_execucao(executada_por=usuario, nome_arquivo=nome)
+
+    client.force_login(chefe_almoxarifado)
+    resposta = client.get(reverse("catalogo:historico"))
+
+    conteudo = resposta.content.decode("utf-8")
+    resumos = re.findall(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
+    assert len(resumos) == 2
+    assert len(set(resumos)) == 2, f"resumos indistinguíveis: {resumos}"
+    for nome in nomes:
+        assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
 
 
 # ---------------------------------------------------------------------------
@@ -471,7 +584,7 @@ def test_cabecalho_concluida_em_primeiro_clique_a_partir_do_padrao_ordena_cresce
     """A ordem padrão do histórico já é decrescente (FR-037a); o primeiro
     clique em "Concluída em" (sem `?ordem=` na requisição) precisa alternar
     para crescente, não repetir a mesma direção (`querystring_ordenacao`,
-    `catalogo/templatetags/catalogo_extras.py`)."""
+    `interface/templatetags/interface_extras.py`)."""
     usuario = criar_usuario()
     _criar_execucao(executada_por=usuario)
 
@@ -493,8 +606,13 @@ def test_cabecalho_executor_ordenado_crescente_marca_aria_sort_ascending(
     client.force_login(chefe_almoxarifado)
     resposta = client.get(reverse("catalogo:historico"), {"ordem": "executor"})
 
-    th_executor = _th(resposta.content.decode("utf-8"), "Executada por")
+    # Rótulo visível "Executor" (Fase C; antes "Executada por"); a chave lógica
+    # da coluna (`executor`, `?ordem=`) e o nome acessível do link ("Ordenar
+    # por executor, ...") não mudam — o `<th>` é localizado pelo rótulo.
+    th_executor = _th(resposta.content.decode("utf-8"), "Executor")
     assert 'aria-sort="ascending"' in th_executor
+    assert 'aria-label="Ordenar por executor, decrescente"' in th_executor
+    assert "Executada por" not in resposta.content.decode("utf-8")
 
 
 def test_colunas_nao_ordenaveis_do_historico_continuam_sem_link(
