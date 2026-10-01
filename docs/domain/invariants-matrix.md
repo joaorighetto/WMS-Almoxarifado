@@ -3,9 +3,9 @@
 ```text
 Status: VALIDADO
 Autoridade: CANÔNICA PARA INVARIANTES DE DOMÍNIO
-Versão: 1.1
+Versão: 1.2
 Última validação: 2026-09-18
-Última alteração: 2026-09-25 (INV-ENT-001, INV-SUPPLIER-001 a 005)
+Última alteração: 2026-10-01 (INV-ORG-004 a 006)
 
 Escopo:
 propriedades transversais atualmente confirmadas que devem permanecer
@@ -22,6 +22,8 @@ verdadeiras nos estados e operações relevantes do WMS.
 - `specs/001-importacao-catalogo-materiais/spec.md`
 - decisões do dono do produto de 2026-09-25, na especificação de `specs/003-entrada-materiais` e
   da importação de fornecedores (`FOR`)
+- decisão do dono do produto de 2026-10-01, no brainstorming de `ORG`
+  (`docs/brainstorming/2026-10-01-org-administracao-usuarios-setores.md`, insumo não normativo)
 - `docs/domain/permissions-matrix.md` (condições de capability usadas como evidência, nunca
   duplicadas sem necessidade)
 - `docs/domain/reconciliation/invariants-reconciliation.md` (histórico do raciocínio completo,
@@ -55,6 +57,9 @@ foi definida transversalmente. Ver seção 4, "Fora desta matriz".
 | `INV-ORG-001` | Organização | Todo usuário pertence a um único setor. | CRÍTICA | domínio; banco/constraint |
 | `INV-ORG-002` | Organização | Todo setor ativo possui exatamente um chefe ativo, pertencente ao próprio setor. Nenhuma operação sobre usuário ou setor pode deixar um setor ativo sem chefe ativo. | CRÍTICA | domínio; banco/constraint |
 | `INV-ORG-003` | Organização | Um chefe responde por um único setor. | CRÍTICA | domínio; banco/constraint |
+| `INV-ORG-004` | Organização | Existe exatamente um setor designado como Almoxarifado. A designação é feita no provisionamento e não muda depois; uma vez ativado, o setor Almoxarifado não pode ser desativado. | CRÍTICA | domínio; banco/constraint |
+| `INV-ORG-005` | Organização | `ROLE-WAREHOUSE-STAFF` e `ROLE-WAREHOUSE-HEAD` só podem estar atribuídos a usuários do setor Almoxarifado. | CRÍTICA | domínio; banco/constraint |
+| `INV-ORG-006` | Organização | Um usuário ativo só possui `ROLE-WAREHOUSE-HEAD` se for o chefe do setor Almoxarifado, e esse chefe também ocupa `ROLE-WAREHOUSE-STAFF`. Com o setor Almoxarifado ativo, seu chefe ativo possui `ROLE-WAREHOUSE-HEAD`; há, portanto, exatamente um chefe do almoxarifado ativo, e trocar a chefia do setor Almoxarifado troca também a chefia de estoque, na mesma operação. | CRÍTICA | domínio; transacional; concorrência |
 | `INV-AUTH-001` | Autenticação | Usuário inativo não pode acessar nem executar nenhuma operação no sistema, qualquer que seja o mecanismo de autenticação. | CRÍTICA | autorização |
 
 **Evidência**: `PRODUCT.md`, Operating Context — "Cada funcionário do SAEP pertence a um único
@@ -62,6 +67,14 @@ setor. Todo setor ativo tem exatamente um chefe ativo, que pertence a esse mesmo
 responde por um único setor. Essas invariantes são a base de todo escopo 'próprio setor'... sem
 elas, esse escopo fica indefinido." `INV-AUTH-001`: Constitution, Princípio VI (segurança por
 padrão).
+
+`INV-ORG-004` a `INV-ORG-006`: decisão do dono do produto de 2026-10-01 (brainstorming de `ORG`).
+Transformam em regra a composição do chefe do almoxarifado descrita em `PRODUCT.md` (Users) e nas
+notas de composição de `docs/domain/permissions-matrix.md`: a pessoa que chefia o setor
+Almoxarifado é a mesma que detém as atribuições exclusivas de estoque, e quem a substitui —
+inclusive temporariamente — assume ambas. A atribuição continua explícita (nenhum papel é inferido),
+mas precisa permanecer coerente com a chefia. Desativar uma conta não remove papéis; por isso
+`INV-ORG-006` restringe usuários **ativos**.
 
 ### Catálogo
 
@@ -174,7 +187,7 @@ almoxarifado).
 
 ## 3. Total
 
-25 invariantes canonizadas.
+28 invariantes canonizadas.
 
 ## 4. Fora desta matriz (deliberadamente, não por esquecimento)
 
@@ -198,7 +211,11 @@ transversal ainda não foi definida.
 - **Origens completas de movimentação de estoque**: o conjunto total de origens possíveis de uma
   movimentação (importação, entrada, ajuste de inventário, saída excepcional, devolução, estorno)
   ainda não está definido; não há enum canônico.
-- **Desativação de setor**: nenhuma regra até que essa capacidade seja especificada.
+- **Desativação de setor — além do setor Almoxarifado**: a única regra transversal é
+  `INV-ORG-004` (o Almoxarifado não é desativado depois de ativo). As condições para desativar os
+  demais setores foram decididas no brainstorming de `ORG` e pertencem à spec de ORG; o bloqueio
+  por requisições não encerradas pertence à spec de REQ. Nenhuma delas é invariante transversal
+  até decisão explícita em contrário.
 
 Ver `docs/domain/reconciliation/invariants-reconciliation.md` para o raciocínio completo por trás
 de cada item pendente e as perguntas de produto associadas.

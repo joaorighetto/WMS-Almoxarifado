@@ -3,9 +3,9 @@
 ```text
 Status: VALIDADO
 Autoridade: CANÔNICA PARA AUTORIZAÇÃO DE DOMÍNIO
-Versão: 1.1
+Versão: 1.2
 Última validação: 2026-09-18
-Última alteração: 2026-09-25 (PERM-STOCK-ENTRY-REVERSE; capabilities de fornecedores)
+Última alteração: 2026-10-01 (condições de PERM-USER-MANAGE e PERM-SECTOR-MANAGE; INV-ORG-004 a 006)
 ```
 
 **Escopo**: capacidades de negócio atualmente definidas para o WMS-Almoxarifado.
@@ -16,6 +16,9 @@ Versão: 1.1
 - `specs/001-importacao-catalogo-materiais/spec.md`
 - decisão do dono do produto de 2026-09-25, na especificação de `specs/003-entrada-materiais`
   (`PERM-STOCK-ENTRY-REVERSE`) e da importação de fornecedores (`PERM-SUPPLIER-*`)
+- decisão do dono do produto de 2026-10-01, no brainstorming de `ORG` (chefia do almoxarifado
+  acoplada à chefia do setor Almoxarifado; `docs/domain/invariants-matrix.md`, `INV-ORG-004` a
+  `INV-ORG-006`)
 
 > A ausência de uma capability para uma feature ainda não especificada não significa proibição
 > permanente da feature; significa apenas que nenhuma autorização correspondente foi definida
@@ -82,14 +85,19 @@ Versão: 1.1
   concedida a `ROLE-SECTOR-HEAD`, com escopo "próprio setor", já cobre o chefe do almoxarifado
   quando o setor em questão é o próprio almoxarifado.
 
+  Desde 2026-10-01 essa composição é exigida, não apenas descrita: os papéis de almoxarifado só
+  existem no setor Almoxarifado, e `ROLE-WAREHOUSE-HEAD` acompanha a chefia desse setor — quem a
+  assume, inclusive temporariamente, assume também as atribuições exclusivas de estoque
+  (`INV-ORG-004` a `INV-ORG-006`). As atribuições continuam explícitas; nenhuma é inferida.
+
 ## 3. Catálogo de capabilities
 
 ### Usuários e setores
 
 | ID | Capacidade | Papéis autorizados | Escopo | Condições |
 |---|---|---|---|---|
-| `PERM-USER-MANAGE` | Gerenciar usuários e atribuição de papéis | `ROLE-SYSTEM-ADMIN` | Global | — |
-| `PERM-SECTOR-MANAGE` | Gerenciar setores | `ROLE-SYSTEM-ADMIN` | Global | Setor ativo precisa de chefe ativo do próprio setor. |
+| `PERM-USER-MANAGE` | Gerenciar usuários e atribuição de papéis | `ROLE-SYSTEM-ADMIN` | Global | Toda atribuição respeita `INV-ORG-001` a `INV-ORG-006`. |
+| `PERM-SECTOR-MANAGE` | Gerenciar setores | `ROLE-SYSTEM-ADMIN` | Global | Setor ativo precisa de chefe ativo do próprio setor. O setor Almoxarifado é único, tem designação fixa e não é desativado depois de ativo (`INV-ORG-004`). |
 
 ### Requisição
 

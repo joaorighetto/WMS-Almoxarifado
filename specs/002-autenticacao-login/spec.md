@@ -55,6 +55,14 @@ estratégia de redirect."
   sua representação cadastrada (FR-001b). Formato, tamanho e máscara continuam indefinidos, por
   falta de evidência.
 
+### Emenda 2026-10-01 (decisão do dono do produto no brainstorming de `ORG`)
+
+- **Credencial provisória**: a entrega e a redefinição de credenciais pela administração de `ORG`
+  usam senha provisória, e o usuário que autentica com ela precisa definir a própria senha antes de
+  acessar qualquer outra superfície. SC-001 passa a ressalvar essa etapa. A definição da senha,
+  a redefinição pelo administrador e a troca voluntária pertencem a `ORG`, não a esta feature
+  (`docs/brainstorming/2026-10-01-org-administracao-usuarios-setores.md`, D-13 e D-14).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Entrar no sistema com credenciais válidas (Priority: P1)
@@ -355,7 +363,9 @@ subsequente de acessar superfície protegida exige nova autenticação.
 ### Measurable Outcomes
 
 - **SC-001**: Um usuário ativo cadastrado consegue autenticar-se e acessar a área autenticada em uma
-  única tentativa, informando apenas suas credenciais, sem etapa adicional.
+  única tentativa, informando apenas suas credenciais, sem etapa adicional — exceto quando a
+  credencial vigente for provisória, caso em que a definição da própria senha, entregue por `ORG`,
+  precede o acesso (emenda de 2026-10-01).
 - **SC-002**: 100% das tentativas de acesso a superfície protegida sem sessão autenticada válida são
   impedidas e direcionadas ao fluxo de autenticação, sem exceção.
 - **SC-003**: 100% das tentativas de autenticação recusadas — senha incorreta, login inexistente ou
@@ -386,7 +396,8 @@ subsequente de acessar superfície protegida exige nova autenticação.
   está sujeito a `INV-ORG-002`/`INV-ORG-003` como qualquer outro caminho de escrita. Por isso
   FR-019 a FR-023 fazem parte do escopo: não para oferecer administração de setores, mas para
   impedir que o próprio bootstrap produza um estado que viole uma invariante CRÍTICA.
-- Recuperação de senha, autoatendimento de conta, primeiro acesso ou provisionamento de credencial.
+- Recuperação de senha, autoatendimento de conta, primeiro acesso ou provisionamento de credencial
+  (tratados por `ORG` a partir da emenda de 2026-10-01; continuam fora desta feature).
 - Escolha do mecanismo de autenticação (matrícula, e-mail, SSO) além do necessário para descrever o
   comportamento observável de login desta feature.
 - Qualquer regra de autorização específica de uma feature de negócio (por exemplo, quem aprova
