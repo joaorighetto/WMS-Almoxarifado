@@ -956,9 +956,11 @@ def designar_chefia(autor, setor_id, usuario_id):
     return usuario
 
 
-def retirar_chefia(autor, setor_id):
+def retirar_chefia(autor, setor_id, *, chefe_esperado_id=None):
     """Retira a chefia de um setor INATIVO; no Almoxarifado, junto com `ROLE-WAREHOUSE-HEAD`
-    (FR-012). O ex-chefe continua no setor com os demais papéis."""
+    (FR-012). O ex-chefe continua no setor com os demais papéis. `chefe_esperado_id`, quando
+    informado, é conferido sob o lock: se a chefia mudou desde a confirmação, nada é retirado
+    (FR-017, FR-049)."""
     with _operacao():
         setor = _setor_existente(setor_id)
         if setor.ativo:
@@ -969,6 +971,10 @@ def retirar_chefia(autor, setor_id):
         chefe = chefes_ativos(setor.pk).filter(is_superuser=False).first()
         if chefe is None:
             raise _recusar(f"O setor {setor.nome} não tem chefe ativo.")
+        if chefe_esperado_id is not None and chefe.pk != chefe_esperado_id:
+            raise _recusar(
+                "A chefia mudou desde que você abriu esta tela.", "Confira o chefe atual e repita."
+            )
         retirados = _papeis(chefe) & _papeis_da_chefia(setor)
         _retirar(chefe, retirados)
         validar_organizacao([setor], [chefe])

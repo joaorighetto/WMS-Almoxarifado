@@ -1040,7 +1040,12 @@ class SetorChefiaView(_OperacaoView):
             if estado == "retirar":
                 if not dados["confirmar"]:
                     return self._tela(request, setor, estado, chefe, form)
-                ex_chefe = self.executar(retirar_chefia, request.user, setor.pk)
+                ex_chefe = self.executar(
+                    retirar_chefia,
+                    request.user,
+                    setor.pk,
+                    chefe_esperado_id=dados["chefe_esperado"],
+                )
                 mensagem = f"A chefia do setor {setor.nome} foi retirada de {ex_chefe.nome}."
             elif estado == "designar":
                 novo = self.executar(designar_chefia, request.user, setor.pk, dados["usuario"])

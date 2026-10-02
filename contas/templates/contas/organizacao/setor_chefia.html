@@ -128,6 +128,7 @@ são primárias. A prévia oferece "Escolher outra pessoa" e "Cancelar" (volta �
       {% csrf_token %}
       <input type="hidden" name="estado" value="{{ estado }}">
       <input type="hidden" name="confirmar" value="1">
+      <input type="hidden" name="chefe_esperado" value="{{ chefe.pk }}">
 
       <section class="page-section" aria-labelledby="retirada-heading">
         <h2 class="section-marker" id="retirada-heading">

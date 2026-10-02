@@ -664,6 +664,34 @@ def test_retirar_a_chefia_do_almoxarifado_inativo_tira_a_chefia_de_estoque_e_man
     validar_tudo()
 
 
+def test_retirar_com_o_chefe_esperado_trocado_e_recusado_sem_mexer_no_chefe_atual(cenario):
+    """Outro administrador retirou a chefia de Luiza e designou Lucas depois que a confirmação foi
+    aberta: confirmar a retirada de Luiza não pode tirar a chefia de Lucas (FR-017, FR-049)."""
+    org.designar_chefia(cenario.admin, cenario.lab.pk, cenario.luiza.pk)
+    org.retirar_chefia(cenario.admin, cenario.lab.pk)
+    org.designar_chefia(cenario.admin, cenario.lab.pk, cenario.lucas.pk)
+    antes = foto_organizacao()
+
+    recusa = recusa_de(
+        lambda: org.retirar_chefia(
+            cenario.admin, cenario.lab.pk, chefe_esperado_id=cenario.luiza.pk
+        )
+    )
+
+    assert recusa.motivo and recusa.caminho
+    assert foto_organizacao() == antes
+    assert [u.pk for u in chefes_ativos(cenario.lab.pk)] == [cenario.lucas.pk]
+    assert not operacao_em_curso()
+
+
+def test_retirar_com_o_chefe_esperado_certo_retira(cenario):
+    org.designar_chefia(cenario.admin, cenario.lab.pk, cenario.luiza.pk)
+
+    org.retirar_chefia(cenario.admin, cenario.lab.pk, chefe_esperado_id=cenario.luiza.pk)
+
+    assert chefes_ativos(cenario.lab.pk).count() == 0
+
+
 def test_retirar_a_chefia_de_setor_ativo_e_recusado_e_indica_a_substituicao(cenario):
     antes = foto_organizacao()
 

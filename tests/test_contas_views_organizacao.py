@@ -1564,12 +1564,16 @@ def test_tela_de_retirada_mostra_o_chefe_a_ser_retirado(client, cenario, lab_com
 
 
 def test_retirada_exige_confirmacao_e_depois_tira_a_chefia(client, cenario, lab_com_chefe):
-    sem_confirmar = client.post(rota("setor_chefia", cenario.lab.pk), {"estado": "retirar"})
+    sem_confirmar = client.post(
+        rota("setor_chefia", cenario.lab.pk),
+        {"estado": "retirar", "chefe_esperado": lab_com_chefe.pk},
+    )
     assert sem_confirmar.status_code == 200
     assert _chefes(cenario.lab) == [lab_com_chefe.pk], "sem `confirmar` nada é retirado"
 
     confirmada = client.post(
-        rota("setor_chefia", cenario.lab.pk), {"estado": "retirar", "confirmar": "1"}
+        rota("setor_chefia", cenario.lab.pk),
+        {"estado": "retirar", "confirmar": "1", "chefe_esperado": lab_com_chefe.pk},
     )
 
     assert confirmada.status_code == 302 and confirmada.url == rota("setor", cenario.lab.pk)
@@ -1582,7 +1586,10 @@ def test_retirada_exige_confirmacao_e_depois_tira_a_chefia(client, cenario, lab_
 
 
 def test_depois_da_retirada_a_tela_volta_a_oferecer_a_designacao(client, cenario, lab_com_chefe):
-    client.post(rota("setor_chefia", cenario.lab.pk), {"estado": "retirar", "confirmar": "1"})
+    client.post(
+        rota("setor_chefia", cenario.lab.pk),
+        {"estado": "retirar", "confirmar": "1", "chefe_esperado": lab_com_chefe.pk},
+    )
 
     resposta = client.get(rota("setor_chefia", cenario.lab.pk))
 
@@ -2671,3 +2678,41 @@ def test_confirmacao_de_substituicao_com_o_setor_ja_em_retirada_nao_retira_a_che
     assert resposta.context["recusa"].motivo
     assert foto_organizacao() == antes
     assert _chefes(cenario.lab) == [lab_com_chefe.pk]
+
+
+def test_tela_de_retirada_envia_o_chefe_mostrado(client, cenario, lab_com_chefe):
+    resposta = client.get(rota("setor_chefia", cenario.lab.pk))
+
+    conteudo = resposta.content.decode()
+    assert f'name="chefe_esperado" value="{lab_com_chefe.pk}"' in conteudo
+
+
+def test_confirmacao_de_retirada_com_outro_chefe_designado_nao_retira_o_novo(
+    client, cenario, chefias, lab_com_chefe
+):
+    """A confirmação mostrou Luiza; antes do envio, a chefia passou a Lucas (o setor continua em
+    retirada). Confirmar não pode tirar a chefia de Lucas."""
+    org.retirar_chefia(cenario.admin, cenario.lab.pk)
+    org.designar_chefia(cenario.admin, cenario.lab.pk, chefias.lucas.pk)
+    antes = foto_organizacao()
+
+    resposta = client.post(
+        rota("setor_chefia", cenario.lab.pk),
+        {"estado": "retirar", "confirmar": "1", "chefe_esperado": lab_com_chefe.pk},
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.context["recusa"].motivo
+    assert foto_organizacao() == antes
+    assert _chefes(cenario.lab) == [chefias.lucas.pk]
+
+
+def test_confirmacao_de_retirada_sem_o_chefe_mostrado_nao_executa(client, cenario, lab_com_chefe):
+    antes = foto_organizacao()
+
+    resposta = client.post(
+        rota("setor_chefia", cenario.lab.pk), {"estado": "retirar", "confirmar": "1"}
+    )
+
+    assert resposta.status_code == 200
+    assert foto_organizacao() == antes

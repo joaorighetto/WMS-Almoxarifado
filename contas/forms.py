@@ -155,7 +155,7 @@ class ChefiaForm(forms.Form):
     def clean(self):
         dados = super().clean()
         if (
-            self.estado == "substituir"
+            self.estado in ("substituir", "retirar")
             and dados.get("confirmar")
             and not dados.get("chefe_esperado")
         ):
