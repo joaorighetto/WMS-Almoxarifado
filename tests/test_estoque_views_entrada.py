@@ -29,6 +29,8 @@ from decimal import Decimal
 import pytest
 from django.urls import reverse
 
+from tests.contas_helpers import operacao
+
 pytestmark = pytest.mark.django_db
 
 
@@ -630,8 +632,9 @@ def test_usuario_desativado_entre_preenchimento_e_confirmacao_vai_ao_login_sem_g
     material = criar_material("700.000.023", Decimal("10.000"))
     client.force_login(funcionario_almoxarifado)
     chave = _obter_chave_confirmacao(client)
-    funcionario_almoxarifado.is_active = False
-    funcionario_almoxarifado.save(update_fields=["is_active"])
+    with operacao():
+        funcionario_almoxarifado.is_active = False
+        funcionario_almoxarifado.save(update_fields=["is_active"])
 
     resposta = client.post(
         reverse("estoque:entrada_confirmar"),

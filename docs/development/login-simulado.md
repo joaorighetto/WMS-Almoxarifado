@@ -29,7 +29,7 @@ identidade.
 | `funcionario-almoxarifado` | `funcionario` | Funcionário do almoxarifado |
 | `chefe-almoxarifado` (padrão) | `chefe` | Chefe de setor, funcionário e chefe do almoxarifado |
 | `auditor` | `auditor` | Gestor/auditor |
-| `administrador-sistema` | `administrador` | Administrador de sistema |
+| `administrador-sistema` | `administrador` | Administrador de sistema (`/organizacao/usuarios/` e `/organizacao/setores/`) |
 | `anonimo` | — | Sai e para de autenticar automaticamente |
 
 Qualquer matrícula de conta ativa também é aceita (`?dev_como=redes.chefe`,
@@ -43,6 +43,7 @@ Exemplos:
 http://localhost:8010/estoque/entradas/?dev_como=auditor
 http://localhost:8010/catalogo/?dev_como=requisitante
 http://localhost:8010/login/?dev_como=anonimo
+http://localhost:8010/organizacao/usuarios/?dev_como=administrador-sistema
 ```
 
 Para criticar a tela de login, use `?dev_como=anonimo`; para voltar ao
@@ -64,3 +65,9 @@ na navegação seguinte, a menos que a identidade seja `anonimo`.
 - Um login feito pelo formulário não é sobrescrito, exceto por `?dev_como=`.
 - Requer o banco populado (`make seed_dev`). Sem a conta, o visitante continua
   anônimo e o console registra um aviso.
+- As contas do seed têm senha definitiva. Uma conta com credencial provisória
+  (cadastrada ou com a senha redefinida nas telas de `/organizacao/usuarios/`) é autenticada
+  normalmente, mas o `CredencialProvisoriaMiddleware` a leva a `/senha/` em
+  qualquer rota, como no login real; para criticar `/senha/` no estado
+  provisório, use `?dev_como=<matrícula>` dessa conta. Sem credencial
+  provisória, `/senha/` mostra a troca voluntária.

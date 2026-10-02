@@ -1,0 +1,85 @@
+{% extends "contas/organizacao/base.html" %}
+{% load static %}
+
+{% block title %}{% if redefinicao %}Senha redefinida{% else %}Usuário cadastrado{% endif %} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Resposta 200 ao POST de cadastro ou de redefinição de senha, com `Cache-Control: no-store` (`never_cache` na view): é o ÚNICO
+lugar em que a senha provisória aparece, uma vez (FR-031, research R8). Contrato de contexto:
+`usuario` (com `setor`), `papeis` (rótulos), `senha` e `redefinicao` (só na redefinição). Nada aqui grava a senha em sessão,
+mensagem, log ou evento — nem em atributo HTML, JS, armazenamento ou URL: ela existe só como
+texto do elemento `#senha-provisoria`, e o botão "Copiar" (`static/js/copiar.js`) a lê dali no
+momento do clique.
+
+Composição: a senha vem primeiro, no bloco de segredo (`.secret-block`, `organizacao.css`), com o
+aviso de que não será mostrada de novo logo abaixo; a conta (para conferir que é a pessoa certa)
+e o caminho para a ficha vêm depois. Alfabeto: `contas/credenciais.py` → `_ALFABETO` não tem
+0, O, 1, l nem I; a dica de ditado abaixo depende disso.
+
+Sem ação primária: o que importa aqui é entregar a senha, e a saída da tela a perderia ("Abrir a
+ficha" e "Cadastrar outro usuário" são retornos, secundários). O botão "Copiar" só existe onde há
+`navigator.clipboard` (contexto seguro; numa intranet em HTTP não aparece): enquanto está oculto,
+`.secret-block-manual` ensina a selecionar e copiar à mão (CSS `:has`, sem JS).
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">{% if redefinicao %}Senha redefinida{% else %}Usuário cadastrado{% endif %}</h1>
+        <p class="page-header-description">Entregue a senha provisória à pessoa, em mãos ou por canal seguro.</p>
+      </div>
+    </header>
+
+    <section class="page-section" aria-labelledby="senha-provisoria-heading">
+      <h2 class="section-marker" id="senha-provisoria-heading">
+        <span class="section-marker-label">Senha provisória</span>
+      </h2>
+      <div class="secret-block">
+        <p class="secret-block-label">Senha de {{ usuario.nome }}</p>
+        <div class="secret-block-main">
+          <p class="secret-block-value" id="senha-provisoria" data-senha-provisoria translate="no">{{ senha }}</p>
+          <div class="secret-block-copy">
+            <button type="button" class="btn btn-secondary" data-copiar-alvo="senha-provisoria" data-copiar-ok="Senha copiada." data-copiar-falha="Não foi possível copiar. Selecione a senha e copie." hidden>Copiar senha</button>
+            <p class="secret-block-feedback" role="status"></p>
+          </div>
+        </div>
+        <p class="secret-block-manual">Para copiar: clique ou toque sobre a senha para selecioná-la inteira e use Ctrl+C (no celular, “Copiar” no menu que abre).</p>
+        <p class="secret-block-meta">Para ditar: a senha nunca tem 0 (zero), O, 1, l (L minúsculo) nem I (i maiúsculo).</p>
+      </div>
+      <div class="alert alert-warning" role="alert">
+        <p>Esta senha não será mostrada de novo. Ela vale por 7 dias e deve ser trocada no primeiro acesso. Entregue-a antes de sair desta tela.</p>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="resumo-heading">
+      <h2 class="section-marker" id="resumo-heading">
+        <span class="section-marker-label">Conta</span>
+      </h2>
+      <dl class="meta-grid">
+        <div><dt>Matrícula</dt><dd class="table-cell-code">{{ usuario.matricula }}</dd></div>
+        <div><dt>Nome</dt><dd>{{ usuario.nome }}</dd></div>
+        <div><dt>Setor</dt><dd>{{ usuario.setor.nome }}</dd></div>
+        <div>
+          <dt>Papéis</dt>
+          <dd>
+            <ul class="badge-list">
+              {% for papel in papeis %}<li><span class="badge badge-neutral">{{ papel }}</span></li>{% endfor %}
+            </ul>
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="form-actions">
+      <a href="{% url 'usuario' pk=usuario.pk %}" class="btn btn-secondary">Abrir a ficha</a>
+      {% if not redefinicao %}<a href="{% url 'usuario_novo' %}" class="btn btn-secondary">Cadastrar outro usuário</a>{% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block org_js %}
+<script src="{% static 'js/copiar.js' %}" defer></script>
+{% endblock %}

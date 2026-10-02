@@ -1,0 +1,97 @@
+{% extends "contas/organizacao/base.html" %}
+{% load static %}
+
+{% block title %}Usuários — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `filtro` (`FiltroUsuariosForm`, GET: `q`, `setor`, `situacao`, `papel`),
+`pagina` (`Page` de `User`, 50/página) e `usuarios` (as linhas da página, com
+`rotulos_dos_papeis`). O formulário e a paginação trocam só `#resultados-usuarios` via HTMX
+(`_resultados_usuarios.html`); sem JS funcionam como GET comum. Consulta pura: a autorização é da
+rota (`PERM-USER-MANAGE`), nunca da visibilidade do link.
+
+Mesmo tratamento de falha e de foco da consulta do catálogo (`catalogo/consulta.html`, onde cada
+decisão está explicada): `defaultSettleDelay: 0` e o `<script>` no `<head>`; falha de rede no
+`<body>` (alcança também voltar/avançar) e de servidor na `<section>`, ambas por
+`interface/_consulta_falha.html`, sem trocar os resultados anteriores; depois da paginação, o foco
+vai à tabela. Aqui sem filtro que possa dar erro de campo: um valor inválido é ignorado.
+{% endcomment %}
+{% block extra_head %}
+<meta name="htmx-config" content='{"defaultSettleDelay":0}'>
+<script src="{% static 'vendor/htmx/htmx-4.0.0.min.js' %}" defer></script>
+{% endblock %}
+
+{% block body_attrs %} hx-on::error="document.getElementById('resultados-erro-rede').hidden = false; const secao = document.getElementById('resultados-usuarios')?.closest('section'); if (secao?.dataset.paginacaoPendente === '1') { secao.dataset.paginacaoPendente = ''; document.getElementById('resultados-erro-rede').scrollIntoView(); }"{% endblock %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container">
+    {% include "interface/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Usuários</h1>
+        <p class="page-header-description">Busque por parte do nome ou pela matrícula exata.</p>
+      </div>
+      <div class="page-header-actions">
+        <a href="{% url 'usuario_novo' %}" class="btn btn-primary">Novo usuário</a>
+      </div>
+    </header>
+
+    <section
+      class="page-section"
+      hx-on::before:request="document.getElementById('resultados-erro-rede').hidden = true; document.getElementById('resultados-erro-servidor').hidden = true; this.dataset.paginacaoPendente = event.target.closest('a.pagination-link[hx-get]') ? '1' : ''"
+      hx-on::response:error="ctx.swap = 'none'; ctx.push = false; ctx.text = ''; document.getElementById('resultados-erro-servidor').hidden = false"
+      hx-on::after:swap="if (this.dataset.paginacaoPendente === '1') { this.dataset.paginacaoPendente = ''; let erroVisivel = [document.getElementById('resultados-erro-rede'), document.getElementById('resultados-erro-servidor')].find(function (alerta) { return !alerta.hidden; }); if (erroVisivel) { erroVisivel.scrollIntoView(); } else { document.querySelector('#resultados-usuarios table')?.focus({ preventScroll: true }); } }"
+    >
+      {% comment %}
+      "Novo usuário" é a ação primária da tela (The One Accent Rule); a busca é secundária, como
+      "Buscar" nas composições em que ela não é a ação da página. "Limpar" é navegação normal
+      para a URL sem filtros, como no catálogo: campos e resultados voltam coerentes.
+      {% endcomment %}
+      <form
+        method="get"
+        class="filter-bar"
+        hx-get="{% url 'usuarios' %}"
+        hx-target="#resultados-usuarios"
+        hx-push-url="true"
+        hx-indicator="#resultados-indicador"
+      >
+        <div class="field filter-bar-field">
+          <label for="{{ filtro.q.id_for_label }}">Nome ou matrícula</label>
+          {{ filtro.q }}
+        </div>
+        <div class="field filter-bar-field">
+          <label for="{{ filtro.setor.id_for_label }}">Setor</label>
+          {{ filtro.setor }}
+        </div>
+        <div class="field filter-bar-field">
+          <label for="{{ filtro.situacao.id_for_label }}">Situação</label>
+          {{ filtro.situacao }}
+        </div>
+        <div class="field filter-bar-field">
+          <label for="{{ filtro.papel.id_for_label }}">Papel</label>
+          {{ filtro.papel }}
+        </div>
+        <div class="filter-bar-actions">
+          <button type="submit" class="btn btn-secondary">Buscar</button>
+          <a href="{% url 'usuarios' %}" class="btn btn-secondary">Limpar</a>
+        </div>
+      </form>
+
+      <div class="status-line">
+        <p id="resultados-indicador" class="htmx-indicator loading-indicator" role="status">
+          <span class="loading-indicator-spinner" aria-hidden="true"></span>
+          Atualizando…
+        </p>
+      </div>
+
+      {% include "interface/_consulta_falha.html" %}
+
+      <div id="resultados-usuarios">
+        {% include "contas/organizacao/_resultados_usuarios.html" %}
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

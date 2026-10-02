@@ -20,6 +20,7 @@ import pytest
 from django.urls import reverse
 
 from contas.models import Papel
+from tests.contas_helpers import rota
 
 # Títulos das capacidades planejadas, na ordem canônica definida para a Home.
 TITULO_SOLICITAR_MATERIAL = "Solicitar material"
@@ -65,9 +66,10 @@ TITULOS_CHEFE_SETOR = [
     TITULO_HISTORICO_MOVIMENTACOES,
 ]
 
+# ORG deixou de ser "em preparação" (feature 005, T027/T029): o administrador agora tem os
+# atalhos reais Usuários e Setores, e `TITULO_ADMINISTRACAO` não aparece mais em lista alguma.
 TITULOS_ADMIN_SISTEMA = [
     TITULO_SOLICITAR_MATERIAL,
-    TITULO_ADMINISTRACAO,
 ]
 
 TITULOS_AUXILIAR_SETOR = [
@@ -80,12 +82,13 @@ HREF_RE = re.compile(r'href="([^"]+)"')
 
 def _hrefs_de_negocio(conteudo_html):
     """Extrai todos os `href="..."` do HTML, descartando assets estáticos
-    (`/static/...`), para comparar exatamente quais rotas de negócio a Home
-    expôs como link."""
+    (`/static/...`) e o link "Senha" da barra de trabalho (mecânica de
+    autenticação de todo usuário, não capability — D-27/FR-039 da 005), para
+    comparar exatamente quais rotas de negócio a Home expôs como link."""
     return {
         href
         for href in HREF_RE.findall(conteudo_html)
-        if not href.startswith("/static/")
+        if not href.startswith("/static/") and href != reverse("definir_senha")
     }
 
 
@@ -266,8 +269,9 @@ def test_capacidades_planejadas_chefe_de_outro_setor(client, chefe_setor, senha_
 
 @pytest.mark.django_db
 def test_capacidades_planejadas_admin_sistema(client, admin_sistema, senha_valida):
-    """`admin_sistema` (REQUESTER + SYSTEM-ADMIN): único papel testado aqui
-    que alcança o item 10 ("Administração de usuários e setores")."""
+    """`admin_sistema` (REQUESTER + SYSTEM-ADMIN): o item de administração saiu de "Em
+    preparação" (feature 005, T029) e virou os atalhos reais; só sobra o que todo
+    requisitante vê."""
     _login(client, admin_sistema, senha_valida)
 
     response = client.get(reverse("home"))
@@ -280,8 +284,8 @@ def test_capacidades_planejadas_admin_sistema(client, admin_sistema, senha_valid
 def test_capacidades_planejadas_auxiliar_setor(client, criar_usuario_com_papeis, senha_valida):
     """Auxiliar de setor (REQUESTER + SECTOR-ASSISTANT): sem fixture própria
     em `conftest.py`, criado aqui via `criar_usuario_com_papeis`, que já
-    concede `ROLE-REQUESTER` por `create_user()` e preserva as invariantes de
-    `contas/models.py`."""
+    concede `ROLE-REQUESTER` pela API de provisionamento e preserva as
+    invariantes de `contas/organizacao.py`."""
     usuario = criar_usuario_com_papeis(Papel.AUXILIAR_SETOR)
     _login(client, usuario, senha_valida)
 
@@ -537,3 +541,109 @@ def test_auditor_ve_apenas_o_link_de_consultar_entradas_nao_o_de_registrar(
 
     assert reverse("estoque:entradas") in hrefs
     assert reverse("estoque:entrada_nova") not in hrefs
+
+
+# ---------------------------------------------------------------------------
+# 10. Atalhos de administração da organização (feature 005 — T027/T029/T030):
+# `pode_administrar_organizacao` (ROLE-SYSTEM-ADMIN, PERM-USER-MANAGE e
+# PERM-SECTOR-MANAGE) e os atalhos Usuários e Setores. O item ORG sai de
+# `CAPACIDADES_PLANEJADAS` ("Em preparação"). Os links são conveniência: a
+# autorização efetiva é das rotas (`test_contas_permissoes_organizacao.py`).
+# ---------------------------------------------------------------------------
+
+PAPEIS_SEM_ADMINISTRACAO = [
+    "requisitante",
+    "chefe_setor",
+    "auditor",
+    "funcionario_almoxarifado",
+    "chefe_almoxarifado",
+    "superusuario_tecnico",
+]
+
+
+def _texto_do_link(conteudo_html, url):
+    """Texto do primeiro `<a href="url">...</a>` (vazio se não houver o link)."""
+    achado = re.search(
+        rf'<a\b[^>]*href="{re.escape(url)}"[^>]*>(.*?)</a>', conteudo_html, re.DOTALL
+    )
+    return re.sub(r"<[^>]+>|\s+", " ", achado.group(1)).strip() if achado else ""
+
+
+@pytest.mark.django_db
+def test_administrador_ve_so_os_atalhos_de_usuarios_e_setores_alem_do_catalogo(
+    client, admin_sistema, senha_valida
+):
+    """`ROLE-SYSTEM-ADMIN` não concede poder operacional (FR-003, SC-008): além do
+    atalho que todo requisitante tem, só os dois de administração — nenhum de
+    importação, fornecedores ou estoque."""
+    _login(client, admin_sistema, senha_valida)
+
+    response = client.get(reverse("home"))
+    conteudo = response.content.decode()
+
+    assert response.context["pode_administrar_organizacao"] is True
+    assert _hrefs_de_negocio(conteudo) == {
+        reverse("catalogo:consulta"),
+        rota("usuarios"),
+        rota("setores"),
+    }
+    assert "Usuários" in _texto_do_link(conteudo, rota("usuarios"))
+    assert "Setores" in _texto_do_link(conteudo, rota("setores"))
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("fixture_usuario", PAPEIS_SEM_ADMINISTRACAO)
+def test_so_o_administrador_tem_os_atalhos_de_usuarios_e_setores(
+    client, senha_valida, fixture_usuario, request
+):
+    usuario = request.getfixturevalue(fixture_usuario)
+    _login(client, usuario, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    assert response.context["pode_administrar_organizacao"] is False
+    hrefs = _hrefs_de_negocio(response.content.decode())
+    assert rota("usuarios") not in hrefs
+    assert rota("setores") not in hrefs
+
+
+@pytest.mark.django_db
+def test_administrador_com_papeis_operacionais_tem_os_dois_conjuntos_de_atalhos(
+    client, criar_usuario_com_papeis, senha_valida
+):
+    usuario = criar_usuario_com_papeis(
+        Papel.ADMINISTRADOR_SISTEMA, Papel.CHEFE_SETOR, Papel.CHEFE_ALMOXARIFADO,
+        Papel.FUNCIONARIO_ALMOXARIFADO,
+    )  # fmt: skip
+    _login(client, usuario, senha_valida)
+
+    hrefs = _hrefs_de_negocio(client.get(reverse("home")).content.decode())
+
+    assert {rota("usuarios"), rota("setores")} <= hrefs
+    assert {reverse("catalogo:importacao_envio"), reverse("estoque:entrada_nova")} <= hrefs
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "fixture_usuario", ["admin_sistema", *PAPEIS_SEM_ADMINISTRACAO]
+)
+def test_o_item_de_administracao_nao_esta_mais_em_preparacao_para_nenhum_papel(
+    client, senha_valida, fixture_usuario, request
+):
+    usuario = request.getfixturevalue(fixture_usuario)
+    _login(client, usuario, senha_valida)
+
+    response = client.get(reverse("home"))
+
+    titulos = [item["titulo"] for item in response.context["capacidades_planejadas"]]
+    assert TITULO_ADMINISTRACAO not in titulos
+
+
+@pytest.mark.django_db
+def test_home_do_administrador_nao_introduz_n_mais_1(
+    client, admin_sistema, senha_valida, django_assert_max_num_queries
+):
+    _login(client, admin_sistema, senha_valida)
+
+    with django_assert_max_num_queries(10):
+        client.get(reverse("home"))

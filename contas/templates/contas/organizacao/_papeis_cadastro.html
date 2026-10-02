@@ -1,0 +1,44 @@
+{% comment %}
+Região de papéis adicionais do cadastro, trocada por HTMX quando o setor muda (`GET usuario_novo`
+com `setor=<pk>` e `HX-Request` devolve só este parcial; sem JS, o envio re-renderiza a página).
+Contexto: `form` (`UsuarioCadastroForm`), `setor_escolhido` (ou `None`), `opcoes_de_papeis` (um
+item por papel adicional: `papel`, `rotulo`, `id`, `marcado`, `bloqueio` — a recusa que o papel
+daria nesse setor, ou `None` —, `destino` — `{"rotulo", "url"}` ou `None`) e
+`implicados_pela_chefia` (rótulos que "Chefe de setor" leva junto no Almoxarifado). O bloqueio só
+antecipa: quem decide é `cadastrar_usuario`.
+
+Choice List (`components.css`), como em `usuario_papeis.html`: o papel bloqueado leva a caixa
+desabilitada, o selo "Bloqueado" (o estado não depende só da caixa cinza) e o motivo e o caminho
+abaixo, ligados à caixa por `aria-describedby`. Um papel bloqueado nunca vai marcado nem é enviado.
+{% endcomment %}
+<fieldset id="papeis-cadastro" class="field{% if form.papeis.errors %} field-has-error{% endif %}" aria-describedby="{{ form.papeis.auto_id }}_dica{% if form.papeis.errors %} {{ form.papeis.auto_id }}_error{% endif %}">
+  <legend>Papéis adicionais</legend>
+  <p class="field-hint" id="{{ form.papeis.auto_id }}_dica">
+    O papel de requisitante é concedido a toda conta.
+    {% if setor_escolhido %}
+    {% if implicados_pela_chefia %}No Almoxarifado, “Chefe de setor” concede também {{ implicados_pela_chefia|join:" e " }}.{% else %}Papéis de almoxarifado só no Almoxarifado.{% endif %}
+    {% else %}
+    Papéis de almoxarifado só no Almoxarifado; escolha o setor para ver o que cabe a ele.
+    {% endif %}
+  </p>
+  <ul class="choice-list">
+    {% for opcao in opcoes_de_papeis %}
+    <li class="choice-item{% if opcao.bloqueio %} choice-item-locked{% endif %}">
+      <div class="choice-row">
+        <label class="choice-label" for="{{ opcao.id }}">
+          <input type="checkbox" name="{{ form.papeis.html_name }}" value="{{ opcao.papel.value }}" id="{{ opcao.id }}"{% if opcao.marcado %} checked{% endif %}{% if opcao.bloqueio %} disabled aria-describedby="{{ opcao.id }}_bloqueio"{% endif %}>
+          <span>{{ opcao.rotulo }}</span>
+        </label>
+        {% if opcao.bloqueio %}<span class="badge badge-neutral">Bloqueado</span>{% endif %}
+      </div>
+      {% if opcao.bloqueio %}
+      <p class="choice-reason" id="{{ opcao.id }}_bloqueio">
+        {{ opcao.bloqueio.motivo }}{% if opcao.bloqueio.caminho %} {{ opcao.bloqueio.caminho }}{% endif %}
+        {% if opcao.destino %}<a href="{{ opcao.destino.url }}" class="text-link">{{ opcao.destino.rotulo }}</a>{% endif %}
+      </p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if form.papeis.errors %}<p class="field-error" id="{{ form.papeis.auto_id }}_error">{{ form.papeis.errors.0 }}</p>{% endif %}
+</fieldset>

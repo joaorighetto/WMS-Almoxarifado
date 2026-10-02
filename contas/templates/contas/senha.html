@@ -1,0 +1,109 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% block title %}{% if provisoria %}Definir senha{% else %}Trocar senha{% endif %} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+`/senha/` nos dois estados da credencial. Contrato de contexto: `provisoria` e `form`
+(`DefinirSenhaForm` com credencial provisória, `TrocarSenhaForm` com a definitiva).
+
+Credencial provisória (definição obrigatória, FR-032 a FR-034): sem navegação nem atalhos, só o
+logout — a barra de trabalho comum (marca como link para a Home) é substituída por uma faixa
+mínima, a mesma forma da barra mas só com a marca (texto, nunca link), a matrícula e "Sair". Sem
+"Senha" na faixa (é a própria tela) e sem retorno: não há para onde voltar enquanto a senha não
+for definida. Credencial definitiva (troca voluntária, FR-037): barra de trabalho comum e o campo
+da senha atual, com "Cancelar" de volta à Home.
+
+A senha nunca volta preenchida e nunca é ecoada: o Django já não repopula campos de senha.
+
+Acessibilidade dos campos: o Django liga cada widget por `aria-describedby` a `<auto_id>_helptext`
+(quando o campo tem `help_text`, sempre) e a `<auto_id>_error` (quando tem erro) — os dois elementos
+precisam existir com esses ids (DESIGN.md → Inputs / Fields). Por isso a dica é renderizada mesmo
+quando há erro, e todos os erros do campo ficam dentro de um só elemento com o id do erro.
+{% endcomment %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'contas/css/organizacao.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/envio.js' %}" defer></script>
+{% endblock %}
+
+{% block appbar %}{% if provisoria %}
+<header class="appbar">
+  <div class="appbar-inner">
+    <span class="appbar-brand">Almoxarifado SAEP</span>
+    <div class="appbar-account">
+      <span class="appbar-matricula">{{ user.matricula }}</span>
+      <form method="post" action="{% url 'logout' %}" class="appbar-logout-form">
+        {% csrf_token %}
+        <button type="submit" class="appbar-logout">Sair</button>
+      </form>
+    </div>
+  </div>
+</header>
+{% else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    <header class="page-header">
+      <div>
+        {% if provisoria %}
+        <h1 class="page-header-title">Defina a sua senha</h1>
+        <p class="page-header-description">
+          Você entrou com uma senha provisória. Escolha uma senha só sua para continuar: até lá,
+          as demais telas ficam indisponíveis e só é possível sair.
+        </p>
+        {% else %}
+        <h1 class="page-header-title">Trocar a senha</h1>
+        <p class="page-header-description">
+          Informe a senha atual e escolha a nova. As outras sessões abertas da sua conta são encerradas.
+        </p>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for erro in form.non_field_errors %}<p>{{ erro }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="form-frame" data-processing-form data-processing-label="{% if provisoria %}Definindo…{% else %}Trocando…{% endif %}">
+      {% csrf_token %}
+
+      {% if not provisoria %}
+      <div class="field{% if form.old_password.errors %} field-has-error{% endif %}">
+        <label for="{{ form.old_password.id_for_label }}">Senha atual</label>
+        {{ form.old_password }}
+        {% if form.old_password.errors %}<div class="field-error" id="{{ form.old_password.auto_id }}_error">{% for erro in form.old_password.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
+        {% if form.old_password.help_text %}<p class="field-hint" id="{{ form.old_password.auto_id }}_helptext">{{ form.old_password.help_text }}</p>{% endif %}
+      </div>
+      {% endif %}
+
+      <div class="field{% if form.new_password1.errors %} field-has-error{% endif %}">
+        <label for="{{ form.new_password1.id_for_label }}">Nova senha</label>
+        {{ form.new_password1 }}
+        {% if form.new_password1.errors %}<div class="field-error" id="{{ form.new_password1.auto_id }}_error">{% for erro in form.new_password1.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
+        <div class="field-hint" id="{{ form.new_password1.auto_id }}_helptext">{{ form.new_password1.help_text|safe }}</div>
+      </div>
+
+      <div class="field{% if form.new_password2.errors %} field-has-error{% endif %}">
+        <label for="{{ form.new_password2.id_for_label }}">Confirme a nova senha</label>
+        {{ form.new_password2 }}
+        {% if form.new_password2.errors %}<div class="field-error" id="{{ form.new_password2.auto_id }}_error">{% for erro in form.new_password2.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
+        {% if form.new_password2.help_text %}<p class="field-hint" id="{{ form.new_password2.auto_id }}_helptext">{{ form.new_password2.help_text }}</p>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>{% if provisoria %}Definir senha{% else %}Trocar senha{% endif %}</span>
+        </button>
+        {% if not provisoria %}<a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

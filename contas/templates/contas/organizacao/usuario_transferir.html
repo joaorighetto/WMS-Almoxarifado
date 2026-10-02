@@ -1,0 +1,93 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Transferir {{ usuario.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Duas etapas sobre o mesmo POST. Contrato de contexto, etapa de escolha: `usuario`, `form`
+(`TransferenciaForm`), `setores` (destinos possíveis, sem o setor atual) e `recusa`
+(`OperacaoRecusada` ou `None`), `impedimento` (a recusa por quem o usuário é — chefe de setor
+ativo —, ou `None`) e `destino_impedimento` (a substituição da chefia): com impedimento a tela só
+explica e devolve à ficha, sem formulário. Etapa de prévia: `usuario` e `previa` (`PreviaTransferencia`:
+`setor_destino` e `papeis_removidos`, em `Papel`). A confirmação reenvia o destino, `confirmar=1`
+e cada papel previsto em `papeis_removidos_previstos`; se os efeitos mudarem entre a prévia e a
+confirmação, o servidor devolve esta tela com a prévia nova (FR-049).
+
+A prévia segue o padrão de Confirmação do DESIGN.md: a prévia é o contexto (de onde, para onde, o
+que se perde) e a barra de confirmação persistente leva a ação principal (Confirmar) e dois retornos:
+"Escolher outro setor" (volta à escolha) e "Cancelar" (volta à ficha).
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'usuario' pk=usuario.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=usuario.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Transferir de setor</h1>
+        <p class="page-header-description">{{ usuario.nome }} — hoje no setor {{ usuario.setor.nome }}.</p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" with todos=True %}
+
+    {% if impedimento %}
+    {% include "contas/organizacao/_impedimento.html" with href=url_ficha rotulo_voltar="Voltar à ficha" titulo="Não é possível transferir esta conta agora." %}
+    {% elif previa %}
+    <form method="post" data-processing-form data-processing-label="Transferindo…">
+      {% csrf_token %}
+      <input type="hidden" name="setor" value="{{ previa.setor_destino.pk }}">
+      <input type="hidden" name="confirmar" value="1">
+      {% for papel in previa.papeis_removidos %}<input type="hidden" name="papeis_removidos_previstos" value="{{ papel.value }}">{% endfor %}
+
+      <section class="page-section" aria-labelledby="previa-heading">
+        <h2 class="section-marker" id="previa-heading">
+          <span class="section-marker-label">Confirme a transferência</span>
+        </h2>
+        <p class="effects-summary">{{ usuario.nome }} passa do setor {{ usuario.setor.nome }} para o setor {{ previa.setor_destino.nome }}.</p>
+        {% if previa.papeis_removidos %}
+        <p class="effects-intro">Papéis que serão removidos, por dependerem do setor de origem:</p>
+        <ul class="badge-list">
+          {% for papel in previa.papeis_removidos %}<li><span class="badge badge-neutral">{{ papel.label }}</span></li>{% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">Nenhum papel será removido. Nenhum papel é concedido no setor de destino.</p>
+        {% endif %}
+      </section>
+
+      <div class="confirmation-bar">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Confirmar transferência</span>
+        </button>
+        <a href="{% url 'usuario_transferir' pk=usuario.pk %}" class="btn btn-secondary">Escolher outro setor</a>
+        <a href="{{ url_ficha }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+    {% else %}
+    <form method="post" class="form-frame" data-processing-form data-processing-label="Verificando…">
+      {% csrf_token %}
+      <div class="field{% if form.setor.errors %} field-has-error{% endif %}">
+        <label for="id_setor">Setor de destino</label>
+        <select name="setor" id="id_setor" required aria-describedby="id_setor_dica">
+          <option value="">Escolha o setor</option>
+          {% for setor in setores %}
+          <option value="{{ setor.pk }}"{% if form.setor.value|stringformat:"s" == setor.pk|stringformat:"s" %} selected{% endif %}>{{ setor.nome }}{% if not setor.ativo %} (inativo){% endif %}</option>
+          {% endfor %}
+        </select>
+        <p class="field-hint" id="id_setor_dica">
+          A tela seguinte lista os papéis que a transferência remove. Quem chefia um setor ativo
+          não pode ser transferido: substitua a chefia antes.
+        </p>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Ver o que muda</span>
+        </button>
+        <a href="{% url 'usuario' pk=usuario.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

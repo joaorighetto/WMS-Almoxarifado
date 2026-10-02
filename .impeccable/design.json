@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-29T12:00:00Z",
+  "generatedAt": "2026-10-02T12:00:00Z",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -689,7 +689,7 @@
       "name": "Destructive Button",
       "kind": "button",
       "refersTo": "button-danger",
-      "description": "Confirmação de ação irreversível (estorno); nunca ao lado de um primário; o convite ao fluxo é secundário com texto danger.",
+      "description": "Confirmação de ação que corta acesso ou autoridade de alguém (estornar entrada, desativar usuário, retirar chefia, redefinir senha); nunca ao lado de um primário.",
       "html": "<button class=\"ds-btn ds-btn-danger\">Estornar entrada: 3 itens</button>",
       "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height,44px);padding:var(--space-2) var(--space-4);border:1px solid transparent;border-radius:var(--radius-sm);font-family: var(--font-family-base);font-size:var(--font-size-body);font-weight:var(--font-weight-medium);text-decoration:none;cursor:pointer}.ds-btn-danger{background:var(--color-danger);border-color:var(--color-danger);color:var(--color-surface)}.ds-btn-danger:hover,.ds-btn-danger:active{background:var(--color-danger-hover);border-color:var(--color-danger-hover)}"
     },
@@ -772,6 +772,22 @@
       "description": "Feedback de seção em frase explícita, família semântica completa.",
       "html": "<div class=\"ds-alert ds-alert-info\"><p>Esta é só uma prévia: nada foi gravado.</p></div>",
       "css": ".ds-alert{padding:var(--space-3);border-radius:var(--radius-sm);font-family: var(--font-family-base);font-size:var(--font-size-body)}.ds-alert p{margin:0}.ds-alert-info{background:var(--color-info-surface);border:1px solid var(--color-info-border);color:var(--color-info)}"
+    },
+    {
+      "name": "Lista de opções com bloqueio",
+      "kind": "custom",
+      "refersTo": "choice-list",
+      "description": "Grupo de caixas de marcar com estado bloqueado: selo \"Bloqueado\" e motivo ligado à caixa; marcada em selected.",
+      "html": "<ul class=\"ds-choice-list\"><li class=\"ds-choice-item ds-checked\"><div class=\"ds-choice-row\"><label class=\"ds-choice-label\"><input type=\"checkbox\" checked aria-describedby=\"m1\" disabled> Requisitante</label><span class=\"ds-badge\">Bloqueado</span></div><p class=\"ds-choice-reason\" id=\"m1\">Toda conta ativa é requisitante.</p></li><li class=\"ds-choice-item\"><div class=\"ds-choice-row\"><label class=\"ds-choice-label\"><input type=\"checkbox\"> Gestor/auditor</label></div></li></ul>",
+      "css": ".ds-choice-list{margin:0;padding:0;list-style:none;border-top:1px solid var(--color-border)}.ds-choice-item{padding:var(--space-1) var(--space-2);border-bottom:1px solid var(--color-border);background:var(--color-surface)}.ds-choice-item.ds-checked{background:var(--color-selected)}.ds-choice-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-1) var(--space-3)}.ds-choice-label{display:flex;align-items:center;gap:var(--space-3);min-height:var(--control-height,44px);font-family:var(--font-family-base);font-size:var(--font-size-body);font-weight:var(--font-weight-medium);color:var(--color-text)}.ds-choice-label input{width:20px;height:20px;margin:0;accent-color:var(--color-primary)}.ds-choice-label:has(input:disabled){cursor:not-allowed}.ds-badge{display:inline-flex;padding:4px 8px;border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);background:var(--color-surface-subtle);color:var(--color-text);font-size:0.75rem;font-weight:var(--font-weight-semibold)}.ds-choice-reason{max-width:72ch;margin:0 0 var(--space-2) calc(20px + var(--space-3));color:var(--color-text-muted);font-size:var(--font-size-meta)}"
+    },
+    {
+      "name": "Segredo exibido uma vez",
+      "kind": "custom",
+      "refersTo": "secret-block",
+      "description": "Senha provisória mostrada só na resposta do cadastro ou da redefinição: Mono no tamanho de total, selecionável com um toque.",
+      "html": "<div class=\"ds-secret\"><p class=\"ds-secret-label\">Senha provisória</p><p class=\"ds-secret-value\">Ka7mQx4rTn9p</p><p class=\"ds-secret-meta\">Não será mostrada de novo. Sem 0, O, 1, l ou I.</p></div>",
+      "css": ".ds-secret{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4);background:var(--color-surface);border:1px solid var(--color-border-frame);border-radius:var(--radius-md)}.ds-secret-label,.ds-secret-meta{margin:0;color:var(--color-text-muted);font-family:var(--font-family-base);font-size:var(--font-size-meta)}.ds-secret-value{margin:0;font-family:var(--font-family-mono);font-size:var(--font-size-metric);font-weight:var(--font-weight-semibold);letter-spacing:0.1em;color:var(--color-text);user-select:all;overflow-wrap:anywhere}"
     }
   ],
   "narrative": {
@@ -798,6 +814,11 @@
       {
         "name": "The Yellow-On-Ink Rule",
         "body": "O amarelo de segurança só existe sobre a tinta grafite ou como linha de demarcação. Nunca é texto, ícone, preenchimento de botão ou fundo sobre superfície clara.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red-Cuts-Access Rule",
+        "body": "O botão Destrutivo preenchido significa \"esta ação tira agora o acesso, a autoridade ou o registro de alguém\": estornar uma entrada, desativar um usuário, retirar a chefia de um setor, redefinir uma senha (as sessões caem e a senha anterior nunca volta). Não significa \"irreversível\" nem \"grave\" em geral: desativar um setor, reativar uma conta ou ativar um setor usam o primário. Na mesma lógica, ganho e perda de papel numa prévia de efeitos usam `success` e `danger`, sempre com o sinal \"+\"/\"−\".",
         "section": "colors"
       },
       {
@@ -858,7 +879,9 @@
       "**Do** reconferir contraste de borda, texto atenuado e rótulo desabilitado contra a folha **e** o piso sempre que a rampa neutra mudar.",
       "**Do** reutilizar os primitivos de `components.css` e os parciais de `interface/` (mensagens, paginação, cabeçalho ordenável, falha de consulta) em vez de recompor por tela; o que uma segunda feature reutilizar sobe para lá com nome neutro.",
       "**Do** formatar números só na exibição: `separador_milhar` para contagem e total, `quantidade` para saldo e quantidade.",
-      "**Do** dar a toda linha clicável um `<a>` real com nome acessível que diga o que abre, deixando a affordance da linha inteira para o script que a torna verdadeira."
+      "**Do** dar a toda linha clicável um `<a>` real com nome acessível que diga o que abre, deixando a affordance da linha inteira para o script que a torna verdadeira.",
+      "**Do** reservar o Destrutivo preenchido a ação que corta acesso ou autoridade de alguém, e mostrar ação já sabidamente recusada como explicação com caminho, sem botão.",
+      "**Do** dizer numa prévia o que cada pessoa recebe e perde, com sinal \"+\"/\"−\" além da cor."
     ],
     "donts": [
       "**Don't** colocar eyebrow, kicker ou rótulo em caixa-alta acima de um título; o marcador de seção é o próprio título.",
@@ -879,7 +902,9 @@
       "**Don't** esconder ação frequente (buscar, filtrar, confirmar) atrás de menu de três pontos.",
       "**Don't** marcar uma linha como clicável (cursor, hover) sem o comportamento que a torna clicável, nem deixar o clique na linha engolir um `summary`, botão ou campo dentro dela.",
       "**Don't** aplicar formatação de exibição (milhar, casas) ao `value` de um campo ou a um `hidden` reenviado: \"1.500\" relido pelo servidor vira 1,5.",
-      "**Don't** deixar uma falha de consulta HTMX substituir os resultados pela página de erro, nem apresentar resultados antigos como se fossem da consulta nova."
+      "**Don't** deixar uma falha de consulta HTMX substituir os resultados pela página de erro, nem apresentar resultados antigos como se fossem da consulta nova.",
+      "**Don't** pôr um segredo exibido uma vez em atributo, script, armazenamento, URL ou mensagem, nem dar à tela que o mostra uma ação primária que leve embora dele.",
+      "**Don't** truncar a matrícula na barra de trabalho; ela quebra de linha."
     ]
   }
 }

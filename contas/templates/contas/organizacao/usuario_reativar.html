@@ -1,0 +1,92 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Reativar {{ usuario.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `usuario`, `form` (`ReativacaoForm`), `recusa` (`OperacaoRecusada` ou `None`) e
+`papeis` — um item por papel preservado, com `papel` (`Papel`), `marcado`, `travado`
+(`ROLE-REQUESTER`) e `recusa` (a que manter o papel daria, ou `None`). O POST traz o conjunto
+MANTIDO em `papeis` e `confirmar=1`. O papel travado aparece desabilitado e segue num campo
+oculto, porque checkbox desabilitado não é enviado (mesma técnica de `usuario_papeis.html`). O
+resultado é exatamente o que for confirmado (FR-023); a decisão é do servidor (FR-048).
+`recusa_sem_requisitante` (`OperacaoRecusada` ou `None`): a conta perdeu `ROLE-REQUESTER` enquanto
+inativa; a reativação seria recusada, então a tela mostra o motivo, leva à de papéis
+(`usuario_papeis`) e não oferece o envio.
+
+Choice List (`components.css`): travado = selo "Bloqueado" e o motivo fixo; com recusa, o papel
+continua marcado e habilitado (a pessoa decide desmarcar), mas a linha leva o selo "Não pode ser
+mantido" e o motivo e o caminho em `danger`, ligados à caixa por `aria-describedby`.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'usuario' pk=usuario.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=usuario.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Reativar usuário</h1>
+        <p class="page-header-description">
+          {{ usuario.nome }} — setor {{ usuario.setor.nome }}. Estes são os papéis preservados da
+          conta; desmarque os que não devem voltar a valer. A senha não muda.
+        </p>
+      </div>
+    </header>
+
+    {% if recusa_sem_requisitante %}
+    <div class="alert alert-warning" role="alert">
+      <p>{{ recusa_sem_requisitante.motivo }}</p>
+      <p>{{ recusa_sem_requisitante.caminho }} <a href="{% url 'usuario_papeis' pk=usuario.pk %}" class="text-link">Conceder o papel de requisitante</a></p>
+    </div>
+    {% else %}
+    {% include "contas/organizacao/_recusa.html" %}
+    {% endif %}
+    {% if form.papeis.errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for erro in form.papeis.errors %}<p>{{ erro }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="form-frame" data-processing-form data-processing-label="Reativando…">
+      {% csrf_token %}
+      <input type="hidden" name="confirmar" value="1">
+
+      <fieldset class="field">
+        <legend>Papéis preservados</legend>
+        <ul class="choice-list">
+          {% for item in papeis %}
+          <li class="choice-item{% if item.travado %} choice-item-locked{% endif %}{% if item.recusa %} choice-item-refused{% endif %}">
+            <div class="choice-row">
+              <label class="choice-label" for="papel-{{ item.papel.value }}">
+                <input type="checkbox" name="papeis" value="{{ item.papel.value }}" id="papel-{{ item.papel.value }}"
+                       {% if item.marcado %}checked{% endif %}
+                       {% if item.travado %}disabled{% endif %}
+                       {% if item.travado or item.recusa %}aria-describedby="{% if item.travado %}papel-{{ item.papel.value }}-travado{% endif %}{% if item.travado and item.recusa %} {% endif %}{% if item.recusa %}papel-{{ item.papel.value }}-recusa{% endif %}"{% endif %}>
+                <span>{{ item.papel.label }}</span>
+              </label>
+              {% if item.travado %}<span class="badge badge-neutral">Bloqueado</span>{% endif %}
+              {% if item.recusa %}<span class="badge badge-danger">Não pode ser mantido</span>{% endif %}
+            </div>
+            {% if item.travado %}<input type="hidden" name="papeis" value="{{ item.papel.value }}">{% endif %}
+            {% if item.travado %}
+            <p class="choice-reason" id="papel-{{ item.papel.value }}-travado">Toda conta ativa é requisitante.</p>
+            {% endif %}
+            {% if item.recusa %}
+            <p class="choice-reason" id="papel-{{ item.papel.value }}-recusa">{{ item.recusa.motivo }}{% if item.recusa.caminho %} {{ item.recusa.caminho }}{% endif %}</p>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-processing-submit{% if recusa_sem_requisitante %} disabled{% endif %}>
+          <span data-processing-submit-label>Reativar usuário</span>
+        </button>
+        <a href="{% url 'usuario' pk=usuario.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

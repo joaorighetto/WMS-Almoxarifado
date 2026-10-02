@@ -1,0 +1,52 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}{% if setor %}Editar {{ setor.nome }}{% else %}Novo setor{% endif %} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Criação e renomeação de setor. Contrato de contexto: `form` (`SetorForm`: `nome`), `recusa`
+(`OperacaoRecusada` ou `None`; motivo e caminho como a operação os produziu, FR-048) e `setor`
+(só na edição). O nome é único sem diferenciar caixa nem espaços nas pontas (FR-025); o setor novo
+nasce inativo e nunca como Almoxarifado (FR-026).
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% if setor %}
+    {% url 'setor' pk=setor.pk as url_origem %}
+    {% include "contas/organizacao/_voltar.html" with href=url_origem rotulo=setor.nome %}
+    {% else %}
+    {% url 'setores' as url_origem %}
+    {% include "contas/organizacao/_voltar.html" with href=url_origem rotulo="Setores" %}
+    {% endif %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">{% if setor %}Editar setor{% else %}Novo setor{% endif %}</h1>
+        <p class="page-header-description">
+          {% if setor %}O nome anterior fica no histórico.{% else %}O setor nasce inativo: designe a chefia e só então ative.{% endif %}
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" %}
+
+    <form method="post" class="form-frame" data-processing-form data-processing-label="Salvando…">
+      {% csrf_token %}
+
+      <div class="field{% if form.nome.errors %} field-has-error{% endif %}">
+        <label for="{{ form.nome.id_for_label }}">Nome</label>
+        {{ form.nome }}
+        {% if form.nome.errors %}<p class="field-error" id="{{ form.nome.auto_id }}_error">{{ form.nome.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Salvar</span>
+        </button>
+        <a href="{{ url_origem }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

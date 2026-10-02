@@ -38,55 +38,9 @@
   gap: 0 var(--space-4);
 }
 
-/* `<select>` do motivo/tipo de documento (`forms.ChoiceField`, `estoque/forms.py`):
-   primeiro uso de select no sistema. Mesma forma dos campos de texto (DESIGN.md →
-   Components → Inputs/Fields) — replicado aqui, e não em `static/css/
-   components.css`, porque só o botão Destrutivo é primitivo compartilhado novo
-   nesta entrega (o resto da composição fica no CSS da própria feature); promover
-   para components.css quando outra feature também precisar de um select. */
-.field select {
-  width: 100%;
-  min-height: var(--control-height);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--font-size-body);
-}
-
-@media (pointer: coarse) {
-  .field select {
-    font-size: var(--font-size-section-title);
-  }
-}
-
-/* Erro de motivo/tipo de documento (`.field-has-error` no wrapper) — mesma
-   convenção de `.field-has-error input[type="text"]`
-   (`static/css/components.css`), estendida ao `<select>` que só existe
-   nesta feature. */
-.field-has-error select {
-  border-color: var(--color-danger);
-}
-
-/* Justificativa do estorno (`EstornoEntradaForm.justificativa`, `Textarea`):
-   primeiro uso de textarea no sistema — mesma forma dos campos de texto,
-   sem altura mínima fixa de controle (a altura vem de `rows="4"`, definido
-   no widget) e com redimensionamento vertical apenas. */
-.field textarea {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--font-size-body);
-  resize: vertical;
-}
-
-.field-has-error textarea {
-  border-color: var(--color-danger);
-}
+/* `<select>` e `<textarea>` (motivo, tipo de documento, justificativa do estorno)
+   subiram para `static/css/components.css` quando a organização (`contas`) passou a
+   usá-los também (DESIGN.md → Inputs / Fields). */
 
 /* Rótulo de um grupo de controles sem um único `<input>` para associar via
    `<label for>` (Emitente: campo oculto + busca + resultado escolhido) —

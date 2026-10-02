@@ -480,7 +480,7 @@ Estratégia **Restrained** dentro de uma gramática de sinalização industrial:
 Cada estado é uma família de três papéis (texto, superfície, borda), não texto colorido sobre o cinza comum; os pares texto/superfície medem entre 5,53:1 e 6,74:1.
 - **Verde Condição Segura** (`success`): operação concluída.
 - **Âmbar Atenção** (`warning`): condição que merece atenção sem bloquear. Inclui a rejeição de linhas numa importação (decisão do dono do produto: rejeição é atenção, não erro): o total de rejeitados diferente de zero aparece em `warning` semibold no resumo da prévia e da execução e na célula do histórico, ao lado do selo "Com rejeições" (`badge-warning`). Como texto, mede 6,10:1 sobre a folha e 4,80:1 sobre o piso.
-- **Vermelho Perigo** (`danger`): erro, recusa, ação destrutiva. `danger-hover` (#7F1812) é o hover/pressionado do botão Destrutivo, escurecido na mesma proporção de `primary` → `primary-hover` (texto `surface` a ~10,3:1); `danger-border` é tom de borda da família, nunca fundo sólido.
+- **Vermelho Perigo** (`danger`): erro, recusa e ação que corta acesso ou autoridade de alguém (ver The Red-Cuts-Access Rule). `danger-hover` (#7F1812) é o hover/pressionado do botão Destrutivo, escurecido na mesma proporção de `primary` → `primary-hover` (texto `surface` a ~10,3:1); `danger-border` é tom de borda da família, nunca fundo sólido.
 - **Petróleo Informação** (`info`): contexto neutro. Petróleo, não azul, para "contexto" e "ação" não se confundirem.
 - **Seleção** (`selected`): hoje só no `::selection` de texto; reservado a linha selecionada e item de navegação ativo quando existirem.
 
@@ -491,6 +491,8 @@ Cada estado é uma família de três papéis (texto, superfície, borda), não t
 **The One Accent Rule.** Por contexto de interação (tela, dialog ou região independente) existe no máximo uma ação preenchida em `primary`, quando houver uma ação principal clara. Onde ela existe, é primária: deixar tudo em secundário não é aplicar a regra, é não decidir. Fora do preenchimento, o azul aparece só como sinal de ação pequeno (traço da seta de tarefa, página atual, seta de ordenação), nunca competindo como segundo botão.
 
 **The Yellow-On-Ink Rule.** O amarelo de segurança só existe sobre a tinta grafite ou como linha de demarcação. Nunca é texto, ícone, preenchimento de botão ou fundo sobre superfície clara.
+
+**The Red-Cuts-Access Rule.** O botão Destrutivo preenchido significa "esta ação tira agora o acesso, a autoridade ou o registro de alguém": estornar uma entrada, desativar um usuário, retirar a chefia de um setor, redefinir uma senha (as sessões caem e a senha anterior nunca volta). Não significa "irreversível" nem "grave" em geral: desativar um setor, reativar uma conta ou ativar um setor usam o primário. Na mesma lógica, ganho e perda de papel numa prévia de efeitos usam `success` e `danger`, sempre com o sinal "+"/"−".
 
 **The No Color-Only State Rule.** Nenhum estado ou seleção relevante depende só de cor: há sempre uma pista não cromática (texto, peso, borda, forma, posição). Estados semânticos preferem texto explícito; estados estruturais (página atual, coluna ordenada, item disponível vs. planejado) podem usar peso, borda, forma ou presença/ausência de seta.
 
@@ -513,7 +515,7 @@ Ambas auto-hospedadas em `static/vendor/fonts/` (woff2 variável, subset latino,
 - **Cabeçalho de tabela** (semibold, 0.75rem, 1.25, tracking +0.04em, caixa-alta, `text-muted`): rótulo, não dado; no máximo ~3 palavras.
 - **Metadado** (regular, 0.8125rem, 1.5, `text-muted`): dica, erro de campo, resumo de paginação, rótulo da placa de identificação, descrição de item planejado.
 - **Estado / badge** (semibold, 0.75rem, 1.25).
-- **Código** (Mono, 0.875rem): CADPRO, CODIF, documento (CNPJ/CPF) e tipo do fornecedor, SHA-256, matrícula na placa e o texto digitado no campo de matrícula do login (só a família muda; tamanho e altura seguem o campo). **Código compacto** (Mono, 0.8125rem): matrícula na barra de trabalho.
+- **Código** (Mono, 0.875rem): CADPRO, CODIF, documento (CNPJ/CPF) e tipo do fornecedor, SHA-256, matrícula na placa e o texto digitado no campo de matrícula do login e do cadastro de usuário (só a família muda; tamanho e altura seguem o campo). **Código compacto** (Mono, 0.8125rem): matrícula na barra de trabalho.
 
 Sob `pointer: coarse`, o texto digitado nos campos sobe para 1rem (evita o zoom automático do Safari); o resto da escala não muda.
 
@@ -573,6 +575,7 @@ Tabela de muitas colunas curtas (os históricos de importação, com nove ou dez
 - A densidade das tabelas foi medida com a Atkinson: linha simples de ~38px, linha composta de ~62px, Filter Bar alinhada e cabeçalhos sem quebra a 1440px.
 - As telas de estoque (composição e resumo da entrada, lista, detalhe e estorno) passaram pelo gate visual em 2026-09-27 (23/40 na primeira crítica). As cinco questões prioritárias foram corrigidas na mesma entrega, sem nova pontuação. A verificação foi em desktop e em largura estreita do painel; celular com toque ainda não foi conferido nelas.
 - As superfícies de importação, histórico e consulta do catálogo, de fornecedores e de entradas passaram por dois gates visuais em 2026-09-28 (25/40 → 29/40), a 1440, 768 e 375 com toque, nos papéis que usam cada tela. As questões aprovadas das duas rodadas foram corrigidas e conferidas no navegador; as prévias de importação só foram avaliadas pelo código.
+- As telas de administração de usuários e setores (`/organizacao/`: listas, fichas, cadastro, papéis, transferência, chefia, desativação, reativação, redefinição de senha, ciclo do setor) e `/senha/` nos dois estados passaram pelo gate visual em 2026-10-02 (26/40), a 1280 e 375, como administrador de sistema e com credencial provisória. As cinco questões prioritárias foram corrigidas na mesma entrega, sem nova pontuação; a entrega da senha provisória só foi avaliada pelo código na crítica.
 - Tablet continua em aberto: nem a composição das telas densas nem o app shell foram validados nesse contexto (o preset de 768px não emula toque). A navegação de Solicitante/Chefe de setor com mais destinos também não está definida.
 
 ## Elevation & Depth
@@ -599,13 +602,17 @@ O mesmo vale fora do CSS. Parciais e filtros usados por mais de uma feature vive
 - **Forma:** 4px, altura mínima de 44px, rótulo em peso médio, sem sublinhado mesmo quando é `<a>`.
 - **Primário:** fundo `primary`, rótulo `surface`, borda da mesma cor; hover/pressionado em `primary-hover`. Uma por contexto (The One Accent Rule). Desabilitado: `disabled-surface` + `disabled-text`, `cursor: not-allowed`.
 - **Secundário:** fundo `surface`, moldura `border-frame`, texto `text`; hover em `surface-subtle`. Lê como controle tanto sobre a folha quanto sobre o piso. Também é a aparência de link-ação e do gatilho do File Upload.
-- **Destrutivo** (`.btn-danger`): fundo e borda `danger`, rótulo `surface`; hover/pressionado em `danger-hover`; desabilitado como o primário. Reservado ao passo de confirmação de uma ação irreversível (hoje, a barra de confirmação do estorno de entrada: "Estornar entrada: N itens" + "Cancelar" secundário), nunca ao lado de um primário no mesmo par. O convite que leva ao fluxo destrutivo (ex.: "Estornar entrada" no detalhe) é botão secundário com texto em `danger`, não preenchido: a gravidade se concentra na tela de confirmação. Quando a ação está impedida (ex.: algum item ficaria com saldo negativo), o botão não é renderizado: a página explica o motivo e oferece só o retorno.
+- **Destrutivo** (`.btn-danger`): fundo e borda `danger`, rótulo `surface`; hover/pressionado em `danger-hover`; desabilitado como o primário. Reservado ao passo de confirmação de uma ação que corta acesso ou autoridade de alguém (The Red-Cuts-Access Rule): hoje, estornar entrada, desativar usuário, retirar a chefia e redefinir a senha. Nunca ao lado de um primário no mesmo par. O convite que leva a esse fluxo (ex.: "Estornar entrada" no detalhe, "Desativar" e "Redefinir a senha" na ficha do usuário, "Retirar a chefia" na do setor) é botão secundário com texto em `danger` (`.btn-secondary-danger`; `.estoque-btn-estornar` é o equivalente antigo), não preenchido: a gravidade se concentra na tela de confirmação. Ação de impacto que não corta acesso (desativar setor) usa primário na confirmação e secundário comum no convite.
+- **Ação impedida:** quando a operação já se sabe recusada (ex.: algum item ficaria com saldo negativo; o usuário é chefe de setor ativo; o setor tem outros membros ativos), a tela de confirmação não renderiza o botão: mostra o motivo e o caminho num alerta e oferece só o retorno (ver Ação impedida). O servidor continua decidindo no envio.
 - **Foco:** anel de 2px em `focus`, afastado 2px, em todo controle; sobre `ink`, o anel vira `on-ink-accent`.
+- **Oculto:** botão que nasce com o atributo `hidden` (aprimoramento progressivo, como "Copiar senha") fica oculto de fato: `.btn[hidden]` vence o `display` do botão.
+- **Ações de formulário** (`.form-actions`): ao fim de um formulário isolado, primária e depois "Cancelar" secundário, 8px entre elas e 24px acima; abaixo de 480px empilham em largura total.
 - **Processando:** o botão de envio de efeito real fica desabilitado e troca o rótulo pelo gerúndio ("Enviando…", "Confirmando…", "Entrando…"). Sem JS, o formulário envia normalmente.
 
 ### Chips (Badge)
 - **Estilo:** `.badge` + `-success`/`-warning`/`-danger`/`-info`/`-neutral`: superfície, borda de 1px e texto da própria família, semibold 12px, padding 4 × 8px, 4px, sem quebra. Sempre com texto. O neutro (`surface-subtle`, `border-strong`, `text`) marca papéis na placa de identificação.
 - **Planejado** (`.badge-planned`): fundo `surface`, borda **tracejada** em `border-strong`, texto `text-muted`, rótulo "Planejado". Marca algo que ainda não existe no sistema, não um valor de dado; o tracejado é o que o distingue do neutro.
+- **Lista de selos** (`.badge-list`): selos de uma mesma coleção (os papéis de uma conta) numa lista real, com 4px entre eles, quebrando juntos.
 - Rótulo que quebra dentro do selo é rótulo longo demais: encurte preservando a distinção. Não usar badge para marcar linha de divergência de saldo.
 
 ### Cards / Containers
@@ -616,9 +623,12 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 - **Foco:** anel `focus` sempre visível.
 - **Erro:** texto em `danger` abaixo do campo e borda `danger` no campo (via `.field-has-error` no wrapper), nunca só a borda. O parágrafo de erro tem o id que o `aria-describedby` do campo referencia (`<auto_id>_error`). O erro de um campo de filtro aparece só no campo: a região de resultados não o repete num alert, e mostra um estado neutro dizendo o que corrigir.
 - **Largura:** no desktop reflete o comprimento esperado do dado; no celular ocupa a largura do container.
+- **Dica e erro ligados ao campo:** o Django liga cada campo a `<auto_id>_helptext` e `<auto_id>_error` pelo `aria-describedby`; os dois ids precisam existir no template, e a dica continua renderizada quando há erro. Nas telas de administração a dica não passa de 72ch.
+- **`select`, `textarea` e grupo de opções:** mesma forma do campo de texto (moldura `border`, 4px, padding 8 × 12px, 44px), em `components.css`; o `<legend>` de um grupo usa o par tipográfico do rótulo. Dica com lista (regras de senha) mantém os marcadores dentro da coluna. Rótulo vazio de seletor é sempre em português e diz o que fazer ("Escolha o setor", "Todos os setores").
+- **Link de texto** (`.text-link`): link dentro de prosa ou de célula em `primary`, sempre sublinhado (a pista não cromática); hover em `primary-hover`.
 
 ### Navigation
-- **Barra de trabalho** (`.appbar`, parcial `contas/_barra_trabalho.html`): faixa `ink` sticky no topo, linha de corredor de 4px em `signal` na borda inferior, conteúdo com o mesmo teto de 1120px da página. Marca "Almoxarifado SAEP" em `on-ink`, título de seção; na Home ela é o item atual (`aria-current`, sem link), em outras telas vira link para a Home, sublinhado no hover/foco. À direita, matrícula em Mono 13px `on-ink-muted` (páginas com placa própria a ocultam abaixo de 900px, via `esconde_matricula_compacta`) e "Sair": botão de formulário POST + CSRF, contorno de 1px em `border-strong`, texto `on-ink`, 4px, alvo de 44px, hover em `ink-raised`. Nunca preenchido de `primary` nem de amarelo. Presente em toda tela autenticada (ver Layout → App shell).
+- **Barra de trabalho** (`.appbar`, parcial `contas/_barra_trabalho.html`): faixa `ink` sticky no topo, linha de corredor de 4px em `signal` na borda inferior, conteúdo com o mesmo teto de 1120px da página. Marca "Almoxarifado SAEP" em `on-ink`, título de seção; na Home ela é o item atual (`aria-current`, sem link), em outras telas vira link para a Home, sublinhado no hover/foco. À direita, matrícula em Mono 13px `on-ink-muted` (páginas com placa própria a ocultam abaixo de 900px, via `esconde_matricula_compacta`), o link "Senha" (`.appbar-link`: texto `on-ink` sem contorno, alvo de 44px, sublinhado no hover, no foco e como página atual) e "Sair": botão de formulário POST + CSRF, contorno de 1px em `border-strong`, texto `on-ink`, 4px, alvo de 44px, hover em `ink-raised`. Nunca preenchido de `primary` nem de amarelo. Presente em toda tela autenticada (ver Layout → App shell). Abaixo de 480px a matrícula nunca é truncada: quebra em até três linhas dentro da faixa, de altura fixa, e os vãos encolhem. Com credencial provisória, `/senha/` mostra uma faixa mínima (marca como texto, matrícula e "Sair"), sem nenhum link.
 - **Retorno contextual** (`.back-link`, em `components.css`): link acima do page header para a tela de origem quando ela **não** é a Home (prévia → "Envio"; execução → "Histórico de importações do catálogo" ou "… de fornecedores"). Texto em metadado `primary`, seta para a esquerda em SVG desenhado (14px, traço 1.75, o mesmo traço da seta de fluxo espelhado, `aria-hidden`), 4px entre os dois, alvo de 44px de altura sem inflar o texto, 16px abaixo antes do page header, sublinhado no hover e no foco. Não é botão. O retorno à Home é sempre a marca da barra, nunca um back-link.
 - **Faixa de identidade** (login, `.appbar.login-band`): a mesma faixa `ink` com linha de corredor `signal`, altura e x da marca da barra de trabalho, reaproveitando os primitivos `.appbar`/`.appbar-inner`/`.appbar-brand`. Só a marca, como texto: nunca link, nunca `aria-current`, sem matrícula, sem "Sair" e sem seta de fluxo (não leva a lugar algum). Não é sticky: no login nada rola por baixo dela. É o que ancora a tela anônima no mesmo mundo da Home, sem logo nem identidade inventada.
 - Destinos adicionais na barra, estado ativo por item e comportamento com muitos destinos ainda não existem.
@@ -693,14 +703,37 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 
 ### Confirmação
 - Ação de impacto exige confirmação explícita que reitera o resultado. Hoje sem modal: a prévia é o contexto, e o botão primário repete o resultado com plural correto ("Confirmar importação: 1 inserido, 12 atualizados"), acrescentando "(N rejeitados ficam de fora)" só quando N > 0, ao lado de "Cancelar".
-- **Barra de confirmação persistente** (`.confirmation-bar`): o **único** par Confirmar/Cancelar da página, sem seção "Confirmação" separada e sem marcador próprio. É o último elemento da coluna: `sticky; bottom: 0` (nunca `fixed`) a mantém grudada ao rodapé da viewport durante a rolagem, e ela assenta na própria posição no fim da página. Fica dentro da coluna de conteúdo, sem sangrar além dela. Fundo `surface`, borda superior em `border-frame`, padding 12 × 16px, 24px acima, sem sombra; abaixo de 480px os botões empilham em largura total. Enquanto ela está grudada, a página ganha `scroll-padding-bottom` (80px; 160px abaixo de 480px, onde a barra chega a ~141px), o espelho do `scroll-padding-top` da barra de trabalho: foco de teclado e âncora nunca param sob ela.
+- **Barra de confirmação persistente** (`.confirmation-bar`): o **único** par Confirmar/Cancelar da página, sem seção "Confirmação" separada e sem marcador próprio. É o último elemento da coluna: `sticky; bottom: 0` (nunca `fixed`) a mantém grudada ao rodapé da viewport durante a rolagem, e ela assenta na própria posição no fim da página. Fica dentro da coluna de conteúdo, sem sangrar além dela. Fundo `surface`, borda superior em `border-frame`, padding 12 × 16px, 24px acima, sem sombra; abaixo de 480px os botões empilham em largura total. Numa prévia que escolhe uma pessoa ou um destino, o par pode ganhar um segundo retorno secundário ("Escolher outra pessoa" ao lado de "Cancelar"). Enquanto ela está grudada, a página ganha `scroll-padding-bottom` (80px; 160px abaixo de 480px, onde a barra chega a ~141px), o espelho do `scroll-padding-top` da barra de trabalho: foco de teclado e âncora nunca param sob ela.
 
 ### Composição de documento (cabeçalho + itens)
 - Registro operacional que espelha um documento físico (hoje, a entrada de materiais: motivo, tipo, número e emitente da nota + linhas de material e quantidade). Uma só folha, um só `<form>`: seções com marcador de leitura, cabeçalho em grade de campos e, abaixo, a tabela de itens editável (Código em Mono, Descrição, Quantidade com Unidade adjacente, Remover por linha com `aria-label` que nomeia o item). O estado vive no próprio formulário e cada ação é um submit comum; HTMX só troca a região do formulário.
 - O primeiro submit da árvore é um botão neutro oculto que só re-renderiza, para que Enter em qualquer campo nunca dispare ação destrutiva nem a ação principal.
 - Escolha feita num campo de busca recolhe a busca: o valor escolhido aparece como dado, e "Trocar …" (secundário, `<details>` nativo) reabre a busca; ela reabre sozinha quando há resultado ou erro naquele campo.
 - "Revisar" leva a um resumo antes de gravar (ver Confirmação): pares rótulo/valor do cabeçalho, marcador "Itens (N)" e tabela com saldo atual → resultante. Os erros de cabeçalho e de itens aparecem juntos numa só resposta, cada um no seu campo ou linha; depois da troca, o foco vai ao primeiro campo inválido.
-- `select` e `textarea` seguem o estilo de Inputs / Fields. Hoje vivem em `estoque.css`; sobem para `components.css` quando outra feature os usar.
+- `select` e `textarea` seguem o estilo de Inputs / Fields (em `components.css`).
+
+### Lista de opções (Choice List)
+- Grupo de caixas de marcar num `<fieldset>` (papéis de uma conta, papéis mantidos na reativação, papéis no cadastro): `.choice-list` com divisores de 1px, cada item um rótulo de 44px com caixa de 20px em `accent-color: primary`. A opção marcada recebe o tom `selected`, nunca só ele: a caixa marcada é a pista.
+- **Bloqueada** (`.choice-item-locked`): caixa desabilitada, selo neutro "Bloqueado" e o motivo e o caminho em metadado abaixo (até 72ch), ligados à caixa por `aria-describedby`, `cursor: not-allowed`. Opção bloqueada e marcada viaja num `hidden` com o mesmo nome, porque caixa desabilitada não é enviada; o servidor recusa mesmo assim qualquer tentativa de mudá-la.
+- **Recusada** (`.choice-item-refused`): está marcada, mas mantê-la será recusado; selo e motivo na família `danger`.
+- Quando as opções dependem de outro campo (os papéis dependem do setor), a região é trocada por HTMX ao mudar o campo e re-renderizada sem JS.
+
+### Segredo exibido uma única vez
+- A senha provisória aparece só na resposta ao cadastro ou à redefinição. `.secret-block`: folha emoldurada de 8px, rótulo em metadado e o valor em Mono no tamanho de total, semibold, `letter-spacing` 0.1em, `user-select: all`, texto contíguo no DOM. Logo abaixo, o aviso de que não será mostrada de novo e a dica de ditado (o alfabeto não tem 0, O, 1, l, I).
+- "Copiar senha" nasce oculto e `static/js/copiar.js` (genérico, por `data-copiar-alvo`) o revela só onde há área de transferência, avisando em `role="status"` sem repetir o valor. Enquanto ele está oculto, a tela ensina a selecionar e copiar à mão.
+- A tela não tem ação primária: "Abrir a ficha" e "Cadastrar outro" são secundários, para um clique por reflexo não descartar o segredo antes da entrega. O valor nunca vai para atributo, script, armazenamento, URL ou mensagem.
+
+### Ação impedida
+- Parcial `_impedimento.html` (`.impediment`): alerta `warning` (nada deu errado, a ação só não está disponível) com título em semibold ("Não é possível … agora."), o motivo, a lista de quem causa o impedimento (cada um com link para a ficha), o caminho e o link para ele quando existe. Só o retorno abaixo, sem barra de confirmação.
+- Na ficha, a ação impedida continua visível e leva à tela que explica; uma nota abaixo do grupo de ações (`.action-notes`, texto, nunca só cor) diz que ela está impedida e por quê, ligada ao link por `aria-describedby`.
+- Ações de uma ficha são todas secundárias (a ficha é leitura), em grupos separados por linha (`.action-groups`: cadastro do dia a dia; acesso e situação, com o convite destrutivo por último), empilhados abaixo de 900px.
+
+### Prévia de efeitos
+- Antes de uma operação que move papéis entre pessoas (substituição de chefia) ou os remove (transferência), a prévia diz por pessoa o que muda: `.effects-list`, um bloco por pessoa com os pares "Recebe" e "Perde". A partir de 640px o bloco é uma linha de três colunas (pessoa | Recebe | Perde); abaixo, os pares empilham, sem rolagem horizontal. Selos com sinal "+"/"−" (a pista não cromática) em `success`/`danger`. A frase que resume a operação vem antes da lista, para não ficar sob a barra de confirmação no celular; uma consequência de autoridade (a chefia de estoque mudando de mãos) é dita por extenso num alert `info`.
+- A confirmação reenvia os efeitos mostrados; se o servidor recalcular outros, mostra a prévia nova em vez de executar.
+
+### Lista de requisitos
+- Pré-condições de uma ação (a prontidão de um setor para ser ativado): `.checklist`, um item por requisito com o estado em texto no selo ("Atendido" em `success`, "Falta" em `warning`) e, quando falta, o caminho em metadado logo abaixo. A lista não depende da cor.
 
 ### Resumo de totais e nota explicativa
 - Pares rótulo/valor lado a lado (`.summary` > `.summary-item`, com `<dt>`/`<dd>`; ênfase de atenção em `.emphasis-warning`): rótulo em metadado acima do valor em `metric` (com separador de milhar), separados por divisor vertical fino e 24px; até 640px os pares quebram em duas colunas e perdem o divisor vertical (o gap separa). Detalhe secundário em metadado; valor que não entra na soma fica separado por espaço **e** explicado por extenso. Rejeitados diferente de zero: rótulo e valor em `warning` semibold (ver Colors → Estados semânticos).
@@ -726,6 +759,8 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 - **Do** reutilizar os primitivos de `components.css` e os parciais de `interface/` (mensagens, paginação, cabeçalho ordenável, falha de consulta) em vez de recompor por tela; o que uma segunda feature reutilizar sobe para lá com nome neutro.
 - **Do** formatar números só na exibição: `separador_milhar` para contagem e total, `quantidade` para saldo e quantidade.
 - **Do** dar a toda linha clicável um `<a>` real com nome acessível que diga o que abre, deixando a affordance da linha inteira para o script que a torna verdadeira.
+- **Do** reservar o Destrutivo preenchido a ação que corta acesso ou autoridade de alguém, e mostrar ação já sabidamente recusada como explicação com caminho, sem botão.
+- **Do** dizer numa prévia o que cada pessoa recebe e perde, com sinal "+"/"−" além da cor.
 
 ### Don't:
 - **Don't** colocar eyebrow, kicker ou rótulo em caixa-alta acima de um título; o marcador de seção é o próprio título.
@@ -747,3 +782,5 @@ Não há card como estrutura universal. Há quatro superfícies isoladas, todas 
 - **Don't** marcar uma linha como clicável (cursor, hover) sem o comportamento que a torna clicável, nem deixar o clique na linha engolir um `summary`, botão ou campo dentro dela.
 - **Don't** aplicar formatação de exibição (milhar, casas) ao `value` de um campo ou a um `hidden` reenviado: "1.500" relido pelo servidor vira 1,5.
 - **Don't** deixar uma falha de consulta HTMX substituir os resultados pela página de erro, nem apresentar resultados antigos como se fossem da consulta nova.
+- **Don't** pôr um segredo exibido uma vez em atributo, script, armazenamento, URL ou mensagem, nem dar à tela que o mostra uma ação primária que leve embora dele.
+- **Don't** truncar a matrícula na barra de trabalho; ela quebra de linha.

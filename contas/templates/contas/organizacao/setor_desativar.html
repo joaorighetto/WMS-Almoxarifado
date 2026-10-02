@@ -1,0 +1,67 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Desativar {{ setor.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `setor`, `chefe` (usuário ou `None`), `form` (`ConfirmacaoForm`) e `recusa`
+(`OperacaoRecusada` ou `None`; o motivo lista os demais membros ativos, FR-028), `impedimento`
+(a recusa que a desativação daria hoje, ou `None`; com `membros` quando há membros ativos além do
+chefe) e `destino_impedimento`. Com impedimento a tela só explica e devolve à ficha, sem botão. Só vale com o
+chefe como único membro ativo; o chefe mantém a chefia (D-16); o Almoxarifado ativado nunca é
+desativado (FR-029). O envio sem `confirmar` só mostra esta tela.
+
+Confirmação com o que muda por extenso, na barra de confirmação. É a ação principal da tela e
+primária (azul), não `danger`: desativar o setor não corta o acesso nem a autoridade de ninguém — o
+setor só deixa de ser oferecido, e o chefe mantém a chefia (D-16) — e se reverte pela ficha.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'setor' pk=setor.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=setor.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Desativar setor</h1>
+        <p class="page-header-description">
+          {% if impedimento %}O setor {{ setor.nome }} não pode ser desativado agora.{% else %}O setor {{ setor.nome }} passa a inativo. O setor só pode ser desativado quando o chefe é o
+          único membro ativo.{% endif %}
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" %}
+
+    {% if impedimento %}
+    {% include "contas/organizacao/_impedimento.html" with href=url_ficha rotulo_voltar="Voltar à ficha" titulo="Não é possível desativar este setor agora." %}
+    {% else %}
+    <form method="post" data-processing-form data-processing-label="Desativando…">
+      {% csrf_token %}
+      <input type="hidden" name="confirmar" value="1">
+
+      <section class="page-section" aria-labelledby="efeitos-heading">
+        <h2 class="section-marker" id="efeitos-heading">
+          <span class="section-marker-label">O que muda</span>
+        </h2>
+        <dl class="meta-grid">
+          <div><dt>Situação</dt><dd>O setor passa a inativo.</dd></div>
+          <div>
+            <dt>Chefia</dt>
+            <dd>{% if chefe %}{{ chefe.nome }} continua como chefe registrado.{% else %}O setor não tem chefe registrado.{% endif %}</dd>
+          </div>
+          <div><dt>Reversão</dt><dd>O setor pode ser ativado de novo pela ficha, com chefe ativo.</dd></div>
+        </dl>
+      </section>
+
+      <div class="confirmation-bar">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Desativar setor</span>
+        </button>
+        <a href="{% url 'setor' pk=setor.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

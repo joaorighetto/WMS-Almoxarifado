@@ -1,0 +1,77 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Desativar {{ usuario.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `usuario`, `form` (`DesativacaoForm`: `justificativa` opcional e `confirmar`) e
+`recusa` (`OperacaoRecusada` ou `None`; motivo e caminho como a operação os produziu, FR-048),
+`impedimento` (a recusa que a desativação daria hoje, ou `None`) e `destino_impedimento`. Com
+impedimento a tela só explica e devolve à ficha, sem botão; o POST segue recusado pela operação.
+Desativar corta o acesso na interação seguinte e preserva os papéis (FR-019); o envio sem
+`confirmar` só mostra esta tela. A justificativa vai para o histórico.
+
+Confirmação de ação que corta acesso (DESIGN.md → Buttons, Destrutivo): o que muda, dito por
+extenso antes do botão; o passo de confirmação leva o único preenchimento `danger` da tela, na
+barra de confirmação, com "Cancelar" ao lado. O convite que trouxe até aqui é secundário com texto
+`danger` na ficha.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'usuario' pk=usuario.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=usuario.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Desativar usuário</h1>
+        <p class="page-header-description">
+          {% if impedimento %}A desativação de {{ usuario.nome }} ({{ usuario.matricula }}) não está disponível agora.{% else %}{{ usuario.nome }} ({{ usuario.matricula }}) perde o acesso ao sistema, inclusive em sessão
+          aberta. Os papéis ficam registrados e a conta pode ser reativada depois.{% endif %}
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" %}
+
+    {% if impedimento %}
+    {% include "contas/organizacao/_impedimento.html" with href=url_ficha rotulo_voltar="Voltar à ficha" titulo="Não é possível desativar esta conta agora." %}
+    {% else %}
+    <form method="post" data-processing-form data-processing-label="Desativando…">
+      {% csrf_token %}
+      <input type="hidden" name="confirmar" value="1">
+
+      <section class="page-section" aria-labelledby="efeitos-heading">
+        <h2 class="section-marker" id="efeitos-heading">
+          <span class="section-marker-label">O que muda</span>
+        </h2>
+        <dl class="meta-grid">
+          <div><dt>Acesso</dt><dd>Cortado na interação seguinte, inclusive em sessão aberta.</dd></div>
+          <div><dt>Papéis</dt><dd>Ficam registrados na conta.</dd></div>
+          <div><dt>Reversão</dt><dd>A conta pode ser reativada pela ficha.</dd></div>
+        </dl>
+      </section>
+
+      <section class="page-section">
+        <div class="field{% if form.justificativa.errors %} field-has-error{% endif %}">
+          <label for="{{ form.justificativa.id_for_label }}">Justificativa (opcional)</label>
+          {{ form.justificativa }}
+          {% if form.justificativa.errors %}
+          <p class="field-error" id="{{ form.justificativa.auto_id }}_error">{{ form.justificativa.errors.0 }}</p>
+          {% else %}
+          <p class="field-hint">Fica registrada no histórico da conta.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <div class="confirmation-bar">
+        <button type="submit" class="btn btn-danger" data-processing-submit>
+          <span data-processing-submit-label>Desativar usuário</span>
+        </button>
+        <a href="{% url 'usuario' pk=usuario.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

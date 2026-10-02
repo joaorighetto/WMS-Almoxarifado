@@ -41,6 +41,13 @@
   cursor: pointer;
 }
 
+/* O `display` do botão vence o `display: none` do atributo `hidden` do navegador: sem esta
+   regra um botão que nasce `hidden` (aprimoramento progressivo, como "Copiar senha") aparecia
+   mesmo onde o script não o revela. */
+.btn[hidden] {
+  display: none;
+}
+
 /* Primário: fundo `primary`, reservado à ação visualmente dominante de cada contexto
    de interação — no máximo uma por tela/dialog/região independente (The One Accent
    Rule). */
@@ -1802,4 +1809,278 @@ html:has(.confirmation-bar) {
   white-space: normal;
   color: var(--color-text-muted);
   font-size: var(--font-size-meta);
+}
+
+/* ---------------------------------------------------------------------
+ * Select, textarea e legenda de grupo (administração de usuários e setores)
+ *
+ * `select` e `textarea` nasceram em `estoque.css` (primeiro uso, entrada de
+ * materiais). A organização (`contas`) é o segundo consumidor, então sobem para
+ * cá sem mudar de forma, como o próprio comentário de origem previa. Mesma
+ * forma do campo de texto (DESIGN.md → Inputs / Fields). O `<legend>` de um
+ * grupo de opções (papéis) ganha o mesmo par tipográfico do rótulo de campo.
+ * ------------------------------------------------------------------- */
+.field select {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+}
+
+.field textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  resize: vertical;
+}
+
+@media (pointer: coarse) {
+  .field select,
+  .field textarea {
+    font-size: var(--font-size-section-title);
+  }
+}
+
+.field-has-error select,
+.field-has-error textarea {
+  border-color: var(--color-danger);
+}
+
+.field legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+/* Dica com lista (regras de senha vindas dos validadores do Django): sem isto o
+   reset de `base.css` deixa os marcadores pendurados fora da coluna. */
+.field-hint ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  list-style: disc;
+}
+
+/* ---------------------------------------------------------------------
+ * Link de texto (DESIGN.md → Colors → Primary: azul é ação)
+ *
+ * O azul padrão do navegador não pertence ao sistema. Link dentro de prosa ou de
+ * célula: `primary`, sublinhado (a pista não cromática de que é link), sem pintar
+ * a linha inteira como botão. A célula que é a "porta" da linha (matrícula, nome do
+ * setor) usa o mesmo estilo.
+ * ------------------------------------------------------------------- */
+.text-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+@media (hover: hover) {
+  .text-link:hover {
+    color: var(--color-primary-hover);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Convite a uma ação destrutiva (DESIGN.md → Buttons → Destrutivo)
+ *
+ * Secundário com o texto na própria família: a gravidade se concentra na tela de
+ * confirmação (`.btn-danger`), aqui só sinaliza "isto leva a algo destrutivo" sem
+ * ser um segundo preenchimento. Mesmo recurso de `.estoque-btn-estornar`
+ * (`estoque.css`), que pode migrar para esta classe.
+ * ------------------------------------------------------------------- */
+.btn-secondary-danger {
+  color: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------------
+ * Ações de formulário (primária + cancelar)
+ *
+ * Linha de ações ao fim de um formulário isolado: a primária primeiro, "Cancelar"
+ * (secundário) depois, com o respiro que o `inline-flex` do `.btn` não dá. Abaixo
+ * de 480px empilham em largura total, a primária no topo.
+ * ------------------------------------------------------------------- */
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 480px) {
+  .form-actions .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Lista de selos (papéis de uma conta)
+ *
+ * Os selos de papel ficam em lista de verdade: quebram de linha juntos, com o
+ * mesmo vão entre eles, sem depender do espaço em branco do HTML.
+ * ------------------------------------------------------------------- */
+.badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------------------------------------------------------------------
+ * Lista de opções (checkbox) com estado bloqueado e motivo
+ *
+ * Grupo de opções num `<fieldset>`: cada item é um rótulo de 44px com a caixa de
+ * marcar, o texto e, quando a opção não pode mudar, o selo "Bloqueado" e o motivo
+ * abaixo (ligado à caixa por `aria-describedby`). Opção marcada recebe o tom
+ * `selected` (a linha selecionada que a fundação já reservava), nunca só ele: a
+ * caixa marcada continua sendo a pista. Bloqueada: caixa desabilitada, selo e
+ * motivo em texto, `cursor: not-allowed`. Recusada (`-refused`): a opção está
+ * marcada, mas mantê-la será recusado — selo e motivo na família `danger`.
+ *
+ * Estrutura esperada:
+ *   <ul class="choice-list">
+ *     <li class="choice-item choice-item-locked">
+ *       <div class="choice-row">
+ *         <label class="choice-label">
+ *           <input type="checkbox" aria-describedby="motivo-x" disabled> Rótulo
+ *         </label>
+ *         <span class="badge badge-neutral">Bloqueado</span>
+ *       </div>
+ *       <p class="choice-reason" id="motivo-x">Motivo.</p>
+ *     </li>
+ *   </ul>
+ * ------------------------------------------------------------------- */
+.choice-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.choice-item {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.choice-item:has(input:checked) {
+  background-color: var(--color-selected);
+}
+
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+
+.choice-label {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.choice-label input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.choice-item-locked .choice-label,
+.choice-label:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.choice-reason {
+  max-width: 72ch;
+  margin: 0 0 var(--space-2) calc(20px + var(--space-3));
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.choice-reason + .choice-reason {
+  margin-top: calc(-1 * var(--space-1));
+}
+
+.choice-item-refused .choice-reason {
+  color: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------------
+ * Link da conta na barra de trabalho ("Senha")
+ *
+ * Destino secundário ao lado de "Sair": texto sobre `ink`, sem contorno (o contorno
+ * é do "Sair", a saída), sublinhado no hover, no foco e quando é a página atual
+ * (`aria-current`): a pista de "você está aqui" não é só cor. Alvo de 44px.
+ * ------------------------------------------------------------------- */
+.appbar-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-ink);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.appbar-link:hover,
+.appbar-link:focus-visible,
+.appbar-link[aria-current="page"] {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------
+ * Barra de trabalho em celular: a matrícula nunca é truncada
+ *
+ * Marca + matrícula + "Senha" + "Sair" não cabem numa linha em 320–480px. A matrícula é
+ * identificador (não se corta com reticências): abaixo de 480px ela quebra em até duas ou
+ * três linhas dentro da própria faixa (a altura fixa de `--appbar-height` comporta três
+ * linhas de 13px), e os vãos e o respiro lateral dos controles encolhem. O texto no DOM
+ * continua inteiro.
+ * ------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .appbar-inner {
+    gap: var(--space-1);
+  }
+
+  .appbar-account {
+    gap: var(--space-1);
+  }
+
+  .appbar-matricula {
+    min-width: 0;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+    line-height: var(--line-height-tight);
+    text-align: right;
+  }
+
+  .appbar-link {
+    padding-inline: var(--space-2);
+  }
+
+  .appbar-logout {
+    padding-inline: var(--space-2);
+  }
 }

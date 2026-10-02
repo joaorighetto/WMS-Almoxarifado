@@ -1,0 +1,69 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Papéis de {{ usuario.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `usuario`, `form` (`UsuarioPapeisForm`), `recusa` (`OperacaoRecusada` ou
+`None`) e `papeis` — um item por papel, com `papel` (`Papel`), `atual`, `marcado` e `bloqueio`
+(a `OperacaoRecusada` que alternar o papel daria, ou `None`). O POST traz o conjunto desejado
+inteiro em `papeis`. Papel bloqueado aparece desabilitado e com o motivo; se o usuário o tem, vai
+também num campo oculto, porque checkbox desabilitado não é enviado e a conta perderia o papel por
+omissão. A decisão é do servidor (FR-048).
+
+Choice List (`components.css`): o papel bloqueado leva o selo "Bloqueado" — o estado não depende
+só da caixa cinza — e o motivo e o caminho abaixo, ligados à caixa por `aria-describedby`.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'usuario' pk=usuario.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=usuario.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Papéis</h1>
+        <p class="page-header-description">
+          {{ usuario.nome }} — setor {{ usuario.setor.nome }}. A chefia do setor muda pela ficha do setor.
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" with todos=True %}
+
+    <form method="post" class="form-frame" data-processing-form data-processing-label="Salvando…">
+      {% csrf_token %}
+
+      <fieldset class="field">
+        <legend>Papéis</legend>
+        <ul class="choice-list">
+          {% for item in papeis %}
+          <li class="choice-item{% if item.bloqueio %} choice-item-locked{% endif %}">
+            <div class="choice-row">
+              <label class="choice-label" for="papel-{{ item.papel.value }}">
+                <input type="checkbox" name="papeis" value="{{ item.papel.value }}" id="papel-{{ item.papel.value }}"
+                       {% if item.marcado %}checked{% endif %}
+                       {% if item.bloqueio %}disabled aria-describedby="papel-{{ item.papel.value }}-motivo"{% endif %}>
+                <span>{{ item.papel.label }}</span>
+              </label>
+              {% if item.bloqueio %}<span class="badge badge-neutral">Bloqueado</span>{% endif %}
+            </div>
+            {% if item.bloqueio and item.atual %}<input type="hidden" name="papeis" value="{{ item.papel.value }}">{% endif %}
+            {% if item.bloqueio %}
+            <p class="choice-reason" id="papel-{{ item.papel.value }}-motivo">{{ item.bloqueio.motivo }}{% if item.bloqueio.caminho %} {{ item.bloqueio.caminho }}{% endif %}</p>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Salvar papéis</span>
+        </button>
+        <a href="{% url 'usuario' pk=usuario.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

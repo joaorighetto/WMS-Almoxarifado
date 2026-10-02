@@ -1,0 +1,12 @@
+{% comment %}
+Retorno contextual (`.back-link`, DESIGN.md → Navigation) para a tela de origem. Parâmetros:
+`href` (destino) e `rotulo` (nome da tela de origem, repetido como texto do link).
+{% endcomment %}
+<a href="{{ href }}" class="back-link">
+  <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
+       fill="none" aria-hidden="true">
+    <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <span>{{ rotulo }}</span>
+</a>

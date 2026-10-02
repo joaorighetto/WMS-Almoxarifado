@@ -37,12 +37,16 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "contas.middleware.CredencialProvisoriaMiddleware",
     "contas.middleware.RetornoPosLoginMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
+
+# Recusa também o login com senha provisória vencida (research R9 da 005).
+AUTHENTICATION_BACKENDS = ["contas.backends.WMSModelBackend"]
 
 TEMPLATES = [
     {
@@ -76,6 +80,9 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        # Os atributos padrão (username, first_name, last_name, email) não
+        # existem em contas.User (research R12 da 005).
+        "OPTIONS": {"user_attributes": ("matricula", "nome")},
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -147,6 +154,10 @@ LOGGING = {
             "level": "INFO",
         },
         "estoque.entradas": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "contas.organizacao": {
             "handlers": ["console"],
             "level": "INFO",
         },

@@ -28,6 +28,7 @@ import pytest
 from django.urls import reverse
 
 from estoque.models import Entrada
+from tests.contas_helpers import operacao
 
 pytestmark = pytest.mark.django_db
 
@@ -81,8 +82,9 @@ def test_funcionario_desativado_apos_login_no_registro_e_tratado_como_anonimo(
     client, funcionario_almoxarifado, nome_rota, metodo, kwargs
 ):
     client.force_login(funcionario_almoxarifado)
-    funcionario_almoxarifado.is_active = False
-    funcionario_almoxarifado.save(update_fields=["is_active"])
+    with operacao():
+        funcionario_almoxarifado.is_active = False
+        funcionario_almoxarifado.save(update_fields=["is_active"])
 
     url = reverse(nome_rota, **kwargs)
     resposta = getattr(client, metodo)(url)
@@ -188,8 +190,9 @@ def test_auditor_desativado_apos_login_na_consulta_e_tratado_como_anonimo(
     client, auditor, nome_rota, metodo, kwargs
 ):
     client.force_login(auditor)
-    auditor.is_active = False
-    auditor.save(update_fields=["is_active"])
+    with operacao():
+        auditor.is_active = False
+        auditor.save(update_fields=["is_active"])
 
     url = reverse(nome_rota, **kwargs)
     resposta = getattr(client, metodo)(url)
@@ -277,8 +280,9 @@ def test_chefe_almoxarifado_desativado_apos_login_no_estorno_e_tratado_como_anon
     client, chefe_almoxarifado, nome_rota, metodo, kwargs
 ):
     client.force_login(chefe_almoxarifado)
-    chefe_almoxarifado.is_active = False
-    chefe_almoxarifado.save(update_fields=["is_active"])
+    with operacao():
+        chefe_almoxarifado.is_active = False
+        chefe_almoxarifado.save(update_fields=["is_active"])
 
     url = reverse(nome_rota, **kwargs)
     resposta = getattr(client, metodo)(url)

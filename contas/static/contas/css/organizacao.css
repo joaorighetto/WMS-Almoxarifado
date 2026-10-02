@@ -1,0 +1,416 @@
+/*
+ * Administração de usuários, papéis e setores — WMS-Almoxarifado (feature 005, ORG)
+ *
+ * Composição das telas de `/organizacao/` e da definição/troca de senha (`/senha/`).
+ * Consome só os tokens de static/css/tokens.css e os primitivos de
+ * static/css/components.css (Page Header, Back Link, Filter Bar, Table, Badge,
+ * Alert, Empty State, Pagination, Form Frame, Form Actions, Choice List, Confirmation
+ * Bar, Summary/Meta Grid, Section Marker) — nenhum é redefinido aqui. Superfície
+ * operacional de um papel só (Administrador de sistema): desktop-first, sem perder o
+ * celular (colunas únicas, botões de 44px, tabela com rolagem em vez de card).
+ *
+ * Padrões desta feature (a registrar em DESIGN.md pelo coordenador):
+ *   - `.action-groups`/`.action-group`: ações da ficha agrupadas por natureza;
+ *   - `.secret-block`: segredo exibido uma única vez (senha provisória);
+ *   - `.history-details`: detalhes de um evento do histórico como pares rótulo/valor;
+ *   - `.credential`: situação da credencial (selo + vencimento);
+ *   - `.field-code`: campo cujo valor é identificador (matrícula) em Mono;
+ *   - `.action-notes`: nota curta, abaixo das ações, do que está impedido e por quê;
+ *   - `.impediment`: ação impedida explicada (motivo, membros, caminho) em vez de confirmar;
+ *   - `.effects-list`: efeitos de uma operação por pessoa (Recebe/Perde), em pares;
+ *   - `.checklist`: requisitos com estado em texto (prontidão do setor para ativar).
+ */
+
+/* ---------------------------------------------------------------------
+ * Ações da ficha agrupadas
+ *
+ * A ficha oferece de quatro a seis ações, todas secundárias (a ficha é leitura: não
+ * há "principal"). A hierarquia vem da natureza: o primeiro grupo é o dia a dia do
+ * cadastro; o segundo é acesso e situação, com o convite destrutivo (`.btn-secondary-
+ * danger`) por último. O divisor entre grupos é uma linha, nunca só espaço: vertical
+ * quando cabem lado a lado, horizontal quando empilham.
+ * ------------------------------------------------------------------- */
+.action-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.action-group + .action-group {
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--color-border-frame);
+}
+
+@media (max-width: 899px) {
+  .action-groups {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .action-group + .action-group {
+    padding: var(--space-3) 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--color-border-frame);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Ação impedida na ficha
+ *
+ * A ação impedida continua visível (ela leva à tela que explica); abaixo do grupo de
+ * ações, uma nota por ação diz que está impedida e por quê, em texto (nunca só pela
+ * cor ou pelo botão): a linha ocupa a largura do cabeçalho, sob o título e as ações.
+ * ------------------------------------------------------------------- */
+.action-notes {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 72ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.action-notes strong {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------------------------------------------------------------------
+ * Ação impedida explicada (`_impedimento.html`)
+ *
+ * Alerta de atenção (âmbar: nada deu errado, a ação só não está disponível) com o título
+ * em semibold, o motivo, os membros que o causam (cada um com ficha) e o caminho. Sem
+ * botão de confirmação: só o retorno, logo abaixo.
+ * ------------------------------------------------------------------- */
+.impediment .impediment-title {
+  font-weight: var(--font-weight-semibold);
+}
+
+.impediment .impediment-members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-2) 0;
+  padding-left: var(--space-4);
+  list-style: disc;
+}
+
+.impediment .impediment-destino {
+  margin-top: var(--space-2);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ---------------------------------------------------------------------
+ * Matrícula como identificador
+ *
+ * O valor digitado no campo de matrícula é dado, não prosa (The Mono-Is-Data Rule),
+ * como na tela de login: só a família muda; tamanho e altura seguem o campo.
+ * ------------------------------------------------------------------- */
+.field-code input[type="text"] {
+  font-family: var(--font-family-mono);
+}
+
+/* ---------------------------------------------------------------------
+ * Situação da credencial
+ *
+ * Selo com o estado (texto explícito) e, ao lado, o momento. Quebra junto em
+ * largura estreita.
+ * ------------------------------------------------------------------- */
+.credential {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+/* ---------------------------------------------------------------------
+ * Segredo exibido uma única vez (senha provisória)
+ *
+ * Folha emoldurada, como a placa de identificação, com o valor no maior tamanho que
+ * a fundação tem para dado (o de total) em Mono: é o elemento mais pesado da tela, e
+ * a pessoa precisa ditá-lo ou copiá-lo agora. O espaçamento entre letras dá o
+ * agrupamento visual sem alterar o valor (o texto continua contíguo no DOM, sem
+ * espaço nem separador inserido). `user-select: all` seleciona tudo com um toque
+ * ou clique, para copiar sem o botão. O botão "Copiar" é aprimoramento: o HTML o traz
+ * oculto e `static/js/copiar.js` o revela só onde há área de transferência; nada é
+ * guardado em atributo, armazenamento ou URL.
+ * ------------------------------------------------------------------- */
+.secret-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-md);
+}
+
+.secret-block-label {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.secret-block-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
+.secret-block-value {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-metric);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.secret-block-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.secret-block-feedback {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.secret-block-meta,
+.secret-block-manual {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+/* Como copiar à mão: só enquanto o botão "Copiar" não está disponível (ele só é revelado onde
+   há `navigator.clipboard`, ou seja, em contexto seguro; numa intranet em HTTP não aparece).
+   Sem JS o botão fica oculto, e a instrução aparece. */
+.secret-block:has([data-copiar-alvo]:not([hidden])) .secret-block-manual {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------
+ * Detalhes de um evento do histórico
+ *
+ * Pares rótulo/valor em grade de duas colunas (rótulo em metadado `text-muted`,
+ * valor em corpo), no lugar da lista com marcadores: o olho percorre os rótulos e
+ * lê só o que interessa. A coluna do rótulo tem largura fixa, para os valores de eventos diferentes alinharem na vertical.
+ * ------------------------------------------------------------------- */
+.history-details {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  min-width: 28rem;
+  margin: 0;
+}
+
+.history-details dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.history-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.history-event-type {
+  font-weight: var(--font-weight-medium);
+}
+
+/* ---------------------------------------------------------------------
+ * Efeitos de uma operação por pessoa (quem recebe e quem perde papéis)
+ *
+ * Uma pessoa por bloco; dentro dele, pares rótulo/valor ("Recebe", "Perde"). Dentro da
+ * mesma moldura da tabela (o marcador de seção encosta nela). Acima de 640px o bloco é uma
+ * linha de três colunas — pessoa | Recebe | Perde — com o rótulo em metadado acima do
+ * valor; abaixo, os pares empilham, rótulo à esquerda e valor à direita, sem rolagem
+ * horizontal. O sinal do selo ("+", "−") é a pista não cromática do efeito.
+ * ------------------------------------------------------------------- */
+.effects-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background-color: var(--color-surface);
+}
+
+.effects-item {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.effects-item + .effects-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.effects-person {
+  font-weight: var(--font-weight-semibold);
+}
+
+.effects-role {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.effects-pairs {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.effects-pair {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.effects-pair dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.effects-pair dd {
+  margin: 0;
+}
+
+/* Sinal do selo de efeito: separado do rótulo por um vão (o selo é `inline-flex` e descarta o
+   espaço em branco). */
+.effects-sign {
+  margin-right: var(--space-1);
+}
+
+@media (min-width: 640px) {
+  .effects-item {
+    grid-template-columns: minmax(12rem, 1fr) minmax(0, 2.4fr);
+    gap: var(--space-6);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .effects-pairs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+
+  .effects-pair {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: var(--space-1);
+  }
+}
+
+/* Linha de explicação antes de uma lista de papéis (prévia da transferência). */
+.effects-intro {
+  margin: 0 0 var(--space-2);
+}
+
+.effects-summary {
+  max-width: 72ch;
+  margin: 0 0 var(--space-4);
+}
+
+.effects-note {
+  margin: var(--space-4) 0 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Requisitos com estado em texto (prontidão do setor para ativar)
+ *
+ * Cada requisito traz o estado por extenso no selo ("Atendido" / "Falta") e, quando falta,
+ * o que fazer logo abaixo. A lista não depende da cor: o texto do selo é a pista.
+ * ------------------------------------------------------------------- */
+.checklist {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-frame);
+  border-radius: var(--radius-sm);
+}
+
+.checklist-item {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3);
+}
+
+.checklist-item + .checklist-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.checklist-item .badge {
+  justify-self: start;
+}
+
+.checklist-label {
+  font-weight: var(--font-weight-medium);
+}
+
+.checklist-hint {
+  grid-column: 2;
+  max-width: 72ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+@media (max-width: 480px) {
+  .checklist-item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checklist-hint {
+    grid-column: 1;
+  }
+}
+
+/* Link da matrícula com prefixo só para leitor de tela ("Ficha de …"): o prefixo é
+   `position: absolute` (`.visually-hidden`), então o link vira o bloco de contenção — sem
+   isto o prefixo escapa do rolo da tabela e estica a altura da página. */
+.org-link-ficha {
+  position: relative;
+}
+
+/* Dica de campo com a mesma medida das notas do sistema (a dos papéis passava de 90
+   caracteres por linha na largura do formulário). */
+.field-hint {
+  max-width: 72ch;
+}
+
+/* O widget do Django traz `rows="10"`; a justificativa é uma ou duas frases. */
+.field textarea {
+  height: 6.5rem;
+}
+
+/* Nome de pessoa numa tabela larga: não espremer em três linhas no celular; a tabela rola
+   na horizontal (DESIGN.md → Tabelas: responsividade) em vez de quebrar o nome. */
+.org-cell-nome {
+  min-width: 10rem;
+}

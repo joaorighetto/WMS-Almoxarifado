@@ -21,42 +21,53 @@ SETORES = (
     ("obras", "Obras e Expansão — Unidade Desativada", False),
 )
 
-# Matrícula, setor, papéis adicionais ao REQUISITANTE, conta ativa.
+# Chave, em `SETORES`, do setor designado como o Almoxarifado (`INV-ORG-004`).
+SETOR_ALMOXARIFADO = "almox"
+
+# Matrícula, nome fictício, setor, papéis adicionais ao REQUISITANTE, conta ativa.
 # A conta técnica admin é criada separadamente e não recebe nenhum ROLE-*.
 USUARIOS = (
-    ("chefe", "almox", (
-        Papel.CHEFE_SETOR, Papel.FUNCIONARIO_ALMOXARIFADO, Papel.CHEFE_ALMOXARIFADO,
-    ), True),
-    ("funcionario", "almox", (Papel.FUNCIONARIO_ALMOXARIFADO,), True),
-    ("requisitante", "almox", (), True),
-    ("almox.conferente", "almox", (Papel.FUNCIONARIO_ALMOXARIFADO,), True),
-    ("almox.inativo", "almox", (Papel.FUNCIONARIO_ALMOXARIFADO,), False),
-    ("eta.chefe", "eta", (Papel.CHEFE_SETOR,), True),
-    ("eta.auxiliar", "eta", (Papel.AUXILIAR_SETOR,), True),
-    ("eta.operador.01", "eta", (), True),
-    ("eta.operador.02", "eta", (), True),
-    ("ete.chefe", "ete", (Papel.CHEFE_SETOR,), True),
-    ("ete.auxiliar", "ete", (Papel.AUXILIAR_SETOR,), True),
-    ("ete.operador.01", "ete", (), True),
-    ("ete.operador.02", "ete", (), True),
-    ("redes.chefe", "redes", (Papel.CHEFE_SETOR,), True),
-    ("redes.auxiliar", "redes", (Papel.AUXILIAR_SETOR,), True),
-    ("redes.encanador.01", "redes", (), True),
-    ("redes.encanador.02", "redes", (), True),
-    ("oficina.chefe", "oficina", (Papel.CHEFE_SETOR,), True),
-    ("oficina.auxiliar", "oficina", (Papel.AUXILIAR_SETOR,), True),
-    ("oficina.eletricista", "oficina", (), True),
-    ("oficina.mecanico", "oficina", (), True),
-    ("lab.chefe", "lab", (Papel.CHEFE_SETOR,), True),
-    ("lab.auxiliar", "lab", (Papel.AUXILIAR_SETOR,), True),
-    ("lab.tecnico.01", "lab", (), True),
-    ("lab.tecnico.02", "lab", (), True),
-    ("adm.chefe", "adm", (Papel.CHEFE_SETOR,), True),
-    ("adm.auxiliar", "adm", (Papel.AUXILIAR_SETOR,), True),
-    ("auditor", "adm", (Papel.AUDITOR,), True),
-    ("administrador", "adm", (Papel.ADMINISTRADOR_SISTEMA,), True),
-    ("obras.chefe.inativo", "obras", (Papel.CHEFE_SETOR,), False),
-    ("obras.tecnico.inativo", "obras", (), False),
+    (
+        "chefe",
+        "Helena Duarte Moura",
+        "almox",
+        (
+            Papel.CHEFE_SETOR,
+            Papel.FUNCIONARIO_ALMOXARIFADO,
+            Papel.CHEFE_ALMOXARIFADO,
+        ),
+        True,
+    ),
+    ("funcionario", "Rogério Batista Lima", "almox", (Papel.FUNCIONARIO_ALMOXARIFADO,), True),
+    ("requisitante", "Cláudia Nogueira Reis", "almox", (), True),
+    ("almox.conferente", "Tiago Almeida Prado", "almox", (Papel.FUNCIONARIO_ALMOXARIFADO,), True),
+    ("almox.inativo", "Marcos Vinícius Teles", "almox", (Papel.FUNCIONARIO_ALMOXARIFADO,), False),
+    ("eta.chefe", "Patrícia Lemos Andrade", "eta", (Papel.CHEFE_SETOR,), True),
+    ("eta.auxiliar", "Fernando Aguiar Costa", "eta", (Papel.AUXILIAR_SETOR,), True),
+    ("eta.operador.01", "Joana Ferraz Quintino", "eta", (), True),
+    ("eta.operador.02", "Sérgio Matos Vilela", "eta", (), True),
+    ("ete.chefe", "Ricardo Salgado Peixoto", "ete", (Papel.CHEFE_SETOR,), True),
+    ("ete.auxiliar", "Luciana Barros Vieira", "ete", (Papel.AUXILIAR_SETOR,), True),
+    ("ete.operador.01", "Anderson Pires Tavares", "ete", (), True),
+    ("ete.operador.02", "Beatriz Camargo Rocha", "ete", (), True),
+    ("redes.chefe", "Gilberto Farias Neves", "redes", (Papel.CHEFE_SETOR,), True),
+    ("redes.auxiliar", "Débora Cardoso Azevedo", "redes", (Papel.AUXILIAR_SETOR,), True),
+    ("redes.encanador.01", "Paulo Henrique Souto", "redes", (), True),
+    ("redes.encanador.02", "Elisa Montenegro Dias", "redes", (), True),
+    ("oficina.chefe", "Wagner Siqueira Borges", "oficina", (Papel.CHEFE_SETOR,), True),
+    ("oficina.auxiliar", "Renata Furtado Leal", "oficina", (Papel.AUXILIAR_SETOR,), True),
+    ("oficina.eletricista", "Caio Medeiros Barreto", "oficina", (), True),
+    ("oficina.mecanico", "Vanessa Coelho Pinheiro", "oficina", (), True),
+    ("lab.chefe", "Adriana Xavier Mendonça", "lab", (Papel.CHEFE_SETOR,), True),
+    ("lab.auxiliar", "Leonardo Brandão Guedes", "lab", (Papel.AUXILIAR_SETOR,), True),
+    ("lab.tecnico.01", "Simone Tavares Cordeiro", "lab", (), True),
+    ("lab.tecnico.02", "Otávio Rangel Bastos", "lab", (), True),
+    ("adm.chefe", "Marta Figueiredo Sampaio", "adm", (Papel.CHEFE_SETOR,), True),
+    ("adm.auxiliar", "Daniel Ribeiro Fontes", "adm", (Papel.AUXILIAR_SETOR,), True),
+    ("auditor", "Isabel Cavalcanti Duarte", "adm", (Papel.AUDITOR,), True),
+    ("administrador", "Henrique Valadares Neto", "adm", (Papel.ADMINISTRADOR_SISTEMA,), True),
+    ("obras.chefe.inativo", "Cássio Mourão Telles", "obras", (Papel.CHEFE_SETOR,), False),
+    ("obras.tecnico.inativo", "Nádia Esteves Prates", "obras", (), False),
 )
 
 # Conta do seed que o login simulado (`contas/login_simulado.py`) autentica para cada papel.
@@ -73,11 +84,20 @@ CONTA_POR_PAPEL = {
 
 
 def _linha(registro: RegistroAceito) -> str:
-    return ";".join((
-        registro.cadpro, registro.descricao, registro.unidade,
-        str(registro.quantidade).replace(".", ","), registro.detalhamento,
-        registro.grupo, registro.subgrupo, registro.nome_grupo, registro.nome_subgrupo, "",
-    ))
+    return ";".join(
+        (
+            registro.cadpro,
+            registro.descricao,
+            registro.unidade,
+            str(registro.quantidade).replace(".", ","),
+            registro.detalhamento,
+            registro.grupo,
+            registro.subgrupo,
+            registro.nome_grupo,
+            registro.nome_subgrupo,
+            "",
+        )
+    )
 
 
 def revisao_simulada(registros: tuple[RegistroAceito, ...]) -> bytes:
@@ -109,10 +129,10 @@ def revisao_simulada(registros: tuple[RegistroAceito, ...]) -> bytes:
             amostra.get(positivo.cadpro, positivo),
             quantidade=positivo.quantidade - min(Decimal("1.000"), positivo.quantidade),
         )
-    aumento = next((
-        r for r in candidatos
-        if r is not positivo and r.quantidade < Decimal("999999999998.999")
-    ), None)
+    aumento = next(
+        (r for r in candidatos if r is not positivo and r.quantidade < Decimal("999999999998.999")),
+        None,
+    )
     if aumento is not None:
         amostra[aumento.cadpro] = replace(
             amostra.get(aumento.cadpro, aumento), quantidade=aumento.quantidade + Decimal("1.250")

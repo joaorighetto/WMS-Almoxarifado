@@ -41,8 +41,16 @@ para repor os dados. `make setup` já faz as duas etapas.
 
 O conjunto inclui 8 setores, 32 contas, todos os sete papéis de negócio, setores
 ativos com exatamente um chefe ativo e contas inativas para conferir o bloqueio
-de login. Setores e matrículas são fictícios, inspirados na operação de um serviço
-municipal de saneamento. Os modelos atuais não têm campos de nome ou e-mail.
+de login. Setores, matrículas e nomes são fictícios, inspirados na operação de um
+serviço municipal de saneamento; cada conta de negócio tem um nome fictício.
+
+A organização é criada pela API de provisionamento de `contas.organizacao`
+(`provisionar_setor`, `provisionar_usuario`, `provisionar_ativacao`), com as
+mesmas regras e o mesmo histórico (`EventoOrganizacional`, autor nulo) das
+operações de administração. O setor Almoxarifado é o designado como Almoxarifado
+(`INV-ORG-004`): nasce inativo, recebe a chefia do almoxarifado e só então é
+ativado. Fora dessas operações, gravações em `User`, `Setor` e `PapelUsuario`
+são recusadas (barreira de escrita da 005).
 
 | Setor | Contas | Estado |
 |---|---:|---|
@@ -57,14 +65,19 @@ municipal de saneamento. Os modelos atuais não têm campos de nome ou e-mail.
 
 | Matrícula | Uso |
 |---|---|
-| `admin` | Superusuário técnico do Django Admin, sem papéis de negócio |
+| `admin` | Superusuário técnico do Django Admin (somente consulta), sem papéis de negócio |
 | `chefe` | Chefe do almoxarifado e do setor Almoxarifado; importa, consulta e vê histórico |
 | `funcionario` | Funcionário do almoxarifado; consulta o catálogo |
 | `requisitante` | Requisitante do setor Almoxarifado; consulta o catálogo |
+| `administrador` | Administrador de sistema; administra usuários e setores em `/organizacao/` |
 
-Todas usam a senha definida em `SEED_DEV_PASSWORD`. A conta técnica acessa
-`/admin/`; as contas de negócio acessam `/login/`. Os demais perfis e matrículas
-estão declarados em `contas/dev_seed/dados.py` e podem ser consultados no Admin.
+Todas usam a senha definida em `SEED_DEV_PASSWORD`, gravada como definitiva: o
+seed é o único caminho que aceita senha conhecida, e só com
+`config.settings.development` ou `config.settings.test`. A conta técnica acessa
+`/admin/`, que é somente leitura para usuários, setores, papéis e histórico
+organizacional; as contas de negócio acessam `/login/`. Os demais perfis e
+matrículas estão declarados em `contas/dev_seed/dados.py` e podem ser
+consultados em `/organizacao/` (como `administrador`) ou no Admin.
 
 No servidor de desenvolvimento, essas contas também são usadas sem senha pelo
 [login simulado por papel](login-simulado.md) (`?dev_como=<papel>`).
@@ -93,8 +106,8 @@ Com o CSV local validado nesta implementação, a carga resulta em 1.588 materia
 restauração). Há 52 atribuições explícitas de papéis. As contagens do catálogo e
 do histórico podem variar quando outro CSV é fornecido.
 
-O seed cobre os oito modelos de negócio do catálogo: `Setor`, `User`,
-`PapelUsuario`, `Material`, `ExecucaoImportacao`, `ExcecaoImportacao`,
+O seed cobre os modelos de negócio de contas e do catálogo: `Setor`, `User`,
+`PapelUsuario`, `EventoOrganizacional`, `Material`, `ExecucaoImportacao`, `ExcecaoImportacao`,
 `DivergenciaSaldo` e `AlteracaoCadastralMaterial`. Tabelas internas do Django são
 administradas pelos próprios mecanismos do framework. Não são criadas
 movimentações, reservas ou requisições, cujos modelos ainda não existem.
@@ -122,6 +135,23 @@ importação já tem com dados pessoais do cadastro (`INV-SUPPLIER-004`).
 O seed cobre os quatro modelos de negócio de `fornecedores`: `Fornecedor`,
 `ExecucaoImportacaoFornecedores`, `ExcecaoImportacaoFornecedores` e
 `AlteracaoFornecedor` — só quando o arquivo é fornecido.
+
+## Provisionamento fora do desenvolvimento
+
+Num banco sem nenhum setor nem identidade de negócio, a organização inicial é
+criada pelo comando `provisionar_organizacao`, não pelo seed nem pelo Admin:
+
+```bash
+uv run --env-file .env python manage.py provisionar_organizacao --setor-almoxarifado "Almoxarifado" --matricula 1001 --nome "Pessoa Administradora"
+```
+
+Numa única transação, ele cria o setor designado como Almoxarifado, uma conta com
+`ROLE-REQUESTER`, `ROLE-SYSTEM-ADMIN`, `ROLE-SECTOR-HEAD`, `ROLE-WAREHOUSE-HEAD` e
+`ROLE-WAREHOUSE-STAFF`, e ativa o setor. A senha provisória é impressa uma única
+vez; no primeiro acesso a conta é levada a `/senha/` para definir a própria senha.
+Rodar de novo, ou num banco que já tenha setor ou conta de negócio, é recusado sem
+gravar nada. As demais pessoas e setores são cadastrados pela própria aplicação,
+em `/organizacao/`.
 
 ## Repetição e falhas
 

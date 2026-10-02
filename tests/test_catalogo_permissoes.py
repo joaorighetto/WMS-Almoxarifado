@@ -27,6 +27,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
 
+from tests.contas_helpers import operacao
+
 pytestmark = pytest.mark.django_db
 
 # Chave de sessão do pedido de prévia — valor fixado literalmente em
@@ -96,8 +98,9 @@ def test_chefe_do_almoxarifado_desativado_apos_login_e_tratado_como_anonimo(
     protegido aqui contra qualquer view de `catalogo` que porventura passe a
     cachear o usuário de outra forma."""
     client.force_login(chefe_almoxarifado)
-    chefe_almoxarifado.is_active = False
-    chefe_almoxarifado.save(update_fields=["is_active"])
+    with operacao():
+        chefe_almoxarifado.is_active = False
+        chefe_almoxarifado.save(update_fields=["is_active"])
 
     url = reverse(nome_rota, **kwargs)
     resposta = getattr(client, metodo)(url)
@@ -238,8 +241,9 @@ def test_requisitante_desativado_apos_login_na_consulta_e_tratado_como_anonimo(
     `test_chefe_do_almoxarifado_desativado_apos_login_e_tratado_como_anonimo`
     (acima), aqui com `ROLE-REQUESTER` — o papel exigido pela consulta."""
     client.force_login(requisitante)
-    requisitante.is_active = False
-    requisitante.save(update_fields=["is_active"])
+    with operacao():
+        requisitante.is_active = False
+        requisitante.save(update_fields=["is_active"])
 
     url = reverse(nome_rota, **kwargs)
     resposta = getattr(client, metodo)(url)
@@ -330,8 +334,9 @@ def test_chefe_do_almoxarifado_desativado_apos_login_e_tratado_como_anonimo_no_h
     `test_chefe_do_almoxarifado_desativado_apos_login_e_tratado_como_anonimo`
     (`ROTAS_IMPORTACAO`), aqui para o histórico."""
     client.force_login(chefe_almoxarifado)
-    chefe_almoxarifado.is_active = False
-    chefe_almoxarifado.save(update_fields=["is_active"])
+    with operacao():
+        chefe_almoxarifado.is_active = False
+        chefe_almoxarifado.save(update_fields=["is_active"])
 
     url = reverse(nome_rota, **kwargs)
     resposta = getattr(client, metodo)(url)

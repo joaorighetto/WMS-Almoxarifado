@@ -1,0 +1,50 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Ativar {{ setor.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `setor`, `chefe` (usuário ou `None`), `form` (`ConfirmacaoForm`) e `recusa`
+(`OperacaoRecusada` ou `None`). A ativação exige exatamente um chefe ativo do próprio setor e, no
+Almoxarifado, a chefia de estoque completa (FR-027); reativar segue as mesmas condições (FR-030).
+O envio sem `confirmar` só mostra esta tela.
+
+`impedimento` (a recusa que a ativação daria hoje, ou `None`) e `destino_impedimento`: sem chefe
+ativo (ou, no Almoxarifado, sem a chefia de estoque completa) a tela explica, leva à chefia e só
+oferece o retorno, sem botão. Quem decide é sempre o servidor: o POST segue recusado.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'setor' pk=setor.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=setor.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Ativar setor</h1>
+        <p class="page-header-description">
+          {% if chefe %}O setor {{ setor.nome }} passa a ativo, com {{ chefe.nome }} como chefe.{% else %}O setor {{ setor.nome }} ainda não tem chefe ativo.{% endif %}
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" %}
+
+    {% if impedimento %}
+    {% include "contas/organizacao/_impedimento.html" with href=url_ficha rotulo_voltar="Voltar à ficha" titulo="Não é possível ativar este setor agora." %}
+    {% else %}
+    <form method="post" data-processing-form data-processing-label="Ativando…">
+      {% csrf_token %}
+      <input type="hidden" name="confirmar" value="1">
+
+      <div class="confirmation-bar">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Ativar setor</span>
+        </button>
+        <a href="{% url 'setor' pk=setor.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

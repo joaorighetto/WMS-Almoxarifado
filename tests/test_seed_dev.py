@@ -30,13 +30,15 @@ from catalogo.models import (
     Material,
     MotivoRecusa,
 )
-from contas.models import Papel, PapelUsuario, Setor, User
+from contas.models import EventoOrganizacional, Papel, PapelUsuario, Setor, User
+from contas.organizacao import provisionar_setor, provisionar_usuario, validar_organizacao
 from fornecedores.models import (
     AlteracaoFornecedor,
     ExcecaoImportacaoFornecedores,
     ExecucaoImportacaoFornecedores,
     Fornecedor,
 )
+from tests.contas_helpers import operacao
 
 CATALOGO = Path(__file__).parent / "fixtures" / "catalogo" / "carga_inicial_valida.csv"
 # Fixture sintética de fornecedores (feature 004, T033) — nunca o arquivo real
@@ -157,6 +159,30 @@ def test_catalogo_padrao_ausente_indica_docs_csvs(monkeypatch, tmp_path):
         call_command(
             "seed_dev", "--fornecedores", str(FORNECEDORES_INEXISTENTE), check=True
         )
+
+
+@pytest.mark.django_db
+def test_seed_designa_o_almoxarifado_e_toda_a_organizacao_e_valida():
+    """Feature 005 (T014): a organização do seed sai da API de provisionamento — um único
+    Almoxarifado designado e ativo, nome em toda conta, eventos com autor nulo e o estado
+    final aceito por `validar_organizacao` sobre o banco inteiro (INV-ORG-001 a 006)."""
+    executar_seed()
+
+    almoxarifado = Setor.objects.get(almoxarifado=True)
+    assert almoxarifado.nome == "Almoxarifado"
+    assert almoxarifado.ativo is True and almoxarifado.ativado_em is not None
+    assert Setor.objects.filter(almoxarifado=True).count() == 1
+    assert Setor.objects.filter(ativo=False).get().ativado_em is None
+    chefe = User.objects.get(is_active=True, papeis__papel=Papel.CHEFE_ALMOXARIFADO)
+    assert chefe.setor_id == almoxarifado.pk
+    for usuario in User.objects.all():
+        assert usuario.nome.strip() and usuario.nome_busca
+        assert usuario.senha_provisoria_em is None, "credencial definitiva no seed (D-23)"
+    assert User.objects.get(matricula="admin").is_superuser is True
+    assert EventoOrganizacional.objects.exists()
+    assert not EventoOrganizacional.objects.exclude(autor=None).exists()
+
+    validar_organizacao(Setor.objects.all(), User.objects.all())
 
 
 @pytest.mark.django_db
@@ -348,7 +374,8 @@ def test_reexecucao_preserva_todos_dados_mesmo_sem_senha_e_catalogo(monkeypatch)
     usuario.save()
     setor = Setor.objects.filter(ativo=False).first()
     setor.nome = "Nome alterado depois do bootstrap"
-    setor.save()
+    with operacao():  # a escrita organizacional só é permitida dentro das operações (005, R4)
+        setor.save()
     antes = estado_dominio()
     monkeypatch.delenv("SEED_DEV_PASSWORD")
 
@@ -364,9 +391,9 @@ def test_reexecucao_preserva_todos_dados_mesmo_sem_senha_e_catalogo(monkeypatch)
 @pytest.mark.django_db
 @pytest.mark.parametrize("tipo", ["setor", "usuario", "superusuario"])
 def test_recusa_dados_preexistentes_sem_modifica_los(tipo, senha_valida):
-    setor = Setor.objects.create(nome="Setor preexistente")
+    setor = provisionar_setor("Setor preexistente")
     if tipo == "usuario":
-        User.objects.create_user(matricula="EXISTENTE", password=senha_valida, setor=setor)
+        provisionar_usuario("EXISTENTE", "Pessoa Existente", setor, set(), senha=senha_valida)
     elif tipo == "superusuario":
         User.objects.create_superuser(matricula="TECNICO", password=senha_valida, setor=setor)
     antes = estado_dominio()
