@@ -1,0 +1,17 @@
+{% extends "contas/base.html" %}
+{% load static %}
+
+{% comment %}
+Base das telas de administração da organização (`/organizacao/`): a composição própria
+(`organizacao.css`) e o estado "Processando…" dos envios (`static/js/envio.js`, por `data-*`).
+Cada tela estende esta base em vez de `contas/base.html`; scripts próprios entram em `org_js`.
+{% endcomment %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'contas/css/organizacao.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/envio.js' %}" defer></script>
+{% block org_js %}{% endblock %}
+{% endblock %}

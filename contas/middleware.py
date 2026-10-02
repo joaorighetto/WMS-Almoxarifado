@@ -1,5 +1,51 @@
+from django.conf import settings
+from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import redirect
+from django.http import HttpResponse
+from django.shortcuts import redirect, resolve_url
+from django.urls import reverse
+
+from contas.credenciais import provisoria_vencida
+
+
+class CredencialProvisoriaMiddleware:
+    """Mantém quem tem credencial provisória na definição da própria senha (FR-032, research
+    R10, `contracts/credenciais.md`).
+
+    Para usuário autenticado com `senha_provisoria_em`: provisória vencida encerra a sessão e
+    leva ao login; fora isso, só `definir_senha`, `logout` e os arquivos estáticos seguem — toda
+    outra rota (GET ou POST, inclusive o Admin) é redirecionada a `definir_senha`, com
+    `HX-Redirect` quando a requisição é HTMX. Anônimo, inativo e quem já definiu a senha passam
+    sem custo extra. Fica logo depois da autenticação e antes do `RetornoPosLoginMiddleware`,
+    para que o marcador de retorno não seja gasto por uma requisição que a restrição barrou.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        usuario = request.user
+        if usuario.is_authenticated and usuario.senha_provisoria_em is not None:
+            if provisoria_vencida(usuario):
+                logout(request)
+                return self._redirecionar(request, resolve_url(settings.LOGIN_URL))
+            if not self._liberada(request):
+                return self._redirecionar(request, reverse("definir_senha"))
+        return self.get_response(request)
+
+    @staticmethod
+    def _liberada(request):
+        return request.path in {reverse("definir_senha"), reverse("logout")} or (
+            request.path.startswith(settings.STATIC_URL)
+        )
+
+    @staticmethod
+    def _redirecionar(request, destino):
+        if request.headers.get("HX-Request") == "true":
+            resposta = HttpResponse()
+            resposta["HX-Redirect"] = destino
+            return resposta
+        return redirect(destino)
 
 
 class RetornoPosLoginMiddleware:

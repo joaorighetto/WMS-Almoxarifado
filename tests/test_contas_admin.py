@@ -1,259 +1,142 @@
-"""Testes do Django Admin de `contas`.
+"""Django Admin de `contas`: consulta técnica, somente leitura (T015, research R6 da 005).
 
-O Admin não é tela de produto: é a ferramenta técnica de bootstrap/manutenção
-(`research.md` R6) e, enquanto a administração de usuários não for
-especificada, o **único** meio de criar contas, definir senha e conceder
-`Papel` fora dos testes. Por isso os caminhos abaixo são protegidos contra
-regressão, ainda que `manage.py check` já valide a *configuração* do Admin.
-
-Protegido aqui:
-- senha nunca é gravada crua — sempre via `set_password()`/hashers nativos
-  (Constitution, Princípio VI);
-- o formulário de alteração não expõe a senha como campo editável em texto;
-- criar uma conta comum pelo Admin concede automaticamente apenas o papel
-  mínimo `ROLE-REQUESTER` (`FR-016a`), sem inferir nenhum outro `Papel`
-  (`ROLE-*`) a partir de `is_staff`/`is_superuser`
-  (`docs/domain/permissions-matrix.md`, regras 3, 7 e 8);
-- criar uma conta com `is_superuser=True` pelo Admin não concede
-  `ROLE-REQUESTER` nem nenhum outro papel: a conta técnica de superusuário
-  não é identidade de negócio, mesmo quando criada pelo Admin em vez de
-  `createsuperuser` (`permissions-matrix.md`, regra 8; `FR-016a`);
-- `INV-ORG-001`: o Admin não permite criar usuário sem setor.
-
-Os testes de concessão de papel abaixo passam pela *view* real do Admin
-(`Client.post`), não apenas por `form.save()` isolado: `ModelAdmin.save_form`
-sempre chama `form.save(commit=False)` internamente, então uma concessão de
-papel que só existisse dentro de `ContaCriacaoForm.save(commit=True)` nunca
-seria exercida em produção — foi exatamente esse gap que deixou
-`FR-016a` sem efeito quando a conta era criada pelo Admin de verdade.
+O Admin deixou de ser meio de criar contas, definir senha ou conceder `Papel`: a escrita
+organizacional é só das operações de `contas.organizacao` (FR-046). A conta técnica
+(superusuário, sem papel de negócio) consulta `User`, `Setor`, `PapelUsuario` e
+`EventoOrganizacional`, e NÃO adiciona, altera nem exclui — nem por POST direto, nem pela
+ação em lote de exclusão. Preserva `INV-ORG-001`, `INV-ORG-004`; FR-016a e FR-005 (rastro
+e preservação histórica: nada é excluído por aqui).
 """
 
 import pytest
-from django.conf import global_settings
-from django.test import override_settings
-from django.urls import reverse
+from django.contrib import admin
+from django.urls import NoReverseMatch, reverse
 
-from contas.admin import ContaAlteracaoForm, ContaCriacaoForm
-from contas.models import PapelUsuario, Setor, User
+from contas.models import EventoOrganizacional, PapelUsuario, Setor, User
 
-SENHA = "uma-senha-de-admin-bastante-forte-123"
+pytestmark = pytest.mark.django_db
 
-
-def _payload_inline_vazio(**campos):
-    """Payload mínimo do form de criação, com o management form do inline
-    `PapelUsuarioInline` vazio (nenhuma linha de papel adicionada à mão)."""
-    payload = {
-        "password1": SENHA,
-        "password2": SENHA,
-        "is_active": True,
-        "papeis-TOTAL_FORMS": "0",
-        "papeis-INITIAL_FORMS": "0",
-        "papeis-MIN_NUM_FORMS": "0",
-        "papeis-MAX_NUM_FORMS": "1000",
-    }
-    payload.update(campos)
-    return payload
+MODELOS = ("user", "setor", "papelusuario", "eventoorganizacional")
 
 
 @pytest.fixture
-def admin_logado(client, django_user_model):
-    """Superusuário técnico autenticado no client, para acessar as views do
-    Admin (`permissions-matrix.md`, regras 7-8: não é identidade de negócio,
-    não recebe `ROLE-*` — só precisa de `is_staff`/`is_superuser`)."""
-    setor = Setor.objects.create(nome="Almoxarifado")
-    superuser = User.objects.create_superuser(
-        matricula="root-admin", password=SENHA, setor=setor
-    )
-    client.force_login(superuser)
-    return client, setor
+def admin_logado(client, superusuario_tecnico):
+    client.force_login(superusuario_tecnico)
+    return client
 
 
-@pytest.mark.django_db
-# `config.settings.test` troca o hasher por MD5 para acelerar a suíte; aqui o
-# padrão do Django (o mesmo de development/production) é restaurado para
-# provar que o formulário grava com o hasher nativo real.
-@override_settings(PASSWORD_HASHERS=global_settings.PASSWORD_HASHERS)
-def test_criacao_via_admin_grava_senha_com_hash_nunca_crua():
-    setor = Setor.objects.create(nome="Almoxarifado")
+@pytest.fixture
+def alvo(requisitante):
+    """Uma identidade de negócio com histórico, papel e setor: o que há para consultar."""
+    return requisitante
 
-    form = ContaCriacaoForm(
-        data={
-            "matricula": "adm-001",
-            "setor": setor.pk,
-            "password1": SENHA,
-            "password2": SENHA,
-            "is_active": True,
-        }
-    )
-    assert form.is_valid(), form.errors
 
-    usuario = form.save()
-
-    assert usuario.password != SENHA, "senha crua nunca pode ser persistida"
-    assert usuario.check_password(SENHA), "a senha definida precisa autenticar"
-    assert usuario.password.startswith("pbkdf2_"), (
-        "deve usar o hasher nativo do Django, nunca criptografia própria"
+def _foto():
+    return (
+        list(Setor.objects.order_by("pk").values()),
+        list(User.objects.order_by("pk").values()),
+        list(PapelUsuario.objects.order_by("pk").values()),
+        list(EventoOrganizacional.objects.order_by("pk").values()),
     )
 
 
-@pytest.mark.django_db
-def test_criacao_via_admin_concede_apenas_o_papel_minimo(admin_logado):
-    """Regressão: `ModelAdmin.save_form` sempre chama `form.save(commit=False)`,
-    então a concessão de `ROLE-REQUESTER` precisa sobreviver ao fluxo real do
-    Admin (POST na view de adição) — não só a uma chamada direta a
-    `form.save()`, que passava mesmo quando a conta criada pela view real
-    ficava sem nenhum papel (`FR-016a`)."""
-    client, setor = admin_logado
+def _pk_de(modelo, alvo):
+    return {
+        "user": alvo.pk,
+        "setor": alvo.setor_id,
+        "papelusuario": alvo.papeis.first().pk,
+        "eventoorganizacional": EventoOrganizacional.objects.filter(usuario=alvo).first().pk,
+    }[modelo]
 
-    resp = client.post(
-        reverse("admin:contas_user_add"),
-        data=_payload_inline_vazio(
-            matricula="adm-002",
-            setor=setor.pk,
-            is_staff=False,
-            is_superuser=False,
-        ),
+
+@pytest.mark.parametrize("modelo", MODELOS)
+def test_superusuario_tecnico_consulta_lista_e_ficha(admin_logado, alvo, modelo):
+    lista = admin_logado.get(reverse(f"admin:contas_{modelo}_changelist"))
+    ficha = admin_logado.get(reverse(f"admin:contas_{modelo}_change", args=[_pk_de(modelo, alvo)]))
+
+    assert lista.status_code == 200
+    assert ficha.status_code == 200
+
+
+def test_lista_de_usuarios_mostra_nome_e_a_de_setores_mostra_a_designacao(admin_logado, alvo):
+    usuarios = admin_logado.get(reverse("admin:contas_user_changelist")).content.decode()
+    setores = admin_logado.get(reverse("admin:contas_setor_changelist")).content.decode()
+
+    assert alvo.matricula in usuarios and alvo.nome in usuarios
+    assert "Almoxarifado Central" in setores
+    assert "almoxarifado" in setores.lower() and "ativado em" in setores.lower()
+
+
+def test_ficha_do_usuario_nunca_exibe_o_hash_da_senha(admin_logado, alvo):
+    ficha = admin_logado.get(reverse("admin:contas_user_change", args=[alvo.pk]))
+
+    assert alvo.password not in ficha.content.decode()
+    assert "pbkdf2" not in ficha.content.decode() and "md5$" not in ficha.content.decode()
+
+
+@pytest.mark.parametrize("modelo", MODELOS)
+def test_admin_nao_oferece_adicionar_alterar_nem_excluir(admin_logado, alvo, modelo):
+    antes = _foto()
+    pk = _pk_de(modelo, alvo)
+
+    adicionar_get = admin_logado.get(reverse(f"admin:contas_{modelo}_add"))
+    adicionar_post = admin_logado.post(reverse(f"admin:contas_{modelo}_add"), data={"nome": "x"})
+    alterar_post = admin_logado.post(
+        reverse(f"admin:contas_{modelo}_change", args=[pk]), data={"nome": "alterado"}
     )
-    if resp.status_code == 200:
-        pytest.fail(f"form inválido: {resp.context['adminform'].form.errors}")
-    assert resp.status_code == 302
-
-    usuario = User.objects.get(matricula="adm-002")
-
-    # `FR-016a`: a criação administrativa é o segundo caminho suportado de
-    # criação de identidade de negócio, e também concede o papel mínimo —
-    # explicitamente, como linha persistida.
-    assert list(usuario.papeis.values_list("papel", flat=True)) == ["ROLE-REQUESTER"]
-
-
-@pytest.mark.django_db
-def test_criacao_via_admin_de_superusuario_nao_concede_nenhum_papel(admin_logado):
-    """A conta técnica de superusuário do Django não é identidade de negócio
-    e não deve receber `ROLE-REQUESTER` nem nenhum outro papel, também
-    quando criada pelo Admin — o mesmo padrão já seguido por
-    `UserManager.create_superuser` para o outro caminho de criação suportado
-    (`permissions-matrix.md`, regra 8; `FR-016a`)."""
-    client, setor = admin_logado
-
-    payload = _payload_inline_vazio(
-        matricula="adm-007",
-        setor=setor.pk,
-        is_staff=True,
-        is_superuser=True,
-    )
-    payload.update(
-        {
-            "papeis-TOTAL_FORMS": "1",
-            "papeis-0-papel": "ROLE-SYSTEM-ADMIN",
-            "papeis-0-id": "",
-        }
+    excluir_get = admin_logado.get(reverse(f"admin:contas_{modelo}_delete", args=[pk]))
+    excluir_post = admin_logado.post(
+        reverse(f"admin:contas_{modelo}_delete", args=[pk]), data={"post": "yes"}
     )
 
-    resp = client.post(
-        reverse("admin:contas_user_add"),
-        data=payload,
-    )
-    if resp.status_code == 200:
-        pytest.fail(f"form inválido: {resp.context['adminform'].form.errors}")
-    assert resp.status_code == 302
-
-    usuario = User.objects.get(matricula="adm-007")
-
-    assert list(usuario.papeis.values_list("papel", flat=True)) == []
+    for resposta in (adicionar_get, adicionar_post, alterar_post, excluir_get, excluir_post):
+        assert resposta.status_code == 403
+    assert _foto() == antes, "nenhuma escrita, nem por POST direto"
 
 
-@pytest.mark.django_db
-def test_criacao_via_admin_nao_duplica_papel_ja_concedido_no_inline(admin_logado):
-    """Um administrador pode conceder `ROLE-REQUESTER` explicitamente pela
-    linha do inline `PapelUsuarioInline` ao criar a conta — a concessão
-    automática precisa apenas confirmar a linha já existente
-    (`get_or_create`), nunca duplicá-la e violar
-    `papelusuario_unico_usuario_papel`."""
-    client, setor = admin_logado
+@pytest.mark.parametrize("modelo", MODELOS)
+def test_acao_em_lote_de_exclusao_nao_existe_e_nao_exclui(admin_logado, alvo, modelo):
+    antes = _foto()
+    pk = _pk_de(modelo, alvo)
 
-    payload = _payload_inline_vazio(matricula="adm-005", setor=setor.pk)
-    payload.update(
-        {
-            "papeis-TOTAL_FORMS": "1",
-            "papeis-0-papel": "ROLE-REQUESTER",
-            "papeis-0-id": "",
-        }
-    )
-    resp = client.post(reverse("admin:contas_user_add"), data=payload)
-    assert resp.status_code == 302
-
-    usuario = User.objects.get(matricula="adm-005")
-    assert list(usuario.papeis.values_list("papel", flat=True)) == ["ROLE-REQUESTER"]
-
-
-@pytest.mark.django_db
-def test_alteracao_via_admin_nao_remove_papel_minimo_de_identidade_ativa(admin_logado):
-    """O inline recusa a remoção de ROLE-REQUESTER antes de persistir."""
-    client, setor = admin_logado
-
-    usuario = User.objects.create_user(matricula="adm-006", password=SENHA, setor=setor)
-    atribuicao = PapelUsuario.objects.get(usuario=usuario, papel="ROLE-REQUESTER")
-
-    resp = client.post(
-        reverse("admin:contas_user_change", args=[usuario.pk]),
-        data={
-            "matricula": "adm-006",
-            "setor": setor.pk,
-            "is_active": True,
-            "papeis-TOTAL_FORMS": "1",
-            "papeis-INITIAL_FORMS": "1",
-            "papeis-MIN_NUM_FORMS": "0",
-            "papeis-MAX_NUM_FORMS": "1000",
-            "papeis-0-id": atribuicao.pk,
-            "papeis-0-papel": "ROLE-REQUESTER",
-            "papeis-0-DELETE": "on",
-        },
-    )
-    assert resp.status_code == 200
-
-    usuario.refresh_from_db()
-    assert list(usuario.papeis.values_list("papel", flat=True)) == ["ROLE-REQUESTER"]
-
-
-@pytest.mark.django_db
-def test_admin_oculta_inline_de_papeis_apenas_para_superusuario_tecnico(admin_logado):
-    client, setor = admin_logado
-    superusuario = User.objects.get(matricula="root-admin")
-    identidade = User.objects.create_user(matricula="adm-008", password=SENHA, setor=setor)
-
-    resposta_superusuario = client.get(
-        reverse("admin:contas_user_change", args=[superusuario.pk])
-    )
-    resposta_identidade = client.get(reverse("admin:contas_user_change", args=[identidade.pk]))
-
-    assert b"id_papeis-TOTAL_FORMS" not in resposta_superusuario.content
-    assert b"id_papeis-TOTAL_FORMS" in resposta_identidade.content
-
-
-@pytest.mark.django_db
-def test_criacao_via_admin_exige_setor():
-    form = ContaCriacaoForm(
-        data={
-            "matricula": "adm-003",
-            "password1": SENHA,
-            "password2": SENHA,
-            "is_active": True,
-        }
+    resposta = admin_logado.post(
+        reverse(f"admin:contas_{modelo}_changelist"),
+        data={"action": "delete_selected", "_selected_action": [pk], "post": "yes"},
     )
 
-    assert form.is_valid() is False, "INV-ORG-001: usuário sem setor não pode ser criado"
-    assert "setor" in form.errors
+    assert resposta.status_code in (200, 302)
+    assert _foto() == antes
 
 
-@pytest.mark.django_db
-def test_form_de_alteracao_nao_expoe_senha_editavel_em_texto():
-    setor = Setor.objects.create(nome="Almoxarifado")
-    usuario = User.objects.create_user(matricula="adm-004", password=SENHA, setor=setor)
-    hash_original = usuario.password
+def test_troca_de_senha_pelo_admin_nao_esta_disponivel(admin_logado, alvo):
+    """O Admin não é caminho de credencial: a rota de troca de senha do `UserAdmin` nativo
+    não existe, e um POST direto ao endereço antigo não altera a credencial."""
+    antes = alvo.password
 
-    form = ContaAlteracaoForm(instance=usuario)
+    with pytest.raises(NoReverseMatch):
+        reverse("admin:auth_user_password_change", args=[alvo.pk])
+    admin_logado.post(
+        f"/admin/contas/user/{alvo.pk}/password/",
+        data={"password1": "outra-senha-bem-forte-456", "password2": "outra-senha-bem-forte-456"},
+        follow=True,
+    )
 
-    # `ReadOnlyPasswordHashField` nativo: mostra o hash, nunca um input de texto
-    # que permita gravar senha crua ao salvar.
-    assert form.fields["password"].disabled is True
-    assert form.initial.get("password") == hash_original
+    alvo.refresh_from_db()
+    assert alvo.password == antes
+
+
+@pytest.mark.parametrize("modelo", [User, Setor, PapelUsuario, EventoOrganizacional])
+def test_todo_model_organizacional_esta_registrado_somente_leitura(modelo):
+    ma = admin.site._registry[modelo]
+
+    assert ma.has_add_permission(None) is False
+    assert ma.has_change_permission(None) is False
+    assert ma.has_delete_permission(None) is False
+
+
+def test_conta_tecnica_continua_sem_papeis_apos_consultar_o_admin(
+    admin_logado, superusuario_tecnico
+):
+    admin_logado.get(reverse("admin:contas_user_change", args=[superusuario_tecnico.pk]))
+
+    assert not PapelUsuario.objects.filter(usuario=superusuario_tecnico).exists()

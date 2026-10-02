@@ -1,0 +1,28 @@
+{% comment %}
+Ação que o servidor já sabe que seria recusada (DESIGN.md → Buttons, Destrutivo): a tela explica
+e oferece só o retorno, sem botão de confirmação. Contexto: `impedimento` (`OperacaoRecusada`:
+`motivo`, `caminho` e, para o setor com membros, `membros` — cada um com ficha), `destino_impedimento`
+(`{"rotulo", "url"}` ou `None`: onde resolver) e, por parâmetro, `titulo` (a frase que diz que a ação
+não está disponível), `href` e `rotulo_voltar` (o retorno). A decisão continua sendo da operação: o
+POST segue recusado.
+
+Composição: alerta de atenção (`.alert-warning`: nada falhou, a ação só não está disponível) com o
+título em semibold, o motivo, os membros que o causam e o caminho; o link do caminho é o destino
+que resolve o impedimento. Em seguida, só o retorno.
+{% endcomment %}
+<div class="alert alert-warning impediment" data-impedimento="{{ impedimento.codigo|default:'' }}">
+  <p class="impediment-title">{{ titulo }}</p>
+  <p>{{ impedimento.motivo }}</p>
+  {% if impedimento.membros %}
+  <ul class="impediment-members" aria-label="Membros ativos que impedem">
+    {% for membro in impedimento.membros %}
+    <li><a href="{% url 'usuario' pk=membro.pk %}" class="text-link">{{ membro.nome }}</a> (<span class="table-cell-code">{{ membro.matricula }}</span>)</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if impedimento.caminho %}<p>{{ impedimento.caminho }}</p>{% endif %}
+  {% if destino_impedimento %}<p class="impediment-destino"><a href="{{ destino_impedimento.url }}" class="text-link">{{ destino_impedimento.rotulo }}</a></p>{% endif %}
+</div>
+<div class="form-actions">
+  <a href="{{ href }}" class="btn btn-secondary">{{ rotulo_voltar }}</a>
+</div>

@@ -18,7 +18,7 @@ português correto e acionável (ver `research.md`, R3).
 import pytest
 from django.urls import reverse
 
-from contas.models import Papel, PapelUsuario
+from contas.models import Papel
 
 
 def _erro_do_formulario(response):
@@ -204,7 +204,7 @@ def test_usuario_com_papel_unico_tem_exatamente_esse_papel_sem_heranca(
 
 @pytest.mark.django_db
 def test_usuario_com_multiplos_papeis_simultaneos_expoe_todos_sem_conceder_outros(
-    client, usuario_ativo, senha_valida
+    client, criar_usuario_com_papeis, senha_valida
 ):
     # Cenário real: chefe do almoxarifado acumula três papéis explícitos
     # simultaneamente (spec.md, User Story 3, Acceptance Scenario 2).
@@ -213,8 +213,7 @@ def test_usuario_com_multiplos_papeis_simultaneos_expoe_todos_sem_conceder_outro
         Papel.CHEFE_SETOR,
         Papel.CHEFE_ALMOXARIFADO,
     }
-    for papel in papeis_extras:
-        PapelUsuario.objects.create(usuario=usuario_ativo, papel=papel)
+    usuario_ativo = criar_usuario_com_papeis(*papeis_extras, matricula="0001234")
 
     # A identidade de negócio já nasceu com a concessão mínima (`FR-016a`).
     papeis_atribuidos = papeis_extras | {Papel.REQUISITANTE}

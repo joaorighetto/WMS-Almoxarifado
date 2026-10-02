@@ -59,7 +59,7 @@ isso, o implementador **para e reporta** ao coordenador.
 - [x] T001 (coordenador) Confirmar com o dono do produto a criação da branch da feature antes de
   qualquer código (a spec e o plano estão em `main`, sem commit; nenhuma troca de branch sem pedido
   explícito)
-- [ ] T002 [P] Em `config/settings/base.py`: acrescentar o logger `contas.organizacao` (INFO) em
+- [x] T002 [P] Em `config/settings/base.py`: acrescentar o logger `contas.organizacao` (INFO) em
   `LOGGING`, no formato de `estoque.entradas`; configurar
   `UserAttributeSimilarityValidator` com `"OPTIONS": {"user_attributes": ("matricula", "nome")}`
   (research R12), mantendo os outros três validadores
@@ -71,12 +71,12 @@ isso, o implementador **para e reporta** ao coordenador.
 **⚠️ CRITICAL**: nenhuma story começa antes desta fase. Ao fim dela, a suíte inteira volta a passar
 com a organização criada pela API de provisionamento.
 
-- [ ] T003 (coordenador) Acionar o `test-engineer` com `plan.md` → "Testes", `research.md` R19,
+- [x] T003 (coordenador) Acionar o `test-engineer` com `plan.md` → "Testes", `research.md` R19,
   `data-model.md`, os três contratos, `docs/domain/permissions-matrix.md` e
   `docs/domain/invariants-matrix.md`, para revisar e completar os cenários críticos antes da
   implementação. Prioridade: `INV-ORG-002`, `INV-ORG-004`, `INV-ORG-005`, `INV-ORG-006`,
   `INV-AUTH-001` e a regressão integral de FR-016a e FR-019 a FR-023 da 002
-- [ ] T004 [P] (test-engineer) Reescrever `tests/test_contas_models.py` para o modelo novo: cada
+- [x] T004 [P] (test-engineer) Reescrever `tests/test_contas_models.py` para o modelo novo: cada
   constraint de `data-model.md` com `IntegrityError` — `setor_nome_unico_normalizado`
   (`UNIQUE (lower(trim(nome)))`), `setor_nome_nao_vazio` (`CHECK trim(nome) <> ''`),
   `setor_um_unico_almoxarifado` (`UNIQUE (almoxarifado) WHERE almoxarifado`),
@@ -90,7 +90,7 @@ com a organização criada pela API de provisionamento.
   esses campos levantam `ValidationError`; continuam funcionando `create_superuser`,
   `save(update_fields=["last_login"])` e `save(update_fields=["password"])` (rehash do login).
   Preserva: `INV-ORG-001`, `INV-ORG-004`
-- [ ] T005 [P] (test-engineer) Escrever `tests/test_contas_banco.py` com
+- [x] T005 [P] (test-engineer) Escrever `tests/test_contas_banco.py` com
   `django_db(transaction=True)` e SQL direto (`connection.cursor()`), sem passar pelas operações:
   no commit, o trigger adiado recusa setor ativo sem chefe ativo, setor ativo com dois chefes
   ativos, `ROLE-WAREHOUSE-STAFF`/`ROLE-WAREHOUSE-HEAD` em usuário fora do Almoxarifado, usuário
@@ -103,7 +103,7 @@ com a organização criada pela API de provisionamento.
   de `last_login` não espera por uma operação de organização em andamento (com o lock tomado em
   outra conexão, o login conclui). Preserva: `INV-ORG-002`, `INV-ORG-004`, `INV-ORG-005`,
   `INV-ORG-006`
-- [ ] T006 [P] (test-engineer) Reescrever `tests/test_contas_organizacao.py` e
+- [x] T006 [P] (test-engineer) Reescrever `tests/test_contas_organizacao.py` e
   `tests/test_contas_revisao_integridade.py` sobre `contas.organizacao.validar_organizacao` e a API
   de provisionamento (T011), mantendo cada caso hoje coberto de FR-016a e FR-019 a FR-023 da 002:
   setor nasce inativo; ativação exige exatamente um chefe ativo; chefe de outro setor não habilita;
@@ -112,7 +112,7 @@ com a organização criada pela API de provisionamento.
   (desativar o chefe, transferir o chefe, remover o papel do chefe, segundo chefe) ficam marcados
   com o nome da operação e são completados nas stories US3, US4 e US5. Preserva: `INV-ORG-001` a
   `INV-ORG-003`
-- [ ] T007 [P] (test-engineer) Escrever `tests/test_contas_provisionamento.py`: a API de
+- [x] T007 [P] (test-engineer) Escrever `tests/test_contas_provisionamento.py`: a API de
   provisionamento cria setor (com e sem designação de Almoxarifado) e usuários com papéis, valida o
   estado final e registra eventos com `autor` nulo; recusa um segundo Almoxarifado; o comando
   `provisionar_organizacao --setor-almoxarifado NOME --matricula M --nome N` em banco vazio cria o
@@ -123,7 +123,7 @@ com a organização criada pela API de provisionamento.
   produção simuladas, `provisionar_usuario(..., senha=...)` é recusado sem gravar nada (FR-031).
   Aplica: D-23.
   Preserva: `INV-ORG-004`, `INV-ORG-006`
-- [ ] T008 Alterar `contas/models.py` conforme `data-model.md`:
+- [x] T008 Alterar `contas/models.py` conforme `data-model.md`:
   - `User`: `nome = CharField(max_length=150)` ("obrigatório; gravado sem espaços nas pontas;
     `CHECK nome <> ''`"); `nome_busca = CharField(max_length=150)` (`normalizar_para_busca(nome)`,
     gravado junto com `nome`); `senha_provisoria_em = DateTimeField(null=True, blank=True)`;
@@ -143,7 +143,7 @@ com a organização criada pela API de provisionamento.
     ligado só por `contas.organizacao`).
   Manter `chefes_ativos()` como consulta. Aplica: research R3, R4, R13. Preserva: `INV-ORG-001`,
   `INV-ORG-003`, `INV-ORG-004`
-- [ ] T009 Implementar em `contas/apps.py` um handler `post_migrate` (`sender=self`, idempotente:
+- [x] T009 Implementar em `contas/apps.py` um handler `post_migrate` (`sender=self`, idempotente:
   `CREATE OR REPLACE FUNCTION`, `DROP TRIGGER IF EXISTS`, nomes de tabela por `_meta.db_table`), no
   molde de `estoque/apps.py`: trigger `BEFORE UPDATE` em `Setor` que recusa mudar `almoxarifado` e
   mudar `ativado_em` já preenchido; trigger `BEFORE UPDATE OR DELETE` em `EventoOrganizacional` que
@@ -154,7 +154,7 @@ com a organização criada pela API de provisionamento.
   "Verificação de estado final" de `data-model.md` nos setores e usuários tocados. Comentar o SQL
   como futura `RunSQL` (Constitution XIII). Aplica: research R5. Preserva: `INV-ORG-002`,
   `INV-ORG-004`, `INV-ORG-005`, `INV-ORG-006`, FR-016a (002)
-- [ ] T010 Criar `contas/organizacao.py` com a base comum (research R1–R3, R18;
+- [x] T010 Criar `contas/organizacao.py` com a base comum (research R1–R3, R18;
   `contracts/operacoes-organizacionais.md`): `CHAVE_LOCK_ORGANIZACAO` (constante própria, distinta
   das chaves de importação); exceções `OperacaoRecusada(motivo, caminho=None)`,
   `OperacaoJaExecutada(evento)` e `PreviaDesatualizada(previa)`; um context manager interno de
@@ -163,7 +163,7 @@ com a organização criada pela API de provisionamento.
   `OperacaoRecusada` com a regra violada; `_registrar_evento(...)`; `_papeis(usuario)`;
   `_administradores_ativos()`; logger `contas.organizacao` sem senha nem `dados`. Nenhum import de
   model de outro app (FR-051). Preserva: `INV-ORG-001` a `INV-ORG-006`
-- [ ] T011 Implementar em `contas/organizacao.py` a API de provisionamento técnico, autor nulo
+- [x] T011 Implementar em `contas/organizacao.py` a API de provisionamento técnico, autor nulo
   (research R15): `provisionar_setor(nome, *, almoxarifado=False, ativo=False)`,
   `provisionar_usuario(matricula, nome, setor, papeis, *, senha=None, is_active=True)` — sem `senha`,
   gera provisória por `contas.credenciais.gerar_senha_provisoria` (criar `contas/credenciais.py` só
@@ -174,11 +174,11 @@ com a organização criada pela API de provisionamento.
   nem `config.settings.test`), grava definitiva e registra `SENHA_DEFINIDA` —, e `provisionar_ativacao(setor)`. Todas validam o estado final e registram os
   eventos de `data-model.md`. Recusam segundo Almoxarifado. Aplica: D-23, FR-050. Preserva:
   `INV-ORG-004` a `INV-ORG-006`, FR-016a (002)
-- [ ] T012 Criar `contas/management/commands/provisionar_organizacao.py` (`--setor-almoxarifado`,
+- [x] T012 Criar `contas/management/commands/provisionar_organizacao.py` (`--setor-almoxarifado`,
   `--matricula`, `--nome`): recusa se existir qualquer `Setor` ou identidade de negócio; numa
   transação, pela API de T011, cria o Almoxarifado, a conta com os cinco papéis e ativa o setor;
   imprime a senha provisória uma única vez. Faz T007 passar
-- [ ] T013 Reescrever as fábricas de `tests/conftest.py` sobre a API de provisionamento (T011):
+- [x] T013 Reescrever as fábricas de `tests/conftest.py` sobre a API de provisionamento (T011):
   `setor` vira o setor designado como Almoxarifado ("Almoxarifado Central", inativo);
   `criar_usuario` passa `nome` (padrão derivado da matrícula) e `senha=SENHA_VALIDA`;
   `criar_usuario_com_papeis` concede os papéis pela mesma API; `chefe_setor` continua em
@@ -187,18 +187,18 @@ com a organização criada pela API de provisionamento.
   `test_contas_auth.py`, `test_contas_login_simulado.py`, `test_contas_logout.py`,
   `test_contas_protected_access.py`) criações diretas de `User`, `Setor` ou `PapelUsuario` e
   trocá-las pelas fábricas, sem mudar o que cada teste verifica
-- [ ] T014 [P] Alterar `contas/dev_seed/dados.py` (nome fictício por conta, setor `almox` como
+- [x] T014 [P] Alterar `contas/dev_seed/dados.py` (nome fictício por conta, setor `almox` como
   Almoxarifado) e `contas/management/commands/seed_dev.py` (organização pela API de T011, com
   `senha=SEED_DEV_PASSWORD`; `almox` com `almoxarifado=True`; ativação pela API; conta técnica
   `admin` por `create_superuser`); atualizar `tests/test_seed_dev.py` para conferir o Almoxarifado
   designado e `validar_organizacao` sem recusa sobre todo o banco
-- [ ] T015 [P] Tornar somente leitura em `contas/admin.py` `UserAdmin`, `SetorAdmin` e
+- [x] T015 [P] Tornar somente leitura em `contas/admin.py` `UserAdmin`, `SetorAdmin` e
   `PapelUsuarioAdmin` (`has_add_permission`, `has_change_permission`, `has_delete_permission` →
   `False`; listas com `nome`, `almoxarifado`, `ativado_em`) e registrar `EventoOrganizacional` só
   para consulta; remover `ContaCriacaoForm`, `ContaAlteracaoForm` e o inline editável; reescrever
   `tests/test_contas_admin.py` para provar que o superusuário técnico consulta e não adiciona, não
   altera e não exclui (POST direto incluído). Aplica: research R6
-- [ ] T016 (coordenador) `make resetdb` e `make test`: a suíte inteira verde, incluindo T004–T007,
+- [x] T016 (coordenador) `make resetdb` e `make test`: a suíte inteira verde, incluindo T004–T007,
   T014 e T015. Checkpoint da fase
 
 **Checkpoint**: modelo, banco, barreira, validação final, provisionamento e fixtures prontos.
@@ -215,7 +215,7 @@ definir e acessar normalmente (spec, US1).
 
 ### Tests for User Story 1
 
-- [ ] T017 [P] [US1] (test-engineer) Escrever `tests/test_contas_operacoes_usuario.py` (parte de
+- [x] T017 [P] [US1] (test-engineer) Escrever `tests/test_contas_operacoes_usuario.py` (parte de
   cadastro): `cadastrar_usuario` cria conta ativa com `ROLE-REQUESTER` e os adicionais, `nome`
   sem espaços nas pontas, `nome_busca`, `senha_provisoria_em`, eventos `USUARIO_CADASTRADO` (com a
   chave) e `SENHA_PROVISORIA_GERADA` sem senha; cada recusa da linha `cadastrar_usuario` de
@@ -225,7 +225,7 @@ definir e acessar normalmente (spec, US1).
   sem chefe é designação, e no Almoxarifado inclui os três papéis; mesma `chave_confirmacao` →
   `OperacaoJaExecutada` sem nova conta. Aplica: `PERM-USER-MANAGE`. Preserva: `INV-ORG-001`,
   `INV-ORG-002`, `INV-ORG-005`, `INV-ORG-006`, FR-016a (002)
-- [ ] T018 [P] [US1] (test-engineer) Escrever `tests/test_contas_credenciais.py` (parte de US1):
+- [x] T018 [P] [US1] (test-engineer) Escrever `tests/test_contas_credenciais.py` (parte de US1):
   a senha gerada satisfaz os validadores de R12, tem 12 caracteres do alfabeto e ao menos uma
   letra e um dígito; login com provisória válida autentica; com provisória vencida (relógio por
   `monkeypatch` de `timezone.now`, 7 dias) é recusado com exatamente a mesma mensagem de senha
@@ -237,7 +237,7 @@ definir e acessar normalmente (spec, US1).
   demais e redireciona ao destino do marcador `_retorno_pos_login_destino` (proibido → Home pelo
   `RetornoPosLoginMiddleware`) ou à Home sem marcador (FR-034); nenhuma senha aparece em log
   (`caplog`), sessão ou evento. Preserva: `INV-AUTH-001`; FR-003, FR-010, FR-011 da 002
-- [ ] T019 [P] [US1] (test-engineer) Escrever `tests/test_contas_views_organizacao.py` (parte de
+- [x] T019 [P] [US1] (test-engineer) Escrever `tests/test_contas_views_organizacao.py` (parte de
   US1): GET do formulário traz `chave_confirmacao`; POST válido → 200 com a senha e
   `Cache-Control: no-store`, nunca redirect; repetir o POST → aviso "operação já executada" e 302
   para a ficha, sem senha; recusa → 200 com motivo e caminho e dados preservados; a ficha mostra
@@ -249,35 +249,35 @@ definir e acessar normalmente (spec, US1).
 
 ### Implementation for User Story 1
 
-- [ ] T020 [US1] Implementar `cadastrar_usuario(autor, *, matricula, nome, setor_id,
+- [x] T020 [US1] Implementar `cadastrar_usuario(autor, *, matricula, nome, setor_id,
   papeis_adicionais, chave_confirmacao)` em `contas/organizacao.py` conforme
   `contracts/operacoes-organizacionais.md` (recusas, efeitos, eventos), reusando a criação interna
   de T011. Aplica: `PERM-USER-MANAGE`. Preserva: `INV-ORG-001`, `INV-ORG-002`, `INV-ORG-005`,
   `INV-ORG-006`, FR-016a (002)
-- [ ] T021 [US1] Criar `contas/backends.py` com `WMSModelBackend(ModelBackend)` cujo
+- [x] T021 [US1] Criar `contas/backends.py` com `WMSModelBackend(ModelBackend)` cujo
   `user_can_authenticate` também recusa provisória vencida (`VALIDADE_SENHA_PROVISORIA`) e apontar
   `AUTHENTICATION_BACKENDS` para ele em `config/settings/base.py`; conferir que
   `contas/login_simulado.py` (que usa `AUTHENTICATION_BACKENDS[0]`) continua funcionando. Aplica:
   research R9
-- [ ] T022 [US1] Implementar `CredencialProvisoriaMiddleware` em `contas/middleware.py` conforme
+- [x] T022 [US1] Implementar `CredencialProvisoriaMiddleware` em `contas/middleware.py` conforme
   `contracts/credenciais.md` (vencida → logout + login; `definir_senha`, `logout` e estáticos
   seguem; resto → 302 ou `HX-Redirect` para `definir_senha`) e registrá-lo em `MIDDLEWARE` de
   `config/settings/base.py` logo depois de `AuthenticationMiddleware`. Aplica: research R10.
   Preserva: `INV-AUTH-001`
-- [ ] T023 [US1] Implementar em `contas/credenciais.py` `definir_propria_senha(request, usuario,
+- [x] T023 [US1] Implementar em `contas/credenciais.py` `definir_propria_senha(request, usuario,
   nova)` (sob a operação de organização: política de R12, diferente da provisória, `set_password`,
   `senha_provisoria_em = None`, `update_session_auth_hash`, evento `SENHA_DEFINIDA` com
   `motivo=definicao_obrigatoria`); `DefinirSenhaForm` em `contas/forms.py`; `SenhaView` em
   `contas/views.py` com rota `definir_senha` (`/senha/`) em `contas/urls.py`, por ora só no estado
   provisório, redirecionando ao destino do marcador ou à Home (FR-034). Aplica: D-27, FR-039
-- [ ] T024 [US1] Implementar `UsuarioCadastroForm` (matrícula, nome, setor, papéis adicionais
+- [x] T024 [US1] Implementar `UsuarioCadastroForm` (matrícula, nome, setor, papéis adicionais
   exceto `ROLE-REQUESTER`, `chave_confirmacao` oculta) em `contas/forms.py`; `UsuarioNovoView`
   (POST de sucesso renderiza 200 com a senha e `never_cache`/`no-store`; `OperacaoJaExecutada` →
   mensagem e 302; `OperacaoRecusada` → alerta com motivo e caminho) e `UsuarioFichaView` (dados,
   papéis, situação da credencial calculada na view; conta técnica → 404) em `contas/views.py`, com
   `ExigePapelMixin(Papel.ADMINISTRADOR_SISTEMA)`; rotas `usuario_novo` e `usuario` em
   `contas/urls.py` sob `/organizacao/`. Aplica: `PERM-USER-MANAGE`
-- [ ] T025 [US1] (frontend-implementer) Criar `contas/templates/contas/organizacao/usuario_form.html`,
+- [x] T025 [US1] (frontend-implementer) Criar `contas/templates/contas/organizacao/usuario_form.html`,
   `usuario_senha_entregue.html` (bloco de exibição única da senha, legível para ditar ou copiar, com
   o aviso de que não será mostrada de novo e o link para a ficha), `usuario.html` (ficha básica:
   Page Header, dados, papéis em Badge, situação da credencial; seção de histórico e ações ficam para
@@ -297,12 +297,12 @@ conferir dados e histórico (spec, US2).
 
 ### Tests for User Story 2
 
-- [ ] T026 [P] [US2] (test-engineer) Escrever `tests/test_contas_historico.py`: a ficha do usuário
+- [x] T026 [P] [US2] (test-engineer) Escrever `tests/test_contas_historico.py`: a ficha do usuário
   lista os eventos em que ele é `usuario` ou `usuario_relacionado`, e a do setor os em que ele é
   `setor` ou `setor_relacionado`, em ordem cronológica, com autor, momento e anterior/novo; operação
   sem efeito não gera evento; nenhum evento contém senha; evento com `autor` nulo aparece na ficha
   como "Provisionamento técnico"; histórico paginado. Aplica: FR-040 a FR-042
-- [ ] T027 [P] [US2] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com a lista de
+- [x] T027 [P] [US2] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com a lista de
   usuários (busca por parte do nome com e sem acento, matrícula exata, filtros combinados de setor,
   situação e papel, paginação de 50, conta técnica nunca listada, número fixo de queries, resposta
   com `HX-Request` só com a região de resultados, estado vazio) e a lista e ficha de setores (chefe,
@@ -313,15 +313,15 @@ conferir dados e histórico (spec, US2).
 
 ### Implementation for User Story 2
 
-- [ ] T028 [US2] Implementar `FiltroUsuariosForm` e `FiltroSetoresForm` (GET) em `contas/forms.py`;
+- [x] T028 [US2] Implementar `FiltroUsuariosForm` e `FiltroSetoresForm` (GET) em `contas/forms.py`;
   `UsuariosView` (paginação 50, `nome_busca` por `normalizar_para_busca`, matrícula exata,
   `prefetch_related` dos papéis, `is_superuser=False`), `SetoresView` (chefe e membros ativos
   anotados numa consulta; a contagem de membros exclui contas técnicas) e `SetorFichaView` em `contas/views.py`; histórico paginado nas duas
   fichas; rotas `usuarios`, `setores` e `setor` em `contas/urls.py`. Aplica: `PERM-USER-MANAGE`,
   `PERM-SECTOR-MANAGE`, FR-043 a FR-045
-- [ ] T029 [US2] Em `contas/views.py`, `HomeView` ganha `pode_administrar_organizacao`
+- [x] T029 [US2] Em `contas/views.py`, `HomeView` ganha `pode_administrar_organizacao`
   (`ADMINISTRADOR_SISTEMA`, do mesmo `set` de papéis) e o item ORG sai de `CAPACIDADES_PLANEJADAS`
-- [ ] T030 [US2] (frontend-implementer) Criar `contas/templates/contas/organizacao/usuarios.html`,
+- [x] T030 [US2] (frontend-implementer) Criar `contas/templates/contas/organizacao/usuarios.html`,
   `_resultados_usuarios.html`, `setores.html`, `setor.html` e `_historico.html` (Filter Bar, Table,
   Badge de situação e papéis, Pagination, Empty State, Retorno contextual); incluir `_historico.html`
   em `usuario.html`; acrescentar os atalhos Usuários e Setores em
@@ -339,7 +339,7 @@ conferir dados e histórico (spec, US2).
 
 ### Tests for User Story 3
 
-- [ ] T031 [P] [US3] (test-engineer) Completar `tests/test_contas_operacoes_usuario.py` com
+- [x] T031 [P] [US3] (test-engineer) Completar `tests/test_contas_operacoes_usuario.py` com
   `editar_usuario` (nome, correção de matrícula com anterior no evento, unicidade, sem efeito sem
   evento), `alterar_papeis` (cada recusa da tabela, incluindo o último administrador ativo e o
   `ROLE-WAREHOUSE-STAFF` do chefe do Almoxarifado; concessões permitidas por setor) e
@@ -352,7 +352,7 @@ conferir dados e histórico (spec, US2).
   (`transaction=True`, `threading.Barrier`), alteração de papéis concorrente com transferência do
   mesmo usuário → resultado equivalente a uma ordem serial. Aplica: `PERM-USER-MANAGE`. Preserva:
   `INV-ORG-001`, `INV-ORG-002`, `INV-ORG-005`, `INV-ORG-006`, FR-016a (002)
-- [ ] T032 [P] [US3] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com edição,
+- [x] T032 [P] [US3] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com edição,
   papéis (papéis não editáveis aparecem bloqueados com o motivo) e transferência em duas etapas
   (prévia lista os papéis a remover; confirmação executa; prévia desatualizada mostra nova
   prévia); e `tests/test_contas_permissoes_organizacao.py` com `usuario_editar`, `usuario_papeis` e
@@ -360,15 +360,15 @@ conferir dados e histórico (spec, US2).
 
 ### Implementation for User Story 3
 
-- [ ] T033 [US3] Implementar `editar_usuario`, `alterar_papeis`, `previa_transferencia` e
+- [x] T033 [US3] Implementar `editar_usuario`, `alterar_papeis`, `previa_transferencia` e
   `transferir_usuario` em `contas/organizacao.py` conforme o contrato. Aplica: `PERM-USER-MANAGE`.
   Preserva: `INV-ORG-001`, `INV-ORG-002`, `INV-ORG-005`, `INV-ORG-006`
-- [ ] T034 [US3] Implementar `UsuarioEdicaoForm`, `UsuarioPapeisForm` (sete papéis; a view informa
+- [x] T034 [US3] Implementar `UsuarioEdicaoForm`, `UsuarioPapeisForm` (sete papéis; a view informa
   quais estão bloqueados e por quê) e `TransferenciaForm` em `contas/forms.py`; views e rotas
   `usuario_editar`, `usuario_papeis` e `usuario_transferir` (POST sem `confirmar` → prévia; com
   `confirmar=1` e `papeis_removidos_previstos` → executa) em `contas/views.py` e `contas/urls.py`;
   ações correspondentes na ficha. Aplica: FR-049
-- [ ] T035 [US3] (frontend-implementer) Criar `usuario_editar.html`, `usuario_papeis.html` (lista de
+- [x] T035 [US3] (frontend-implementer) Criar `usuario_editar.html`, `usuario_papeis.html` (lista de
   papéis com estado bloqueado e motivo) e `usuario_transferir.html` (escolha e prévia com
   Confirmação) em `contas/templates/contas/organizacao/`; ações na ficha
 
@@ -385,7 +385,7 @@ movendo a chefia de estoque no Almoxarifado.
 
 ### Tests for User Story 4
 
-- [ ] T036 [P] [US4] (test-engineer) Escrever `tests/test_contas_operacoes_chefia.py`:
+- [x] T036 [P] [US4] (test-engineer) Escrever `tests/test_contas_operacoes_chefia.py`:
   `designar_chefia` (setor inativo sem chefe; no Almoxarifado concede `ROLE-SECTOR-HEAD`,
   `ROLE-WAREHOUSE-HEAD` e, se faltar, `ROLE-WAREHOUSE-STAFF`; recusas do contrato); `retirar_chefia`
   (setor inativo; no Almoxarifado retira junto `ROLE-WAREHOUSE-HEAD`); `substituir_chefia` (cenários
@@ -399,20 +399,20 @@ movendo a chefia de estoque no Almoxarifado.
   `chefes_ativos(setor)` devolve só o novo chefe na consulta seguinte (FR-052). Aplica:
   `PERM-SECTOR-MANAGE`.
   Preserva: `INV-ORG-002`, `INV-ORG-003`, `INV-ORG-006`
-- [ ] T037 [P] [US4] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com a tela de
+- [x] T037 [P] [US4] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com a tela de
   chefia nos três estados (designar, retirar, substituir com prévia e `chefe_esperado`) e
   `tests/test_contas_permissoes_organizacao.py` com `setor_chefia`
 
 ### Implementation for User Story 4
 
-- [ ] T038 [US4] Implementar `designar_chefia`, `retirar_chefia`, `previa_substituicao` e
+- [x] T038 [US4] Implementar `designar_chefia`, `retirar_chefia`, `previa_substituicao` e
   `substituir_chefia` em `contas/organizacao.py` conforme o contrato, validando o estado final só
   depois de mover os papéis (research R3). Aplica: `PERM-SECTOR-MANAGE`. Preserva: `INV-ORG-002`,
   `INV-ORG-003`, `INV-ORG-006`
-- [ ] T039 [US4] Implementar `ChefiaForm` em `contas/forms.py` e a view `setor_chefia` em
+- [x] T039 [US4] Implementar `ChefiaForm` em `contas/forms.py` e a view `setor_chefia` em
   `contas/views.py`/`contas/urls.py` (estado do setor decide entre designar, retirar e substituir;
   candidatos só membros ativos do setor; substituição em duas etapas com `chefe_esperado_id`)
-- [ ] T040 [US4] (frontend-implementer) Criar
+- [x] T040 [US4] (frontend-implementer) Criar
   `contas/templates/contas/organizacao/setor_chefia.html` (três variantes; prévia da substituição
   mostrando o que cada pessoa ganha e perde, inclusive os papéis de almoxarifado) e a ação na ficha
   do setor
@@ -429,7 +429,7 @@ movendo a chefia de estoque no Almoxarifado.
 
 ### Tests for User Story 5
 
-- [ ] T041 [P] [US5] (test-engineer) Escrever `tests/test_contas_operacoes_situacao.py`:
+- [x] T041 [P] [US5] (test-engineer) Escrever `tests/test_contas_operacoes_situacao.py`:
   `desativar_usuario` (papéis preservados; justificativa no evento; sessão aberta recusada na
   interação seguinte; recusas de chefe de setor ativo, própria conta e último administrador; nunca
   bloqueada por registros de outro app); `reativar_usuario` (`previa_reativacao` lista os papéis
@@ -440,7 +440,7 @@ movendo a chefia de estoque no Almoxarifado.
   desativação concorrente dos dois últimos administradores → um recusado, e ativação de setor ×
   desativação do chefe → nunca ambas. Aplica: `PERM-USER-MANAGE`. Preserva: `INV-AUTH-001`,
   `INV-ORG-002`, `INV-ORG-005`, `INV-ORG-006`, FR-016a (002)
-- [ ] T042 [P] [US5] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com
+- [x] T042 [P] [US5] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com
   desativação (confirmação, justificativa) e reativação (revisão com `ROLE-REQUESTER` travado; papel
   recusado indicado na linha) e `tests/test_contas_permissoes_organizacao.py` com
   `usuario_desativar` e `usuario_reativar`; no mesmo arquivo, depois de retirar
@@ -449,13 +449,13 @@ movendo a chefia de estoque no Almoxarifado.
 
 ### Implementation for User Story 5
 
-- [ ] T043 [US5] Implementar `desativar_usuario`, `previa_reativacao` e `reativar_usuario` em
+- [x] T043 [US5] Implementar `desativar_usuario`, `previa_reativacao` e `reativar_usuario` em
   `contas/organizacao.py` conforme o contrato, com as proteções de D-15 sob o lock. Aplica:
   `PERM-USER-MANAGE`. Preserva: `INV-AUTH-001`, `INV-ORG-002`, `INV-ORG-005`, `INV-ORG-006`
-- [ ] T044 [US5] Implementar `DesativacaoForm` e `ReativacaoForm` em `contas/forms.py`; views e rotas
+- [x] T044 [US5] Implementar `DesativacaoForm` e `ReativacaoForm` em `contas/forms.py`; views e rotas
   `usuario_desativar` e `usuario_reativar` em `contas/views.py`/`contas/urls.py`; flags de ação na
   ficha calculadas na view
-- [ ] T045 [US5] (frontend-implementer) Criar `usuario_desativar.html` e `usuario_reativar.html`
+- [x] T045 [US5] (frontend-implementer) Criar `usuario_desativar.html` e `usuario_reativar.html`
   (revisão de papéis com o motivo de recusa na linha) em `contas/templates/contas/organizacao/`;
   ações e Badge de situação na ficha
 
@@ -471,7 +471,7 @@ movendo a chefia de estoque no Almoxarifado.
 
 ### Tests for User Story 6
 
-- [ ] T046 [P] [US6] (test-engineer) Completar `tests/test_contas_credenciais.py`:
+- [x] T046 [P] [US6] (test-engineer) Completar `tests/test_contas_credenciais.py`:
   `redefinir_senha` gera provisória, preenche `senha_provisoria_em`, registra
   `SENHA_PROVISORIA_GERADA` com a chave e sem senha, encerra todas as sessões da conta (inclusive a
   do administrador que redefine a própria) e exige definição no próximo acesso; a mesma chave não
@@ -479,19 +479,19 @@ movendo a chefia de estoque no Almoxarifado.
   sessão em uso mantida; evento `SENHA_DEFINIDA` com `motivo=troca_voluntaria`) e errada (nada
   muda); política de R12 nos dois casos; vencimento depois de redefinição (cenário 5 da US6).
   Preserva: `INV-AUTH-001`
-- [ ] T047 [P] [US6] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com a
+- [x] T047 [P] [US6] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com a
   redefinição (200 `no-store` com a senha; repetição sem senha) e `/senha/` no estado definitivo; e
   `tests/test_contas_permissoes_organizacao.py` com `usuario_redefinir_senha` e `definir_senha`
   (todo autenticado ativo; anônimo e inativo → login)
 
 ### Implementation for User Story 6
 
-- [ ] T048 [US6] Implementar `redefinir_senha` em `contas/organizacao.py` e `trocar_propria_senha` em
+- [x] T048 [US6] Implementar `redefinir_senha` em `contas/organizacao.py` e `trocar_propria_senha` em
   `contas/credenciais.py` conforme `contracts/credenciais.md`; `TrocarSenhaForm` em
   `contas/forms.py`; `SenhaView` passa a atender o estado definitivo (senha atual, nova,
   confirmação; sucesso → Home com "Senha alterada."); view e rota `usuario_redefinir_senha`.
   Aplica: `PERM-USER-MANAGE`, D-27
-- [ ] T049 [US6] (frontend-implementer) Criar `usuario_redefinir_senha.html` (confirmação; o sucesso
+- [x] T049 [US6] (frontend-implementer) Criar `usuario_redefinir_senha.html` (confirmação; o sucesso
   reusa o bloco de senha entregue de T025), completar `senha.html` com o estado de troca voluntária
   e acrescentar o link "Senha" ao lado de "Sair" em `contas/templates/contas/_barra_trabalho.html`
 
@@ -507,7 +507,7 @@ movendo a chefia de estoque no Almoxarifado.
 
 ### Tests for User Story 7
 
-- [ ] T050 [P] [US7] (test-engineer) Escrever `tests/test_contas_operacoes_setor.py`: `criar_setor`
+- [x] T050 [P] [US7] (test-engineer) Escrever `tests/test_contas_operacoes_setor.py`: `criar_setor`
   (nasce inativo, `almoxarifado=False`, nome sem espaços nas pontas; " eta " recusado diante de
   "ETA"); `renomear_setor` (mesmo setor pode mudar só a caixa; Almoxarifado renomeado mantém a
   designação); `ativar_setor` (preenche `ativado_em` só na primeira vez; recusas de FR-020 da 002 e
@@ -518,22 +518,22 @@ movendo a chefia de estoque no Almoxarifado.
   `tests/test_contas_concorrencia.py`, duas criações ou renomeações concorrentes para o mesmo nome →
   uma recusada. Aplica: `PERM-SECTOR-MANAGE`. Preserva: `INV-ORG-002`, `INV-ORG-004`,
   `INV-ORG-006`
-- [ ] T051 [P] [US7] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com
+- [x] T051 [P] [US7] (test-engineer) Completar `tests/test_contas_views_organizacao.py` com
   criação, edição, ativação e desativação de setor (o Almoxarifado ativado não oferece
   desativação) e `tests/test_contas_permissoes_organizacao.py` com `setor_novo`, `setor_editar`,
   `setor_ativar` e `setor_desativar`
 
 ### Implementation for User Story 7
 
-- [ ] T052 [US7] Implementar `criar_setor`, `renomear_setor`, `ativar_setor` e `desativar_setor` em
+- [x] T052 [US7] Implementar `criar_setor`, `renomear_setor`, `ativar_setor` e `desativar_setor` em
   `contas/organizacao.py` conforme o contrato; a contagem de membros ativos de `desativar_setor`
   considera só `is_superuser=False` (FR-028); em `desativar_setor`, deixar um único ponto
   comentado onde outro recorte acrescentará sua condição (FR-053, research R17), sem mecanismo
   genérico. Aplica: `PERM-SECTOR-MANAGE`. Preserva: `INV-ORG-002`, `INV-ORG-004`, `INV-ORG-006`
-- [ ] T053 [US7] Implementar `SetorForm` em `contas/forms.py`; views e rotas `setor_novo`,
+- [x] T053 [US7] Implementar `SetorForm` em `contas/forms.py`; views e rotas `setor_novo`,
   `setor_editar`, `setor_ativar` e `setor_desativar` em `contas/views.py`/`contas/urls.py`; flags de
   ação na ficha do setor
-- [ ] T054 [US7] (frontend-implementer) Criar `setor_form.html`, `setor_ativar.html` e
+- [x] T054 [US7] (frontend-implementer) Criar `setor_form.html`, `setor_ativar.html` e
   `setor_desativar.html` em `contas/templates/contas/organizacao/`; ações na ficha e na lista de
   setores
 
@@ -543,26 +543,26 @@ movendo a chefia de estoque no Almoxarifado.
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T055 [P] (test-engineer) Acrescentar a `tests/test_contas_operacoes_usuario.py` a verificação
+- [x] T055 [P] (test-engineer) Acrescentar a `tests/test_contas_operacoes_usuario.py` a verificação
   de FR-051: `contas.organizacao` e `contas.credenciais` não importam models de `catalogo`,
   `fornecedores` nem `estoque`, e nenhuma operação altera linhas dessas tabelas (contagem antes e
   depois sobre um banco com entradas registradas)
-- [ ] T056 [P] Atualizar `docs/development/seed-dev.md` e `docs/development/login-simulado.md`
+- [x] T056 [P] Atualizar `docs/development/seed-dev.md` e `docs/development/login-simulado.md`
   (nomes fictícios, Almoxarifado designado, Admin somente leitura, comando
   `provisionar_organizacao`, `/senha/`)
-- [ ] T057 (coordenador) `make resetdb`, `make seed_dev`, `make verify` e o roteiro de
+- [x] T057 (coordenador) `make resetdb`, `make seed_dev`, `make verify` e o roteiro de
   `quickstart.md` (§1 a §4)
-- [ ] T058 (coordenador) Acionar o `code-reviewer` com o escopo da feature, `spec.md`, `plan.md`, os
+- [x] T058 (coordenador) Acionar o `code-reviewer` com o escopo da feature, `spec.md`, `plan.md`, os
   contratos, as matrizes canônicas, FR-016a e FR-019 a FR-023 da 002 e o "Não inclui" da linha ORG
   do roadmap; tratar P0/P1 pelo fluxo de findings
-- [ ] T059 (coordenador) Gate visual: `impeccable critique` nas telas de `/organizacao/` como
+- [x] T059 (coordenador) Gate visual: `impeccable critique` nas telas de `/organizacao/` como
   `administrador-sistema` e em `/senha/` nos dois estados, depois do `code-reviewer`; encaminhar ao
   `frontend-implementer` só os findings aprovados
-- [ ] T060 (coordenador) Atualizar `DESIGN.md` e `.impeccable/design.json` por `impeccable document`
+- [x] T060 (coordenador) Atualizar `DESIGN.md` e `.impeccable/design.json` por `impeccable document`
   (modo scan) com os padrões novos (bloco de exibição única da senha, lista de papéis com estado
   bloqueado, prévia de efeitos); conferir contra `static/css/components.css`,
   `contas/static/contas/css/` e os templates
-- [ ] T061 (coordenador) `/speckit-converge`; manter a anotação de ORG no `ROADMAP.md` fiel ao
+- [x] T061 (coordenador) `/speckit-converge`; manter a anotação de ORG no `ROADMAP.md` fiel ao
   estado da implementação e, depois do merge em `main`, marcar ORG como concluída
 
 ---
@@ -610,3 +610,7 @@ Task: "(test-engineer) tests/test_contas_views_organizacao.py e test_contas_perm
 4. Pipeline de segurança e permissões em cada etapa crítica: `test-engineer` → `task-implementer` →
    `frontend-implementer` → `code-reviewer`. Não considerar concluída uma etapa em que só o happy
    path passa.
+
+## Phase 11: Convergence
+
+- [x] T062 Acrescentar caminho às recusas de nome de setor repetido (`criar_setor`/`renomear_setor`) e de matrícula repetida na edição (`editar_usuario`) em `contas/organizacao.py` per FR-048 (partial)

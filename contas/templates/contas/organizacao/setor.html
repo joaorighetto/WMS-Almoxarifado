@@ -1,0 +1,152 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}{{ setor.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `setor`, `chefe` (usuário ou `None`), `membros` (ativos primeiro e
+inativos depois, sem a conta técnica, com `rotulos_dos_papeis`) e `pagina`/`eventos` (histórico).
+`prontidao` (só no setor inativo: um item por requisito de `ativar_setor` — `rotulo`, `atendido` e
+`recusa` —, e no Almoxarifado "Chefia de estoque completa"), `impedimento_ativar` e
+`impedimento_desativar` (a `OperacaoRecusada` que a operação daria hoje, ou `None`). Em `membros`,
+o papel de chefe de conta inativa vem como "Chefe de setor (inativo)".
+`setor.ativado_em` preenchido é "já esteve ativo" (FR-030). `acao_chefia` (`substituir`, `retirar`
+ou `designar`) é a ação de chefia que o estado do setor oferece. `pode_ativar` e `pode_desativar`
+são as ações de situação (o Almoxarifado ativado não oferece a desativação, FR-029); editar o nome
+é sempre oferecido.
+
+Ações em dois grupos por natureza (`.action-groups`), como na ficha do usuário: a chefia e o
+nome; a situação do setor. Todas secundárias. O vermelho é de "corta acesso ou autoridade agora"
+(DESIGN.md → Buttons, Destrutivo): só "Retirar a chefia" leva o texto em `danger`; "Desativar" o
+setor é secundário comum (não corta o acesso de ninguém; o chefe mantém a chefia). Ação impedida
+não some: `.action-notes` a explica em texto sob as ações (a de ativar remete à lista "Para
+ativar", que já traz o que falta). A marca "Almoxarifado" só aparece (título e nota) no setor que
+a tem — nunca no nome.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container">
+    {% url 'setores' as url_setores %}
+    {% include "contas/organizacao/_voltar.html" with href=url_setores rotulo="Setores" %}
+
+    {% include "interface/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">
+          {{ setor.nome }}
+          {% if setor.ativo %}
+          <span class="badge badge-success page-header-badge">Ativo</span>
+          {% else %}
+          <span class="badge badge-neutral page-header-badge">Inativo</span>
+          {% endif %}
+          {% if setor.almoxarifado %}<span class="badge badge-info page-header-badge">Almoxarifado</span>{% endif %}
+        </h1>
+      </div>
+      <div class="page-header-actions action-groups">
+        <div class="action-group">
+          <a href="{% url 'setor_chefia' pk=setor.pk %}" class="btn btn-secondary{% if acao_chefia == 'retirar' %} btn-secondary-danger{% endif %}">
+            {% if acao_chefia == "substituir" %}Substituir o chefe{% elif acao_chefia == "retirar" %}Retirar a chefia{% else %}Designar o chefe{% endif %}
+          </a>
+          <a href="{% url 'setor_editar' pk=setor.pk %}" class="btn btn-secondary">Editar nome</a>
+        </div>
+        {% if pode_ativar or pode_desativar %}
+        <div class="action-group">
+          {% if pode_ativar %}
+          <a href="{% url 'setor_ativar' pk=setor.pk %}" class="btn btn-secondary"{% if impedimento_ativar %} aria-describedby="nota-ativar"{% endif %}>Ativar</a>
+          {% endif %}
+          {% if pode_desativar %}
+          <a href="{% url 'setor_desativar' pk=setor.pk %}" class="btn btn-secondary"{% if impedimento_desativar %} aria-describedby="nota-desativar"{% endif %}>Desativar</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% if impedimento_ativar and pode_ativar or impedimento_desativar and pode_desativar %}
+      <ul class="action-notes">
+        {% if impedimento_ativar and pode_ativar %}<li id="nota-ativar"><strong>Ativar está impedido.</strong> O setor só ativa com os requisitos de “Para ativar” atendidos, abaixo.</li>{% endif %}
+        {% if impedimento_desativar and pode_desativar %}<li id="nota-desativar"><strong>Desativar está impedido.</strong> {{ impedimento_desativar.motivo }}</li>{% endif %}
+      </ul>
+      {% endif %}
+    </header>
+
+    <section class="page-section" aria-labelledby="dados-heading">
+      <h2 class="section-marker" id="dados-heading">
+        <span class="section-marker-label">Dados</span>
+      </h2>
+      <dl class="meta-grid">
+        <div>
+          <dt>Chefe</dt>
+          <dd>{% if chefe %}<a href="{% url 'usuario' pk=chefe.pk %}" class="text-link">{{ chefe.nome }}</a>{% else %}Sem chefe ativo{% endif %}</dd>
+        </div>
+        <div>
+          <dt>Primeira ativação</dt>
+          <dd>{% if setor.ativado_em %}{{ setor.ativado_em|date:"d/m/Y H:i" }}{% else %}Nunca foi ativado{% endif %}</dd>
+        </div>
+      </dl>
+    </section>
+
+    {% if prontidao %}
+    <section class="page-section" aria-labelledby="prontidao-heading">
+      <h2 class="section-marker" id="prontidao-heading">
+        <span class="section-marker-label">Para ativar</span>
+      </h2>
+      <ul class="checklist">
+        {% for item in prontidao %}
+        <li class="checklist-item" data-atendido="{{ item.atendido|yesno:'sim,nao' }}">
+          {% if item.atendido %}<span class="badge badge-success">Atendido</span>{% else %}<span class="badge badge-warning">Falta</span>{% endif %}
+          <span class="checklist-label">{{ item.rotulo }}</span>
+          {% if not item.atendido and item.recusa.caminho %}<p class="checklist-hint">{{ item.recusa.caminho }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="page-section" aria-labelledby="membros-heading">
+      <h2 class="section-marker{% if membros %} section-marker-attached{% endif %}" id="membros-heading">
+        <span class="section-marker-label">Membros ({{ membros|length }})</span>
+      </h2>
+      {% if membros %}
+      <div class="table-wrapper table-wrapper-marker-attached">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Matrícula</th>
+              <th scope="col">Nome</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Papéis</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for membro in membros %}
+            <tr>
+              <td><a href="{% url 'usuario' pk=membro.pk %}" class="text-link table-cell-code org-link-ficha"><span class="visually-hidden">Ficha de </span>{{ membro.matricula }}</a></td>
+              <td class="org-cell-nome">{{ membro.nome }}</td>
+              <td>
+                {% if membro.is_active %}<span class="badge badge-success">Ativo</span>{% else %}<span class="badge badge-neutral">Inativo</span>{% endif %}
+              </td>
+              <td>
+                <ul class="badge-list">
+                  {% for papel in membro.rotulos_dos_papeis %}<li><span class="badge badge-neutral">{{ papel }}</span></li>{% endfor %}
+                </ul>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">Nenhum membro neste setor.</p>
+        <p class="empty-state-description">
+          <a href="{% url 'usuario_novo' %}?setor={{ setor.pk }}" class="text-link">Cadastrar usuário neste setor</a>
+          · <a href="{% url 'usuarios' %}" class="text-link">Transferir alguém pela lista de usuários</a>
+        </p>
+      </div>
+      {% endif %}
+    </section>
+
+    {% include "contas/organizacao/_historico.html" %}
+  </div>
+</main>
+{% endblock %}

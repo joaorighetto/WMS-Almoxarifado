@@ -1,0 +1,86 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Setores — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `filtro` (`FiltroSetoresForm`, GET: `q`, `situacao`) e `setores`
+(queryset anotado com `chefe_pk`, `chefe_nome` e `membros_ativos` — a conta técnica não conta —
+numa única consulta). Almoxarifado é a marca de `setor.almoxarifado` (`INV-ORG-004`), nunca o
+nome do setor. Consulta pura: a autorização é da rota (`PERM-SECTOR-MANAGE`).
+
+Poucas linhas e filtros curtos: navegação comum (sem HTMX), como "Limpar" e a ordenação de
+fornecedores. "Novo setor" é a primária da tela; "Buscar" é secundário (The One Accent Rule). A
+chefia é dado da linha: setor sem chefe diz "Sem chefe" por extenso.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container">
+    {% include "interface/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Setores</h1>
+        <p class="page-header-description">Situação, chefia e membros ativos de cada setor.</p>
+      </div>
+      <div class="page-header-actions">
+        <a href="{% url 'setor_novo' %}" class="btn btn-primary">Novo setor</a>
+      </div>
+    </header>
+
+    <section class="page-section">
+      <form method="get" class="filter-bar">
+        <div class="field filter-bar-field">
+          <label for="{{ filtro.q.id_for_label }}">Nome do setor</label>
+          {{ filtro.q }}
+        </div>
+        <div class="field filter-bar-field">
+          <label for="{{ filtro.situacao.id_for_label }}">Situação</label>
+          {{ filtro.situacao }}
+        </div>
+        <div class="filter-bar-actions">
+          <button type="submit" class="btn btn-secondary">Buscar</button>
+          <a href="{% url 'setores' %}" class="btn btn-secondary">Limpar</a>
+        </div>
+      </form>
+
+      {% if setores %}
+      <div class="table-wrapper table-sticky-header">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Setor</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Chefe</th>
+              <th scope="col" class="table-cell-numeric">Membros ativos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for setor in setores %}
+            <tr>
+              <td>
+                <a href="{% url 'setor' pk=setor.pk %}" class="text-link">{{ setor.nome }}</a>
+                {% if setor.almoxarifado %}<span class="badge badge-info">Almoxarifado</span>{% endif %}
+              </td>
+              <td>
+                {% if setor.ativo %}<span class="badge badge-success">Ativo</span>{% else %}<span class="badge badge-neutral">Inativo</span>{% endif %}
+              </td>
+              <td>
+                {% if setor.chefe_pk %}<a href="{% url 'usuario' pk=setor.chefe_pk %}" class="text-link">{{ setor.chefe_nome }}</a>{% else %}<span class="text-muted">Sem chefe</span>{% endif %}
+              </td>
+              <td class="table-cell-numeric">{{ setor.membros_ativos }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">Nenhum setor encontrado.</p>
+        <p class="empty-state-description">Ajuste a busca ou o filtro e tente novamente.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

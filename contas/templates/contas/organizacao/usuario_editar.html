@@ -1,0 +1,52 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Editar {{ usuario.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `usuario`, `form` (`UsuarioEdicaoForm`: `nome` e `matricula`) e `recusa`
+(`OperacaoRecusada` ou `None`; motivo e caminho como a operação os produziu, FR-048). A matrícula
+só se corrige (erro de digitação): o valor anterior fica no histórico (FR-009).
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'usuario' pk=usuario.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=usuario.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Editar dados</h1>
+        <p class="page-header-description">
+          Corrija a matrícula só para consertar erro de digitação; a anterior fica no histórico.
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" %}
+
+    <form method="post" class="form-frame" data-processing-form data-processing-label="Salvando…">
+      {% csrf_token %}
+
+      <div class="field{% if form.nome.errors %} field-has-error{% endif %}">
+        <label for="{{ form.nome.id_for_label }}">Nome</label>
+        {{ form.nome }}
+        {% if form.nome.errors %}<p class="field-error" id="{{ form.nome.auto_id }}_error">{{ form.nome.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="field field-code{% if form.matricula.errors %} field-has-error{% endif %}">
+        <label for="{{ form.matricula.id_for_label }}">Matrícula</label>
+        {{ form.matricula }}
+        {% if form.matricula.errors %}<p class="field-error" id="{{ form.matricula.auto_id }}_error">{{ form.matricula.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Salvar</span>
+        </button>
+        <a href="{% url 'usuario' pk=usuario.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

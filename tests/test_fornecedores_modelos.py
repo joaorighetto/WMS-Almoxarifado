@@ -53,6 +53,7 @@ from fornecedores.models import (
     Fornecedor,
     MotivoRecusaFornecedor,
 )
+from tests.contas_helpers import operacao
 
 SHA256_FAKE = "0" * 64
 
@@ -397,7 +398,9 @@ def test_execucao_referenciada_por_fornecedor_nao_pode_ser_excluida(
 
 @pytest.mark.django_db
 def test_usuario_executor_referenciado_nao_pode_ser_excluido(execucao_valida, chefe_almoxarifado):
-    with pytest.raises(ProtectedError):
+    # Dentro de uma operação organizacional, para exercitar a FK `PROTECT`: fora dela a
+    # barreira de escrita da 005 recusa a exclusão de qualquer conta antes (ValidationError).
+    with operacao(), pytest.raises(ProtectedError):
         chefe_almoxarifado.delete()
 
     assert ExecucaoImportacaoFornecedores.objects.filter(pk=execucao_valida.pk).exists()

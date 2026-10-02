@@ -1,0 +1,191 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Chefia de {{ setor.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Uma só tela, três variantes decididas por `estado`:
+- `substituir` (setor ativo): escolha do novo chefe entre `candidatos` → prévia (`previa`:
+  `chefe_atual`, `novo_chefe`, `novo_ganha`, `anterior_perde`, em `Papel`) → confirmação, que
+  reenvia `novo_chefe`, `confirmar=1`, `chefe_esperado` (o chefe que a prévia mostrou, FR-017) e
+  os efeitos mostrados em `novo_ganha_previsto` e `anterior_perde_previsto` (um campo por papel);
+  se mudarem entre a prévia e a confirmação, o servidor devolve a prévia nova (FR-049);
+- `designar` (setor inativo sem chefe ativo): escolha em `candidatos` (campo `usuario`);
+- `retirar` (setor inativo com chefe): confirmação (`confirmar=1`) da retirada do `chefe`.
+Contexto comum: `setor`, `chefe` (ou `None`), `form` (`ChefiaForm`) e `recusa`
+(`OperacaoRecusada` ou `None`; motivo e caminho como a operação os produziu, FR-048).
+
+`autoridade_de_estoque` (só na prévia da substituição do Almoxarifado: `anterior`, `novo` e `texto`,
+o texto fixo da passagem da autoridade exclusiva de estoque) e, na escolha sem candidatos,
+`url_cadastrar_no_setor` e `url_usuarios`.
+
+Prévia da substituição: a frase da operação vem primeiro (a barra de confirmação é sticky e, no
+celular, cobriria o fim da página), depois uma lista de efeitos — um bloco por pessoa, em pares
+"Recebe"/"Perde" (`.effects-list`; três colunas no desktop, pares empilhados abaixo de 640px, nunca
+rolagem horizontal) —, que já traz os papéis de almoxarifado quando o setor é o Almoxarifado, porque
+eles vêm em `novo_ganha`/`anterior_perde`. Cada selo leva o sinal ("+", "−"), que é a pista não
+cromática do efeito. No Almoxarifado, `autoridade_de_estoque` vem por extenso num alerta de
+informação logo abaixo. Retirada: corta a autoridade de quem chefia, então o passo de confirmação
+leva o único preenchimento `danger` da tela (DESIGN.md → Buttons, Destrutivo). Designar e substituir
+são primárias. A prévia oferece "Escolher outra pessoa" e "Cancelar" (volta à ficha).
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'setor' pk=setor.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=setor.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">
+          {% if estado == "substituir" %}Substituir o chefe{% elif estado == "retirar" %}Retirar a chefia{% else %}Designar o chefe{% endif %}
+        </h1>
+        <p class="page-header-description">Setor {{ setor.nome }}.{% if setor.almoxarifado %} <span class="badge badge-info">Almoxarifado</span>{% endif %}</p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" with todos=True %}
+
+    {% if previa %}
+    <form method="post" data-processing-form data-processing-label="Substituindo…">
+      {% csrf_token %}
+      <input type="hidden" name="novo_chefe" value="{{ previa.novo_chefe.pk }}">
+      <input type="hidden" name="chefe_esperado" value="{{ previa.chefe_atual.pk }}">
+      {% for papel in previa.novo_ganha %}<input type="hidden" name="novo_ganha_previsto" value="{{ papel.value }}">{% endfor %}
+      {% for papel in previa.anterior_perde %}<input type="hidden" name="anterior_perde_previsto" value="{{ papel.value }}">{% endfor %}
+      <input type="hidden" name="confirmar" value="1">
+
+      <section class="page-section" aria-labelledby="previa-heading">
+        <h2 class="section-marker" id="previa-heading">
+          <span class="section-marker-label">Confirme a substituição</span>
+        </h2>
+        <p class="effects-summary">
+          {{ previa.novo_chefe.nome }} assume a chefia do setor {{ previa.setor.nome }} no lugar de {{ previa.chefe_atual.nome }}. {{ previa.chefe_atual.nome }} continua ativo no setor, com os demais papéis.
+        </p>
+        <div class="table-wrapper">
+          <ul class="effects-list">
+            <li class="effects-item">
+              <div>
+                <span class="effects-person">{{ previa.novo_chefe.nome }}</span>
+                <p class="effects-role">Assume a chefia</p>
+              </div>
+              <dl class="effects-pairs">
+                <div class="effects-pair">
+                  <dt>Recebe</dt>
+                  <dd>
+                    <ul class="badge-list">
+                      {% for papel in previa.novo_ganha %}<li><span class="badge badge-success"><span class="effects-sign" aria-hidden="true">+</span>{{ papel.label }}</span></li>{% empty %}<li class="text-muted">Nenhum papel novo.</li>{% endfor %}
+                    </ul>
+                  </dd>
+                </div>
+                <div class="effects-pair">
+                  <dt>Perde</dt>
+                  <dd class="text-muted">Nenhum</dd>
+                </div>
+              </dl>
+            </li>
+            <li class="effects-item">
+              <div>
+                <span class="effects-person">{{ previa.chefe_atual.nome }}</span>
+                <p class="effects-role">Deixa a chefia, continua ativo no setor</p>
+              </div>
+              <dl class="effects-pairs">
+                <div class="effects-pair">
+                  <dt>Recebe</dt>
+                  <dd class="text-muted">Nenhum</dd>
+                </div>
+                <div class="effects-pair">
+                  <dt>Perde</dt>
+                  <dd>
+                    <ul class="badge-list">
+                      {% for papel in previa.anterior_perde %}<li><span class="badge badge-danger"><span class="effects-sign" aria-hidden="true">&minus;</span>{{ papel.label }}</span></li>{% empty %}<li class="text-muted">Nenhum papel.</li>{% endfor %}
+                    </ul>
+                  </dd>
+                </div>
+              </dl>
+            </li>
+          </ul>
+        </div>
+        {% if autoridade_de_estoque %}
+        <div class="alert alert-info effects-note" data-autoridade-de-estoque>
+          <p><strong>Autoridade de estoque.</strong> {{ autoridade_de_estoque.texto }}</p>
+        </div>
+        {% endif %}
+      </section>
+
+      <div class="confirmation-bar">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Confirmar substituição</span>
+        </button>
+        <a href="{% url 'setor_chefia' pk=setor.pk %}" class="btn btn-secondary">Escolher outra pessoa</a>
+        <a href="{{ url_ficha }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+
+    {% elif estado == "retirar" %}
+    <form method="post" data-processing-form data-processing-label="Retirando…">
+      {% csrf_token %}
+      <input type="hidden" name="confirmar" value="1">
+
+      <section class="page-section" aria-labelledby="retirada-heading">
+        <h2 class="section-marker" id="retirada-heading">
+          <span class="section-marker-label">Chefe atual</span>
+        </h2>
+        <p class="effects-summary">
+          <span class="effects-person">{{ chefe.nome }}</span> (<span class="table-cell-code">{{ chefe.matricula }}</span>) deixa de ser chefe do setor {{ setor.nome }}{% if setor.almoxarifado %} e perde também a chefia do almoxarifado{% endif %}. O setor fica sem chefe e só pode ser ativado depois de nova designação.
+        </p>
+      </section>
+
+      <div class="confirmation-bar">
+        <button type="submit" class="btn btn-danger" data-processing-submit>
+          <span data-processing-submit-label>Retirar a chefia</span>
+        </button>
+        <a href="{% url 'setor' pk=setor.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+
+    {% else %}
+    <section class="page-section" aria-labelledby="escolha-heading">
+      <h2 class="section-marker" id="escolha-heading">
+        <span class="section-marker-label">{% if estado == "substituir" %}Chefe atual{% else %}Sem chefe{% endif %}</span>
+      </h2>
+      {% if estado == "substituir" %}
+      <p class="effects-summary">{{ chefe.nome }} ({{ chefe.matricula }}) é o chefe do setor. Escolha quem assume; {{ chefe.nome }} continua ativo no setor.</p>
+      {% else %}
+      <p class="effects-summary">O setor não tem chefe. Escolha um membro ativo; designar não ativa o setor.</p>
+      {% endif %}
+      {% if candidatos %}
+      <form method="post" class="form-frame" data-processing-form data-processing-label="Verificando…">
+        {% csrf_token %}
+        <div class="field">
+          <label for="id_candidato">{% if estado == "substituir" %}Novo chefe{% else %}Chefe{% endif %}</label>
+          <select name="{% if estado == 'substituir' %}novo_chefe{% else %}usuario{% endif %}" id="id_candidato" required>
+            <option value="">Escolha um membro do setor</option>
+            {% for candidato in candidatos %}
+            <option value="{{ candidato.pk }}">{{ candidato.nome }} ({{ candidato.matricula }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" data-processing-submit>
+            <span data-processing-submit-label>{% if estado == "substituir" %}Ver o que muda{% else %}Designar chefe{% endif %}</span>
+          </button>
+          <a href="{% url 'setor' pk=setor.pk %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+      {% else %}
+      <div class="empty-state" data-estado="vazio">
+        <p class="empty-state-title">{% if chefe %}Nenhum outro membro ativo neste setor.{% else %}Nenhum membro ativo neste setor.{% endif %}</p>
+        <p class="empty-state-description">Cadastre uma pessoa no setor ou transfira alguém para ele antes.</p>
+        <div class="form-actions">
+          <a href="{{ url_cadastrar_no_setor }}" class="btn btn-primary">Cadastrar usuário neste setor</a>
+          <a href="{{ url_usuarios }}" class="btn btn-secondary">Transferir alguém pela lista de usuários</a>
+          <a href="{% url 'setor' pk=setor.pk %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </div>
+      {% endif %}
+    </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

@@ -1,9 +1,15 @@
-from contextlib import contextmanager
+from contextvars import ContextVar
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models import Q
+from django.db.models.functions import Length, Lower, Trim
+from django.db.models.signals import pre_save
+from django.utils import timezone
+
+from config.texto import normalizar_para_busca
 
 
 class Papel(models.TextChoices):
@@ -18,6 +24,40 @@ class Papel(models.TextChoices):
     CHEFE_ALMOXARIFADO = "ROLE-WAREHOUSE-HEAD", "Chefe do almoxarifado"
     AUDITOR = "ROLE-AUDITOR", "Gestor/auditor"
     ADMINISTRADOR_SISTEMA = "ROLE-SYSTEM-ADMIN", "Administrador de sistema"
+
+
+# ---------------------------------------------------------------------------
+# Barreira de escrita (research R4 da 005)
+# ---------------------------------------------------------------------------
+#
+# Só as operações de `contas.organizacao` escrevem dados organizacionais: é
+# `contas.organizacao._operacao()` que liga este marcador (e mais ninguém).
+# Fora dele, `save()`/`delete()` e os atalhos de `QuerySet` sobre `Setor`,
+# `PapelUsuario` e os campos organizacionais de `User` levantam
+# `ValidationError` ANTES de qualquer escrita (e antes do `Collector` do
+# Django, que responderia `ProtectedError`). As regras de integridade em si
+# não moram aqui: são `validar_organizacao` (R3) e o trigger adiado (R5).
+# Caminhos que não chamam `save()`/`QuerySet` do manager padrão também passam
+# pela barreira: `Meta.base_manager_name = "objects"` faz os gerenciadores
+# reversos (`setor.user_set.add`, `usuario.papeis.add`, que atualizam por
+# `_base_manager`) usarem os QuerySets guardados abaixo, e um `pre_save` recusa
+# a carga bruta (`raw=True`) de `loaddata`/`deserialize`. O marcador vive neste
+# módulo, e não em `organizacao`, só para evitar import
+# circular.
+
+_OPERACAO_EM_CURSO = ContextVar("contas_operacao_organizacional", default=False)
+
+
+def operacao_em_curso():
+    return _OPERACAO_EM_CURSO.get()
+
+
+def _exigir_operacao(descricao):
+    if not _OPERACAO_EM_CURSO.get():
+        raise ValidationError(
+            f"{descricao} só é permitido pelas operações de contas.organizacao "
+            "(escrita organizacional protegida, FR-046)."
+        )
 
 
 def chefes_ativos(setor_id, excluir_usuario_id=None):
@@ -41,167 +81,115 @@ def chefes_ativos(setor_id, excluir_usuario_id=None):
     return consulta
 
 
-def _exigir_chefia_preservada(setor_id, excluir_usuario_id=None):
-    """Recusa a operação se ela deixaria um setor ATIVO sem chefe ativo.
-
-    Setor inativo não está sob `INV-ORG-002` — é exatamente por isso que um
-    setor nasce inativo (`FR-019`): provisionar deixa de exigir um chefe que
-    ainda não existe.
-
-    Faz `select_for_update()` na própria linha do `Setor`: é o mesmo lock que
-    `Setor.save()` adquire ao ativar um setor. Sem esse lock compartilhado, uma
-    ativação de setor e uma desativação/remoção do único chefe podem cada uma
-    ler o estado anterior da outra (setor ainda inativo; chefe ainda ativo) e
-    ambas comitar, violando `INV-ORG-002` (condição de corrida).
-    """
-    if setor_id is None:
-        return
-    setor = Setor.objects.select_for_update().filter(pk=setor_id).first()
-    if setor is None or not setor.ativo:
-        return
-    if not chefes_ativos(setor_id, excluir_usuario_id=excluir_usuario_id).exists():
-        raise ValidationError(
-            "Operação recusada: deixaria o setor ativo sem chefe ativo "
-            "(INV-ORG-002). Desative o setor ou designe outro chefe antes."
-        )
-
-
-def _exigir_chefia_nao_duplicada(setor_id, excluir_usuario_id=None):
-    """Recusa a operação se ela daria a um setor um segundo chefe ativo
-    (`FR-022`). Mantém, intencionalmente, o comportamento anterior de não
-    condicionar a checagem a `Setor.ativo` — a mesma checagem já feita antes
-    desta correção.
-
-    Faz o mesmo `select_for_update()` na linha do `Setor` que
-    `_exigir_chefia_preservada` e `Setor.save()` — todas as mutações que
-    podem afetar a chefia de um setor serializam sobre o mesmo lock.
-    """
-    if setor_id is None:
-        return
-    Setor.objects.select_for_update().filter(pk=setor_id).first()
-    if chefes_ativos(setor_id, excluir_usuario_id=excluir_usuario_id).exists():
-        raise ValidationError(
-            "Operação recusada: o setor já possui um chefe ativo (INV-ORG-002)."
-        )
-
-
 class SetorQuerySet(models.QuerySet):
-    """Impede que operações em lote contornem ``Setor.save()``."""
+    """Fecha os atalhos do ORM que não chamam ``Setor.save()``/``delete()``."""
 
     def update(self, **kwargs):
-        if "ativo" in kwargs:
-            raise ValidationError(
-                "Atualize o estado do setor por Setor.save(), que preserva INV-ORG-002."
-            )
+        _exigir_operacao("Alterar setores")
         return super().update(**kwargs)
 
     def bulk_create(self, objs, **kwargs):
-        objs = list(objs)
-        if any(obj.ativo for obj in objs):
-            raise ValidationError(
-                "Setores ativos não podem ser criados em lote; use Setor.save() "
-                "para preservar INV-ORG-002."
-            )
+        _exigir_operacao("Criar setores em lote")
         return super().bulk_create(objs, **kwargs)
 
     def bulk_update(self, objs, fields, **kwargs):
-        if "ativo" in fields:
-            raise ValidationError(
-                "Atualize o estado do setor por Setor.save(), que preserva INV-ORG-002."
-            )
+        _exigir_operacao("Alterar setores em lote")
         return super().bulk_update(objs, fields, **kwargs)
+
+    def delete(self):
+        _exigir_operacao("Excluir setores")
+        return super().delete()
 
 
 class Setor(models.Model):
     """Setor organizacional ao qual todo usuário pertence (`INV-ORG-001`).
 
-    Esta feature não oferece administração de setores como funcionalidade de
-    produto (`PERM-SECTOR-MANAGE` segue pendente), mas seu caminho de bootstrap
-    escreve em setor/usuário/papel — e por isso está sujeito a `INV-ORG-002`
-    como qualquer outro caminho de escrita (`research.md` R4, revisão 3).
+    Nasce inativo (FR-019 da 002); a ativação é uma operação deliberada de
+    `contas.organizacao`, que exige exatamente um chefe ativo (`INV-ORG-002`).
+    A designação de Almoxarifado nasce com o setor e não muda (`INV-ORG-004`,
+    trigger de banco); `ativado_em` registra a primeira ativação (FR-030).
     """
 
-    nome = models.CharField(blank=False)
-    # Nasce INATIVO (`FR-019`): criar um setor nunca produz, por si só, um setor
-    # ativo sem chefe ativo. A ativação é um passo deliberado, validado abaixo.
+    nome = models.CharField(max_length=100)
     ativo = models.BooleanField(default=False)
+    almoxarifado = models.BooleanField(default=False)
+    ativado_em = models.DateTimeField(null=True, blank=True)
 
     objects = SetorQuerySet.as_manager()
+
+    class Meta:
+        # `_base_manager` é o que os gerenciadores reversos (`setor.user_set.add`)
+        # usam para atualizar; apontá-lo para `objects` mantém a barreira de escrita.
+        base_manager_name = "objects"
+        constraints = [
+            models.UniqueConstraint(Lower(Trim("nome")), name="setor_nome_unico_normalizado"),
+            models.CheckConstraint(
+                condition=models.lookups.GreaterThan(Length(Trim("nome")), 0),
+                name="setor_nome_nao_vazio",
+            ),
+            models.UniqueConstraint(
+                fields=["almoxarifado"],
+                condition=Q(almoxarifado=True),
+                name="setor_um_unico_almoxarifado",
+            ),
+            models.CheckConstraint(
+                condition=Q(ativo=False) | Q(ativado_em__isnull=False),
+                name="setor_ativo_tem_ativacao",
+            ),
+            models.CheckConstraint(
+                condition=Q(almoxarifado=False) | Q(ativado_em__isnull=True) | Q(ativo=True),
+                name="setor_almoxarifado_nao_desativado",
+            ),
+        ]
 
     def __str__(self):
         return self.nome
 
     def save(self, *args, **kwargs):
-        # `FR-020`: ativar exige exatamente um chefe ativo do próprio setor.
-        # Verificado a cada save de setor ativo, não só na transição, para que
-        # nenhum caminho de escrita (Admin, ORM, shell) escape da invariante.
-        if self.ativo:
-            with transaction.atomic():
-                if self.pk is None:
-                    raise ValidationError(
-                        "Um setor não pode ser criado já ativo: não há como ter um chefe "
-                        "ativo antes de o setor existir (INV-ORG-002). Crie o setor, "
-                        "designe o chefe e só então ative."
-                    )
-                # Mesmo lock usado por `_exigir_chefia_preservada`/
-                # `_exigir_chefia_nao_duplicada`: serializa esta ativação com
-                # qualquer mutação concorrente de usuário/papel que poderia
-                # alterar a contagem de chefes ativos deste setor, prevenindo
-                # a condição de corrida entre ativar o setor e desativar (ou
-                # remover) o seu único chefe.
-                Setor.objects.select_for_update().filter(pk=self.pk).first()
-                total = chefes_ativos(self.pk).count()
-                if total != 1:
-                    raise ValidationError(
-                        f"Setor ativo exige exatamente um chefe ativo do próprio setor "
-                        f"(INV-ORG-002); encontrados: {total}."
-                    )
-                return super().save(*args, **kwargs)
+        _exigir_operacao("Gravar um setor")
+        self.nome = (self.nome or "").strip()
         return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        _exigir_operacao("Excluir um setor")
+        return super().delete(*args, **kwargs)
 
 
 class UserQuerySet(models.QuerySet):
     """Fecha os atalhos do ORM que não chamam ``User.save()``/``delete()``."""
 
-    CAMPOS_ORGANIZACIONAIS = {"is_active", "is_superuser", "setor", "setor_id"}
-
-    def create(self, **kwargs):
-        raise ValidationError(
-            "Crie contas por create_user() ou create_superuser(), que preservam "
-            "a atribuição atômica dos papéis de negócio."
-        )
+    CAMPOS_ORGANIZACIONAIS = frozenset(
+        {
+            "matricula",
+            "nome",
+            "nome_busca",
+            "setor",
+            "setor_id",
+            "is_active",
+            "is_superuser",
+            "senha_provisoria_em",
+        }
+    )
 
     def bulk_create(self, objs, **kwargs):
-        raise ValidationError(
-            "Contas não podem ser criadas em lote; use create_user() ou create_superuser()."
-        )
+        objs = list(objs)
+        if any(not obj.is_superuser for obj in objs):
+            _exigir_operacao("Criar contas em lote")
+        return super().bulk_create(objs, **kwargs)
 
     def update(self, **kwargs):
         if self.CAMPOS_ORGANIZACIONAIS.intersection(kwargs):
-            raise ValidationError(
-                "Atualize is_active, is_superuser ou setor por User.save(), que preserva "
-                "as invariantes de identidade e INV-ORG-002."
-            )
+            _exigir_operacao("Alterar dados organizacionais de contas")
         return super().update(**kwargs)
 
     def bulk_update(self, objs, fields, **kwargs):
         if self.CAMPOS_ORGANIZACIONAIS.intersection(fields):
-            raise ValidationError(
-                "Atualize is_active, is_superuser ou setor por User.save(), que preserva "
-                "as invariantes de identidade e INV-ORG-002."
-            )
+            _exigir_operacao("Alterar dados organizacionais de contas em lote")
         return super().bulk_update(objs, fields, **kwargs)
 
     def delete(self):
-        with transaction.atomic():
-            total = 0
-            detalhes = {}
-            for usuario in self.order_by("pk"):
-                removidos, por_modelo = usuario.delete()
-                total += removidos
-                for modelo, quantidade in por_modelo.items():
-                    detalhes[modelo] = detalhes.get(modelo, 0) + quantidade
-            return total, detalhes
+        _exigir_operacao("Excluir contas")
+        return super().delete()
 
 
 class UserManager(BaseUserManager.from_queryset(UserQuerySet)):
@@ -237,11 +225,13 @@ class UserManager(BaseUserManager.from_queryset(UserQuerySet)):
         return usuario
 
     def create_user(self, matricula, password=None, setor=None, **extra_fields):
-        """Cria uma identidade de NEGÓCIO.
+        """Cria uma identidade de NEGÓCIO, com `ROLE-REQUESTER` explícito e
+        persistido (`FR-016a`; `permissions-matrix.md`, Notas de composição).
 
-        Recebe `ROLE-REQUESTER` como concessão explícita e persistida
-        (`FR-016a`; `permissions-matrix.md`, Notas de composição) — nunca
-        inferida em tempo de consulta a partir de `is_active`.
+        Só funciona dentro de uma operação de `contas.organizacao` (barreira de
+        escrita, research R4 da 005): a criação de identidade de negócio é
+        feita pelas operações e pelo provisionamento, que validam o estado
+        final e registram o evento.
         """
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
@@ -254,10 +244,13 @@ class UserManager(BaseUserManager.from_queryset(UserQuerySet)):
 
         Não é identidade de negócio: não recebe `ROLE-REQUESTER` nem nenhum
         outro `ROLE-*` (`permissions-matrix.md`, regras 7-8). Sem papel de
-        negócio, não possui nenhuma capability de domínio.
+        negócio, não possui nenhuma capability de domínio. Fica fora da
+        barreira de escrita. Sem `nome`, usa a matrícula (a coluna é
+        obrigatória, FR-006).
         """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("nome", matricula)
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superusuário precisa ter is_staff=True.")
@@ -274,14 +267,27 @@ class User(AbstractBaseUser, PermissionsMixin):
     opaco de negócio) — nunca por nome de exibição ou e-mail."""
 
     matricula = models.CharField(max_length=32, unique=True, verbose_name="matrícula")
+    nome = models.CharField(max_length=150)
+    # `normalizar_para_busca(nome)`, gravado junto com `nome` (research R14).
+    nome_busca = models.CharField(max_length=150, editable=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     setor = models.ForeignKey("contas.Setor", on_delete=models.PROTECT)
+    # Preenchido ao gerar senha provisória; nulo depois que o usuário define a própria
+    # (research R8 a R10).
+    senha_provisoria_em = models.DateTimeField(null=True, blank=True)
 
     objects = UserManager()
 
     USERNAME_FIELD = "matricula"
-    REQUIRED_FIELDS = ["setor"]
+    REQUIRED_FIELDS = ["setor", "nome"]
+
+    class Meta:
+        base_manager_name = "objects"  # ver `Setor.Meta`
+        constraints = [
+            models.CheckConstraint(condition=~Q(nome=""), name="user_nome_nao_vazio"),
+            models.CheckConstraint(condition=~Q(matricula=""), name="user_matricula_nao_vazia"),
+        ]
 
     def __str__(self):
         return self.matricula
@@ -292,165 +298,95 @@ class User(AbstractBaseUser, PermissionsMixin):
         (`docs/domain/permissions-matrix.md`, regra 3)."""
         return self.papeis.filter(papel__in=codigos).exists()
 
-    def save(self, *args, **kwargs):
-        if self.pk is None:
-            return super().save(*args, **kwargs)
+    # Campos comparados com o banco num `save()` completo fora de operação.
+    CAMPOS_COMPARADOS = (
+        "matricula",
+        "nome",
+        "setor_id",
+        "is_active",
+        "is_superuser",
+        "senha_provisoria_em",
+    )
 
-        update_fields = kwargs.get("update_fields")
+    def _exigir_escrita_organizacional_permitida(self, update_fields):
+        """Barreira de `save()` fora de operação (research R4).
+
+        Livres: a conta técnica (criação e atualização, por `create_superuser`
+        e `changepassword`) e qualquer `save()` que não altere campo
+        organizacional (`last_login`, rehash de senha). Recusados: criar
+        identidade de negócio e alterar `matricula`, `nome`, `setor`,
+        `is_active`, `is_superuser` ou `senha_provisoria_em`.
+        """
+        if _OPERACAO_EM_CURSO.get():
+            return
+        if self.pk is None:
+            if not self.is_superuser:
+                _exigir_operacao("Criar uma identidade de negócio")
+            return
+
         if update_fields is not None and not UserQuerySet.CAMPOS_ORGANIZACIONAIS.intersection(
             update_fields
         ):
-            return super().save(*args, **kwargs)
+            return
 
-        # `FR-021`/`FR-023`: desativar o chefe ou transferi-lo de setor não pode
-        # deixar um setor ativo sem chefe. Avaliado dentro da transação, sobre o
-        # estado anterior lido do banco.
-        with transaction.atomic():
-            # Todas as escritas de identidade/papel seguem Usuário → Setor →
-            # PapelUsuario. Travar o usuário primeiro estabiliza seu setor e
-            # serializa reativação/promoção com concessão/remoção de papéis.
-            # Setor.save() só trava o setor; nunca adquire lock de usuário.
-            anterior = (
-                User.objects.select_for_update()
-                .filter(pk=self.pk)
-                .values("setor_id", "is_active")
-                .first()
-            )
-            if anterior is None:
-                return super().save(*args, **kwargs)
+        atual = User.objects.filter(pk=self.pk).values(*self.CAMPOS_COMPARADOS).first()
+        if atual is None:
+            if not self.is_superuser:
+                _exigir_operacao("Criar uma identidade de negócio")
+            return
+        if self.is_superuser and atual["is_superuser"]:
+            return
+        if update_fields is None and all(
+            atual[campo] == getattr(self, campo) for campo in self.CAMPOS_COMPARADOS
+        ):
+            # Cópia idêntica ao banco no que é organizacional: nada a proteger.
+            return
+        _exigir_operacao("Alterar dados organizacionais de uma conta")
 
-            setores_para_travar = sorted(
-                {sid for sid in (anterior["setor_id"], self.setor_id) if sid is not None}
-            )
-            for setor_id in setores_para_travar:
-                Setor.objects.select_for_update().filter(pk=setor_id).first()
-
-            if self.is_superuser and self.papeis.exists():
-                raise ValidationError(
-                    "Superusuário técnico não pode possuir papéis de negócio ROLE-*."
-                )
-
-            if (
-                self.is_active
-                and not self.is_superuser
-                and not self.tem_papel(Papel.REQUISITANTE)
-            ):
-                raise ValidationError(
-                    "Identidade de negócio ativa precisa possuir ROLE-REQUESTER."
-                )
-
-            saiu_do_setor = anterior["setor_id"] != self.setor_id
-            foi_desativado = anterior["is_active"] and not self.is_active
-
-            if (saiu_do_setor or foi_desativado) and self.tem_papel(Papel.CHEFE_SETOR):
-                _exigir_chefia_preservada(anterior["setor_id"], excluir_usuario_id=self.pk)
-
-            # `FR-022`: entrar (ou voltar a ficar ativo) como chefe num setor ativo
-            # que já tem chefe criaria um segundo chefe.
-            entrou_no_setor = saiu_do_setor
-            foi_reativado = not anterior["is_active"] and self.is_active
-            if (entrou_no_setor or foi_reativado) and self.is_active:
-                if self.tem_papel(Papel.CHEFE_SETOR):
-                    _exigir_chefia_nao_duplicada(self.setor_id, excluir_usuario_id=self.pk)
-
-            return super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        self._exigir_escrita_organizacional_permitida(update_fields)
+        if update_fields is None or "nome" in update_fields:
+            self.nome = (self.nome or "").strip()
+            self.nome_busca = normalizar_para_busca(self.nome)
+            if update_fields is not None:
+                kwargs["update_fields"] = {*update_fields, "nome_busca"}
+        return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        with transaction.atomic():
-            atual = User.objects.select_for_update().filter(pk=self.pk).first()
-            if atual is not None and atual.is_active and atual.tem_papel(Papel.CHEFE_SETOR):
-                _exigir_chefia_preservada(atual.setor_id, excluir_usuario_id=atual.pk)
-            return super().delete(*args, **kwargs)
+        _exigir_operacao("Excluir uma conta")
+        return super().delete(*args, **kwargs)
 
 
 class PapelUsuarioQuerySet(models.QuerySet):
-    """Mantém as invariantes de papéis também nas operações em lote."""
+    """Fecha os atalhos do ORM que não chamam ``PapelUsuario.save()``/``delete()``."""
 
     def update(self, **kwargs):
-        if {"papel", "usuario", "usuario_id"}.intersection(kwargs):
-            raise ValidationError(
-                "Altere papel ou usuário por PapelUsuario.save(), que preserva as invariantes."
-            )
+        _exigir_operacao("Alterar papéis")
         return super().update(**kwargs)
 
     def bulk_create(self, objs, **kwargs):
-        objs = list(objs)
-        if objs:
-            raise ValidationError(
-                "Papéis não podem ser criados em lote; use PapelUsuario.save() para preservar "
-                "as invariantes."
-            )
+        _exigir_operacao("Criar papéis em lote")
         return super().bulk_create(objs, **kwargs)
 
     def bulk_update(self, objs, fields, **kwargs):
-        if {"papel", "usuario", "usuario_id"}.intersection(fields):
-            raise ValidationError(
-                "Altere papel ou usuário por PapelUsuario.save(), que preserva as invariantes."
-            )
+        _exigir_operacao("Alterar papéis em lote")
         return super().bulk_update(objs, fields, **kwargs)
 
     def delete(self):
-        with transaction.atomic():
-            total = 0
-            detalhes = {}
-            for atribuicao in self.order_by("pk"):
-                removidos, por_modelo = atribuicao.delete()
-                total += removidos
-                for modelo, quantidade in por_modelo.items():
-                    detalhes[modelo] = detalhes.get(modelo, 0) + quantidade
-            return total, detalhes
-
-
-class _TitularAlteradoDuranteBloqueio(Exception):
-    """Sinal interno para liberar os locks e reler uma atribuição reapontada."""
-
-
-_MAX_TENTATIVAS_BLOQUEIO_ATRIBUICAO = 3
-
-
-@contextmanager
-def _bloquear_atribuicao(atribuicao_id, usuario_destino_id=None):
-    """Lê o estado atual na ordem Usuário → Setor → PapelUsuario.
-
-    O titular precisa ser descoberto antes de travar a atribuição. Se outra
-    transação o trocar nessa janela, desfazemos o savepoint para liberar os
-    locks antes de repetir, inclusive dentro da transação externa do Admin.
-    Evita validar um usuário diferente daquele efetivamente alterado/excluído.
-    """
-    for _ in range(_MAX_TENTATIVAS_BLOQUEIO_ATRIBUICAO):
-        try:
-            with transaction.atomic():
-                titular_id = (
-                    PapelUsuario.objects.filter(pk=atribuicao_id)
-                    .values_list("usuario_id", flat=True)
-                    .first()
-                )
-                ids = {pk for pk in (titular_id, usuario_destino_id) if pk is not None}
-                usuarios = {
-                    usuario.pk: usuario
-                    for usuario in (
-                        User.objects.select_for_update().filter(pk__in=ids).order_by("pk")
-                    )
-                }
-                setores = {usuario.setor_id for usuario in usuarios.values()}
-                list(Setor.objects.select_for_update().filter(pk__in=setores).order_by("pk"))
-                atual = PapelUsuario.objects.select_for_update().filter(pk=atribuicao_id).first()
-                if atual is not None and atual.usuario_id not in usuarios:
-                    raise _TitularAlteradoDuranteBloqueio
-                yield atual, usuarios
-                return
-        except _TitularAlteradoDuranteBloqueio:
-            continue
-
-    raise ValidationError(
-        "O titular mudou durante o bloqueio; a operação deve ser repetida."
-    )
+        _exigir_operacao("Remover papéis")
+        return super().delete()
 
 
 class PapelUsuario(models.Model):
     """Atribuição explícita de um papel a um usuário — a única forma de um
     usuário "ter" um papel. Cada linha é uma concessão independente, sem
-    herança implícita entre papéis (`docs/domain/permissions-matrix.md`, regra 3)."""
+    herança implícita entre papéis (`docs/domain/permissions-matrix.md`, regra 3).
+
+    Sem regra própria em `save()`/`delete()`: a barreira de escrita (R4) só
+    admite escrita dentro das operações organizacionais, que validam o estado
+    final (R3); o trigger adiado (R5) é a última defesa.
+    """
 
     usuario = models.ForeignKey("contas.User", related_name="papeis", on_delete=models.CASCADE)
     papel = models.CharField(max_length=32, choices=Papel.choices)
@@ -458,6 +394,7 @@ class PapelUsuario(models.Model):
     objects = PapelUsuarioQuerySet.as_manager()
 
     class Meta:
+        base_manager_name = "objects"  # ver `Setor.Meta`
         constraints = [
             models.UniqueConstraint(
                 fields=["usuario", "papel"],
@@ -468,93 +405,100 @@ class PapelUsuario(models.Model):
     def __str__(self):
         return f"{self.usuario_id} — {self.papel}"
 
-    @staticmethod
-    def exigir_papel_removivel(usuario_id, papel):
-        usuario = User.objects.filter(pk=usuario_id).values("is_active", "is_superuser").first()
-        if (
-            papel == Papel.REQUISITANTE
-            and usuario is not None
-            and usuario["is_active"]
-            and not usuario["is_superuser"]
-        ):
-            raise ValidationError(
-                "ROLE-REQUESTER não pode ser removido de uma identidade de negócio ativa."
-            )
-
-    def _exigir_usuario_de_negocio(self):
-        if User.objects.filter(pk=self.usuario_id, is_superuser=True).exists():
-            raise ValidationError(
-                "Superusuário técnico não pode possuir papéis de negócio ROLE-*."
-            )
-
-    def clean(self):
-        # Pré-validação de formulário, que pode ocorrer fora de transação.
-        # save()/delete() repetem as regras com os usuários atuais bloqueados.
-        super().clean()
-        self._exigir_usuario_de_negocio()
-        if self.pk is None:
-            return
-        anterior = PapelUsuario.objects.filter(pk=self.pk).values("papel", "usuario_id").first()
-        if anterior is not None and (
-            anterior["papel"] != self.papel or anterior["usuario_id"] != self.usuario_id
-        ):
-            self.exigir_papel_removivel(anterior["usuario_id"], anterior["papel"])
-
     def save(self, *args, **kwargs):
-        with _bloquear_atribuicao(self.pk, self.usuario_id) as (anterior, usuarios):
-            self._exigir_usuario_de_negocio()
-            papel_anterior = anterior.papel if anterior is not None else None
-            usuario_id_anterior = anterior.usuario_id if anterior is not None else None
-            usuario_mudou = (
-                usuario_id_anterior is not None and usuario_id_anterior != self.usuario_id
-            )
-
-            if papel_anterior is not None and (usuario_mudou or papel_anterior != self.papel):
-                self.exigir_papel_removivel(usuario_id_anterior, papel_anterior)
-
-            # `FR-021`: o titular ANTIGO desta linha deixa de ser chefe quando
-            # o `papel` muda para outra coisa OU quando a própria linha passa
-            # a apontar para outro usuário (troca de titular sem passar por
-            # `delete()`) — os dois casos abandonam a chefia do titular antigo.
-            deixando_de_ser_chefe = papel_anterior == Papel.CHEFE_SETOR and (
-                usuario_mudou or self.papel != Papel.CHEFE_SETOR
-            )
-
-            # `FR-022`: o titular ATUAL (`self.usuario_id`) passa a ser chefe
-            # por esta linha quando `papel` é (ou permanece) `CHEFE_SETOR` e
-            # essa atribuição é nova para ele — concessão nova, edição de
-            # outro papel para chefe, ou troca de titular mantendo
-            # `CHEFE_SETOR` (o mesmo caso de troca acima, do lado do novo
-            # titular).
-            tornando_se_chefe = self.papel == Papel.CHEFE_SETOR and (
-                self.pk is None or usuario_mudou or papel_anterior != Papel.CHEFE_SETOR
-            )
-
-            if not (tornando_se_chefe or deixando_de_ser_chefe):
-                return super().save(*args, **kwargs)
-
-            if deixando_de_ser_chefe:
-                usuario_antigo = usuarios[usuario_id_anterior]
-                if usuario_antigo.is_active:
-                    _exigir_chefia_preservada(
-                        usuario_antigo.setor_id, excluir_usuario_id=usuario_antigo.pk
-                    )
-            if tornando_se_chefe:
-                usuario_novo = usuarios[self.usuario_id]
-                if usuario_novo.is_active:
-                    _exigir_chefia_nao_duplicada(
-                        usuario_novo.setor_id, excluir_usuario_id=usuario_novo.pk
-                    )
-
-            return super().save(*args, **kwargs)
+        _exigir_operacao("Gravar um papel")
+        return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        with _bloquear_atribuicao(self.pk) as (atual, usuarios):
-            if atual is not None:
-                self.exigir_papel_removivel(atual.usuario_id, atual.papel)
-                usuario = usuarios[atual.usuario_id]
-                if atual.papel == Papel.CHEFE_SETOR and usuario.is_active:
-                    _exigir_chefia_preservada(
-                        usuario.setor_id, excluir_usuario_id=usuario.pk
-                    )
-            return super().delete(*args, **kwargs)
+        _exigir_operacao("Remover um papel")
+        return super().delete(*args, **kwargs)
+
+
+def _recusar_carga_bruta(sender, raw=False, **kwargs):
+    """`loaddata` e `serializers.deserialize(...).save()` gravam por
+    `save_base(raw=True)`, sem passar por `save()`: o `pre_save` é o único ponto
+    por onde essa carga passa (FR-046)."""
+    if raw:
+        _exigir_operacao(f"Carregar {sender._meta.verbose_name_plural} por carga bruta")
+
+
+for _modelo in (Setor, User, PapelUsuario):
+    pre_save.connect(
+        _recusar_carga_bruta, sender=_modelo, dispatch_uid=f"barreira_{_modelo.__name__}"
+    )
+
+
+class TipoEvento(models.TextChoices):
+    """Lista fechada dos eventos organizacionais (`data-model.md`)."""
+
+    USUARIO_CADASTRADO = "USUARIO_CADASTRADO", "Usuário cadastrado"
+    USUARIO_EDITADO = "USUARIO_EDITADO", "Usuário editado"
+    PAPEIS_ALTERADOS = "PAPEIS_ALTERADOS", "Papéis alterados"
+    USUARIO_TRANSFERIDO = "USUARIO_TRANSFERIDO", "Usuário transferido"
+    CHEFIA_DESIGNADA = "CHEFIA_DESIGNADA", "Chefia designada"
+    CHEFIA_RETIRADA = "CHEFIA_RETIRADA", "Chefia retirada"
+    CHEFIA_SUBSTITUIDA = "CHEFIA_SUBSTITUIDA", "Chefia substituída"
+    USUARIO_DESATIVADO = "USUARIO_DESATIVADO", "Usuário desativado"
+    USUARIO_REATIVADO = "USUARIO_REATIVADO", "Usuário reativado"
+    SETOR_CRIADO = "SETOR_CRIADO", "Setor criado"
+    SETOR_RENOMEADO = "SETOR_RENOMEADO", "Setor renomeado"
+    SETOR_ATIVADO = "SETOR_ATIVADO", "Setor ativado"
+    SETOR_DESATIVADO = "SETOR_DESATIVADO", "Setor desativado"
+    SENHA_PROVISORIA_GERADA = "SENHA_PROVISORIA_GERADA", "Senha provisória gerada"
+    SENHA_DEFINIDA = "SENHA_DEFINIDA", "Senha definida"
+
+
+class EventoOrganizacional(models.Model):
+    """Histórico organizacional, só de acréscimo (FR-040 a FR-042, research R7).
+
+    Um evento por operação efetivada, gravado na mesma transação. Imutável por
+    trigger de banco (R5). `dados` guarda anterior/novo e detalhes do tipo —
+    nunca senha. `autor` nulo só no provisionamento técnico (R15).
+    """
+
+    momento = models.DateTimeField(default=timezone.now)
+    autor = models.ForeignKey("contas.User", null=True, on_delete=models.PROTECT, related_name="+")
+    tipo = models.CharField(max_length=32, choices=TipoEvento.choices)
+    usuario = models.ForeignKey(
+        "contas.User", null=True, on_delete=models.PROTECT, related_name="eventos_como_alvo"
+    )
+    usuario_relacionado = models.ForeignKey(
+        "contas.User", null=True, on_delete=models.PROTECT, related_name="eventos_como_relacionado"
+    )
+    setor = models.ForeignKey(
+        "contas.Setor", null=True, on_delete=models.PROTECT, related_name="eventos_como_alvo"
+    )
+    setor_relacionado = models.ForeignKey(
+        "contas.Setor",
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="eventos_como_relacionado",
+    )
+    dados = models.JSONField(default=dict)
+    justificativa = models.TextField(blank=True, default="")
+    # Cadastro e redefinição: repetir o POST com a mesma chave não repete a operação
+    # (research R8).
+    chave_confirmacao = models.UUIDField(null=True, unique=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(usuario__isnull=False) | Q(setor__isnull=False),
+                name="evento_organizacional_tem_alvo",
+            ),
+            models.CheckConstraint(
+                condition=Q(tipo__in=TipoEvento.values),
+                name="evento_organizacional_tipo_fechado",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["usuario", "momento"], name="evento_org_usuario_momento"),
+            models.Index(
+                fields=["usuario_relacionado", "momento"], name="evento_org_usurel_momento"
+            ),
+            models.Index(fields=["setor", "momento"], name="evento_org_setor_momento"),
+            models.Index(fields=["setor_relacionado", "momento"], name="evento_org_setrel_momento"),
+        ]
+
+    def __str__(self):
+        return f"{self.tipo} em {self.momento:%Y-%m-%d %H:%M}"

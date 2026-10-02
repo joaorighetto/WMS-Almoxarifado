@@ -1,0 +1,82 @@
+{% extends "contas/organizacao/base.html" %}
+{% load static %}
+
+{% block title %}Novo usuário — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `form` (`UsuarioCadastroForm`, com a `chave_confirmacao` oculta) e `recusa`
+(`OperacaoRecusada` ou `None`). A recusa mostra motivo e caminho exatamente como a operação os
+produziu (FR-048); os dados digitados e a chave são preservados. A senha provisória nunca passa
+por esta página: ela só existe em `usuario_senha_entregue.html`.
+
+Matrícula repetida chega como erro do campo `matricula` (borda e texto, com o id que o
+`aria-describedby` do widget referencia); `conta_existente` (`pk`, `nome`, `ativo`, `situacao`, ou
+`None`) leva, logo abaixo, à ficha da conta e, se inativa, à reativação. `?setor=<pk>` pré-seleciona
+o setor. Os papéis ficam em `_papeis_cadastro.html` (`setor_escolhido`, `opcoes_de_papeis`,
+`implicados_pela_chefia`), trocado por HTMX quando o setor muda: o `<select>` do setor pede
+`usuario_novo?setor=<pk>` e recebe só esse parcial (o script do HTMX é carregado no `<head>`, como
+nas demais telas com troca parcial; `defaultSettleDelay: 0` evita o atraso de assentamento).
+{% endcomment %}
+
+{% block extra_head %}
+<meta name="htmx-config" content='{"defaultSettleDelay":0}'>
+<script src="{% static 'vendor/htmx/htmx-4.0.0.min.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'usuarios' as url_usuarios %}
+    {% include "contas/organizacao/_voltar.html" with href=url_usuarios rotulo="Usuários" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Novo usuário</h1>
+        <p class="page-header-description">
+          A conta nasce ativa, com o papel de requisitante e uma senha provisória exibida uma única vez.
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" %}
+
+    <form method="post" class="form-frame" data-processing-form data-processing-label="Cadastrando…">
+      {% csrf_token %}
+      {{ form.chave_confirmacao }}
+
+      <div class="field field-code{% if form.matricula.errors %} field-has-error{% endif %}">
+        <label for="{{ form.matricula.id_for_label }}">Matrícula</label>
+        {{ form.matricula }}
+        {% if form.matricula.errors %}<p class="field-error" id="{{ form.matricula.auto_id }}_error">{{ form.matricula.errors.0 }}</p>{% endif %}
+        {% if conta_existente %}
+        <p class="field-hint">
+          <a href="{% url 'usuario' pk=conta_existente.pk %}" class="text-link">Abrir a ficha de {{ conta_existente.nome }}</a>
+          {% if not conta_existente.ativo %}· A conta está inativa. <a href="{% url 'usuario_reativar' pk=conta_existente.pk %}" class="text-link">Reativar</a>{% endif %}
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="field{% if form.nome.errors %} field-has-error{% endif %}">
+        <label for="{{ form.nome.id_for_label }}">Nome</label>
+        {{ form.nome }}
+        {% if form.nome.errors %}<p class="field-error" id="{{ form.nome.auto_id }}_error">{{ form.nome.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="field{% if form.setor.errors %} field-has-error{% endif %}">
+        <label for="{{ form.setor.id_for_label }}">Setor</label>
+        {{ form.setor }}
+        {% if form.setor.errors %}<p class="field-error" id="{{ form.setor.auto_id }}_error">{{ form.setor.errors.0 }}</p>{% endif %}
+      </div>
+
+      {% include "contas/organizacao/_papeis_cadastro.html" %}
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-processing-submit>
+          <span data-processing-submit-label>Cadastrar usuário</span>
+        </button>
+        <a href="{% url 'usuarios' %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

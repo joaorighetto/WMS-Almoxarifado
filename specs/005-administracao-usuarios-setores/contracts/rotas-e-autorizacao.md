@@ -1,6 +1,8 @@
 # Contrato — Rotas e autorização
 
-Rotas de administração com prefixo `/organizacao/` e `app_name = "contas"`. Todas usam
+Rotas de administração com prefixo `/organizacao/`, com nomes globais em `contas/urls.py` (sem
+`app_name`: um namespace quebraria `reverse("home")`, `LOGIN_URL = "login"` e os demais consumidores
+das rotas da 002). Todas usam
 `catalogo.views.ExigePapelMixin` com `papel_exigido = Papel.ADMINISTRADOR_SISTEMA`: anônimo vai ao
 login; autenticado sem o papel recebe 403; inativo é tratado como anônimo (`INV-AUTH-001`). Não há
 exceção para o superusuário técnico, que não tem papel de negócio (FR-004). Toda autorização é

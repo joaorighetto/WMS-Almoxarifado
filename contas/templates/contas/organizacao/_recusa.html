@@ -1,0 +1,23 @@
+{% comment %}
+Recusa da operação e erros de formulário sem campo próprio, no alto da tela (Alert). Contexto:
+`recusa` (`OperacaoRecusada` ou `None`: motivo e caminho exatamente como a operação os
+produziu, FR-048) e `form`. Com `todos`, lista também os erros de campo — para telas cujos
+campos não são desenhados um a um (papéis, destino da transferência, chefia).
+{% endcomment %}
+{% if recusa %}
+<div class="alert alert-danger" role="alert">
+  <p>{{ recusa.motivo }}</p>
+  {% if recusa.caminho %}<p>{{ recusa.caminho }}</p>{% endif %}
+</div>
+{% endif %}
+{% if todos %}
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">
+  {% for campo, erros in form.errors.items %}{% for erro in erros %}<p>{{ erro }}</p>{% endfor %}{% endfor %}
+</div>
+{% endif %}
+{% elif form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+  {% for erro in form.non_field_errors %}<p>{{ erro }}</p>{% endfor %}
+</div>
+{% endif %}

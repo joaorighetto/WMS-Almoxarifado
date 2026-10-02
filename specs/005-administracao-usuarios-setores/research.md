@@ -102,10 +102,11 @@ cumpre FR-046).
 - **Trigger de imutabilidade de setor** (`BEFORE UPDATE`): recusa mudar `almoxarifado` e mudar
   `ativado_em` depois de preenchido (`INV-ORG-004`).
 - **Trigger de verificação adiado** (`CONSTRAINT TRIGGER ... DEFERRABLE INITIALLY DEFERRED`, `AFTER
-  INSERT OR DELETE OR UPDATE OF setor_id, is_active, is_superuser` em `contas_user` e `AFTER INSERT
-  OR UPDATE OR DELETE` em `contas_papelusuario` e `contas_setor`, de modo que o login
-  (`last_login`) e a regravação do hash de senha não disparem a verificação nem tomem o lock): no
-  commit,
+  INSERT OR DELETE` e, num trigger separado, `AFTER UPDATE OF setor_id, is_active, is_superuser`
+  com `WHEN` que exige mudança efetiva de uma dessas colunas, em `contas_user`; `AFTER INSERT OR
+  UPDATE OR DELETE` em `contas_papelusuario` e `contas_setor`. Assim o login (`last_login`), a
+  regravação do hash de senha e um `save()` completo sem mudança organizacional não disparam a
+  verificação nem tomam o lock — o que evitaria deadlock com uma operação em curso): no commit,
   toma o mesmo advisory lock de R2 e verifica, nos setores e usuários tocados, `INV-ORG-002`,
   `INV-ORG-005`, `INV-ORG-006` e o papel mínimo de identidade de negócio ativa (FR-016a da 002).
 - **Trigger de imutabilidade do histórico**: `BEFORE UPDATE OR DELETE` em `EventoOrganizacional`
@@ -261,7 +262,8 @@ separada (duplica o nome sem ganho sobre a constraint funcional).
 
 **Decisão**: lista de usuários paginada (50), só identidades de negócio (`is_superuser=False`, FR-004),
 com busca por parte do nome — comparada sem acento e sem diferenciar maiúsculas, com
-`normalizar_para_busca` de `catalogo.leitura_scpi` gravado em `User.nome_busca` — ou pela matrícula
+`normalizar_para_busca` (movida para `config/texto.py` na implementação e reexportada por
+`catalogo.leitura_scpi`, para `contas` não importar `catalogo`, FR-051) gravado em `User.nome_busca` — ou pela matrícula
 exata, e filtros combináveis de setor, situação e papel por GET. Os papéis da página vêm num único
 `prefetch_related`. A lista de setores anota chefe e quantidade de membros ativos numa só consulta; contas técnicas
 não contam como membro, ali nem na desativação de setor (FR-028).

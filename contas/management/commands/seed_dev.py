@@ -19,8 +19,9 @@ from catalogo.importacao import (
 )
 from catalogo.leitura_scpi import LIMITE_TAMANHO_ARQUIVO, ArquivoRecusado, ler_registros
 from catalogo.models import ExecucaoImportacao, Material
-from contas.dev_seed.dados import SETORES, USUARIOS, revisao_simulada
-from contas.models import Papel, PapelUsuario, Setor, User
+from contas.dev_seed.dados import SETOR_ALMOXARIFADO, SETORES, USUARIOS, revisao_simulada
+from contas.models import Papel, Setor, User
+from contas.organizacao import provisionar_ativacao, provisionar_setor, provisionar_usuario
 from fornecedores import importacao as importacao_fornecedores
 from fornecedores.leitura_fornecedores import ler_fornecedores
 from fornecedores.models import Fornecedor
@@ -166,7 +167,7 @@ class Command(BaseCommand):
         self.stdout.write("  funcionario    - funcionário do almoxarifado (/login/)")
         self.stdout.write("  requisitante   - requisitante do almoxarifado (/login/)")
         self.stdout.write(
-            "Demais matrículas e papéis: contas/dev_seed/dados.py ou o Django Admin."
+            "Demais matrículas e papéis: contas/dev_seed/dados.py ou o Django Admin (consulta)."
         )
 
     def _validar_entradas(self, caminho):
@@ -230,20 +231,31 @@ class Command(BaseCommand):
 
     @staticmethod
     def _criar_organizacao(senha):
-        # INV-ORG-001/002/003: setor nasce inativo, recebe chefe próprio e só então é ativado.
-        setores = {chave: Setor.objects.create(nome=nome) for chave, nome, _ in SETORES}
-        User.objects.create_superuser(matricula="admin", password=senha, setor=setores["almox"])
+        # Pela API de provisionamento de `contas.organizacao` (mesmas regras e mesmos eventos
+        # das operações, autor nulo). INV-ORG-001/002/003: setor nasce inativo, recebe chefe
+        # próprio e só então é ativado; INV-ORG-004: um único setor é o Almoxarifado.
+        setores = {
+            chave: provisionar_setor(nome, almoxarifado=chave == SETOR_ALMOXARIFADO)
+            for chave, nome, _ in SETORES
+        }
+        # Conta técnica: fora das operações de negócio, sem nenhum papel.
+        User.objects.create_superuser(
+            matricula="admin",
+            password=senha,
+            setor=setores[SETOR_ALMOXARIFADO],
+            nome="Conta Técnica do Desenvolvimento",
+        )
         usuarios = {}
-        for matricula, setor, papeis, ativo in USUARIOS:
-            usuario = User.objects.create_user(
-                matricula=matricula, password=senha, setor=setores[setor], is_active=ativo,
+        for matricula, nome, setor, papeis, ativo in USUARIOS:
+            usuarios[matricula], _ = provisionar_usuario(
+                matricula,
+                nome,
+                setores[setor],
+                set(papeis),
+                senha=senha,
+                is_active=ativo,
             )
-            for papel in papeis:
-                PapelUsuario.objects.create(usuario=usuario, papel=papel)
-            usuarios[matricula] = usuario
         for chave, _, ativo in SETORES:
             if ativo:
-                setor = setores[chave]
-                setor.ativo = True
-                setor.save(update_fields=["ativo"])
+                provisionar_ativacao(setores[chave])
         return usuarios["chefe"]

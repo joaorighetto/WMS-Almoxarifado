@@ -14,6 +14,11 @@ como link) — nas demais telas (catálogo, importação), a marca é `<a href="
 url 'home' %}">`, sem alterar o contrato de hrefs de negócio já travado em
 tests/test_contas_home_papeis.py (que só examina o HTML da própria Home).
 
+O link "Senha" (`/senha/`, troca da própria senha) fica ao lado de "Sair" e é visível a todo
+usuário autenticado: é mecânica de autenticação, não capability (D-27, FR-039). É texto sem
+contorno (`.appbar-link`): o contorno é do "Sair", a saída; na própria tela de senha ele é o
+item atual (`aria-current`, sublinhado).
+
 Logout continua exclusivamente POST + CSRF (Constitution IX) — nunca um link,
 mesmo com aparência de botão.
 
@@ -34,6 +39,7 @@ na barra em qualquer largura.
 
     <div class="appbar-account">
       <span class="appbar-matricula{% if esconde_matricula_compacta %} appbar-matricula-hide-compact{% endif %}">{{ user.matricula }}</span>
+      <a href="{% url 'definir_senha' %}" class="appbar-link"{% if request.resolver_match.url_name == "definir_senha" %} aria-current="page"{% endif %}>Senha</a>
       <form method="post" action="{% url 'logout' %}" class="appbar-logout-form">
         {% csrf_token %}
         <button type="submit" class="appbar-logout">Sair</button>

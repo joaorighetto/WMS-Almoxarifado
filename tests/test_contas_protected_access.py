@@ -29,6 +29,8 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 import pytest
 from django.urls import reverse
 
+from tests.contas_helpers import operacao
+
 pytestmark = [pytest.mark.django_db, pytest.mark.urls("tests.urls_test_permission_denied")]
 
 MARCADOR_SESSAO = "_retorno_pos_login_destino"
@@ -250,8 +252,11 @@ def test_conta_desativada_apos_login_nega_acesso_na_proxima_requisicao_protegida
     resposta_home_autenticada = client.get(reverse("home"))
     assert resposta_home_autenticada.status_code == 200
 
-    usuario_ativo.is_active = False
-    usuario_ativo.save(update_fields=["is_active"])
+    with operacao():
+
+        usuario_ativo.is_active = False
+
+        usuario_ativo.save(update_fields=["is_active"])
 
     resposta_apos_desativacao = client.get(reverse("home"))
 

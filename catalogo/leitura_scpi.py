@@ -8,12 +8,12 @@ recusa de forma consistente com `ExcecaoImportacao`.
 """
 
 import re
-import unicodedata
 from collections import Counter
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 
 from catalogo.models import MotivoRecusa
+from config.texto import normalizar_para_busca  # noqa: F401 — reexportada (FR-051 da 005)
 
 # ---------------------------------------------------------------------------
 # Constantes do contrato (`contracts/interface-importacao.md`)
@@ -521,24 +521,3 @@ def interpretar_quantidade(texto: str) -> Decimal:
         raise QuantidadeInvalida(MotivoRecusa.QUANTIDADE_FORA_DO_LIMITE)
 
     return valor_quantizado
-
-
-# ---------------------------------------------------------------------------
-# Busca por descrição (T012, já existente)
-# ---------------------------------------------------------------------------
-
-
-def normalizar_para_busca(texto: str) -> str:
-    """Normaliza texto para comparação de busca por descrição (FR-040).
-
-    Remove acentuação (decomposição NFKD seguida da remoção dos caracteres de
-    categoria Unicode `Mn`, marcas combinantes) e aplica `casefold()`. A mesma
-    função grava `Material.descricao_busca` e normaliza o termo digitado pelo
-    usuário, para que a comparação seja simétrica (`research.md` R15).
-    """
-    sem_acento = "".join(
-        caractere
-        for caractere in unicodedata.normalize("NFKD", texto)
-        if unicodedata.category(caractere) != "Mn"
-    )
-    return sem_acento.casefold()

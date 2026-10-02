@@ -120,7 +120,7 @@ Verificado ao fim de toda operação (research R3) e, no commit, pelo trigger (r
 setores e usuários tocados:
 
 1. setor ativo tem exatamente um usuário ativo do próprio setor com `ROLE-SECTOR-HEAD`
-   (`INV-ORG-002`);
+   (`INV-ORG-002`); nenhum setor, ativo ou inativo, tem mais de um (FR-022 da 002);
 2. `ROLE-WAREHOUSE-STAFF` e `ROLE-WAREHOUSE-HEAD` só em usuário do setor Almoxarifado
    (`INV-ORG-005`);
 3. usuário ativo com `ROLE-WAREHOUSE-HEAD` tem `ROLE-SECTOR-HEAD` no Almoxarifado e

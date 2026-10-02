@@ -75,6 +75,7 @@ Mensagens orientativas; o texto final é ajustado na implementação, mantendo m
 | | é chefe de setor ativo | "Substitua a chefia do setor antes." (FR-020) |
 | | já inativo | sem efeito |
 | `reativar_usuario` | `papeis_mantidos` sem `ROLE-REQUESTER` | FR-023 |
+| | a conta inativa perdeu `ROLE-REQUESTER` (permitido por FR-011, que só protege conta ativa) | FR-023, FR-016a da 002 / "Conceda o papel de requisitante na tela de papéis antes de reativar." |
 | | papel mantido violaria regra (segundo chefe, segundo chefe do almoxarifado, papel de almoxarifado fora dele) | motivo por papel / "Desmarque o papel para prosseguir." (FR-024) |
 | | já ativo | sem efeito |
 | `criar_setor`, `renomear_setor` | nome vazio ou repetido (sem caixa e espaços) | "Já existe o setor X." |

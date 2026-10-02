@@ -1,0 +1,62 @@
+{% comment %}
+Histórico organizacional da ficha (FR-040 a FR-042), do mais antigo ao mais recente.
+
+Contrato de contexto: `pagina` (`Page` de `EventoOrganizacional`, 25/página) e `eventos` (os da
+página, com `alteracoes` — campo/anterior/novo — e `detalhes` já montados pela view, ver
+`contas/views.py` → `_historico`). Evento sem autor é o provisionamento técnico (R15). Nenhum
+evento guarda senha (FR-031), então nada aqui pode exibi-la.
+
+A coluna "Detalhes" é uma grade de pares rótulo/valor (`.history-details`): quem e o quê no
+rótulo, o valor ao lado; a alteração diz "de A para B" por extenso. A paginação volta à própria
+seção (`ancora`), não ao topo da ficha.
+{% endcomment %}
+<section class="page-section" aria-labelledby="historico-heading" id="historico">
+  <h2 class="section-marker{% if eventos %} section-marker-attached{% endif %}" id="historico-heading">
+    <span class="section-marker-label">Histórico</span>
+  </h2>
+  {% if eventos %}
+  <div class="table-wrapper table-wrapper-marker-attached">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Momento</th>
+          <th scope="col">Evento</th>
+          <th scope="col">Autor</th>
+          <th scope="col">Detalhes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for evento in eventos %}
+        <tr>
+          <td class="table-cell-date">{{ evento.momento|date:"d/m/Y H:i" }}</td>
+          <td class="history-event-type">{{ evento.get_tipo_display }}</td>
+          <td>
+            {% if evento.autor %}{{ evento.autor.nome }} <span class="table-cell-code">{{ evento.autor.matricula }}</span>{% else %}Provisionamento técnico{% endif %}
+          </td>
+          <td>
+            <dl class="history-details">
+              {% if evento.usuario %}<dt>Usuário</dt><dd>{{ evento.usuario.nome }} (<span class="table-cell-code">{{ evento.usuario.matricula }}</span>)</dd>{% endif %}
+              {% if evento.usuario_relacionado %}<dt>Usuário relacionado</dt><dd>{{ evento.usuario_relacionado.nome }} (<span class="table-cell-code">{{ evento.usuario_relacionado.matricula }}</span>)</dd>{% endif %}
+              {% if evento.setor %}<dt>Setor</dt><dd>{{ evento.setor.nome }}</dd>{% endif %}
+              {% if evento.setor_relacionado %}<dt>Setor relacionado</dt><dd>{{ evento.setor_relacionado.nome }}</dd>{% endif %}
+              {% for alteracao in evento.alteracoes %}
+              <dt>{{ alteracao.campo }}</dt><dd>de {{ alteracao.anterior }} para {{ alteracao.novo }}</dd>
+              {% endfor %}
+              {% for campo, valor in evento.detalhes %}
+              <dt>{{ campo }}</dt><dd>{{ valor }}</dd>
+              {% endfor %}
+              {% if evento.justificativa %}<dt>Justificativa</dt><dd>{{ evento.justificativa }}</dd>{% endif %}
+            </dl>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "interface/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação do histórico" rotulo_item="evento" rotulo_item_plural="eventos" ancora="historico" %}
+  {% else %}
+  <div class="empty-state" data-estado="vazio">
+    <p class="empty-state-title">Nenhum evento registrado.</p>
+  </div>
+  {% endif %}
+</section>

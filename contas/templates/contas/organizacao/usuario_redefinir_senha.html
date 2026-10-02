@@ -1,0 +1,58 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}Redefinir a senha de {{ usuario.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `usuario`, `form` (`RedefinicaoSenhaForm`, com a `chave_confirmacao` oculta) e
+`recusa` (`OperacaoRecusada` ou `None`). A redefinição gera uma senha provisória nova, exibida uma
+única vez na resposta ao POST (`usuario_senha_entregue.html`); o administrador nunca escolhe a
+senha (D-13). A senha atual da conta deixa de valer e todas as sessões dela caem (FR-033).
+
+Confirmação: o que muda, por extenso, antes do botão. A ação é a principal da tela, na barra de
+confirmação, e leva o preenchimento `danger`: redefinir corta o acesso da conta agora — a senha
+atual deixa de valer e as sessões abertas caem (DESIGN.md → Buttons, Destrutivo).
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container page-container-narrow">
+    {% url 'usuario' pk=usuario.pk as url_ficha %}
+    {% include "contas/organizacao/_voltar.html" with href=url_ficha rotulo=usuario.nome %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">Redefinir a senha</h1>
+        <p class="page-header-description">
+          {{ usuario.nome }} ({{ usuario.matricula }}) recebe uma senha provisória nova, válida por
+          7 dias, e as sessões abertas da conta são encerradas. A senha aparece uma única vez.
+        </p>
+      </div>
+    </header>
+
+    {% include "contas/organizacao/_recusa.html" %}
+
+    <form method="post" data-processing-form data-processing-label="Redefinindo…">
+      {% csrf_token %}
+      {{ form.chave_confirmacao }}
+
+      <section class="page-section" aria-labelledby="efeitos-heading">
+        <h2 class="section-marker" id="efeitos-heading">
+          <span class="section-marker-label">O que muda</span>
+        </h2>
+        <dl class="meta-grid">
+          <div><dt>Senha atual</dt><dd>Deixa de valer agora.</dd></div>
+          <div><dt>Sessões abertas</dt><dd>São encerradas.</dd></div>
+          <div><dt>Senha nova</dt><dd>Gerada pelo sistema e mostrada uma única vez, na tela seguinte.</dd></div>
+        </dl>
+      </section>
+
+      <div class="confirmation-bar">
+        <button type="submit" class="btn btn-danger" data-processing-submit>
+          <span data-processing-submit-label>Redefinir a senha</span>
+        </button>
+        <a href="{% url 'usuario' pk=usuario.pk %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

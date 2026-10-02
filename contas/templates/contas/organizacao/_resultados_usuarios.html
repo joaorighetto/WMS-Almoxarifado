@@ -1,0 +1,47 @@
+{% comment %}
+Região de resultados da lista de usuários — devolvida sozinha numa requisição HTMX
+(`HX-Request`) e incluída em `usuarios.html` na página inteira. Contrato de contexto: `pagina`
+e `usuarios` (ver `usuarios.html`).
+
+A situação vem logo depois do nome, perto do início da linha (DESIGN.md → Table). A matrícula é a
+"porta" da linha: link com nome acessível que diz o que abre. A tabela leva `tabindex="-1"` para
+receber o foco depois da paginação por HTMX. Sem JS de linha clicável: as linhas trocam por HTMX
+e só o link promete clique.
+{% endcomment %}
+{% if usuarios %}
+<div class="table-wrapper table-sticky-header">
+  <table class="table" tabindex="-1">
+    <thead>
+      <tr>
+        <th scope="col">Matrícula</th>
+        <th scope="col">Nome</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Setor</th>
+        <th scope="col">Papéis</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for usuario in usuarios %}
+      <tr>
+        <td><a href="{% url 'usuario' pk=usuario.pk %}" class="text-link table-cell-code org-link-ficha"><span class="visually-hidden">Ficha de </span>{{ usuario.matricula }}</a></td>
+        <td class="org-cell-nome">{{ usuario.nome }}</td>
+        <td>{% if usuario.is_active %}<span class="badge badge-success">Ativo</span>{% else %}<span class="badge badge-neutral">Inativo</span>{% endif %}</td>
+        <td>{{ usuario.setor.nome }}</td>
+        <td>
+          <ul class="badge-list">
+            {% for papel in usuario.rotulos_dos_papeis %}<li><span class="badge badge-neutral">{{ papel }}</span></li>{% endfor %}
+          </ul>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include "interface/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de usuários" rotulo_item="usuário" rotulo_item_plural="usuários" htmx_alvo="#resultados-usuarios" htmx_indicador="#resultados-indicador" %}
+{% else %}
+<div class="empty-state" data-estado="vazio">
+  <p class="empty-state-title">Nenhum usuário encontrado.</p>
+  <p class="empty-state-description">Ajuste a busca ou os filtros e tente novamente.</p>
+</div>
+{% endif %}

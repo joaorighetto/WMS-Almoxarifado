@@ -1,0 +1,103 @@
+{% extends "contas/organizacao/base.html" %}
+
+{% block title %}{{ usuario.nome }} — WMS-Almoxarifado{% endblock %}
+
+{% comment %}
+Contrato de contexto: `usuario` (com `setor`), `papeis` (rótulos, na ordem do catálogo),
+`credencial_estado` (`definitiva`, `provisoria` ou `provisoria_vencida`), `credencial_momento`
+(vencimento) e `pagina`/`eventos` (histórico). A senha nunca é mostrada, nem provisória
+(FR-031). Ação impedida não some: "Transferir de setor" e "Desativar" levam à tela que explica o
+impedimento (`impedimento_transferir` e `impedimento_desativar`, a `OperacaoRecusada` que a
+operação daria hoje, ou `None`; só informam a ficha). `pode_desativar` e `pode_reativar` são as
+ações de situação; redefinir a senha é sempre oferecido (a conta técnica não tem ficha).
+
+Ações em dois grupos por natureza (`.action-groups`): o cadastro (editar, papéis, setor) e o
+acesso (senha e situação). Todas secundárias — a ficha é leitura, sem ação principal. O vermelho
+significa "corta acesso ou autoridade agora" (DESIGN.md → Buttons, Destrutivo): os convites que
+levam a isso ("Redefinir a senha", "Desativar") levam o texto em `danger`, como "Estornar
+entrada", e a gravidade fica na tela de confirmação. Ação impedida não some: continua um link e,
+logo abaixo das ações, `.action-notes` diz em texto que está impedida e por quê. Só há palavra
+"provisória" aqui quando a credencial é provisória.
+{% endcomment %}
+
+{% block content %}
+<main class="page">
+  <div class="page-container">
+    {% url 'usuarios' as url_usuarios %}
+    {% include "contas/organizacao/_voltar.html" with href=url_usuarios rotulo="Usuários" %}
+
+    {% include "interface/_mensagens.html" %}
+
+    <header class="page-header">
+      <div>
+        <h1 class="page-header-title">
+          {{ usuario.nome }}
+          {% if usuario.is_active %}
+          <span class="badge badge-success page-header-badge">Ativo</span>
+          {% else %}
+          <span class="badge badge-neutral page-header-badge">Inativo</span>
+          {% endif %}
+        </h1>
+      </div>
+      <div class="page-header-actions action-groups">
+        <div class="action-group">
+          <a href="{% url 'usuario_editar' pk=usuario.pk %}" class="btn btn-secondary">Editar dados</a>
+          <a href="{% url 'usuario_papeis' pk=usuario.pk %}" class="btn btn-secondary">Alterar papéis</a>
+          <a href="{% url 'usuario_transferir' pk=usuario.pk %}" class="btn btn-secondary"{% if impedimento_transferir %} aria-describedby="nota-transferir"{% endif %}>Transferir de setor</a>
+        </div>
+        <div class="action-group">
+          <a href="{% url 'usuario_redefinir_senha' pk=usuario.pk %}" class="btn btn-secondary btn-secondary-danger">Redefinir a senha</a>
+          {% if pode_desativar %}
+          <a href="{% url 'usuario_desativar' pk=usuario.pk %}" class="btn btn-secondary btn-secondary-danger"{% if impedimento_desativar %} aria-describedby="nota-desativar"{% endif %}>Desativar</a>
+          {% endif %}
+          {% if pode_reativar %}
+          <a href="{% url 'usuario_reativar' pk=usuario.pk %}" class="btn btn-secondary">Reativar</a>
+          {% endif %}
+        </div>
+      </div>
+      {% if impedimento_transferir or impedimento_desativar and pode_desativar %}
+      <ul class="action-notes">
+        {% if impedimento_transferir %}<li id="nota-transferir"><strong>Transferir de setor está impedido.</strong> {{ impedimento_transferir.motivo }}</li>{% endif %}
+        {% if impedimento_desativar and pode_desativar %}<li id="nota-desativar"><strong>Desativar está impedido.</strong> {{ impedimento_desativar.motivo }}</li>{% endif %}
+      </ul>
+      {% endif %}
+    </header>
+
+    <section class="page-section" aria-labelledby="dados-heading">
+      <h2 class="section-marker" id="dados-heading">
+        <span class="section-marker-label">Dados</span>
+      </h2>
+      <dl class="meta-grid">
+        <div><dt>Matrícula</dt><dd class="table-cell-code">{{ usuario.matricula }}</dd></div>
+        <div><dt>Nome</dt><dd>{{ usuario.nome }}</dd></div>
+        <div>
+          <dt>Setor</dt>
+          <dd>
+            <a href="{% url 'setor' pk=usuario.setor_id %}" class="text-link">{{ usuario.setor.nome }}</a>
+            {% if usuario.setor.almoxarifado %}<span class="badge badge-info">Almoxarifado</span>{% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>Credencial</dt>
+          <dd class="credential">
+            {% if credencial_estado == "provisoria" %}<span class="badge badge-warning">Provisória</span> <span>vence em {{ credencial_momento|date:"d/m/Y H:i" }}</span>
+            {% elif credencial_estado == "provisoria_vencida" %}<span class="badge badge-danger">Provisória vencida</span> <span>em {{ credencial_momento|date:"d/m/Y H:i" }}</span>
+            {% else %}Definida pelo usuário{% endif %}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="page-section" aria-labelledby="papeis-heading">
+      <h2 class="section-marker" id="papeis-heading">
+        <span class="section-marker-label">Papéis</span>
+      </h2>
+      <ul class="badge-list">
+        {% for papel in papeis %}<li><span class="badge badge-neutral">{{ papel }}</span></li>{% endfor %}
+      </ul>
+    </section>
+
+    {% include "contas/organizacao/_historico.html" %}
+  </div>
+</main>
+{% endblock %}
