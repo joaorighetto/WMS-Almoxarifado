@@ -552,6 +552,8 @@ def provisionar_usuario(matricula, nome, setor, papeis, *, senha=None, is_active
     """
     if senha is not None:
         _exigir_ambiente_de_senha_conhecida()
+    # Mesma normalização do cadastro: o login remove espaços nas pontas da matrícula digitada.
+    matricula = (matricula or "").strip()
     nome = (nome or "").strip()
     adicionais = _papeis_adicionais(papeis)
     with _operacao():

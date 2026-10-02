@@ -1564,11 +1564,13 @@ def test_tela_de_retirada_mostra_o_chefe_a_ser_retirado(client, cenario, lab_com
 
 
 def test_retirada_exige_confirmacao_e_depois_tira_a_chefia(client, cenario, lab_com_chefe):
-    sem_confirmar = client.post(rota("setor_chefia", cenario.lab.pk), {})
+    sem_confirmar = client.post(rota("setor_chefia", cenario.lab.pk), {"estado": "retirar"})
     assert sem_confirmar.status_code == 200
     assert _chefes(cenario.lab) == [lab_com_chefe.pk], "sem `confirmar` nada é retirado"
 
-    confirmada = client.post(rota("setor_chefia", cenario.lab.pk), {"confirmar": "1"})
+    confirmada = client.post(
+        rota("setor_chefia", cenario.lab.pk), {"estado": "retirar", "confirmar": "1"}
+    )
 
     assert confirmada.status_code == 302 and confirmada.url == rota("setor", cenario.lab.pk)
     assert mensagens(confirmada)
@@ -1580,7 +1582,7 @@ def test_retirada_exige_confirmacao_e_depois_tira_a_chefia(client, cenario, lab_
 
 
 def test_depois_da_retirada_a_tela_volta_a_oferecer_a_designacao(client, cenario, lab_com_chefe):
-    client.post(rota("setor_chefia", cenario.lab.pk), {"confirmar": "1"})
+    client.post(rota("setor_chefia", cenario.lab.pk), {"estado": "retirar", "confirmar": "1"})
 
     resposta = client.get(rota("setor_chefia", cenario.lab.pk))
 
@@ -2634,3 +2636,38 @@ def test_erro_inesperado_registra_o_traceback_mostra_alerta_generico_e_nao_grava
     assert "falha-simulada-inesperada" not in texto, "o alerta é genérico: sem detalhe interno"
     assert "Traceback" in caplog.text and "falha-simulada-inesperada" in caplog.text
     assert foto_organizacao() == antes
+
+
+def test_retirada_sem_o_estado_visto_nao_executa(client, cenario, lab_com_chefe):
+    """A retirada é acionada só por `confirmar`: sem o estado que a tela mostrou, nada muda."""
+    antes = foto_organizacao()
+
+    resposta = client.post(rota("setor_chefia", cenario.lab.pk), {"confirmar": "1"})
+
+    assert resposta.status_code == 200
+    assert resposta.context["recusa"].caminho
+    assert foto_organizacao() == antes
+
+
+def test_confirmacao_de_substituicao_com_o_setor_ja_em_retirada_nao_retira_a_chefia(
+    client, cenario, lab_com_chefe
+):
+    """A prévia de substituição foi aberta com o setor ativo; quando o setor passou ao estado de
+    retirada (inativo, com chefe), confirmá-la não pode executar a retirada (FR-049)."""
+    antes = foto_organizacao()
+
+    resposta = client.post(
+        rota("setor_chefia", cenario.lab.pk),
+        {
+            "estado": "substituir",
+            "novo_chefe": lab_com_chefe.pk,
+            "confirmar": "1",
+            "chefe_esperado": lab_com_chefe.pk,
+        },
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.context["estado"] == "retirar"
+    assert resposta.context["recusa"].motivo
+    assert foto_organizacao() == antes
+    assert _chefes(cenario.lab) == [lab_com_chefe.pk]

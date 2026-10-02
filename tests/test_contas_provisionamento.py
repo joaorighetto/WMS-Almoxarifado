@@ -438,6 +438,21 @@ def test_comando_cria_o_almoxarifado_e_a_primeira_identidade_em_banco_vazio():
     validar_tudo()
 
 
+def test_comando_grava_a_matricula_sem_espacos_e_a_conta_entra_com_ela(client):
+    """O login remove espaços nas pontas da matrícula digitada; o provisionamento grava do mesmo
+    jeito, senão o primeiro administrador nunca conseguiria entrar."""
+    argumentos = list(ARGUMENTOS_DO_COMANDO)
+    argumentos[argumentos.index("1001")] = " 1001 \n"
+
+    saida = _executar_comando(*argumentos)
+
+    usuario = User.objects.get(is_superuser=False)
+    assert usuario.matricula == "1001"
+    senha = _senha_impressa(saida, usuario)
+    resposta = client.post("/login/", {"username": " 1001 ", "password": senha})
+    assert resposta.status_code == 302
+
+
 def test_comando_recusa_rodar_de_novo_sem_gravar_nada():
     _executar_comando(*ARGUMENTOS_DO_COMANDO)
     antes = _snapshot()

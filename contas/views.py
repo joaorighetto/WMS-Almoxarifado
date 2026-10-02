@@ -1021,6 +1021,17 @@ class SetorChefiaView(_OperacaoView):
     def post(self, request, pk):
         setor = get_object_or_404(Setor, pk=pk)
         estado, chefe = self._estado(setor)
+        # A tela envia o estado que mostrou. Se o setor mudou desde então, nada é executado: sem
+        # isto, a confirmação de uma substituição viraria retirada da chefia (FR-049). A retirada,
+        # a única operação acionada só por `confirmar`, exige o estado no envio.
+        estado_visto = request.POST.get("estado", "")
+        if estado_visto != estado and (estado_visto or estado == "retirar"):
+            mudou = OperacaoRecusada(
+                "A situação do setor mudou desde que você abriu esta tela.",
+                "Confira a situação atual e escolha de novo.",
+            )
+            form = ChefiaForm(estado=estado)
+            return self._tela(request, setor, estado, chefe, form, recusa=mudou)
         form = ChefiaForm(request.POST, estado=estado)
         if not form.is_valid():
             return self._tela(request, setor, estado, chefe, form)

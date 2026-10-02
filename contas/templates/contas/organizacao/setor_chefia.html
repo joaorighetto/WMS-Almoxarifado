@@ -49,6 +49,7 @@ são primárias. A prévia oferece "Escolher outra pessoa" e "Cancelar" (volta �
     {% if previa %}
     <form method="post" data-processing-form data-processing-label="Substituindo…">
       {% csrf_token %}
+      <input type="hidden" name="estado" value="{{ estado }}">
       <input type="hidden" name="novo_chefe" value="{{ previa.novo_chefe.pk }}">
       <input type="hidden" name="chefe_esperado" value="{{ previa.chefe_atual.pk }}">
       {% for papel in previa.novo_ganha %}<input type="hidden" name="novo_ganha_previsto" value="{{ papel.value }}">{% endfor %}
@@ -125,6 +126,7 @@ são primárias. A prévia oferece "Escolher outra pessoa" e "Cancelar" (volta �
     {% elif estado == "retirar" %}
     <form method="post" data-processing-form data-processing-label="Retirando…">
       {% csrf_token %}
+      <input type="hidden" name="estado" value="{{ estado }}">
       <input type="hidden" name="confirmar" value="1">
 
       <section class="page-section" aria-labelledby="retirada-heading">
@@ -157,6 +159,7 @@ são primárias. A prévia oferece "Escolher outra pessoa" e "Cancelar" (volta �
       {% if candidatos %}
       <form method="post" class="form-frame" data-processing-form data-processing-label="Verificando…">
         {% csrf_token %}
+        <input type="hidden" name="estado" value="{{ estado }}">
         <div class="field">
           <label for="id_candidato">{% if estado == "substituir" %}Novo chefe{% else %}Chefe{% endif %}</label>
           <select name="{% if estado == 'substituir' %}novo_chefe{% else %}usuario{% endif %}" id="id_candidato" required>
