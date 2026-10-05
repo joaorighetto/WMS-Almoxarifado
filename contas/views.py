@@ -44,6 +44,7 @@ from contas.forms import (
 )
 from contas.middleware import RetornoPosLoginMiddleware
 from contas.models import EventoOrganizacional, Papel, Setor, User, chefes_ativos
+from contas.navegacao import codigos_papeis, flags_de_acesso
 from contas.organizacao import (
     PAPEIS_QUE_ACOMPANHAM_O_CHEFE_DO_ALMOXARIFADO,
     RECUSA_CHEFE_DE_SETOR_ATIVO,
@@ -246,25 +247,15 @@ class HomeView(LoginRequiredMixin, TemplateView):
         herança."""
         contexto = super().get_context_data(**kwargs)
         usuario = self.request.user
-        codigos_papeis = set(usuario.papeis.values_list("papel", flat=True))
+        codigos = codigos_papeis(self.request)
 
-        contexto["pode_administrar_organizacao"] = Papel.ADMINISTRADOR_SISTEMA in codigos_papeis
-        contexto["pode_importar_catalogo"] = Papel.CHEFE_ALMOXARIFADO in codigos_papeis
-        contexto["pode_consultar_catalogo"] = Papel.REQUISITANTE in codigos_papeis
-        contexto["pode_importar_fornecedores"] = Papel.CHEFE_ALMOXARIFADO in codigos_papeis
-        contexto["pode_consultar_fornecedores"] = Papel.FUNCIONARIO_ALMOXARIFADO in codigos_papeis
-        contexto["pode_registrar_entrada"] = Papel.FUNCIONARIO_ALMOXARIFADO in codigos_papeis
-        contexto["pode_consultar_entradas"] = bool(
-            codigos_papeis & {Papel.FUNCIONARIO_ALMOXARIFADO, Papel.AUDITOR}
-        )
+        contexto.update(flags_de_acesso(codigos))
         contexto["setor"] = usuario.setor
-        contexto["papeis"] = [
-            Papel(codigo).label for codigo in Papel.values if codigo in codigos_papeis
-        ]
+        contexto["papeis"] = [Papel(codigo).label for codigo in Papel.values if codigo in codigos]
         contexto["capacidades_planejadas"] = [
             {"titulo": item["titulo"], "descricao": item["descricao"]}
             for item in CAPACIDADES_PLANEJADAS
-            if codigos_papeis & {papel.value for papel in item["papeis"]}
+            if codigos & {papel.value for papel in item["papeis"]}
         ]
         return contexto
 
