@@ -21,6 +21,7 @@ from django.urls import reverse
 
 from contas.models import Papel
 from tests.contas_helpers import rota
+from tests.html_helpers import analisar, hrefs_de, secao_por_rotulo
 
 # Títulos das capacidades planejadas, na ordem canônica definida para a Home.
 TITULO_SOLICITAR_MATERIAL = "Solicitar material"
@@ -77,19 +78,20 @@ TITULOS_AUXILIAR_SETOR = [
     TITULO_HISTORICO_MOVIMENTACOES,
 ]
 
-HREF_RE = re.compile(r'href="([^"]+)"')
-
-
 def _hrefs_de_negocio(conteudo_html):
-    """Extrai todos os `href="..."` do HTML, descartando assets estáticos
-    (`/static/...`) e o link "Senha" da barra de trabalho (mecânica de
-    autenticação de todo usuário, não capability — D-27/FR-039 da 005), para
-    comparar exatamente quais rotas de negócio a Home expôs como link."""
-    return {
-        href
-        for href in HREF_RE.findall(conteudo_html)
-        if not href.startswith("/static/") and href != reverse("definir_senha")
-    }
+    """Destinos de negócio que o CONTEÚDO da Home expõe como link: os `<a href>` da seção de
+    tarefas (`aria-labelledby="home-tasks-heading"`). Fora dela ficam a marca, o skip link, a
+    sidebar e o rodapé da conta (Senha, Sair) — shell, não capability (D-27/FR-039 da 005); a
+    sidebar tem verificação própria em `_hrefs_da_sidebar`. A igualdade exata é o que prova que
+    a Home não expõe destino a mais nem a menos."""
+    secao = secao_por_rotulo(analisar(conteudo_html), "home-tasks-heading")
+    return hrefs_de(secao)
+
+
+def _hrefs_da_sidebar(conteudo_html):
+    """`href` da `<nav aria-label="Seções">` da sidebar: Início (`/`) mais os mesmos destinos."""
+    nav = analisar(conteudo_html).unico("nav", aria_label="Seções")
+    return hrefs_de(nav)
 
 
 def _login(client, usuario, senha_valida):
@@ -162,6 +164,31 @@ def test_usuario_sem_requester_e_sem_warehouse_head_nao_ve_nenhum_link_de_catalo
     assert hrefs == set()
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "fixture_usuario",
+    [
+        "requisitante",
+        "auditor",
+        "funcionario_almoxarifado",
+        "chefe_almoxarifado",
+        "admin_sistema",
+        "superusuario_tecnico",
+    ],
+)
+def test_sidebar_e_conteudo_da_home_oferecem_exatamente_os_mesmos_destinos(
+    client, senha_valida, fixture_usuario, request
+):
+    """A sidebar e a seção de tarefas da Home saem da mesma fonte: os destinos de negócio são
+    idênticos, e a sidebar acrescenta apenas o Início (`/`)."""
+    usuario = request.getfixturevalue(fixture_usuario)
+    _login(client, usuario, senha_valida)
+
+    conteudo = client.get(reverse("home")).content.decode()
+
+    assert _hrefs_da_sidebar(conteudo) == _hrefs_de_negocio(conteudo) | {reverse("home")}
+
+
 # ---------------------------------------------------------------------------
 # 2. Placeholders de capacidades futuras nunca são links
 # ---------------------------------------------------------------------------
@@ -204,6 +231,39 @@ def test_titulos_de_capacidades_planejadas_nao_aparecem_como_links(
 
     for titulo in titulos:
         assert titulo in conteudo
+
+    # Os títulos estão na seção "Em preparação", e a seção inteira não tem link algum.
+    em_preparacao = secao_por_rotulo(analisar(conteudo), "home-planned-heading")
+    assert em_preparacao.buscar("a") == []
+    for titulo in titulos:
+        assert titulo in em_preparacao.texto
+
+
+@pytest.mark.django_db
+def test_home_sem_capacidades_planejadas_nao_mostra_a_secao_em_preparacao(
+    client, superusuario_tecnico, senha_valida
+):
+    _login(client, superusuario_tecnico, senha_valida)
+
+    documento = analisar(client.get(reverse("home")).content.decode())
+
+    assert documento.buscar(aria_labelledby="home-planned-heading") == []
+    assert "Em preparação" not in documento.texto
+
+
+@pytest.mark.django_db
+def test_home_sem_tarefas_mostra_o_estado_vazio_e_nenhum_link_de_tarefa(
+    client, superusuario_tecnico, senha_valida
+):
+    """Conta técnica: nenhum papel, nenhuma tarefa. A seção de tarefas continua existindo, com o
+    texto de estado vazio e sem link algum."""
+    _login(client, superusuario_tecnico, senha_valida)
+
+    documento = analisar(client.get(reverse("home")).content.decode())
+
+    tarefas = secao_por_rotulo(documento, "home-tasks-heading")
+    assert tarefas.buscar("a") == []
+    assert "Nenhuma tarefa disponível para os seus papéis atuais." in tarefas.texto
 
 
 # ---------------------------------------------------------------------------
@@ -350,10 +410,6 @@ def test_home_exibe_matricula_setor_e_rotulos_dos_papeis(
     _login(client, chefe_almoxarifado, senha_valida)
 
     response = client.get(reverse("home"))
-    conteudo = response.content.decode()
-
-    assert chefe_almoxarifado.matricula in conteudo
-    assert response.context["setor"].nome in conteudo
     assert response.context["setor"] == chefe_almoxarifado.setor
 
     papeis_esperados = [
@@ -363,8 +419,37 @@ def test_home_exibe_matricula_setor_e_rotulos_dos_papeis(
         "Chefe do almoxarifado",
     ]
     assert response.context["papeis"] == papeis_esperados
-    for rotulo in papeis_esperados:
-        assert rotulo in conteudo
+
+    # A identidade vive nos tiles do conteúdo (a sidebar repete matrícula e setor no rodapé, o
+    # que não prova nada sobre a Home): matrícula e setor em seus tiles, papéis como badges.
+    tiles = _tiles_de_identidade(response.content.decode())
+    assert tiles["Matrícula"].texto == chefe_almoxarifado.matricula
+    assert tiles["Setor"].texto == chefe_almoxarifado.setor.nome
+    badges = [badge.texto for badge in tiles["Papéis"].buscar(classe="badge")]
+    assert badges == papeis_esperados
+
+
+@pytest.mark.django_db
+def test_home_sem_papel_de_negocio_diz_que_nenhum_papel_foi_atribuido(
+    client, superusuario_tecnico, senha_valida
+):
+    _login(client, superusuario_tecnico, senha_valida)
+
+    tiles = _tiles_de_identidade(client.get(reverse("home")).content.decode())
+
+    assert tiles["Papéis"].buscar(classe="badge") == []
+    assert "Nenhum papel de negócio atribuído." in tiles["Papéis"].texto
+
+
+def _tiles_de_identidade(conteudo_html):
+    """`rótulo -> <dd>` dos tiles de identidade (`<dl aria-label="Identidade">`)."""
+    lista = analisar(conteudo_html).unico("dl", aria_label="Identidade")
+    tiles = {}
+    for tile in lista.buscar(classe="tile"):
+        rotulo = tile.unico("dt").texto
+        tiles[rotulo] = tile.unico("dd")
+    assert list(tiles) == ["Matrícula", "Setor", "Papéis"]
+    return tiles
 
 
 @pytest.mark.django_db

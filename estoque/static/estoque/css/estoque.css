@@ -110,20 +110,14 @@
   width: 100%;
   max-width: 10rem;
   min-height: var(--control-height);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--control-pad-y) var(--control-pad-x);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background-color: var(--color-surface);
   color: var(--color-text);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-input);
   font-variant-numeric: tabular-nums;
   text-align: right;
-}
-
-@media (pointer: coarse) {
-  .table td input[type="text"][inputmode="decimal"] {
-    font-size: var(--font-size-section-title);
-  }
 }
 
 /* Erro de quantidade (`.field-has-error` na própria `<td>`,
@@ -171,18 +165,19 @@
 }
 
 /* Item bloqueado no estorno (saldo atual insuficiente): mesma família de
-   `.table-row-error` (borda lateral) — o motivo em texto explícito fica na
-   própria célula (template), nunca só a borda. */
+   `.table-row-error` (fundo do tom de perigo) — o motivo em texto explícito fica na
+   própria célula (template), nunca só a cor. O texto é `--color-text`: cor de estado
+   nunca carrega texto. */
 .estoque-estorno-motivo {
   margin: var(--space-1) 0 0;
-  color: var(--color-danger);
+  color: var(--color-text);
   font-size: var(--font-size-meta);
 }
 
 /* Correção do gate visual (P1, "line-length marginal ~86 car."): mesma medida
    de leitura de `.page-header-description` (70ch), reduzida — o detector
    mediu ~86 caracteres reais por linha com 70ch porque a métrica `ch` (largura
-   do dígito "0" da Atkinson) é mais larga que a média dos caracteres do
+   do dígito "0" da fonte) é mais larga que a média dos caracteres do
    texto corrido; 60ch aproxima o alvo de ~75 caracteres reais pedido. */
 .estoque-estorno-descricao {
   max-width: 60ch;
@@ -218,7 +213,7 @@
    preenchida da página (The One Accent Rule já reserva o azul; isto evita
    um segundo preenchimento de `danger` fora do contexto de confirmação). */
 .estoque-btn-estornar {
-  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
 /* Data de registro na lista de entradas (achado do gate visual, "Mundo

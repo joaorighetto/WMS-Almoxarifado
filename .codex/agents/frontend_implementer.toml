@@ -21,9 +21,9 @@ Sobre a skill impeccable, separe dois usos distintos.
 Como orientação de craft e implementação: use-a normalmente. Trabalho de frontend significativo
 corresponde à descrição da skill e pode ativá-la; siga as instruções dela para qualidade visual, de
 interação e de estados, sempre dentro da fundação já estabelecida em DESIGN.md e nos componentes e
-tokens existentes. Respeite as regras nomeadas do DESIGN.md, lendo o texto delas lá: NR-26 Grammar,
-Yellow-On-Ink, Legible Pair, Mono-Is-Data, No Hover Dependency, Available-Versus-Planned, Flow
-Arrow, One Accent, No Color-Only State, Flat-By-Default e Shared Foundation. Contrariar uma delas é
+tokens existentes. Respeite as regras nomeadas do DESIGN.md, lendo o texto delas lá: One Accent, No Color-Only
+State, Mono-Is-Data, Opaque CADPRO, Shared Foundation, No Hover Dependency, Flat-By-Default e
+Available-Versus-Planned. Contrariar uma delas é
 conflito com DESIGN.md, não decisão de interface.
 
 Como gate de revisão: não é seu. Não execute `impeccable critique`, `impeccable audit` nem

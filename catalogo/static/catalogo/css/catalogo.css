@@ -49,19 +49,33 @@
  * Loading Indicator, Table, Pagination e Empty State (`static/css/components.css`).
  */
 
-/* Classificação recebida do SCPI (FR-023): nome legível em destaque, códigos brutos de
-   grupo/subgrupo como metadado abaixo — preserva os 4 campos (`grupo`, `subgrupo`,
+/* Classificação recebida do SCPI (FR-023): nome legível e, na mesma linha, os códigos brutos de
+   grupo/subgrupo como metadado em mono (densidade do upstream: uma linha por material quando
+   cabe) — preserva os 4 campos (`grupo`, `subgrupo`,
    `nome_grupo`, `nome_subgrupo`) na mesma coluna, sem inventar hierarquia que o SCPI não
    forneceu. */
+#resultados-consulta td:has(> .catalogo-classificacao-nome) {
+  /* Mantém nome curto e código juntos no tablet; nomes longos continuam quebrando, e a
+     largura excedente permanece na rolagem horizontal do wrapper. */
+  min-width: 16rem;
+}
+
 .catalogo-classificacao-nome {
-  display: block;
+  display: inline;
 }
 
 .catalogo-classificacao-codigo {
-  display: block;
-  margin-top: var(--space-1);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-meta);
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-code);
+  white-space: nowrap;
+}
+
+/* Separador decorativo entre o nome e o código (fora da árvore de acessibilidade quando o
+   navegador suporta texto alternativo vazio). */
+.catalogo-classificacao-codigo::before {
+  content: "· ";
+  content: "· " / "";
 }
 
 /* Detalhamento longo (`<details>`): truncamento só visual, nunca do dado — a versão
@@ -70,6 +84,24 @@
 .catalogo-detalhamento summary {
   cursor: pointer;
   color: var(--color-text);
+}
+
+/* Resumo fechado numa linha só, com reticências (como `td.clip` do upstream): o marcador fica
+   dentro da caixa (`list-style-position: inside`) para o `overflow` não o cortar, e o `<summary>`
+   continua focável e clicável. O texto completo abre abaixo, quebrando linha normalmente
+   (`.catalogo-detalhamento-completo`). A coluna tem largura mínima: antes de espremê-la a tabela
+   rola na horizontal dentro do card. */
+.catalogo-detalhamento {
+  min-width: 14rem;
+  max-width: 24rem;
+}
+
+.catalogo-detalhamento summary {
+  display: list-item;
+  list-style-position: inside;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .catalogo-detalhamento summary::-webkit-details-marker {
@@ -83,6 +115,7 @@
 }
 
 .catalogo-descricao-cell {
+  min-width: 14rem;
   white-space: pre-line;
 }
 
@@ -119,3 +152,35 @@
    borda). Os dois rótulos são paralelos, cabem numa linha e continuam texto
    explícito — a cor nunca é a única pista (The No Color-Only State Rule). O
    `white-space: nowrap` do primitivo basta; nenhuma regra própria é necessária. */
+
+/* Consulta do catálogo (contrato do redesign §12, `docs/redesign-observatory/contrato.md`).
+   Filtros: Código (CADPRO, mono, largura de um CADPRO) e Descrição, que ocupa o resto da linha.
+   A largura própria só vale com a barra em linha; em até 640px cada campo ocupa a largura toda. */
+#campo-codigo input {
+  font-family: var(--font-family-mono);
+}
+
+@media (min-width: 641px) {
+  #campo-codigo {
+    flex: 0 1 240px;
+  }
+
+  .filter-bar-field {
+    flex-basis: 320px;
+  }
+}
+
+/* A tabela rola na horizontal dentro do card (nunca vira cards), com largura mínima para não
+   esmagar os dados; CADPRO e números já são `nowrap`, a descrição quebra linha. */
+#resultados-consulta .table {
+  min-width: 46rem;
+}
+
+/* Celular: a Descrição não ocupa o card inteiro; Saldo e Unidade aparecem ao lado do CADPRO e o
+   restante rola na horizontal (a sombra de borda do `.table-wrapper` indica que há mais). */
+@media (max-width: 640px) {
+  .catalogo-descricao-cell {
+    min-width: 10rem;
+    max-width: 12rem;
+  }
+}

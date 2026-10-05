@@ -1,6 +1,6 @@
 # ADR 0001 — App shell: barra de trabalho global no template base, sem sidebar
 
-- **Status:** aceito
+- **Status:** substituído pelo [ADR 0002](0002-app-shell-sidebar-contextual.md) em 2026-10-05
 - **Data da decisão:** 2026-09, na modernização visual "Tubulação e piso industrial" (Home-laboratório
   no PR #15, propagação ao catálogo no PR #17). Registrado depois, em 2026-09-25.
 - **Fonte vigente do detalhe visual:** `DESIGN.md` → Layout → App shell e Components → Navigation.

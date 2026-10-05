@@ -94,7 +94,7 @@ Rolagem e foco depois da paginação HTMX (revisão do gate visual, Fase C,
 achado P1: no celular a página 2 começava ~3.700px acima da área visível).
 Os links `hx-get` levam `hx-swap="innerHTML show:top"`: o HTMX 4 rola o alvo
 (`#resultados-consulta`) até o topo como parte da troca, respeitando o
-`scroll-padding-top` da barra sticky (`base.css`), e só numa troca de
+(sem barra fixa no topo: a barra móvel é estática, ADR 0002), e só numa troca de
 verdade (com `ctx.swap = 'none'`, que cada consulta usa para neutralizar uma
 resposta de erro, o HTMX pula `show`). O FOCO vai à tabela de resultados
 (`<table tabindex="-1">` nas consultas, `hx-on::after:swap`, com

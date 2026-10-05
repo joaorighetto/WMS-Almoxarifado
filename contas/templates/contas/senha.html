@@ -8,11 +8,11 @@
 (`DefinirSenhaForm` com credencial provisória, `TrocarSenhaForm` com a definitiva).
 
 Credencial provisória (definição obrigatória, FR-032 a FR-034): sem navegação nem atalhos, só o
-logout — a barra de trabalho comum (marca como link para a Home) é substituída por uma faixa
-mínima, a mesma forma da barra mas só com a marca (texto, nunca link), a matrícula e "Sair". Sem
-"Senha" na faixa (é a própria tela) e sem retorno: não há para onde voltar enquanto a senha não
-for definida. Credencial definitiva (troca voluntária, FR-037): barra de trabalho comum e o campo
-da senha atual, com "Cancelar" de volta à Home.
+logout — o shell mínimo vem de `contas/base.html` + `_navegacao.html` (`navegacao.provisoria`):
+sidebar só com a marca (texto, nunca link) e o rodapé da conta (matrícula, setor, Senha como
+página atual, Sair, tema), sem Início nem grupos. Sem retorno: não há para onde voltar enquanto a
+senha não for definida. Credencial definitiva (troca voluntária, FR-037): sidebar completa e o
+campo da senha atual, com "Cancelar" de volta à Home.
 
 A senha nunca volta preenchida e nunca é ecoada: o Django já não repopula campos de senha.
 
@@ -29,21 +29,6 @@ quando há erro, e todos os erros do campo ficam dentro de um só elemento com o
 {% block extra_js %}
 <script src="{% static 'js/envio.js' %}" defer></script>
 {% endblock %}
-
-{% block appbar %}{% if provisoria %}
-<header class="appbar">
-  <div class="appbar-inner">
-    <span class="appbar-brand">Almoxarifado SAEP</span>
-    <div class="appbar-account">
-      <span class="appbar-matricula">{{ user.matricula }}</span>
-      <form method="post" action="{% url 'logout' %}" class="appbar-logout-form">
-        {% csrf_token %}
-        <button type="submit" class="appbar-logout">Sair</button>
-      </form>
-    </div>
-  </div>
-</header>
-{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block content %}
 <main class="page">

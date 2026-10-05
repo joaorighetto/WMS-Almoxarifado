@@ -1,260 +1,108 @@
 {% extends "contas/base.html" %}
-{% load static %}
 
 {% block title %}Início — WMS-Almoxarifado{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'contas/css/home.css' %}">
-{% endblock %}
+{% comment %}
+Home (contrato do redesign, `docs/redesign-observatory/contrato.md` §12): só dado real — identidade,
+tarefas por capability e capacidades planejadas. Nada de contadores, gráficos ou alertas.
 
-{% block appbar %}{% include "contas/_barra_trabalho.html" with esconde_matricula_compacta=True %}{% endblock %}
+O `<main id="main">`, o cabeçalho (`.top`) e as mensagens vêm de `contas/base.html`; aqui só o
+bloco `page`.
 
-{% block content %}
-<main class="home-page">
-  <div class="home-container">
-    {% include "interface/_mensagens.html" %}
+Tarefas: vêm de `navegacao.grupos` (`contas/navegacao.py`, a mesma fonte da sidebar), já filtradas
+por capability no servidor — o template não repete condições `pode_*`. Os links são conveniência:
+cada rota verifica o papel no servidor (Constitution VI).
+{% endcomment %}
 
-    <h1 class="page-header-title home-page-title">Início</h1>
+{% block heading %}Início{% endblock %}
+{% block sub %}Suas tarefas, conforme os papéis atribuídos à sua conta.{% endblock %}
 
-    <div class="home-main">
-      <dl class="home-id-plate" aria-label="Identidade">
-        <div class="home-id-item">
-          <dt>Matrícula</dt>
-          <dd class="home-id-matricula">{{ user.matricula }}</dd>
-        </div>
-        <div class="home-id-item">
-          <dt>Setor</dt>
-          <dd>{{ setor.nome }}</dd>
-        </div>
-        <div class="home-id-item">
-          <dt>Papéis</dt>
-          <dd>
-            <ul class="home-id-papeis">
-              {% for papel in papeis %}
-              <li><span class="badge badge-neutral">{{ papel }}</span></li>
-              {% empty %}
-              <li class="home-id-papeis-empty">Nenhum papel de negócio atribuído.</li>
-              {% endfor %}
-            </ul>
-          </dd>
-        </div>
-      </dl>
-
-      <section class="home-tasks" aria-labelledby="home-tasks-heading">
-        <h2 id="home-tasks-heading" class="section-marker section-marker-attached">
-          <span class="section-marker-label">Suas tarefas</span>
-          <svg class="section-marker-arrow" width="14" height="14" viewBox="0 0 16 16"
-               fill="none" aria-hidden="true">
-            <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </h2>
-
-        {% if pode_consultar_catalogo or pode_importar_catalogo or pode_consultar_fornecedores or pode_importar_fornecedores or pode_registrar_entrada or pode_consultar_entradas or pode_administrar_organizacao %}
-        {% comment %}
-        Links de conveniência — cada rota já verifica seu papel exigido no
-        servidor (o esconder do link não é a autorização, Constitution VI).
-        {% endcomment %}
-        <ul class="home-task-list">
-          {% if pode_registrar_entrada %}
-          <li class="home-task-item">
-            <a href="{% url 'estoque:entrada_nova' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Registrar entrada de materiais</span>
-                <span class="home-task-desc">
-                  Lance recebimentos com motivo e referência, com efeito no saldo.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          {% endif %}
-          {% if pode_consultar_catalogo %}
-          <li class="home-task-item">
-            <a href="{% url 'catalogo:consulta' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Consultar catálogo de materiais</span>
-                <span class="home-task-desc">
-                  Localize materiais por CADPRO ou descrição e confira o saldo.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          {% endif %}
-          {% if pode_importar_catalogo %}
-          <li class="home-task-item">
-            <a href="{% url 'catalogo:importacao_envio' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Importar catálogo do SCPI</span>
-                <span class="home-task-desc">
-                  Envie o CSV exportado, confira a prévia e confirme a carga.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          <li class="home-task-item">
-            <a href="{% url 'catalogo:historico' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Histórico de importações</span>
-                <span class="home-task-desc">
-                  Veja quem importou, quando, e as rejeições e divergências de cada carga.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          {% endif %}
-          {% if pode_consultar_fornecedores %}
-          <li class="home-task-item">
-            <a href="{% url 'fornecedores:consulta' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Consultar fornecedores</span>
-                <span class="home-task-desc">
-                  Localize um fornecedor por código, nome ou documento e confira a situação de bloqueio.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          {% endif %}
-          {% if pode_consultar_entradas %}
-          <li class="home-task-item">
-            <a href="{% url 'estoque:entradas' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Consultar entradas</span>
-                <span class="home-task-desc">
-                  Veja as entradas registradas, da mais recente para a mais antiga, e abra o detalhe de cada uma.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          {% endif %}
-          {% if pode_importar_fornecedores %}
-          <li class="home-task-item">
-            <a href="{% url 'fornecedores:importacao_envio' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Importar fornecedores</span>
-                <span class="home-task-desc">
-                  Envie o cadastro de fornecedores exportado do SCPI, confira a prévia
-                  e confirme a carga.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          <li class="home-task-item">
-            <a href="{% url 'fornecedores:historico' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Histórico de importações de fornecedores</span>
-                <span class="home-task-desc">
-                  Veja quem importou, quando, e as rejeições e alterações cadastrais de cada carga.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          {% endif %}
-          {% if pode_administrar_organizacao %}
-          <li class="home-task-item">
-            <a href="{% url 'usuarios' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Usuários</span>
-                <span class="home-task-desc">
-                  Cadastre contas, consulte papéis, situação e o histórico de cada usuário.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          <li class="home-task-item">
-            <a href="{% url 'setores' %}" class="home-task-link">
-              <span class="home-task-text">
-                <span class="home-task-title">Setores</span>
-                <span class="home-task-desc">
-                  Consulte a situação, a chefia e os membros de cada setor.
-                </span>
-              </span>
-              <svg class="home-task-arrow" width="20" height="20" viewBox="0 0 16 16"
-                   fill="none" aria-hidden="true">
-                <path d="M2 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.75"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </li>
-          {% endif %}
-        </ul>
-        {% else %}
-        <div class="empty-state home-tasks-empty">
-          <p class="empty-state-title">Nenhuma tarefa disponível para os seus papéis atuais.</p>
-          <p class="empty-state-description">Procure o responsável pelo sistema.</p>
-        </div>
-        {% endif %}
-      </section>
-    </div>
-
-    {% if capacidades_planejadas %}
-    <section class="home-planned" aria-labelledby="home-planned-heading">
-      <div class="home-planned-tape" aria-hidden="true"></div>
-      <div class="home-planned-body">
-        <h2 id="home-planned-heading" class="section-marker section-marker-muted">
-          <span class="section-marker-label">Em preparação</span>
-        </h2>
-        <p class="home-planned-note">
-          Funções previstas para os seus papéis — ainda indisponíveis nesta versão.
-        </p>
-        <ul class="home-planned-list">
-          {% for item in capacidades_planejadas %}
-          <li class="home-planned-item">
-            <div class="home-planned-item-row">
-              <span class="home-planned-item-title">{{ item.titulo }}</span>
-              <span class="badge badge-planned">Planejado</span>
-            </div>
-            <p class="home-planned-item-desc">{{ item.descricao }}</p>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </section>
-    {% endif %}
+{% block page %}
+<dl class="grid tiles" aria-label="Identidade">
+  <div class="tile">
+    <dt class="k">Matrícula</dt>
+    <dd class="v mono">{{ user.matricula }}</dd>
   </div>
-</main>
+  <div class="tile">
+    <dt class="k">Setor</dt>
+    <dd class="v">{{ setor.nome }}</dd>
+  </div>
+  <div class="tile tile-wide">
+    <dt class="k">Papéis</dt>
+    <dd>
+      {% if papeis %}
+      <ul class="badge-list">
+        {% for papel in papeis %}
+        <li><span class="badge badge-plain">{{ papel }}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <span class="note">Nenhum papel de negócio atribuído.</span>
+      {% endif %}
+    </dd>
+  </div>
+</dl>
+
+<div class="grid">
+  <section aria-labelledby="home-tasks-heading">
+    <h2 id="home-tasks-heading" class="visually-hidden">Suas tarefas</h2>
+    {% if navegacao.grupos %}
+    <div class="grid two">
+      {% for grupo in navegacao.grupos %}
+      <div class="card">
+        <h2>{{ grupo.titulo }}</h2>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead class="visually-hidden">
+              <tr><th scope="col">Tarefa</th></tr>
+            </thead>
+            <tbody>
+              {% for item in grupo.itens %}
+              <tr>
+                <td>
+                  <a href="{{ item.url }}">{{ item.titulo }}</a>
+                  <div class="note">{{ item.descricao }}</div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="empty">
+        <p class="empty-state-title">Nenhuma tarefa disponível para os seus papéis atuais.</p>
+        <p class="empty-state-description">Procure o responsável pelo sistema.</p>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  {% if capacidades_planejadas %}
+  <section class="card" aria-labelledby="home-planned-heading">
+    <h2 id="home-planned-heading">Em preparação <span class="note">— funções previstas para os seus papéis, ainda indisponíveis nesta versão.</span></h2>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead class="visually-hidden">
+          <tr><th scope="col">Função</th></tr>
+        </thead>
+        <tbody>
+          {% for item in capacidades_planejadas %}
+          <tr>
+            <td>
+              <span class="text-muted">{{ item.titulo }}</span>
+              <span class="badge badge-plain">Planejado</span>
+              <div class="note">{{ item.descricao }}</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
 {% endblock %}

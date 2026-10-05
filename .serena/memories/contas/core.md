@@ -1,5 +1,5 @@
 # contas — identidade, setores, papéis
-Arquivos: `models.py` (núcleo), `admin.py` (única UI de administração), `views.py` (`WMSLoginView`, `HomeView`), `forms.py` (`WMSAuthenticationForm`), `middleware.py` (`RetornoPosLoginMiddleware`), templates `base.html` (layout global herdado pelos outros apps; declara a barra de trabalho no bloco `appbar`, só para autenticado), `_barra_trabalho.html` (parcial da barra: marca → Home, matrícula, logout POST), `login.html`, `home.html` (sobrescreve `appbar` só para passar `esconde_matricula_compacta`).
+Arquivos: `models.py` (núcleo), `admin.py` (única UI de administração), `views.py` (`WMSLoginView`, `HomeView`), `forms.py` (`WMSAuthenticationForm`), `middleware.py` (`RetornoPosLoginMiddleware`), templates `base.html` (layout global herdado pelos outros apps; shell com sidebar só para autenticado, ADR 0002), `_navegacao.html` (sidebar: destinos de `navegacao.py` via context processor `navegacao`, conta, logout POST, tema), `login.html`, `home.html` (blocos `heading`/`sub`/`page`). Navegação por capability em `navegacao.py` + `context_processors.py`.
 
 ## Modelo
 - `Papel` (TextChoices, códigos `ROLE-*`): catálogo fechado espelhando `permissions-matrix.md`; não é dado editável.

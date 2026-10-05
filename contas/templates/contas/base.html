@@ -4,24 +4,65 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}WMS-Almoxarifado{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/fonts.css' %}">
+  {% comment %}
+  Tema salvo aplicado antes da primeira pintura (e antes das folhas de estilo): lê
+  `localStorage['wms-tema']` e marca `<html class="js">`. Em try/catch — armazenamento
+  indisponível não quebra a página. A alternância do botão fica em `static/js/shell.js`.
+  {% endcomment %}
+  <script>
+    (function () {
+      var raiz = document.documentElement;
+      raiz.classList.add("js");
+      try {
+        var tema = localStorage.getItem("wms-tema");
+        if (tema === "dark" || tema === "light") raiz.setAttribute("data-theme", tema);
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   <link rel="stylesheet" href="{% static 'css/components.css' %}">
   {% block extra_css %}{% endblock %}
+  {% comment %}
+  `shell.js` fica aqui, no <head>, com `defer` — nunca no <body>: na restauração de histórico o
+  HTMX 4 troca o <body> inteiro e re-executa os <script> que estejam nele. Os listeners são
+  delegados em `document`, então sobrevivem à troca sem duplicar.
+  {% endcomment %}
+  <script src="{% static 'js/shell.js' %}" defer></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body{% block body_attrs %}{% endblock %}>
   {% comment %}
-  Barra de trabalho em toda tela autenticada (propagação da direção "Tubulação
-  e piso industrial", `.claude/rules/agent-orchestration.md` → "Trabalho
-  frontend"). Declarada uma única vez aqui; páginas com placa de identificação
-  própria (Home) sobrescrevem este bloco só para passar
-  `esconde_matricula_compacta=True` — nunca duplicando o `{% include %}`.
-  Anônimo (login) não vê a barra, pois `user.is_authenticated` é falso ali.
+  App shell (ADR 0002): sidebar de 216px à esquerda e a coluna de trabalho à direita, declarados
+  uma única vez aqui. Só para usuário autenticado — o login (anônimo) não tem shell e traz o
+  próprio layout no bloco `content`. Respostas HTMX parciais renderizam só o partial.
+
+  Bloco `content`: encaixe legado. O padrão renderiza o `<main class="main" id="main">` com o
+  cabeçalho da página (`heading`, `sub`, `tools`) e o bloco interno `page`, para as páginas
+  recompostas. Telas ainda não propagadas sobrescrevem `content` e trazem o próprio `<main>`
+  (nunca aninhado neste). A sidebar vem de `_navegacao.html`.
   {% endcomment %}
-  {% block appbar %}{% if user.is_authenticated %}{% include "contas/_barra_trabalho.html" %}{% endif %}{% endblock %}
-  {% block content %}{% endblock %}
+  {% if user.is_authenticated %}
+  <a class="skip" href="#main">Pular para o conteúdo</a>
+  <div class="app">
+    {% include "contas/_navegacao.html" %}
+  {% endif %}
+    {% block content %}
+    <main class="main" id="main">
+      <div class="top">
+        <div>
+          <h1>{% block heading %}{% endblock %}</h1>
+          <div class="sub">{% block sub %}{% endblock %}</div>
+        </div>
+        <div class="tools">{% block tools %}{% endblock %}</div>
+      </div>
+      {% include "interface/_mensagens.html" %}
+      {% block page %}{% endblock %}
+    </main>
+    {% endblock %}
+  {% if user.is_authenticated %}
+  </div>
+  {% endif %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>
