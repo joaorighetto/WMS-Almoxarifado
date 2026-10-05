@@ -132,8 +132,9 @@ fluxo próprio de requisição e autorização hierárquica por setor que o SCPI
   feature especificada.
 - Nenhuma identidade institucional, marca, depoimento ou material de marketing confirmado até o
   momento; trabalho visual futuro não deve presumir nenhum desses. A direção visual adotada na
-  interface ("Tubulação e piso industrial", ver `DESIGN.md`) é decisão de design do produto, não
-  identidade institucional aprovada do SAEP: não há logotipo nem cor oficial.
+  interface (interface de operador derivada do django-observatory, ver `DESIGN.md`) é decisão de
+  design do produto, não identidade institucional aprovada do SAEP: não há logotipo nem cor
+  oficial.
 
 ## Product Principles
 

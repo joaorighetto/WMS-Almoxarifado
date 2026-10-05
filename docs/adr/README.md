@@ -8,4 +8,5 @@ Decisões triviais ou facilmente reversíveis não devem virar ADR.
 
 ## Registros
 
-- [0001 — App shell: barra de trabalho global no template base, sem sidebar](0001-app-shell-barra-de-trabalho.md)
+- [0001 — App shell: barra de trabalho global no template base, sem sidebar](0001-app-shell-barra-de-trabalho.md) — substituído pelo 0002
+- [0002 — App shell: sidebar contextual por capability, no padrão do django-observatory](0002-app-shell-sidebar-contextual.md)
