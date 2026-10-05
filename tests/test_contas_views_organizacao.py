@@ -714,7 +714,9 @@ def test_lista_de_setores_mostra_chefe_membros_ativos_e_marca_de_almoxarifado(cl
 def test_lista_de_setores_busca_por_nome_e_filtra_por_situacao(client, setores, filtros, esperados):
     resposta = client.get(rota("setores"), filtros)
 
-    conteudo = resposta.content.decode()
+    # Só o `<main>`: o rodapé da sidebar mostra o setor do próprio administrador (que também é um
+    # dos setores listados) e não é resultado de busca.
+    conteudo = texto_principal(resposta.content.decode())
     assert {nome for nome in NOMES_DOS_SETORES if nome in conteudo} == esperados
 
 

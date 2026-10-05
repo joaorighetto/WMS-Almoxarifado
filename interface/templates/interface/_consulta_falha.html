@@ -22,14 +22,14 @@ os da última consulta bem-sucedida, não foram apagados nem substituídos.
 Cada consulta escode os dois (`hidden`) em `hx-on::before:request`, antes de
 qualquer nova tentativa, e revela só o que corresponde à falha ocorrida.
 {% endcomment %}
-<div id="resultados-erro-rede" class="alert alert-danger" role="alert" hidden>
+<div id="resultados-erro-rede" class="error-box" role="alert" hidden>
   <p>
     Não foi possível atualizar os resultados: o servidor não respondeu.
     Verifique a conexão e tente de novo. O que aparece abaixo ainda é da
     consulta anterior.
   </p>
 </div>
-<div id="resultados-erro-servidor" class="alert alert-danger" role="alert" hidden>
+<div id="resultados-erro-servidor" class="error-box" role="alert" hidden>
   <p>
     O servidor não conseguiu concluir esta consulta. Tente de novo em
     instantes. O que aparece abaixo ainda é da consulta anterior.

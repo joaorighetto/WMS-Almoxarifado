@@ -39,7 +39,7 @@
 .fornecedores-situacao-destaque,
 .fornecedores-situacao-destaque dt,
 .fornecedores-situacao-destaque dd {
-  color: var(--color-warning);
+  color: var(--color-text);
   font-weight: var(--font-weight-semibold);
 }
 

@@ -1,13 +1,13 @@
 {% comment %}
 Feedback de `django.contrib.messages` (envio, prévia, confirmação, cancelamento e
-detalhe) — DESIGN.md → Components → Alert. Cada mensagem permanece visível até a
+detalhe) (`static/css/components.css`, seção 9). Cada mensagem permanece visível até a
 próxima navegação (nunca some sozinha) e nunca é usada como toast para um resultado
 que já é visível pela própria mudança de tela.
 
-Django emite `message.tags == "error"` para `messages.error(...)`, mas o primitivo de
-Alert usa `alert-danger` (DESIGN.md → Colors → Estados semânticos). O mapeamento fica
-neste partial em vez de `MESSAGE_TAGS` (settings) para manter a mudança restrita aos
-arquivos desta task.
+Família de mensagens do redesign (`docs/redesign-observatory/contrato.md` §8): erro vira
+`.error-box` com `role="alert"`; sucesso, aviso e informação são `.alert-success/-warning/
+-info` com `role="status"` e o marcador de forma do badge. O mapeamento de `message.tags`
+fica neste partial em vez de `MESSAGE_TAGS` (settings).
 
 Movido de `catalogo/templates/catalogo/_mensagens.html` (consolidação de UX,
 Fase A): substitui também a cópia `estoque/templates/estoque/_mensagens.html`
@@ -20,12 +20,11 @@ Consumidores: templates de `catalogo`, `fornecedores` e `estoque`
 {% if messages %}
 <div class="messages">
   {% for message in messages %}
-  <div
-    class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}"
-    role="alert"
-  >
-    <p>{{ message }}</p>
-  </div>
+  {% if message.tags == 'error' %}
+  <div class="error-box" role="alert"><p>{{ message }}</p></div>
+  {% else %}
+  <div class="alert {% if message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}" role="status"><p>{{ message }}</p></div>
+  {% endif %}
   {% endfor %}
 </div>
 {% endif %}

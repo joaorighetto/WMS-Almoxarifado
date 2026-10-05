@@ -49,20 +49,16 @@ tratado abaixo na própria `<section>` — os dois alertas ficam em
 {% endcomment %}
 {% block body_attrs %} hx-on::error="document.getElementById('resultados-erro-rede').hidden = false; const secao = document.getElementById('resultados-consulta')?.closest('section'); if (secao?.dataset.paginacaoPendente === '1') { secao.dataset.paginacaoPendente = ''; document.getElementById('resultados-erro-rede').scrollIntoView(); }"{% endblock %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container">
-  {% include "interface/_mensagens.html" %}
+{% comment %}
+Cabeçalho (`.top`), `<main id="main">` e mensagens vêm de `contas/base.html`; esta página
+preenche `heading`, `sub` e `page` (contrato do redesign, `docs/redesign-observatory/contrato.md`
+§12). A tabela e a paginação ficam dentro de um único `.card` (`#resultados-consulta`), como
+`list.html` do django-observatory.
+{% endcomment %}
+{% block heading %}Consulta do catálogo{% endblock %}
+{% block sub %}Localize um material pelo código completo (CADPRO) ou por palavras da descrição, em qualquer ordem.{% endblock %}
 
-  <header class="page-header">
-    <div>
-      <h1 class="page-header-title">Consulta do catálogo</h1>
-      <p class="page-header-description">
-        Localize um material pelo código completo (CADPRO) ou por palavras da descrição, em qualquer ordem.
-      </p>
-    </div>
-  </header>
-
+{% block page %}
   {% comment %}
   `hx-on` cobre falha HTTP sem arquivo JS próprio (contrato de T035):
   `htmx:response:error` (4xx/5xx, renomeado de `htmx:responseError`)
@@ -99,7 +95,7 @@ tratado abaixo na própria `<section>` — os dois alertas ficam em
 
   - Sucesso: a rolagem até o topo de `#resultados-consulta` é do próprio HTMX
     (`hx-swap="innerHTML show:top"` nos links de página, respeita o
-    `scroll-padding-top` da barra sticky); aqui só o FOCO vai à tabela de resultados
+    sem barra fixa no topo); aqui só o FOCO vai à tabela de resultados
     (`<table tabindex="-1">`, `preventScroll`, já à vista) — não ao resumo "Página
     X de Y", que fica DEPOIS da tabela e rolaria a tela de volta ao fim da
     página (medido: 3.800px acima da área visível). Roda depois da
@@ -114,7 +110,6 @@ tratado abaixo na própria `<section>` — os dois alertas ficam em
   `prefers-reduced-motion`.
   {% endcomment %}
   <section
-    class="page-section"
     hx-on::before:request="document.getElementById('resultados-erro-rede').hidden = true; document.getElementById('resultados-erro-servidor').hidden = true; this.dataset.paginacaoPendente = event.target.closest('a.pagination-link[hx-get]') ? '1' : ''; this.querySelectorAll('.field-has-error').forEach(function (campo) { campo.classList.remove('field-has-error'); campo.removeAttribute('data-estado'); campo.querySelector('[aria-invalid]')?.removeAttribute('aria-invalid'); let erro = campo.querySelector('.field-error'); if (erro) { let dica = document.createElement('p'); dica.className = 'field-hint'; dica.textContent = campo.dataset.dica; erro.replaceWith(dica); } })"
     hx-on::response:error="ctx.swap = 'none'; ctx.push = false; ctx.text = ''; document.getElementById('resultados-erro-servidor').hidden = false"
     hx-on::after:swap="if (this.dataset.paginacaoPendente === '1') { this.dataset.paginacaoPendente = ''; let erroVisivel = [document.getElementById('resultados-erro-rede'), document.getElementById('resultados-erro-servidor')].find(function (alerta) { return !alerta.hidden; }); if (erroVisivel) { erroVisivel.scrollIntoView(); } else { document.querySelector('#resultados-consulta table')?.focus({ preventScroll: true }); } }"
@@ -231,7 +226,7 @@ tratado abaixo na própria `<section>` — os dois alertas ficam em
 
     {% include "interface/_consulta_falha.html" %}
 
-    <div id="resultados-consulta">
+    <div id="resultados-consulta" class="card">
       {% comment %}
       Partial de resultados da consulta do catálogo (T035, US2; template
       partials, Django 6). `ConsultaCatalogoView` renderiza este mesmo
@@ -309,7 +304,7 @@ tratado abaixo na própria `<section>` — os dois alertas ficam em
       </div>
       {% endif %}
       {% elif pagina.object_list %}
-      <div class="table-wrapper table-sticky-header">
+      <div class="table-wrapper">
         <table class="table" tabindex="-1">
           <thead>
             <tr>
@@ -382,6 +377,4 @@ tratado abaixo na própria `<section>` — os dois alertas ficam em
       {% endpartialdef %}
     </div>
   </section>
-  </div>
-</main>
 {% endblock %}

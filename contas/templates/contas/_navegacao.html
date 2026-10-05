@@ -1,0 +1,59 @@
+{% comment %}
+Sidebar do app shell — WMS-Almoxarifado (ADR 0002, `docs/redesign-observatory/contrato.md` §3).
+
+Incluída uma única vez por `contas/templates/contas/base.html`, só para usuário autenticado.
+Substitui a barra de trabalho (`_barra_trabalho.html`). Nenhuma página a inclui diretamente.
+
+Lê o contexto `navegacao` do context processor `contas.context_processors.navegacao`
+(`contas/navegacao.py`): `inicio`, `grupos[].titulo/itens[]` (`chave`, `rotulo`, `url`, `atual`)
+e `provisoria`. A sidebar só espelha o que a rota permite — quem decide é a rota, no servidor
+(Constitution V e VI). Capacidades planejadas não entram aqui; ficam na Home.
+
+Credencial provisória: marca sem link, sem Início nem grupos, só o rodapé da conta (Senha como
+página atual, Sair, tema).
+
+Até 860px a sidebar vira barra estática com botão "Menu" (`button[aria-controls]` +
+`aria-expanded`, manipulado por `static/js/shell.js`). O botão só aparece com `html.js`: sem
+JavaScript a navegação fica aberta, em fluxo.
+
+Logout continua exclusivamente POST + CSRF (Constitution IX): exatamente um formulário de saída
+por página, funcional sem JavaScript.
+{% endcomment %}
+<aside class="side">
+  <div class="side-bar">
+    {% if navegacao.provisoria %}
+    <span class="brand">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M8 21v-8h8v8"/><path d="M8 17h8"/></svg>Almoxarifado SAEP</span>
+    {% else %}
+    <a class="brand" href="{% url 'home' %}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M8 21v-8h8v8"/><path d="M8 17h8"/></svg>Almoxarifado SAEP</a>
+    {% endif %}
+    <button type="button" class="btn side-toggle" data-menu-toggle aria-expanded="false" aria-controls="menu-lateral">Menu</button>
+  </div>
+
+  <div class="side-panel" id="menu-lateral">
+    {% if not navegacao.provisoria %}
+    <nav aria-label="Seções">
+      <a href="{{ navegacao.inicio.url }}"{% if navegacao.inicio.atual %} aria-current="page"{% endif %}>{{ navegacao.inicio.rotulo }}</a>
+      {% for grupo in navegacao.grupos %}
+      <h3>{{ grupo.titulo }}</h3>
+      {% for item in grupo.itens %}
+      <a href="{{ item.url }}"{% if item.atual %} aria-current="page"{% endif %}>{{ item.rotulo }}</a>
+      {% endfor %}
+      {% endfor %}
+    </nav>
+    {% endif %}
+
+    <div class="meta-env">
+      <span class="meta-env-conta"><span class="mono">{{ user.matricula }}</span> · {{ user.setor.nome }}</span>
+      <div class="meta-env-acoes">
+        <a href="{% url 'definir_senha' %}" class="btn"{% if request.resolver_match.url_name == "definir_senha" %} aria-current="page"{% endif %}>Senha</a>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn">Sair</button>
+        </form>
+        <button type="button" class="btn" data-theme-toggle>Claro / escuro</button>
+      </div>
+    </div>
+  </div>
+</aside>
