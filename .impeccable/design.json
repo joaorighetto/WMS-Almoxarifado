@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-05T16:46:58.633418+00:00",
+  "generatedAt": "2026-10-06T11:16:45.929953+00:00",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -613,9 +613,9 @@
       "name": "Campo de texto",
       "kind": "input",
       "refersTo": "input-text",
-      "description": "Label visível, dica associada e tamanho responsivo.",
-      "html": "<label class=\"ds-field\" for=\"ds-cadpro\">Código (CADPRO)<input id=\"ds-cadpro\" aria-describedby=\"ds-hint\" value=\"001.002.003\"><span id=\"ds-hint\" class=\"ds-hint\">Código inteiro, como no SCPI.</span></label>",
-      "css": ".ds-field{display:flex;flex-direction:column;gap:3px;font-family:var(--font-family-base);font-size:var(--font-size-label);color:var(--color-text-muted);line-height:var(--line-height-base)}.ds-field input{width:100%;min-height:var(--control-height);padding:var(--control-pad-y) var(--control-pad-x);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);font-family:var(--font-family-mono);font-size:var(--font-size-input)}.ds-field input:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px;border-radius:var(--radius-focus)}.ds-hint{font-size:var(--font-size-meta)}"
+      "description": "Label visível, dica associada e tamanho responsivo; caixa avulsa com o rótulo inteiro como alvo e aviso de atenção vivo fora do aria-describedby.",
+      "html": "<label class=\"ds-field\" for=\"ds-cadpro\">Código (CADPRO)<input id=\"ds-cadpro\" aria-describedby=\"ds-hint\" value=\"001.002.003\"><span id=\"ds-hint\" class=\"ds-hint\">Código inteiro, como no SCPI.</span></label><div class=\"ds-field\"><label for=\"ds-senha\">Senha</label><input id=\"ds-senha\" type=\"password\" value=\"segredo\"><p class=\"ds-hint-atencao\" aria-live=\"polite\">Caps Lock está ativado.</p><label class=\"ds-check\"><input type=\"checkbox\"> Mostrar senha</label></div>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:3px;font-family:var(--font-family-base);font-size:var(--font-size-label);color:var(--color-text-muted);line-height:var(--line-height-base)}.ds-field input{width:100%;min-height:var(--control-height);padding:var(--control-pad-y) var(--control-pad-x);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);font-family:var(--font-family-mono);font-size:var(--font-size-input)}.ds-field input:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px;border-radius:var(--radius-focus)}.ds-hint{font-size:var(--font-size-meta)}.ds-field input[type=password]{width:100%;min-height:var(--control-height);padding:var(--control-pad-y) var(--control-pad-x);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);font-size:var(--font-size-input)}.ds-hint-atencao{position:relative;margin:0;padding-left:14px;font-size:var(--font-size-meta);color:var(--color-text)}.ds-hint-atencao::before{content:\"\";position:absolute;left:0;top:.45em;width:7px;height:7px;background:var(--color-warning);border-radius:1px;transform:rotate(45deg)}.ds-hint-atencao:empty{height:0;margin-top:-3px;padding:0;overflow:hidden}.ds-hint-atencao:empty::before{content:none}.ds-check{display:inline-flex;align-items:center;gap:var(--space-2);width:fit-content;min-height:var(--control-height);cursor:pointer}.ds-check input{flex-shrink:0;width:18px;height:18px;margin:0;accent-color:var(--color-primary)}"
     },
     {
       "name": "Navegação atual",
@@ -668,7 +668,7 @@
   ],
   "narrative": {
     "northStar": "Interface de operador — django-observatory",
-    "overview": "Uma ferramenta de operador com coluna de trabalho ampla, sidebar discreta e dados compactos. A\nfundação construída segue a apresentação do django-observatory 0.1.0, commit\n`6edda16667c8a8601670f76e3286f86bed16e37d`: fonte do sistema, superfícies neutras, borda fina,\naccent azul e ausência de elevação decorativa. A prioridade é localizar a tarefa e ler material,\nsaldo e identidade com pouco atrito, conforme o propósito operacional de `PRODUCT.md`.\n\nEsta é a documentação do código construído, em modo Operate e caminho code-led, após a direção\nfixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o\nlaboratório recomposto; as demais telas já herdam os tokens, mas sua composição continua em\ntransição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.\nA marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.",
+    "overview": "Uma ferramenta de operador com coluna de trabalho ampla, sidebar discreta e dados compactos. A\nfundação construída segue a apresentação do django-observatory 0.1.0, commit\n`6edda16667c8a8601670f76e3286f86bed16e37d`: fonte do sistema, superfícies neutras, borda fina,\naccent azul e ausência de elevação decorativa. A prioridade é localizar a tarefa e ler material,\nsaldo e identidade com pouco atrito, conforme o propósito operacional de `PRODUCT.md`.\n\nEsta é a documentação do código construído, em modo Operate e caminho code-led, após a direção\nfixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o\nlaboratório recomposto, e as telas de credencial (entrada e senha) foram recompostas no lote P1;\nas demais telas já herdam os tokens, mas sua composição continua em transição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.\nA marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.",
     "keyCharacteristics": [
       "Coluna ampla, sidebar compacta e hierarquia por estrutura, peso e espaço.",
       "Claro e escuro equivalentes, com um accent azul e estados com texto e forma.",

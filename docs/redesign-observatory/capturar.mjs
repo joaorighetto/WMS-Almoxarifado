@@ -67,7 +67,16 @@ try {
   const version = await (await fetch(`${endpoint}/json/version`)).json();
   browser = new CDP(version.webSocketDebuggerUrl);
   // Matriz versionada: `.impeccable/review/` é ignorada pelo git e guarda só a saída.
-  const capture = (name, role, size, theme, url, touch = false) => ({ name, role, size, theme, touch, url });
+  // `acao`: expressão que envia um formulário depois do carregamento (estados de erro de validação);
+  // a captura espera a nova página. Os envios usados aqui são inválidos e não alteram dado.
+  const capture = (name, role, size, theme, url, touch = false, acao = null) => ({ name, role, size, theme, touch, url, acao });
+  const enviar = (form, campos) => `(() => { const f = document.querySelector(${JSON.stringify(form)}); ${
+    Object.entries(campos).map(([nome, valor]) => `f.elements[${JSON.stringify(nome)}].value = ${JSON.stringify(valor)};`).join(' ')
+  } f.noValidate = true; f.requestSubmit(); })()`;
+  const loginInvalido = enviar('[data-login-form]', { username: 'nao.existe', password: 'senha-errada' });
+  // Senhas iguais: a divergência é barrada no navegador (`confirmacao-senha.js`) e não recarrega a página;
+  // aqui o servidor recusa a senha atual vazia e a política (senha curta e comum).
+  const senhaInvalida = enviar('[data-processing-form]', { old_password: '', new_password1: 'abc', new_password2: 'abc' });
   const busca = '/catalogo/?descricao=papel';
   const captures = [
     capture('desktop', 'chefe-almoxarifado', '1440x900', 'light', '/'),
@@ -99,9 +108,21 @@ try {
     capture('usuarios-admin-1440-herdada', 'administrador-sistema', '1440x900', 'light', '/organizacao/usuarios/'),
     capture('fornecedores-1440-herdada', 'funcionario-almoxarifado', '1440x900', 'light', '/fornecedores/'),
     capture('entrada-nova-390-herdada', 'funcionario-almoxarifado', '390x844', 'light', '/estoque/entradas/nova/', true),
-    capture('login-1440-herdada', 'anonimo', '1440x900', 'light', '/login/'),
-    capture('login-390-escuro-herdada', 'anonimo', '390x844', 'dark', '/login/', true),
+    // P1 — credenciais.
+    capture('login-1440-claro', 'anonimo', '1440x900', 'light', '/login/'),
+    capture('login-1440-escuro', 'anonimo', '1440x900', 'dark', '/login/'),
+    capture('login-820-toque', 'anonimo', '820x1180', 'light', '/login/', true),
+    capture('login-390-claro', 'anonimo', '390x844', 'light', '/login/', true),
+    capture('login-390-escuro', 'anonimo', '390x844', 'dark', '/login/', true),
+    capture('login-erro-1440', 'anonimo', '1440x900', 'light', '/login/', false, loginInvalido),
+    capture('login-erro-390-escuro', 'anonimo', '390x844', 'dark', '/login/', true, loginInvalido),
+    capture('senha-1440-claro', 'requisitante', '1440x900', 'light', '/senha/'),
+    capture('senha-1440-escuro', 'requisitante', '1440x900', 'dark', '/senha/'),
+    capture('senha-390-claro', 'requisitante', '390x844', 'light', '/senha/', true),
+    capture('senha-erro-1440', 'requisitante', '1440x900', 'light', '/senha/', false, senhaInvalida),
+    capture('senha-erro-390-escuro', 'requisitante', '390x844', 'dark', '/senha/', true, senhaInvalida),
     capture('provisoria-1440', 'critica.provisoria', '1440x900', 'light', '/senha/'),
+    capture('provisoria-1440-escuro', 'critica.provisoria', '1440x900', 'dark', '/senha/'),
     capture('provisoria-390', 'critica.provisoria', '390x844', 'light', '/senha/', true),
     capture('home-sem-papel-1440', 'admin', '1440x900', 'light', '/'),
   ];
@@ -110,7 +131,6 @@ try {
     ['entradas-auditor', 'auditor', '/estoque/entradas/'],
     ['usuarios-admin', 'administrador-sistema', '/organizacao/usuarios/'],
     ['fornecedores', 'funcionario-almoxarifado', '/fornecedores/'],
-    ['login', 'anonimo', '/login/'],
   ]) {
     for (const theme of ['light', 'dark']) captures.push(capture(`${prefix}-1440-${theme}-herdada`, role, '1440x900', theme, url));
   }
@@ -143,6 +163,14 @@ try {
         if (await page.evaluate("document.readyState === 'complete' && !!document.querySelector('main') && !location.search.includes('dev_como=')")) break;
         if (attempt === 99) throw Error(`Página não carregou: ${capture.name}`);
         await delay(100);
+      }
+      if (capture.acao) {
+        await page.evaluate(`window.__antesDoEnvio = true; ${capture.acao}; void 0`);
+        for (let attempt = 0; attempt < 100; attempt++) {
+          if (await page.evaluate("!window.__antesDoEnvio && document.readyState === 'complete' && !!document.querySelector('main')").catch(() => false)) break;
+          if (attempt === 99) throw Error(`Envio não concluiu: ${capture.name}`);
+          await delay(100);
+        }
       }
       await page.evaluate('document.fonts.ready');
       if (capture.name.startsWith('menu-')) await page.evaluate("document.querySelector('[data-menu-toggle]').click()");

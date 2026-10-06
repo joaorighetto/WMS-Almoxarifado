@@ -189,8 +189,8 @@ saldo e identidade com pouco atrito, conforme o propósito operacional de `PRODU
 
 Esta é a documentação do código construído, em modo Operate e caminho code-led, após a direção
 fixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o
-laboratório recomposto; as demais telas já herdam os tokens, mas sua composição continua em
-transição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.
+laboratório recomposto, e as telas de credencial (entrada e senha) foram recompostas no lote P1;
+as demais telas já herdam os tokens, mas sua composição continua em transição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.
 A marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.
 
 **Key Characteristics:**
@@ -229,6 +229,12 @@ CSS de feature. Aliases de API resolvem para os mesmos papéis: `border-frame` �
 - **Texto principal** (`text`): corpo, dados, estados e erros por extenso.
 - **Texto de apoio** (`text-muted`): descrições, labels, notas e rótulo de processamento.
 - **Texto discreto** (`text-subtle`): metadados breves, rótulos da sidebar e pistas secundárias.
+
+Três valores do upstream ficam abaixo de AA no tema claro e são mantidos por fidelidade, por
+decisão do dono do produto: rótulos de grupo da sidebar (0.7rem em `text-subtle`), rodapé da conta
+em `text-subtle` (~4,2:1 sobre `surface`) e borda de campo em `border` (~1,34:1 sobre o card). É
+uma decisão registrada sobre esses três usos, não uma recomendação: texto novo de leitura usa
+`text-muted` ou `text`.
 
 ### Estados
 
@@ -274,7 +280,8 @@ sistema operacional; fidelidade à referência considera tamanho, peso e entreli
 
 Rótulos de grupo usam caixa-alta com 0.04em e peso 600; na sidebar usam 0.7rem, fora dela 0.8rem.
 O rótulo de tile usa 0.82rem; a nota de tile usa 0.8rem. São papéis de apoio, não títulos de
-exibição. Labels de formulário permanecem visíveis.
+exibição. Labels de formulário permanecem visíveis. A marca da tela de entrada usa 1.15rem,
+derivação local fora da escala do frontmatter; não é papel tipográfico a reutilizar.
 
 **The Mono-Is-Data Rule.** Mono pertence a dado e identificador opaco; não a prosa, título de
 página, rótulo ou botão. O valor de matrícula dentro do tile é dado, portanto pode ser mono.
@@ -301,7 +308,16 @@ Até 860px a sidebar vira barra superior estática com padding lateral 16px: mar
 ficam na mesma linha, com 8px acima/abaixo. A navegação abre em fluxo abaixo dela, sem overlay.
 Os itens e controles têm alvo mínimo de 44px; Escape fecha e devolve foco ao botão. Sem JS,
 a navegação fica aberta e Menu fica oculto. O main usa padding 14px 16px 40px. Não há barra
-horizontal industrial como alternativa de shell.
+horizontal industrial como alternativa de shell. No shell da credencial provisória não há destino
+a abrir: até 860px não existe botão Menu e o rodapé da conta fica sempre visível, em fluxo logo
+abaixo da barra da marca; no desktop esse shell não muda.
+
+A credencial anônima não tem shell: sem sidebar nem cabeçalho de página, um único main em coluna
+centralizada sobre `background`, com a marca (glifo e nome, texto, nunca link) acima de um card
+de formulário. A coluna se ancora no topo com respiro `clamp(24px, 10vh, 96px)`, não no centro
+vertical, para o teclado virtual não cobrir o campo focado; as laterais respeitam a área segura
+(mínimo 16px). O erro de autenticação é uma mensagem de erro acima do formulário, com id
+referenciado pelos campos, e a orientação de recuperação é nota permanente no pé do card.
 
 No desktop com mouse, controles têm mínimo 30px e padding 5px 10px; células têm 6px 10px.
 `pointer: coarse` ou largura até 860px amplia controles para 44px e campos para fonte 16px.
@@ -325,8 +341,9 @@ adicional; linhas de tabela o aplicam somente sob `hover: hover`.
 ### Transição de composição
 
 O shell mínimo da credencial provisória usa a mesma sidebar, com marca sem link e conta, sem
-grupos de navegação; o formulário de senha ainda usa o encaixe legado. Login anônimo continua
-fora do shell, com sua composição e barra de marca legadas. `.page`, `page-header`,
+grupos de navegação; o formulário de senha usa o cabeçalho de página e o card de formulário.
+A entrada anônima segue a composição sem shell descrita acima; a barra de marca legada foi
+removida. `.page`, `page-header`,
 `page-container-narrow` (640px) e o bloco `content` próprio são compatibilidade temporária, não
 uma segunda fundação nem a composição a reproduzir em telas novas.
 
@@ -383,6 +400,25 @@ com triângulo de 7px e texto normal; `aria-invalid` e referências a dica/erro 
 Campo de identificador usa mono. Textarea permite resize vertical. Envio de arquivo mantém
 input acessível e label com aparência de botão, sem exigir JS para abrir o seletor.
 
+Dica é parágrafo de apoio com id `<auto_id>_helptext`, renderizada só quando o campo tem dica e
+também com erro. Nos formulários de credencial o widget referencia erro, dica e mensagens gerais
+nessa ordem, e o servidor põe o foco inicial em um único campo: o primeiro inválido ou,
+sem erro de campo, o escolhido pelo formulário.
+
+Caixa avulsa sob um campo ("Mostrar senha") usa o rótulo inteiro como alvo, com altura de
+controle (44px no toque e até 860px), caixa de 18px em `primary` e gap 8px. A variante que só
+funciona com JavaScript fica oculta sem `html.js`, como o botão de tema. O aviso de atenção do
+campo (Caps Lock) é região `aria-live="polite"` que nasce vazia e sem altura; com texto, usa o
+tamanho da dica, texto em `text` e losango de 7px em `warning`. Não é descritor do campo e fica
+fora do `aria-describedby`.
+
+Comportamentos pontuais são contratos por data-attribute, carregados com `defer` e delegados em
+`document`; sem JS o formulário funciona e o servidor valida. Mostrar senha alterna o tipo dos
+campos de senha do mesmo formulário e os devolve a `password` no envio e no `pageshow`. Caps Lock
+escreve no aviso a mensagem do atributo `data-mensagem`, nunca texto do script. A checagem da
+confirmação cancela, na captura, o envio divergente e renderiza o mesmo erro de campo do servidor,
+com o texto vindo do formulário.
+
 ### Navigation
 
 Um shell declarado na base; navegação recebe destinos calculados no servidor e marca o atual
@@ -404,6 +440,9 @@ Painéis agrupam conteúdo relacionado com título em corpo e peso 650, borda le
 superfície. Tile destaca dado com rótulo acima, valor e nota opcional. Só tile com destino real
 é link; os três tiles de identidade da Home são leitura. Altura acompanha o conteúdo.
 Tarefas da Home usam card por grupo, com link e descrição na mesma célula por tarefa.
+Formulário isolado usa o card com medida de formulário (máximo 420px): a coluna de trabalho não
+tem teto, então é o card que limita a própria largura, alinhado à esquerda; na entrada anônima o
+mesmo card se centraliza.
 
 **The Available-Versus-Planned Rule.** Disponível tem destino real; planejado permanece texto,
 com selo explícito e sem link ou cursor de clique. Na Home, Em preparação usa uma célula por

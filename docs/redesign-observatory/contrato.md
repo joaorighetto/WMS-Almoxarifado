@@ -140,6 +140,8 @@ body
 O shell mínimo mantém a estrutura `.app`, mas a sidebar mostra só a marca **sem link** e o rodapé da
 conta (Senha como item atual, Sair, tema). Nenhum item de navegação, nenhum grupo.
 
+Até 860 px não há botão Menu (não há navegação a abrir) e o rodapé da conta fica sempre visível, em fluxo logo abaixo da barra com a marca.
+
 ### Login (anônimo)
 
 Sem sidebar. Card centralizado (`.card`, largura de formulário) sobre `--bg`, com a marca acima.

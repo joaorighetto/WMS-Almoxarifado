@@ -17,6 +17,9 @@ import pytest
 from django.templatetags.static import static
 from django.urls import reverse
 
+from contas.forms import WMSAuthenticationForm
+from tests.html_helpers import analisar
+
 
 def _sem_acentos(texto):
     """Normaliza texto removendo acentuação, para comparação robusta de
@@ -69,11 +72,26 @@ def test_login_renderiza_200_com_campos_de_matricula_e_senha(client):
     assert 'name="username"' in conteudo
     assert 'name="password"' in conteudo
     assert "Entrar no sistema" in conteudo
-    # A marca vive na faixa de identidade, fora do `<title>` (que também a
-    # contém): texto puro, nunca link nem item atual de navegação.
-    assert '<span class="appbar-brand">Almoxarifado SAEP</span>' in conteudo
-    assert 'aria-current' not in conteudo
-    assert "gestão de materiais" in conteudo
+    # A marca fica acima do card, dentro do `<main>` (fora do `<title>`, que também a contém):
+    # texto puro, nunca link nem item atual de navegação.
+    marca = analisar(conteudo).unico("main").unico(classe="brand")
+    assert marca.texto == "Almoxarifado SAEP"
+    assert marca.tag != "a" and marca.buscar("a") == []
+    assert not marca.esta_dentro_de("a")
+    assert "aria-current" not in marca.attrs
+    assert "aria-current" not in conteudo
+    # A orientação de primeiro acesso é a dica do campo Senha (não há subtítulo no card): o texto
+    # é o `help_text` do formulário (a validade vem da constante, não é fixada aqui) e o widget da
+    # Senha a referencia por `aria-describedby`.
+    card = analisar(conteudo).unico("main").unico(classe="login-card")
+    assert card.buscar(classe="sub") == []
+    dica = card.unico(id="id_password_helptext")
+    assert dica.tag == "p" and dica.tem_classe("field-hint")
+    assert dica.texto == WMSAuthenticationForm().fields["password"].help_text
+    assert "senha provisória" in dica.texto
+    assert "id_password_helptext" in card.unico("input", name="password").get(
+        "aria-describedby", ""
+    ).split()
     assert "data-login-form" in conteudo
     assert "data-login-submit" in conteudo
     assert static("contas/js/login.js") in conteudo
@@ -93,11 +111,17 @@ def test_mensagem_de_erro_generica_aparece_no_html_de_login_invalido(client, usu
     assert response.status_code == 200
     mensagem_esperada = str(response.context["form"].non_field_errors()[0])
 
-    assert mensagem_esperada in response.content.decode()
     assert "Confira os dados e tente novamente." in mensagem_esperada
-    assert "Se o problema continuar, procure o Setor de Almoxarifado:" in (
-        response.content.decode()
-    )
+    # A mensagem genérica (FR-003) está no alerta, que a anuncia ao leitor de tela.
+    alerta = analisar(response.content).unico("main").unico(classe="error-box")
+    assert alerta.get("role") == "alert"
+    assert mensagem_esperada in alerta.texto
+    # A orientação de recuperação é a nota permanente do card (também presente sem erro), com o
+    # contato do Setor de Almoxarifado, e fica fora do alerta.
+    nota = analisar(response.content).unico("main").unico(classe="login-recovery")
+    assert "Procure o Setor de Almoxarifado:" in nota.texto
+    assert nota.unico("a").get("href") == "mailto:almoxarifado@saep.sp.gov.br"
+    assert nota not in alerta.descendentes()
     assert 'href="mailto:almoxarifado@saep.sp.gov.br"' in response.content.decode()
     # O título da aba anuncia o erro (leitor de tela lê o título na carga).
     assert "<title>Erro: Entrar — Almoxarifado SAEP</title>" in response.content.decode()
@@ -112,6 +136,7 @@ def test_erros_de_campo_usam_os_ids_referenciados_pelo_django(client):
 
     assert 'aria-describedby="id_username_error"' in conteudo
     assert 'id="id_username_error"' in conteudo
-    assert 'aria-describedby="id_password_error"' in conteudo
+    # Erro antes da dica de primeiro acesso, que a Senha tem sempre.
+    assert 'aria-describedby="id_password_error id_password_helptext"' in conteudo
     assert 'id="id_password_error"' in conteudo
     assert "<title>Erro: Entrar — Almoxarifado SAEP</title>" in conteudo

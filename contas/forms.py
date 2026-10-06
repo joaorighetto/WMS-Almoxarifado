@@ -21,27 +21,164 @@ O que este módulo NÃO faz, por decisão registrada:
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, SetPasswordForm
+from django.contrib.auth.password_validation import (
+    MinimumLengthValidator,
+    get_default_password_validators,
+)
+from django.forms.boundfield import BoundField
 from django.urls import reverse_lazy
 
+from contas.credenciais import VALIDADE_SENHA_PROVISORIA
 from contas.models import Papel, Setor, User
 
 
-class WMSAuthenticationForm(AuthenticationForm):
+class CampoDeCredencial(BoundField):
+    """`BoundField` dos formulários de credencial (login e `/senha/`), com dois ajustes de
+    acessibilidade feitos no servidor, sem depender de JavaScript:
+
+    - `aria-describedby` lista o erro do campo antes da dica (o Django gera dica -> erro), para o
+      leitor de tela ler o erro antes das regras; os ids são os de sempre
+      (`<auto_id>_error`, `<auto_id>_helptext`), e o formulário pode acrescentar ids que valem
+      para todos os campos (`FormularioDeCredencial.ids_descritores_gerais`);
+    - `autofocus` em exatamente um campo, o que o formulário escolhe (`campo_com_foco`).
+    """
+
+    @property
+    def aria_describedby(self):
+        if self.field.widget.attrs.get("aria-describedby"):
+            return None
+        ids = []
+        if self.auto_id and not self.is_hidden:
+            if self.errors:
+                ids.append(f"{self.auto_id}_error")
+            if self.help_text:
+                ids.append(f"{self.auto_id}_helptext")
+            ids.extend(self.form.ids_descritores_gerais())
+        return " ".join(ids)
+
+    def build_widget_attrs(self, attrs, widget=None):
+        attrs = super().build_widget_attrs(attrs, widget)
+        if self.name == self.form.campo_com_foco():
+            attrs["autofocus"] = True
+        return attrs
+
+
+class FormularioDeCredencial:
+    """Mixin dos formulários de credencial: usa `CampoDeCredencial` e decide o foco inicial.
+
+    O foco vai ao primeiro campo inválido, na ordem do formulário; sem erro de campo, ao campo de
+    `campo_foco_sem_erro_de_campo()`. O `autofocus` que o Django põe por conta própria em alguns
+    widgets é removido, para que só o campo escolhido o tenha.
+    """
+
+    bound_field_class = CampoDeCredencial
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for campo in self.fields.values():
+            campo.widget.attrs.pop("autofocus", None)
+
+    def campo_com_foco(self):
+        for nome in self.fields:
+            if nome in self.errors:
+                return nome
+        return self.campo_foco_sem_erro_de_campo()
+
+    def campo_foco_sem_erro_de_campo(self):
+        return next(iter(self.fields))
+
+    def ids_descritores_gerais(self):
+        return []
+
+
+class WMSAuthenticationForm(FormularioDeCredencial, AuthenticationForm):
     """`AuthenticationForm` nativo com uma única mensagem de recusa reescrita.
 
     A string permanece **genérica e idêntica** para as três causas de recusa —
     senha incorreta, matrícula inexistente e conta inativa —, preservando
     `FR-003`/`SC-003` (não-enumeração de usuário): nada no texto revela qual
     das condições ocorreu.
+
+    Com a recusa (erro não-de-campo), o foco vai à Senha e os dois campos apontam, por
+    `aria-describedby`, para o alerta (`LOGIN_ERRO_ID`) — os dois, sem `aria-invalid`, para não
+    indicar qual dado estaria errado.
+
+    A Senha tem como dica a orientação de primeiro acesso (`ajuda_primeiro_acesso`); a Matrícula
+    não tem dica. Ordem do `aria-describedby` da Senha: sem recusa, só a dica
+    (`id_password_helptext`); com a recusa, a dica e depois o alerta geral
+    (`id_password_helptext login-erro`) — os ids gerais vêm sempre depois dos do próprio campo.
     """
+
+    LOGIN_ERRO_ID = "login-erro"
 
     error_messages = {
         **AuthenticationForm.error_messages,
         "invalid_login": ("Matrícula ou senha inválidas. Confira os dados e tente novamente."),
     }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password"].help_text = ajuda_primeiro_acesso()
 
-class DefinirSenhaForm(SetPasswordForm):
+    def campo_foco_sem_erro_de_campo(self):
+        if self.non_field_errors():
+            return "password"
+        return super().campo_foco_sem_erro_de_campo()
+
+    def ids_descritores_gerais(self):
+        return [self.LOGIN_ERRO_ID] if self.non_field_errors() else []
+
+
+def ajuda_primeiro_acesso():
+    """Dica do campo Senha do login. A validade vem de `VALIDADE_SENHA_PROVISORIA` (em dias
+    inteiros), para o texto acompanhar a regra."""
+    dias = VALIDADE_SENHA_PROVISORIA.days
+    return (
+        "No primeiro acesso, use a senha provisória que você recebeu. "
+        f"Ela vale {dias} dias a partir da emissão; ao entrar, você define uma senha sua."
+    )
+
+
+def ajuda_nova_senha():
+    """Dica da Nova senha: as regras em uma frase, correspondentes aos validadores de
+    `AUTH_PASSWORD_VALIDATORS` (similaridade com matrícula e nome, mínimo de caracteres, senhas
+    comuns e só numérica). O mínimo é o `min_length` efetivo do `MinimumLengthValidator`
+    configurado (padrão do Django: 8)."""
+    minimo = next(
+        (
+            validador.min_length
+            for validador in get_default_password_validators()
+            if isinstance(validador, MinimumLengthValidator)
+        ),
+        MinimumLengthValidator().min_length,
+    )
+    return (
+        f"Use pelo menos {minimo} caracteres, sem ser só números. "
+        "Evite sua matrícula, seu nome e senhas comuns."
+    )
+
+
+class _SenhaNovaForm(FormularioDeCredencial):
+    """Textos dos campos de senha nova (`ajuda_nova_senha`; a confirmação sem dica — o rótulo
+    basta) e o lugar dos erros da política de senha.
+
+    O `SetPasswordForm` valida a política sobre a Confirmação (`new_password2`); aqui os erros da
+    política ficam na Nova senha (`new_password1`), que é o campo que o usuário precisa mudar e o
+    que tem a dica — o foco e a ordem erro -> dica caem nele. A divergência entre os dois campos
+    continua sendo erro da Confirmação."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["new_password1"].help_text = ajuda_nova_senha()
+        self.fields["new_password2"].help_text = ""
+
+    def validate_password_for_user(self, user, password_field_name="password2"):
+        # `SetPasswordForm.clean` pede a validação sobre "new_password2"; redireciona-se para a
+        # Nova senha. Valida mesmo quando as senhas divergem: a política é sobre a Nova senha.
+        super().validate_password_for_user(user, "new_password1")
+
+
+class DefinirSenhaForm(_SenhaNovaForm, SetPasswordForm):
     """Definição obrigatória da própria senha (`/senha/`, estado provisório).
 
     Só valida: nova senha, confirmação e a política de `AUTH_PASSWORD_VALIDATORS` (R12) vêm do
@@ -50,11 +187,17 @@ class DefinirSenhaForm(SetPasswordForm):
     """
 
 
-class TrocarSenhaForm(PasswordChangeForm):
+class TrocarSenhaForm(_SenhaNovaForm, PasswordChangeForm):
     """Troca voluntária da própria senha (`/senha/`, credencial definitiva): senha atual, nova e
     confirmação (`old_password`, `new_password1`, `new_password2`). Como `DefinirSenhaForm`, só
     valida — quem grava é `contas.credenciais.trocar_propria_senha`, que confere a senha atual
-    de novo sob o lock."""
+    de novo sob o lock. A Senha atual tem como dica o caminho de quem a esqueceu."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["old_password"].help_text = (
+            "Esqueceu a senha atual? Saia e peça ao administrador do sistema uma senha provisória."
+        )
 
 
 PAPEIS_ADICIONAIS = [

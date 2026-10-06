@@ -9,62 +9,84 @@
 
 {% block content %}
 {% comment %}
-Faixa de identidade do login (propagação da direção "Tubulação e piso
-industrial" à etapa 3, ver login.css): reaproveita os primitivos
-`.appbar`/`.appbar-inner`/`.appbar-brand` de static/css/components.css para
-ficar idêntica à barra de trabalho da Home/catálogo — mesmo grafite, mesma
-linha de corredor amarela, mesma altura, mesmo x de início da marca. Não é a
-barra de trabalho: sem matrícula, sem "Sair", sem seta de fluxo (a faixa não
-leva a lugar nenhum), e a marca é texto (nunca `<a>`, nunca
-`aria-current` — não é item de navegação). `.login-band` derruba a faixa de
-`sticky` para `static` (ver login.css).
+Login (anônimo, sem sidebar; contrato do redesign, `docs/redesign-observatory/contrato.md` §3):
+card centralizado sobre `--bg`, com a marca acima. A marca é o mesmo glifo da sidebar
+(`_navegacao.html`) e é texto — nunca link, nunca `aria-current`: não é item de navegação e não
+leva a lugar nenhum. Um único `<main>`; sem `.app`, `.side` nem `.top`.
+
+Contratos preservados: `data-login-form`, `data-login-submit` e `data-login-submit-label` são
+consumidos por `contas/js/login.js` (estado "Entrando…"); o erro de campo liga o widget ao
+`<auto_id>_error` por `aria-describedby`/`aria-invalid` (o Django os põe no widget). Sem JavaScript
+o formulário continua enviando normalmente.
+
+Recusa de login: o `.error-box` leva `id="login-erro"` (`WMSAuthenticationForm.LOGIN_ERRO_ID`), que o
+formulário põe no `aria-describedby` da matrícula e da senha. A mensagem é genérica e não diferencia
+a causa (FR-003). A orientação de recuperação é permanente, abaixo do botão, e não depende do erro.
+O foco inicial (`autofocus`) é decidido pelo servidor, em um único campo.
+
+Dicas: cada campo com `help_text` (hoje só a Senha: orientação de primeiro acesso, vinda do servidor
+em `WMSAuthenticationForm`) ganha `<p class="field-hint" id="<auto_id>_helptext">`, texto simples
+(sem `|safe`), depois do erro do campo e referenciado no `aria-describedby` do widget. Não há
+subtítulo no card: a orientação é a dica da Senha.
+
+Aviso de Caps Lock: `static/js/caps-lock.js`. O bloco do campo leva `data-caps-lock` e contém o
+`<p data-caps-lock-aviso data-mensagem="…">`, uma região `aria-live="polite"` que nasce vazia (e sem
+altura): o script escreve a mensagem (vinda do atributo, não do JS) enquanto o Caps Lock estiver
+ativo no campo e a apaga ao desligar e no blur. Sem JavaScript nada aparece. Não é descrito pelo
+`aria-describedby` do campo e não altera a mensagem de recusa (FR-003).
+
+"Mostrar senha": `static/js/mostrar-senha.js` (`data-mostrar-senha`); sem JavaScript a caixa não
+aparece (`html:not(.js)`, components.css).
 {% endcomment %}
-<header class="appbar login-band">
-  <div class="appbar-inner">
-    <span class="appbar-brand">Almoxarifado SAEP</span>
-  </div>
-</header>
-<main class="login-page">
-  <div class="login-card">
-    <h1 class="login-card-title">Entrar no sistema</h1>
-    <p class="login-card-subtitle">
-      Use sua matrícula e senha para acessar a gestão de materiais.
-    </p>
+<main class="login" id="main">
+  <div class="brand login-brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M8 21v-8h8v8"/><path d="M8 17h8"/></svg>Almoxarifado SAEP</div>
+
+  <div class="card card-form login-card">
+    <h1>Entrar no sistema</h1>
 
     {% if form.non_field_errors %}
-    <div class="login-error-block">
-      <div class="alert alert-danger" role="alert">
-        {% for error in form.non_field_errors %}
-        <p>{{ error }}</p>
-        {% endfor %}
-      </div>
-      <p class="login-recovery">
-        Se o problema continuar, procure o Setor de Almoxarifado:
-        <a href="mailto:almoxarifado@saep.sp.gov.br">almoxarifado@saep.sp.gov.br</a>.
-      </p>
+    <div class="error-box" id="login-erro" role="alert">
+      {% for error in form.non_field_errors %}
+      <p>{{ error }}</p>
+      {% endfor %}
     </div>
     {% endif %}
 
     <form method="post" class="login-form" data-login-form>
       {% csrf_token %}
       {% for field in form %}
-      <div class="field{% if field.errors %} field-has-error{% endif %}">
+      <div class="field{% if field.errors %} field-has-error{% endif %}"{% if field.name == "password" %} data-caps-lock{% endif %}>
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
         {% if field.errors %}
         <p class="field-error" id="{{ field.auto_id }}_error">{{ field.errors.0 }}</p>
         {% endif %}
+        {% if field.help_text %}
+        <p class="field-hint" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>
+        {% endif %}
+        {% if field.name == "password" %}
+        <p class="field-hint-atencao" aria-live="polite" data-caps-lock-aviso data-mensagem="Caps Lock está ativado."></p>
+        <label class="field-check field-check-js"><input type="checkbox" data-mostrar-senha> Mostrar senha</label>
+        {% endif %}
       </div>
       {% endfor %}
       <button type="submit" class="btn btn-primary login-submit" data-login-submit>
-        <span class="login-submit-spinner" aria-hidden="true"></span>
+        <span class="loading-indicator-spinner login-submit-spinner" aria-hidden="true"></span>
         <span data-login-submit-label>Entrar</span>
       </button>
     </form>
+
+    <p class="note login-recovery">
+      Esqueceu a senha ou a senha provisória venceu? Procure o Setor de Almoxarifado:
+      <a href="mailto:almoxarifado@saep.sp.gov.br">almoxarifado@saep.sp.gov.br</a>.
+    </p>
   </div>
 </main>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'contas/js/login.js' %}" defer></script>
+<script src="{% static 'js/mostrar-senha.js' %}" defer></script>
+<script src="{% static 'js/caps-lock.js' %}" defer></script>
 {% endblock %}

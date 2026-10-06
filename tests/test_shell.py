@@ -20,7 +20,8 @@ O que este arquivo protege, em ordem de consequência:
 O parsing é estrutural (`tests/html_helpers.py`), nunca regex de atributo. As telas ainda não
 recompostas (propagação P1 a P5) trazem o próprio `<main>` sem `id`: o alvo do skip link nelas é
 resolvido por fallback em JavaScript (`static/js/shell.js`), que um teste de servidor não
-exercita. Só as telas recompostas (Home e consulta do catálogo) têm `id="main"` verificado aqui.
+exercita. Só as telas recompostas (Home, consulta do catálogo e `/senha/`) têm `id="main"`
+verificado aqui; o markup do login e de `/senha/` está em `tests/test_contas_credenciais_markup.py`.
 """
 
 import uuid
@@ -109,7 +110,7 @@ TELAS = [
     ("entrada-nova", "funcionario_almoxarifado", False, _get("estoque:entrada_nova")),
     ("usuarios", "admin_sistema", False, _get("usuarios")),
     ("usuario-ficha", "admin_sistema", False, _ficha_do_proprio_usuario),
-    ("senha", "requisitante", False, _get("definir_senha")),
+    ("senha", "requisitante", True, _get("definir_senha")),
 ]
 
 # Cada tela vira o `request.param` da fixture `pagina` (parametrização indireta).

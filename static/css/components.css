@@ -171,6 +171,18 @@ main:focus {
     padding-bottom: 12px;
   }
 
+  /* Credencial provisória: sem navegação a abrir, não há botão "Menu" (o template não o renderiza)
+     e o rodapé da conta (matrícula · setor, Senha, Sair, tema) fica sempre visível, em fluxo logo
+     abaixo da barra com a marca. */
+  .js .side-provisoria .side-panel {
+    display: block;
+    padding-bottom: 12px;
+  }
+
+  .side-provisoria .meta-env {
+    margin-top: 0;
+  }
+
   .main,
   .page {
     padding: 14px 16px 40px;
@@ -425,6 +437,70 @@ html:not(.js) [data-theme-toggle] {
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 
+/* Aviso de atenção do campo (Caps Lock, `static/js/caps-lock.js`): texto auxiliar como `.field-hint`
+   (mesmo tamanho), mas com o marcador de aviso (◆, o mesmo de `.badge-warning`) e texto em
+   `--color-text`; a cor de estado vive só no marcador. Classe própria, não `.field-hint`: as dicas
+   (`<auto_id>_helptext`) são contratos de `aria-describedby`; este aviso não é descritor do campo.
+   O elemento é a região `aria-live` e nasce vazio: sem texto não ocupa altura e não mostra
+   marcador (sem JavaScript nunca aparece). */
+.field-hint-atencao {
+  position: relative;
+  margin: 0;
+  padding-left: 14px;
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+}
+
+.field-hint-atencao::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 7px;
+  height: 7px;
+  background-color: var(--color-warning);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+.field-hint-atencao:empty {
+  display: block;
+  height: 0;
+  margin-top: -3px; /* anula o `gap` do `.field` que o elemento vazio acrescentaria */
+  padding: 0;
+  overflow: hidden;
+}
+
+.field-hint-atencao:empty::before {
+  content: none;
+}
+
+/* Caixa avulsa sob um campo ("Mostrar senha"): rótulo com a caixa, no contrato de label do campo
+   (cor e tamanho vêm de `.field label`). A área clicável é o rótulo inteiro, com a altura do
+   controle (44px no toque e até 860px). `.field-check-js` marca o aprimoramento que só funciona
+   com JavaScript (`html.js`, marcado no <head>); sem ele a caixa fica oculta, como o botão de
+   tema. */
+.field-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  min-height: var(--control-height);
+  cursor: pointer;
+}
+
+.field-check input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+html:not(.js) .field-check-js {
+  display: none;
+}
+
 .field-has-error input[type="text"],
 .field-has-error input[type="password"],
 .field-has-error select,
@@ -433,7 +509,14 @@ html:not(.js) [data-theme-toggle] {
   border-color: var(--color-danger);
 }
 
-/* Formulário isolado: a mesma moldura do card. */
+/* Medida de formulário: a coluna de trabalho não tem teto (contrato §3), então o formulário
+   isolado limita a própria largura e fica alinhado à esquerda. No login, o mesmo card se centraliza
+   (login.css). */
+.card-form {
+  max-width: 420px;
+}
+
+/* Formulário isolado (telas ainda não recompostas): a mesma moldura do card. */
 .form-frame {
   padding: 14px 16px;
   background-color: var(--color-surface);
@@ -1503,21 +1586,4 @@ html:has(.confirmation-bar) {
   margin: 0 0 0.7rem;
   font-size: var(--font-size-section-title);
   font-weight: var(--font-weight-title);
-}
-
-/* Faixa de identidade do login (login.html, P1): marca estática sobre a superfície. */
-.appbar {
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.appbar-inner {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 24px;
-}
-
-.appbar-brand {
-  font-weight: var(--font-weight-bold);
 }
