@@ -143,6 +143,20 @@ def secao_por_rotulo(documento, id_rotulo):
     return documento.unico(aria_labelledby=id_rotulo)
 
 
+def totais_do_resumo(documento):
+    """`{rótulo: valor}` dos tiles do resumo de uma execução (`dt.k` / `dd.v` dentro de `.tiles`).
+
+    Responde "qual total está ao lado de qual rótulo" sem depender de espaçamento do markup. Os
+    valores saem como o usuário os lê (com separador de milhar); falha se o rótulo se repetir.
+    """
+    totais = {}
+    for tile in documento.unico(classe="tiles").buscar(classe="tile"):
+        rotulo = tile.unico("dt", classe="k").texto
+        assert rotulo not in totais, f"rótulo duplicado no resumo: {rotulo!r}"
+        totais[rotulo] = tile.unico("dd", classe="v").texto
+    return totais
+
+
 def hrefs_de(no):
     """Conjunto dos `href` dos `<a>` dentro de `no`."""
     return {link.attrs["href"] for link in no.buscar("a", href=True)}

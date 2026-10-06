@@ -88,3 +88,101 @@
  * (consolidação de UX, Fase A) — ver comentário equivalente em
  * `catalogo/static/catalogo/css/catalogo.css`.
  */
+
+/* Consulta de fornecedores (contrato do redesign §12, no molde da consulta do catálogo). Filtros:
+   Código (CODIF) e Documento em mono (identificadores opacos, `The Mono-Is-Data Rule`) com largura
+   de dado curto; Nome ocupa o resto da linha. A largura própria só vale com a barra em linha; em
+   até 640px cada campo ocupa a largura toda. */
+#campo-codigo input,
+#campo-documento input {
+  font-family: var(--font-family-mono);
+}
+
+@media (min-width: 641px) {
+  #campo-codigo {
+    flex: 0 1 200px;
+  }
+
+  #campo-documento {
+    flex: 0 1 260px;
+  }
+
+  .filter-bar-field {
+    flex-basis: 320px;
+  }
+}
+
+/* A tabela rola na horizontal dentro do card (nunca vira cards), com largura mínima para não
+   esmagar os dados; códigos e documento são `nowrap`, o nome quebra linha. Só a tabela com
+   resultados (a única com `tabindex`); a do estado vazio ocupa a largura do card. */
+#resultados-consulta .table[tabindex] {
+  min-width: 44rem;
+}
+
+.fornecedores-nome-cell {
+  min-width: 14rem;
+}
+
+/* Celular: o Nome não ocupa o card inteiro; Código e Situação aparecem ao lado e o restante rola
+   na horizontal (a sombra de borda do `.table-wrapper` indica que há mais). */
+@media (max-width: 640px) {
+  .fornecedores-nome-cell {
+    min-width: 10rem;
+    max-width: 12rem;
+  }
+}
+
+/* Resultado de uma execução (`.execucao-secao`, só no detalhe — a prévia reusa os ids; contrato §12):
+   Alterações cadastrais e Exceções são cards; a tabela rola na horizontal dentro do card (nunca vira
+   cards) sem ser esmagada. */
+.execucao-secao#alteracoes .table {
+  min-width: 30rem;
+}
+
+/* Código e nome atual (`.cell-secondary`, como o nome fantasia da consulta) dividem a primeira
+   coluna: o nome quebra linha em vez de ganhar coluna própria. */
+.fornecedores-codigo-cell {
+  min-width: 10rem;
+}
+
+.valor-anterior-compacto {
+  color: var(--color-text-muted);
+}
+
+/* Celular: a coluna "Valor anterior" some e o valor anterior vai para a célula do novo ("Liberado" e,
+   abaixo, "→ ◆ Bloqueado"); sem largura mínima e com menos preenchimento horizontal as três colunas
+   restantes cabem no card e o valor novo aparece inteiro. Nomes e valores só quebram no meio de uma
+   palavra que não cabe sozinha na coluna (`break-word`). */
+@media (max-width: 640px) {
+  .execucao-secao#alteracoes .table {
+    min-width: 0;
+    --table-cell-pad-x: 6px;
+  }
+
+  .execucao-secao#alteracoes .fornecedores-codigo-cell {
+    min-width: 0;
+  }
+
+  .execucao-secao#alteracoes .table thead th {
+    white-space: normal;
+  }
+
+  .execucao-secao#alteracoes td {
+    overflow-wrap: break-word;
+  }
+}
+
+/* Tile do resumo com total zerado (Passam a bloqueado, Voltam a liberado): valor atenuado e peso
+   normal, sem competir com os números acionáveis. O seletor composto vence `.tile .v`. Com total
+   maior que zero o tile usa `.tile-warning` (components.css). */
+.tile.fornecedores-situacao-neutra .v {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-regular);
+}
+
+/* Link da linha do histórico (`#N`): cor de acento, sem sublinhado em repouso (o toque não tem
+   hover para revelar que é link). Foco e hover seguem os de `components.css`. Escopado a esta
+   folha: só as telas de fornecedores a carregam. */
+.table-row-link {
+  color: var(--color-primary);
+}

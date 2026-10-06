@@ -7,7 +7,7 @@ testes poderiam passar sem proteger nada; aqui ficam as propriedades de que depe
 
 import pytest
 
-from tests.html_helpers import analisar, hrefs_de, secao_por_rotulo
+from tests.html_helpers import analisar, hrefs_de, secao_por_rotulo, totais_do_resumo
 
 HTML = """<!DOCTYPE html>
 <html><head>
@@ -72,6 +72,17 @@ def test_unico_falha_com_zero_ou_mais_de_um(documento):
         documento.unico("a")
     with pytest.raises(AssertionError):
         documento.unico("table")
+
+
+def test_totais_do_resumo_associa_cada_rotulo_ao_seu_valor():
+    resumo = analisar(
+        '<dl class="grid tiles">'
+        '<div class="tile"><dt class="k">Inseridos</dt><dd class="v">9</dd></div>'
+        '<div class="tile tile-warning"><dt class="k">Rejeitados</dt><dd class="v">1.234</dd>'
+        '<dd class="d">fora da soma</dd></div></dl>'
+    )
+
+    assert totais_do_resumo(resumo) == {"Inseridos": "9", "Rejeitados": "1.234"}
 
 
 def test_hrefs_e_secao_por_rotulo(documento):

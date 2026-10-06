@@ -28,7 +28,6 @@ minimos.py`, T009), nem atomicidade/concorrência/desempenho
 (`tests/test_fornecedores_atomicidade.py`, T010).
 """
 
-import re
 import uuid
 from urllib.parse import urlsplit
 
@@ -43,6 +42,7 @@ from fornecedores.models import (
     ExecucaoImportacaoFornecedores,
     Fornecedor,
 )
+from tests.html_helpers import analisar, totais_do_resumo
 
 pytestmark = pytest.mark.django_db
 
@@ -576,8 +576,8 @@ def test_execucao_detalhe_mostra_totais_e_recusas(chefe_almoxarifado):
 
     assert resposta_detalhe.status_code == 200
     conteudo_html = resposta_detalhe.content.decode("utf-8")
-    assert re.search(
-        rf"<dt>Inseridos</dt>\s*<dd>{plano.total_inseridos}</dd>", conteudo_html
-    ), f"total_inseridos ({plano.total_inseridos}) não encontrado no detalhe"
+    resumo = totais_do_resumo(analisar(resposta_detalhe.content))
+    assert resumo["Inseridos"] == str(plano.total_inseridos)
+    assert resumo["Rejeitados"] == str(plano.total_rejeitados)
     assert "900012" in conteudo_html
     assert 'id="excecoes"' in conteudo_html

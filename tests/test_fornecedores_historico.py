@@ -48,6 +48,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from fornecedores.models import ExcecaoImportacaoFornecedores, ExecucaoImportacaoFornecedores
+from tests.html_helpers import analisar
 
 pytestmark = pytest.mark.django_db
 
@@ -211,18 +212,19 @@ def test_pagina_do_historico_carrega_o_script_de_linha_clicavel(client, chefe_al
 
 # ---------------------------------------------------------------------------
 # Coluna "Arquivo": mesmo contrato do histórico do catálogo
-# (`table-cell-filename`, `truncar_meio:20`, Fase C) — até 20 caracteres,
-# texto simples; 21 ou mais, `<details>` com o `<summary>` cortado no meio e
+# (`table-cell-filename`, `truncar_meio:32`, P2 do redesign; era 20) — até 32
+# caracteres, texto simples; 33 ou mais, `<details>` com o `<summary>` cortado no meio e
 # o nome completo sempre no DOM.
 # ---------------------------------------------------------------------------
 
-_LIMITE_NOME_ARQUIVO = 20
+_LIMITE_NOME_ARQUIVO = 32  # versão estreita (até 860px)
+_LIMITE_NOME_LARGO = 56  # versão larga: 9 colunas, cabe mais do nome
 
 
-def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
+def test_nome_de_arquivo_no_limite_de_32_caracteres_fica_como_texto_simples(
     client, chefe_almoxarifado, criar_usuario
 ):
-    nome = "a" * 16 + ".csv"  # 20 caracteres exatos — não passa do limite.
+    nome = "a" * 28 + ".csv"  # 32 caracteres exatos — não passa do limite.
     assert len(nome) == _LIMITE_NOME_ARQUIVO
     usuario = criar_usuario()
     _criar_execucao(executada_por=usuario, nome_arquivo=nome)
@@ -235,12 +237,12 @@ def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
     assert "<details" not in conteudo
 
 
-def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_dom(
+def test_nome_de_arquivo_com_33_caracteres_fica_em_details_com_nome_completo_no_dom(
     client, chefe_almoxarifado, criar_usuario
 ):
     from interface.templatetags.interface_extras import truncar_meio
 
-    nome = "a" * 17 + ".csv"  # 21 caracteres — 1 a mais que o limite de 20.
+    nome = "a" * 29 + ".csv"  # 33 caracteres — 1 a mais que o limite de 32.
     assert len(nome) == _LIMITE_NOME_ARQUIVO + 1
     usuario = criar_usuario()
     _criar_execucao(executada_por=usuario, nome_arquivo=nome)
@@ -263,7 +265,9 @@ def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_
 def test_dois_arquivos_de_mesmo_prefixo_tem_resumos_distintos_e_nomes_completos_no_dom(
     client, chefe_almoxarifado, criar_usuario
 ):
-    prefixo = "cadastro_de_fornecedores_scpi_completo_"
+    # Mais longo que o corte da versão larga (56), para as duas versões terem `<summary>`.
+    prefixo = "cadastro_de_fornecedores_scpi_completo_exportado_do_ambiente_de_producao_"
+    assert len(prefixo) + len("v1.csv") > _LIMITE_NOME_LARGO
     nomes = [f"{prefixo}v1.csv", f"{prefixo}v2.csv"]
     usuario = criar_usuario()
     for nome in nomes:
@@ -273,9 +277,13 @@ def test_dois_arquivos_de_mesmo_prefixo_tem_resumos_distintos_e_nomes_completos_
     resposta = client.get(reverse("fornecedores:historico"))
 
     conteudo = resposta.content.decode("utf-8")
-    resumos = re.findall(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
-    assert len(resumos) == 2
-    assert len(set(resumos)) == 2, f"resumos indistinguíveis: {resumos}"
+    documento = analisar(resposta.content)
+    # Cada versão do nome (larga e estreita) distingue as duas execuções por si só.
+    for versao in ("nome-arquivo-largo", "nome-arquivo-estreito"):
+        resumos = [s.texto for s in documento.buscar("summary", classe="table-cell-filename-nome")
+                   if any(a.tem_classe(versao) for a in s.ancestrais())]
+        assert len(resumos) == 2, versao
+        assert len(set(resumos)) == 2, f"resumos indistinguíveis em {versao}: {resumos}"
     for nome in nomes:
         assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
 

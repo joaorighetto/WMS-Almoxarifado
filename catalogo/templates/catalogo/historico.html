@@ -8,9 +8,15 @@ Histórico de importações do catálogo (US3, FR-033–FR-037, FR-037a,
 Versão final (T040) sobre `HistoricoImportacoesView` (ListView, `execucoes`
 paginado 20/página via `?pagina=`; ordenação por coluna, FR-037a, padrão
 `-concluida_em`/`-pk` já aplicada na queryset). Reutiliza os mesmos
-primitivos de `execucao_detalhe.html`/`consulta.html`: Page Header, Table,
+primitivos de `execucao_detalhe.html`/`consulta.html`: Card, Table,
 Pagination e Empty State (`static/css/components.css`,
 `catalogo/static/catalogo/css/catalogo.css`).
+
+Composição do redesign (`docs/redesign-observatory/contrato.md` §4 e §12): o cabeçalho (`.top`),
+o `<main id="main">` e as mensagens vêm de `contas/base.html`; esta página preenche `heading`,
+`sub`, `tools` e `page`. A tabela e a paginação ficam num único `.card`; a tabela rola com a
+página (sem `table-sticky-header`: não há segundo scrollport vertical) e, quando larga, rola na
+horizontal dentro do card.
 
 Ordenação por coluna (FR-037a, emenda de 2026-09-22, `OrdenacaoMixin`,
 `catalogo/ordenacao.py`): "Concluída em", "Executor", "Recebidos",
@@ -69,8 +75,8 @@ ocultar coluna (nível 5) ou a espremer o selo de estado em três linhas.
 `seed_dev`, como "seed_dev_03_restauracao_carga_inicial_valida.csv",
 quebravam em várias linhas e inflavam a linha para 144–152px; a correção da
 Fase B, 24ch fixos, empurrou a tabela para 1259px numa área de 1118px a
-1440px). O nome vai numa linha só, cortado NO MEIO por `truncar_meio:20`
-(`interface_extras.py`: começo + "…" + final com a extensão): o template
+1440px). O nome vai numa linha só, cortado NO MEIO por `truncar_meio` (na Fase C, 20 caracteres;
+limites atuais no parágrafo seguinte) (`interface_extras.py`: começo + "…" + final com a extensão): o template
 compara `nome_arquivo` com o resultado — quando cabe, texto simples; quando
 não, um `<details>` nativo (DESIGN.md → Table: "conteúdo longo truncado só
 com forma previsível de ver o todo") com o nome cortado no `<summary>` e o
@@ -83,8 +89,13 @@ mantém os cabeçalhos numa linha (th de 35px, antes 53px com "Executada por" �
 hoje "Executor" — em duas linhas) e `.table-dense-x` (`static/css/components.css`) aperta o padding
 horizontal (`--table-cell-pad-x` 12px → 8px; o tracking dos cabeçalhos fica
 no 0.04em do DESIGN.md), com o rótulo curto "Executor" e o corte
-`truncar_meio:20`: a tabela passa de 1259px para 1106px numa área de 1118px —
-as dez colunas cabem sem rolagem, linha de 42px.
+então de 20 caracteres (histórico, Fase C): a tabela passava de 1259px para 1106px numa área de 1118px —
+as dez colunas cabiam sem rolagem, linha de 42px. Redesign P2 (limites vigentes): o orçamento do corte subiu de 20 para 32 caracteres até 860px (`truncar_meio:32`)
+e para 42 acima disso (56 no histórico de fornecedores, de 9 colunas), para preservar o trecho que
+distingue um arquivo do outro; a 1440px a tabela segue sem rolagem. As duas versões do nome ficam
+no DOM e uma é `display: none` por media query (components.css). Dentro do `.card` (com o shell novo,
+1142px úteis a 1440px) as dez colunas continuam cabendo sem rolagem (medido na recomposição do
+P2); em larguras menores o card rola na horizontal.
 {% endcomment %}
 
 {% block title %}Histórico de importações do catálogo — WMS-Almoxarifado{% endblock %}
@@ -93,86 +104,96 @@ as dez colunas cabem sem rolagem, linha de 42px.
 <link rel="stylesheet" href="{% static 'catalogo/css/catalogo.css' %}">
 {% endblock %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container">
-    {% include "interface/_mensagens.html" %}
+{% block heading %}Histórico de importações do catálogo{% endblock %}
+{% block sub %}Execuções de importação do catálogo confirmadas.{% endblock %}
+{% comment %}
+"Importar catálogo" é uma ação de página (um link, não o envio de um formulário): vai no `.tools`
+como `.btn` secundário (contrato §4). A ação primária da tarefa — "Enviar" — fica no formulário da
+tela de envio; o mesmo destino já está na sidebar.
+{% endcomment %}
+{% block tools %}<a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-secondary">Importar catálogo</a>{% endblock %}
 
-    <header class="page-header">
-      <div>
-        <h1 class="page-header-title">Histórico de importações do catálogo</h1>
-        <p class="page-header-description">
-          Execuções de importação do catálogo confirmadas.
-        </p>
-      </div>
-      <div class="page-header-actions">
-        <a href="{% url 'catalogo:importacao_envio' %}" class="btn btn-primary">Importar catálogo</a>
-      </div>
-    </header>
-
-    <section class="page-section">
-      {% if execucoes %}
-      <div class="table-wrapper table-sticky-header">
-        <table class="table table-nowrap-headers table-dense-x">
-          <thead>
-            <tr>
-              <th scope="col">Execução</th>
-              <th scope="col">Situação</th>
-              {% include "interface/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
-              {% include "interface/_th_ordenavel.html" with coluna="executor" rotulo="Executor" rotulo_acao="executor" %}
-              <th scope="col" class="table-cell-filename">Arquivo</th>
-              {% include "interface/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
-              <th scope="col" class="table-cell-numeric">Inseridos</th>
-              <th scope="col" class="table-cell-numeric">Atualizados</th>
-              {% include "interface/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
-              {% include "interface/_th_ordenavel.html" with coluna="divergencias" rotulo="Divergências" rotulo_acao="divergências" extra_class="table-cell-numeric" %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for e in execucoes %}
-            <tr data-linha-clicavel>
-              <td>
-                <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="table-row-link" data-linha-link><span class="visually-hidden">Execução </span>#{{ e.pk }}</a>
-              </td>
-              <td class="catalogo-historico-situacao">
-                {% if e.total_rejeitados %}
-                <span class="badge badge-warning">Com rejeições</span>
-                {% else %}
-                <span class="badge badge-success">Sem rejeições</span>
-                {% endif %}
-              </td>
-              <td class="table-cell-date">{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
-              <td>{{ e.executada_por.matricula }}</td>
-              <td class="table-cell-filename">
-                {% if e.nome_arquivo|truncar_meio:20 == e.nome_arquivo %}
-                <span class="table-cell-filename-nome">{{ e.nome_arquivo }}</span>
-                {% else %}
-                <details class="table-cell-filename-detalhe">
-                  <summary class="table-cell-filename-nome">{{ e.nome_arquivo|truncar_meio:20 }}</summary>
-                  <div class="table-cell-filename-completo">{{ e.nome_arquivo }}</div>
-                </details>
-                {% endif %}
-              </td>
-              <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
-              <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
-              <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
-              <td class="table-cell-numeric{% if e.total_rejeitados %} emphasis-warning{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
-              <td class="table-cell-numeric">{{ e.total_divergencias|separador_milhar }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% include "interface/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
-      {% else %}
-      <div class="empty-state" data-estado="vazio">
-        <p class="empty-state-title">Nenhuma importação registrada.</p>
-        <p class="empty-state-description">As execuções confirmadas de importação do catálogo aparecerão aqui.</p>
-      </div>
-      {% endif %}
-    </section>
+{% block page %}
+{% if execucoes %}
+<div class="card">
+  <div class="table-wrapper" role="region" aria-label="Execuções de importação" tabindex="0">
+    <table class="table table-nowrap-headers table-dense-x">
+      <thead>
+        <tr>
+          <th scope="col">Execução</th>
+          <th scope="col">Situação</th>
+          {% include "interface/_th_ordenavel.html" with coluna="concluida" rotulo="Concluída em" rotulo_acao="data de conclusão" %}
+          {% include "interface/_th_ordenavel.html" with coluna="executor" rotulo="Executor" rotulo_acao="executor" %}
+          <th scope="col" class="table-cell-filename">Arquivo</th>
+          {% include "interface/_th_ordenavel.html" with coluna="recebidos" rotulo="Recebidos" rotulo_acao="recebidos" extra_class="table-cell-numeric" %}
+          <th scope="col" class="table-cell-numeric">Inseridos</th>
+          <th scope="col" class="table-cell-numeric">Atualizados</th>
+          {% include "interface/_th_ordenavel.html" with coluna="rejeitados" rotulo="Rejeitados" rotulo_acao="rejeitados" extra_class="table-cell-numeric" %}
+          {% include "interface/_th_ordenavel.html" with coluna="divergencias" rotulo="Divergências" rotulo_acao="divergências" extra_class="table-cell-numeric" %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in execucoes %}
+        <tr data-linha-clicavel>
+          <td>
+            <a href="{% url 'catalogo:execucao_detalhe' e.pk %}" class="table-row-link" data-linha-link><span class="visually-hidden">Execução </span>#{{ e.pk }}</a>
+          </td>
+          <td>
+            {% if e.total_rejeitados %}
+            <span class="badge badge-warning">Com rejeições</span>
+            {% else %}
+            <span class="badge badge-success">Sem rejeições</span>
+            {% endif %}
+          </td>
+          <td class="table-cell-date">{{ e.concluida_em|date:"d/m/Y H:i" }}</td>
+          <td>{{ e.executada_por.matricula }}</td>
+          <td class="table-cell-filename">
+            {% comment %}
+            Duas versões do nome, alternadas por largura (components.css): a larga (acima de 860px, corte de 42: medido para a tabela caber
+            sem rolagem a 1440px) e a estreita (até 860px, corte de 32). A que não vale fica `display: none`, então o
+            leitor de tela lê uma só. O nome completo está sempre no DOM (texto simples ou `<details>`).
+            {% endcomment %}
+            <div class="nome-arquivo-largo">
+              {% if e.nome_arquivo|truncar_meio:42 == e.nome_arquivo %}
+              <span class="table-cell-filename-nome">{{ e.nome_arquivo }}</span>
+              {% else %}
+              <details class="table-cell-filename-detalhe">
+                <summary class="table-cell-filename-nome">{{ e.nome_arquivo|truncar_meio:42 }}</summary>
+                <div class="table-cell-filename-completo">{{ e.nome_arquivo }}</div>
+              </details>
+              {% endif %}
+            </div>
+            <div class="nome-arquivo-estreito">
+              {% if e.nome_arquivo|truncar_meio:32 == e.nome_arquivo %}
+              <span class="table-cell-filename-nome">{{ e.nome_arquivo }}</span>
+              {% else %}
+              <details class="table-cell-filename-detalhe">
+                <summary class="table-cell-filename-nome">{{ e.nome_arquivo|truncar_meio:32 }}</summary>
+                <div class="table-cell-filename-completo">{{ e.nome_arquivo }}</div>
+              </details>
+              {% endif %}
+            </div>
+          </td>
+          <td class="table-cell-numeric">{{ e.total_recebidos|separador_milhar }}</td>
+          <td class="table-cell-numeric">{{ e.total_inseridos|separador_milhar }}</td>
+          <td class="table-cell-numeric">{{ e.total_atualizados|separador_milhar }}</td>
+          <td class="table-cell-numeric{% if e.total_rejeitados %} emphasis-warning{% endif %}">{{ e.total_rejeitados|separador_milhar }}</td>
+          <td class="table-cell-numeric">{{ e.total_divergencias|separador_milhar }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-</main>
+  {% include "interface/_paginacao.html" with pagina=page_obj parametro="pagina" rotulo="Paginação do histórico" rotulo_item="execução" rotulo_item_plural="execuções" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty" data-estado="vazio">
+    <p class="empty-state-title">Nenhuma importação registrada.</p>
+    <p class="empty-state-description">As execuções confirmadas de importação do catálogo aparecerão aqui.</p>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}

@@ -45,6 +45,7 @@ from django.urls import resolve, reverse
 from django.utils import timezone
 
 from catalogo.models import ExcecaoImportacao, ExecucaoImportacao, MotivoRecusa
+from tests.html_helpers import analisar, totais_do_resumo
 
 pytestmark = pytest.mark.django_db
 
@@ -268,20 +269,21 @@ def test_pagina_do_historico_carrega_o_script_de_linha_clicavel(client, chefe_al
 
 # ---------------------------------------------------------------------------
 # Coluna "Arquivo": nome completo sempre acessível, mesmo quando a exibição é
-# encurtada (`table-cell-filename`, `truncar_meio:20`, Fase C). Nomes de até
-# 20 caracteres ficam como texto simples; os de 21 ou mais ficam num
+# encurtada (`table-cell-filename`, `truncar_meio:32`, P2 do redesign; era 20).
+# Nomes de até 32 caracteres ficam como texto simples; os de 33 ou mais ficam num
 # `<details>` nativo, com o `<summary>` cortado NO MEIO (começo + "…" + fim,
 # extensão preservada) e o nome completo sempre no DOM (aberto ou fechado) —
 # o nome em si nunca é alterado, só a apresentação.
 # ---------------------------------------------------------------------------
 
-_LIMITE_NOME_ARQUIVO = 20
+_LIMITE_NOME_ARQUIVO = 32  # versão estreita (até 860px)
+_LIMITE_NOME_LARGO = 42  # versão larga: 10 colunas, medido para caber a 1440px
 
 
-def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
+def test_nome_de_arquivo_no_limite_de_32_caracteres_fica_como_texto_simples(
     client, chefe_almoxarifado, criar_usuario
 ):
-    nome = "a" * 16 + ".csv"  # 20 caracteres exatos — não passa do limite.
+    nome = "a" * 28 + ".csv"  # 32 caracteres exatos — não passa do limite.
     assert len(nome) == _LIMITE_NOME_ARQUIVO
     usuario = criar_usuario()
     _criar_execucao(executada_por=usuario, nome_arquivo=nome)
@@ -294,12 +296,12 @@ def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
     assert "<details" not in conteudo
 
 
-def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_dom(
+def test_nome_de_arquivo_com_33_caracteres_fica_em_details_com_nome_completo_no_dom(
     client, chefe_almoxarifado, criar_usuario
 ):
     from interface.templatetags.interface_extras import truncar_meio
 
-    nome = "a" * 17 + ".csv"  # 21 caracteres — 1 a mais que o limite de 20.
+    nome = "a" * 29 + ".csv"  # 33 caracteres — 1 a mais que o limite de 32.
     assert len(nome) == _LIMITE_NOME_ARQUIVO + 1
     usuario = criar_usuario()
     _criar_execucao(executada_por=usuario, nome_arquivo=nome)
@@ -315,7 +317,7 @@ def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_
     assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
     bloco_details = re.search(r"<details\b[^>]*>", conteudo).group()
     assert " open" not in bloco_details
-    # O `<summary>` traz o corte NO MEIO com exatamente o limite (fixa o "20"
+    # O `<summary>` traz o corte NO MEIO com exatamente o limite (fixa o "32"
     # do template; o algoritmo em si é `test_catalogo_templatetags.py`).
     resumo = re.search(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
     assert resumo is not None
@@ -340,9 +342,13 @@ def test_dois_arquivos_de_mesmo_prefixo_tem_resumos_distintos_e_nomes_completos_
     resposta = client.get(reverse("catalogo:historico"))
 
     conteudo = resposta.content.decode("utf-8")
-    resumos = re.findall(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
-    assert len(resumos) == 2
-    assert len(set(resumos)) == 2, f"resumos indistinguíveis: {resumos}"
+    documento = analisar(resposta.content)
+    # Cada versão do nome (larga e estreita) distingue as duas execuções por si só.
+    for versao in ("nome-arquivo-largo", "nome-arquivo-estreito"):
+        resumos = [s.texto for s in documento.buscar("summary", classe="table-cell-filename-nome")
+                   if any(a.tem_classe(versao) for a in s.ancestrais())]
+        assert len(resumos) == 2, versao
+        assert len(set(resumos)) == 2, f"resumos indistinguíveis em {versao}: {resumos}"
     for nome in nomes:
         assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
 
@@ -740,13 +746,10 @@ def test_detalhe_da_primeira_execucao_e_identico_antes_e_depois_de_uma_segunda_i
     assert resposta_antes.status_code == 200
     totais_antes = _totais_da_execucao(execucao_1.pk)
     excecoes_antes = _excecoes_da_execucao(execucao_1.pk)
-    # Escopado ao par <dt>/<dd> do resumo (`execucao_detalhe.html`) — "9"
-    # solto coincide por acidente com dígitos do SHA-256 exibido na mesma
-    # página.
-    assert re.search(
-        rf"<dt>Inseridos</dt>\s*<dd>\s*{execucao_1.total_inseridos}\s*</dd>",
-        resposta_antes.content.decode("utf-8"),
-    )
+    # Escopado ao tile do resumo (rótulo + valor, `execucao_detalhe.html`) — "9" solto coincide
+    # por acidente com dígitos do SHA-256 exibido na mesma página.
+    resumo_antes = totais_do_resumo(analisar(resposta_antes.content))
+    assert resumo_antes["Inseridos"] == str(execucao_1.total_inseridos)
 
     # segunda importação — arquivo com registros propositalmente inválidos
     # (US3, Independent Test), sobre os mesmos 9 códigos já existentes.
@@ -761,10 +764,8 @@ def test_detalhe_da_primeira_execucao_e_identico_antes_e_depois_de_uma_segunda_i
     assert excecoes_antes == excecoes_depois, (
         "a segunda importação não pode alterar as exceções da 1ª"
     )
-    assert re.search(
-        rf"<dt>Inseridos</dt>\s*<dd>\s*{execucao_1.total_inseridos}\s*</dd>",
-        resposta_depois.content.decode("utf-8"),
-    )
+    # O resumo exibido é o mesmo, tile a tile, e não só o total de inseridos.
+    assert totais_do_resumo(analisar(resposta_depois.content)) == resumo_antes
 
 
 def test_excecao_no_detalhe_mostra_linha_motivo_e_cadpro_quando_identificavel(

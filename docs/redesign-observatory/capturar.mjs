@@ -1,11 +1,11 @@
 // Evidência local do laboratório. Node >=22 e Chrome instalado; sem dependências npm.
-// Uso: node docs/redesign-observatory/capturar.mjs [http://127.0.0.1:8011] [--interacoes | --capturas] [--alvos=a,b]
+// Uso: node docs/redesign-observatory/capturar.mjs [http://127.0.0.1:8010] [--interacoes | --capturas] [--alvos=a,b]
 import { spawn } from 'node:child_process';
 import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const origin = process.argv.slice(2).find(arg => !arg.startsWith('--')) || 'http://127.0.0.1:8011';
+const origin = process.argv.slice(2).find(arg => !arg.startsWith('--')) || 'http://127.0.0.1:8010';
 if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname)) throw Error('Servidor local exigido');
 const output = '.impeccable/review';
 const onlyInteractions = process.argv.includes('--interacoes');
@@ -88,7 +88,6 @@ try {
     capture('menu-820-toque', 'chefe-almoxarifado', '820x1180', 'light', '/', true),
     capture('menu-390-claro', 'chefe-almoxarifado', '390x844', 'light', '/', true),
     capture('menu-390-escuro', 'chefe-almoxarifado', '390x844', 'dark', '/', true),
-    capture('historico-catalogo-1440-herdada', 'chefe-almoxarifado', '1440x900', 'light', '/catalogo/importacoes/'),
     capture('envio-catalogo-1440-escuro-herdada', 'chefe-almoxarifado', '1440x900', 'dark', '/catalogo/importacao/'),
     capture('home-requisitante-1440', 'requisitante', '1440x900', 'light', '/'),
     capture('home-requisitante-390', 'requisitante', '390x844', 'light', '/', true),
@@ -106,7 +105,6 @@ try {
     capture('entradas-auditor-1440-herdada', 'auditor', '1440x900', 'dark', '/estoque/entradas/'),
     capture('home-admin-1440', 'administrador-sistema', '1440x900', 'light', '/'),
     capture('usuarios-admin-1440-herdada', 'administrador-sistema', '1440x900', 'light', '/organizacao/usuarios/'),
-    capture('fornecedores-1440-herdada', 'funcionario-almoxarifado', '1440x900', 'light', '/fornecedores/'),
     capture('entrada-nova-390-herdada', 'funcionario-almoxarifado', '390x844', 'light', '/estoque/entradas/nova/', true),
     // P1 — credenciais.
     capture('login-1440-claro', 'anonimo', '1440x900', 'light', '/login/'),
@@ -126,11 +124,34 @@ try {
     capture('provisoria-390', 'critica.provisoria', '390x844', 'light', '/senha/', true),
     capture('home-sem-papel-1440', 'admin', '1440x900', 'light', '/'),
   ];
+  // P2 — consultas e históricos. As execuções com conteúdo são a 2ª de cada importação do banco local
+  // (catálogo: `seed_dev_02_revisao_simulada.csv`; fornecedores: revisão simulada criada para o P2).
+  const fa = 'funcionario-almoxarifado';
+  const ca = 'chefe-almoxarifado';
+  const buscaFornecedores = '/fornecedores/?nome=ltda';
+  for (const [nome, papel, url, cenarios] of [
+    ['fornecedores', fa, buscaFornecedores, ['1440-claro', '1440-escuro', '1280', '820-toque', '390-claro', '390-escuro']],
+    ['fornecedores-inicial', fa, '/fornecedores/', ['1440-claro']],
+    ['fornecedores-codigo-invalido', fa, '/fornecedores/?codigo=12a', ['1440-claro', '390-claro']],
+    ['fornecedores-documento-invalido', fa, '/fornecedores/?documento=abc', ['1440-escuro']],
+    ['fornecedores-sem-resultado', fa, '/fornecedores/?nome=zzzqqqxx', ['1440-escuro', '390-claro']],
+    ['historico-catalogo', ca, '/catalogo/importacoes/', ['1440-claro', '1440-escuro', '1280', '820-toque', '390-claro', '390-escuro']],
+    ['historico-fornecedores', ca, '/fornecedores/importacoes/', ['1440-claro', '1440-escuro', '390-claro']],
+    ['execucao-catalogo', ca, '/catalogo/importacoes/2/', ['1440-claro', '1440-escuro', '1280', '820-toque', '390-claro', '390-escuro']],
+    ['execucao-catalogo-vazia', ca, '/catalogo/importacoes/1/', ['1440-claro', '390-escuro']],
+    ['execucao-fornecedores', ca, '/fornecedores/importacoes/2/', ['1440-claro', '1440-escuro', '820-toque', '390-claro']],
+    ['execucao-fornecedores-vazia', ca, '/fornecedores/importacoes/1/', ['1440-claro']],
+  ]) {
+    for (const cenario of cenarios) {
+      const [largura, variante] = cenario.split('-');
+      const size = { 1440: '1440x900', 1280: '1280x800', 820: '820x1180', 390: '390x844' }[largura];
+      const touch = ['820', '390'].includes(largura);
+      captures.push(capture(`${nome}-${cenario}`, papel, size, variante === 'escuro' ? 'dark' : 'light', url, touch));
+    }
+  }
   for (const [prefix, role, url] of [
-    ['historico-catalogo', 'chefe-almoxarifado', '/catalogo/importacoes/'],
     ['entradas-auditor', 'auditor', '/estoque/entradas/'],
     ['usuarios-admin', 'administrador-sistema', '/organizacao/usuarios/'],
-    ['fornecedores', 'funcionario-almoxarifado', '/fornecedores/'],
   ]) {
     for (const theme of ['light', 'dark']) captures.push(capture(`${prefix}-1440-${theme}-herdada`, role, '1440x900', theme, url));
   }
@@ -184,7 +205,8 @@ try {
           pointerCoarse:matchMedia('(pointer: coarse)').matches,hoverNone:matchMedia('(hover: none)').matches,touchPoints:navigator.maxTouchPoints,
           nav:[...document.querySelectorAll('nav[aria-label="Seções"] a')].map(a=>({text:a.textContent.trim(),href:a.getAttribute('href'),current:a.getAttribute('aria-current')})),
           tiles:[...document.querySelectorAll('.tiles .tile')].map(rect),description:rect(document.querySelector('.catalogo-descricao-cell')),
-          table:rect(table),wrapper:rect(wrap),tableScroll:wrap?{width:wrap.clientWidth,content:wrap.scrollWidth,background:getComputedStyle(wrap).backgroundImage}:null,
+          table:rect(table),wrapper:rect(wrap),
+          wrappers:[...document.querySelectorAll('.table-wrapper')].map(w=>({width:w.clientWidth,content:w.scrollWidth,overflowY:getComputedStyle(w).overflowY,maxHeight:getComputedStyle(w).maxHeight})),tableScroll:wrap?{width:wrap.clientWidth,content:wrap.scrollWidth,background:getComputedStyle(wrap).backgroundImage}:null,
           plannedColumns:document.querySelector('#home-planned-heading')?.closest('section').querySelector('tbody tr')?.children.length,
           logoutForms:document.querySelectorAll('form[action="/logout/"][method="post"]').length,
           csrfPresent:!!document.querySelector('form[action="/logout/"] input[name="csrfmiddlewaretoken"]'),
@@ -261,6 +283,24 @@ try {
     await page.evaluate("document.querySelector('#id_codigo').value='123'; document.querySelector('.filter-bar').noValidate=true; document.querySelector('.filter-bar').requestSubmit()");
     await waitFor("!!document.querySelector('#campo-codigo .field-error')");
     await check('Código inválido via HTMX e erro associado', "document.querySelector('#id_codigo').getAttribute('aria-invalid')==='true' && !!document.querySelector('#campo-codigo .field-error') && document.querySelectorAll('.side').length===1");
+    // P2 — consulta de fornecedores (paginação HTMX, ordenação de página inteira, código inválido sem apagar a
+    // tabela) e linha clicável do histórico.
+    await page.call('Page.navigate', { url: `${origin}/fornecedores/?dev_como=funcionario-almoxarifado` });
+    await waitFor("document.readyState==='complete' && !!document.querySelector('#pagina-pagina-2-larga') && !location.search.includes('dev_como')");
+    await page.evaluate("window.__smokeOriginalBody=document.body; document.querySelector('#pagina-pagina-2-larga').click()");
+    await waitFor("location.search.includes('pagina=2') && !document.querySelector('.htmx-request')");
+    await check('Fornecedores: paginação HTMX sem shell duplicado', "document.body===window.__smokeOriginalBody && document.activeElement===document.querySelector('#resultados-consulta table') && document.querySelectorAll('.side').length===1 && document.querySelectorAll('main').length===1");
+    await page.evaluate("document.querySelector('#ordenar-nome').click()");
+    await waitFor("document.readyState==='complete' && document.querySelector('#ordenar-nome')?.closest('th').getAttribute('aria-sort')==='descending'");
+    await check('Fornecedores: ordenação recarrega a página e volta à página 1', "!location.search.includes('pagina=2') && document.querySelector('input[name=ordem]').value==='-nome' && document.querySelectorAll('.side').length===1");
+    await page.evaluate("window.__linhasAntes=document.querySelectorAll('#resultados-consulta tbody tr').length; document.querySelector('#id_codigo').value='12a'; document.querySelector('.filter-bar').noValidate=true; document.querySelector('.filter-bar').requestSubmit()");
+    await waitFor("!!document.querySelector('#campo-codigo .field-error')");
+    await check('Fornecedores: código inválido via HTMX marca o campo sem apagar a tabela', "document.querySelector('#id_codigo').getAttribute('aria-invalid')==='true' && document.querySelectorAll('#resultados-consulta tbody tr').length===window.__linhasAntes && window.__linhasAntes>1");
+    await page.call('Page.navigate', { url: `${origin}/catalogo/importacoes/?dev_como=chefe-almoxarifado` });
+    await waitFor("document.readyState==='complete' && !!document.querySelector('[data-linha-clicavel]') && !location.search.includes('dev_como')");
+    await page.evaluate("document.querySelector('[data-linha-clicavel] td:nth-child(3)').click()");
+    await waitFor("document.readyState==='complete' && /importacoes\\/\\d+\\/$/.test(location.pathname)");
+    await check('Histórico: clique na linha abre a execução', "/importacoes\\/\\d+\\/$/.test(location.pathname) && document.querySelectorAll('.side').length===1");
     await page.call('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     await page.call('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await page.evaluate("document.querySelector('[data-menu-toggle]').click()");
