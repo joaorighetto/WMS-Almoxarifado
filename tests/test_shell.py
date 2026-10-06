@@ -20,8 +20,10 @@ O que este arquivo protege, em ordem de consequência:
 O parsing é estrutural (`tests/html_helpers.py`), nunca regex de atributo. As telas ainda não
 recompostas (propagação P1 a P5) trazem o próprio `<main>` sem `id`: o alvo do skip link nelas é
 resolvido por fallback em JavaScript (`static/js/shell.js`), que um teste de servidor não
-exercita. Só as telas recompostas (Home, consulta do catálogo e `/senha/`) têm `id="main"`
-verificado aqui; o markup do login e de `/senha/` está em `tests/test_contas_credenciais_markup.py`.
+exercita. Só as telas recompostas (Home, consulta do catálogo, `/senha/` e as cinco do lote P2:
+consulta de fornecedores e histórico/execução de importação de catálogo e fornecedores) têm
+`id="main"` verificado aqui; o markup do login e de `/senha/` está em
+`tests/test_contas_credenciais_markup.py`.
 """
 
 import uuid
@@ -34,6 +36,7 @@ from django.utils import timezone
 
 from catalogo.models import ExecucaoImportacao
 from contas.models import Papel
+from fornecedores.models import ExecucaoImportacaoFornecedores
 from tests.contas_helpers import PAPEIS_CHEFE_ALMOXARIFADO, membro_provisorio, rota
 from tests.html_helpers import analisar, hrefs_de
 from tests.test_navegacao import ITENS, PERSONAS
@@ -85,6 +88,24 @@ def _execucao(client, usuario, csv_fixture):
     return client.get(reverse("catalogo:execucao_detalhe", args=[execucao.pk]))
 
 
+def _execucao_fornecedores(client, usuario, csv_fixture):
+    execucao = ExecucaoImportacaoFornecedores.objects.create(
+        token_previa=uuid.uuid4(),
+        executada_por=usuario,
+        concluida_em=timezone.now(),
+        nome_arquivo="cadastro.csv",
+        tamanho_arquivo=10,
+        sha256_arquivo="0" * 64,
+        total_recebidos=1,
+        total_inseridos=1,
+        total_atualizados=0,
+        total_atualizados_com_alteracao=0,
+        total_rejeitados=0,
+        total_ausentes_no_arquivo=0,
+    )
+    return client.get(reverse("fornecedores:execucao_detalhe", args=[execucao.pk]))
+
+
 def _previa(client, usuario, csv_fixture):
     arquivo = SimpleUploadedFile(
         "arquivo.csv", csv_fixture("carga_inicial_valida.csv"), content_type="text/csv"
@@ -103,9 +124,11 @@ TELAS = [
     ("catalogo-consulta", "requisitante", True, _get("catalogo:consulta")),
     ("catalogo-envio", "chefe_almoxarifado", False, _get("catalogo:importacao_envio")),
     ("catalogo-previa", "chefe_almoxarifado", False, _previa),
-    ("catalogo-historico", "chefe_almoxarifado", False, _get("catalogo:historico")),
-    ("catalogo-execucao", "chefe_almoxarifado", False, _execucao),
-    ("fornecedores-consulta", "funcionario_almoxarifado", False, _get("fornecedores:consulta")),
+    ("catalogo-historico", "chefe_almoxarifado", True, _get("catalogo:historico")),
+    ("catalogo-execucao", "chefe_almoxarifado", True, _execucao),
+    ("fornecedores-historico", "chefe_almoxarifado", True, _get("fornecedores:historico")),
+    ("fornecedores-execucao", "chefe_almoxarifado", True, _execucao_fornecedores),
+    ("fornecedores-consulta", "funcionario_almoxarifado", True, _get("fornecedores:consulta")),
     ("entradas", "funcionario_almoxarifado", False, _get("estoque:entradas")),
     ("entrada-nova", "funcionario_almoxarifado", False, _get("estoque:entrada_nova")),
     ("usuarios", "admin_sistema", False, _get("usuarios")),

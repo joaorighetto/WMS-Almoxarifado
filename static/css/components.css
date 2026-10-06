@@ -254,6 +254,12 @@ main:focus {
   vertical-align: middle;
 }
 
+/* Selo de estado no h1 do `.top` (resultado de uma execução: "Com rejeições" / "Sem rejeições"). */
+.top h1 .badge {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}
+
 /* =====================================================================
  * 3. Botão
  * ===================================================================== */
@@ -739,6 +745,12 @@ html:not(.js) .field-check-js {
   align-items: start;
 }
 
+/* Resumo de métricas (totais de uma execução): tiles de altura igual na linha, sem a "escada" de
+   `.tiles` (que alinha ao topo para os tiles de identidade da Home, de alturas diferentes). */
+.tiles.tiles-metricas {
+  align-items: stretch;
+}
+
 @media (max-width: 640px) {
   .tile-wide {
     grid-column: 1 / -1;
@@ -785,6 +797,58 @@ a.tile:hover {
 .tile .d {
   color: var(--color-text-subtle);
   font-size: 0.8rem;
+}
+
+/* Atalho textual na nota `.d` de um tile (ex.: "ver exceções"): é um link real com destino real, não
+   o tile inteiro (`dt`/`dd` não vão dentro de `<a>`), numa linha própria e sem quebra. No toque ou
+   até 860px a área clicável vira uma faixa de 44px de altura centrada no link (pseudo-elemento, como
+   `.table-row-link`), sem aumentar o tile. */
+.tile .d a {
+  position: relative;
+  white-space: nowrap;
+}
+
+@media (pointer: coarse), (max-width: 860px) {
+  .tile .d a::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -8px;
+    right: -8px;
+    height: 44px;
+    transform: translateY(-50%);
+  }
+}
+
+/* Atenção (mesma gramática do `.alert-warning`): fundo e borda do tom de aviso, marcador ◆ (a forma
+   do badge de aviso) antes do rótulo e rótulo em negrito. O texto continua `--color-text`; a cor
+   de estado nunca é a única pista. */
+.tile-warning {
+  background-color: var(--color-warning-surface);
+  border-color: var(--color-warning);
+}
+
+.tile-warning .k {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.tile-warning .k::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  vertical-align: 0.08em;
+  background-color: var(--color-warning);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+/* Valor que não entra na soma dos demais (ex.: "Ausentes do arquivo"): borda tracejada, a forma
+   que o separa dos tiles da soma; a nota `.d` diz o mesmo em texto. */
+.tile-aside {
+  border-style: dashed;
 }
 
 /* Seção de página separada por espaço, nunca por card empilhado. */
@@ -962,6 +1026,37 @@ html:has(.confirmation-bar) {
   }
 }
 
+/* Linha secundária numa célula (descrição atual sob o CADPRO, nome atual sob o CODIF, detalhe sob o
+   motivo): atenuada e menor, sempre inteira (`pre-line` preserva as quebras do dado). */
+.cell-secondary {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  white-space: pre-line;
+}
+
+/* Cabeçalho que quebra linha (o `th` é `nowrap` por padrão). */
+.table thead th.th-wrap {
+  white-space: normal;
+}
+
+/* Conteúdo exclusivo do celular (≤640px): `display: none` fora da árvore de acessibilidade no
+   desktop, então nada é lido duas vezes. O inverso, `.so-desktop`, some até 640px. */
+.so-movel {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .so-movel {
+    display: revert;
+  }
+
+  .so-desktop {
+    display: none;
+  }
+}
+
 /* Cabeçalhos numa linha só / colunas mais juntas (opt-in, tabelas de muitas colunas curtas). */
 .table-nowrap-headers thead th {
   white-space: nowrap;
@@ -1010,6 +1105,29 @@ html:has(.confirmation-bar) {
 .table-cell-filename,
 .table-cell-filename-nome {
   white-space: nowrap;
+}
+
+/* Duas versões do nome cortado (orçamentos diferentes de `truncar_meio`), alternadas por largura: a
+   estreita até 860px, a larga acima. A que não vale fica `display: none` (nada é lido duas vezes). */
+.nome-arquivo-estreito {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .nome-arquivo-largo {
+    display: none;
+  }
+
+  .nome-arquivo-estreito {
+    display: block;
+  }
+}
+
+/* Nome inteiro (sem `<details>`): recuo igual ao do marcador do `<summary>` dos nomes cortados, para
+   o texto alinhar na coluna. */
+span.table-cell-filename-nome {
+  display: block;
+  padding-left: var(--filename-marker-indent, 1.06em);
 }
 
 .table-cell-filename-detalhe > summary {

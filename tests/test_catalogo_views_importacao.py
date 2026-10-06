@@ -39,6 +39,7 @@ from catalogo.models import (
     ExecucaoImportacao,
     Material,
 )
+from tests.html_helpers import analisar, totais_do_resumo
 
 pytestmark = pytest.mark.django_db
 
@@ -525,15 +526,11 @@ def test_execucao_detalhe_mostra_totais_e_excecoes(chefe_almoxarifado, csv_fixtu
 
     assert resposta_detalhe.status_code == 200
     conteudo_html = resposta_detalhe.content.decode("utf-8")
-    # Escopado ao par <dt>/<dd> do resumo (`execucao_detalhe.html`) — "9"
-    # solto coincide por acidente com o CADPRO/SHA-256 exibidos na mesma
-    # página.
-    assert re.search(
-        rf"<dt>Inseridos</dt>\s*<dd>\s*{plano.total_inseridos}\s*</dd>", conteudo_html
-    ), f"total_inseridos ({plano.total_inseridos}) não encontrado no resumo"
-    assert re.search(
-        rf"<dt>Rejeitados</dt>\s*<dd>\s*{plano.total_rejeitados}\s*</dd>", conteudo_html
-    ), f"total_rejeitados ({plano.total_rejeitados}) não encontrado no resumo"
+    # Escopado ao tile do resumo (rótulo + valor, `execucao_detalhe.html`) — "9" solto coincide
+    # por acidente com o CADPRO/SHA-256 exibidos na mesma página.
+    resumo = totais_do_resumo(analisar(resposta_detalhe.content))
+    assert resumo["Inseridos"] == str(plano.total_inseridos)
+    assert resumo["Rejeitados"] == str(plano.total_rejeitados)
     cadpros_de_recusas_identificaveis = [recusa.cadpro for recusa in plano.recusas if recusa.cadpro]
     for cadpro in cadpros_de_recusas_identificaveis:
         assert cadpro in conteudo_html

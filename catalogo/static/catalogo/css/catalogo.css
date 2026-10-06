@@ -171,8 +171,9 @@
 }
 
 /* A tabela rola na horizontal dentro do card (nunca vira cards), com largura mínima para não
-   esmagar os dados; CADPRO e números já são `nowrap`, a descrição quebra linha. */
-#resultados-consulta .table {
+   esmagar os dados; CADPRO e números já são `nowrap`, a descrição quebra linha. Só a tabela com
+   resultados (a única com `tabindex`); a do estado vazio ocupa a largura do card. */
+#resultados-consulta .table[tabindex] {
   min-width: 46rem;
 }
 
@@ -183,4 +184,52 @@
     min-width: 10rem;
     max-width: 12rem;
   }
+}
+
+/* Resultado de uma execução (`.execucao-secao`, só no detalhe — a prévia reusa os ids; contrato §12): as seções Divergências, Alterações
+   cadastrais e Exceções são cards. A tabela rola na horizontal dentro do card (nunca vira cards)
+   e não é esmagada: o Detalhe/Valor quebra linha, o código e os números ficam `nowrap`. */
+.execucao-secao#alteracoes .table {
+  min-width: 34rem;
+}
+
+/* Código (CADPRO) e descrição ATUAL do material (`.cell-secondary`, components.css) dividem a primeira
+   coluna de Divergências e Alterações. A descrição vai inteira, sem truncar; o CADPRO não muda. */
+@media (min-width: 641px) {
+  .catalogo-codigo-cell {
+    min-width: 11rem;
+  }
+}
+
+/* Divergências: quatro colunas curtas, sem largura mínima. No celular o preenchimento horizontal
+   das células encolhe e os cabeçalhos quebram linha, para a "Diferença" caber sem rolar. */
+@media (max-width: 640px) {
+  .execucao-secao#divergencias .table {
+    --table-cell-pad-x: var(--space-2);
+  }
+
+  .execucao-secao#divergencias .table thead th {
+    white-space: normal;
+  }
+}
+
+/* Consulta com a tabela do estado vazio (única sem `tabindex`) no celular: os seis cabeçalhos
+   somariam mais que o card e cortariam a mensagem. O cabeçalho não diz nada sem linhas; fica só
+   para leitor de tela (visualmente oculto) e a mensagem ocupa a largura do card. */
+@media (max-width: 640px) {
+  #resultados-consulta .table:not([tabindex]) thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+/* Link da linha do histórico (`#N`): cor de acento, sem sublinhado em repouso (o toque não tem
+   hover para revelar que é link). Foco e hover seguem os de `components.css`. Escopado a esta
+   folha: só as telas de catálogo a carregam. */
+.table-row-link {
+  color: var(--color-primary);
 }

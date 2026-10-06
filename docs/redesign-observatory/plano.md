@@ -22,7 +22,7 @@ apresentação é portada; Django Admin técnico fora.
 | Estudo da referência e contrato | concluído (2026-10-05) |
 | Laboratório (L1–L10) | concluído tecnicamente em 2026-10-05; evidências da retomada abaixo |
 | Checkpoint humano | aceito pelo dono do produto em 2026-10-05 (laboratório integrado à `main` pelo PR #27) |
-| Propagação (P1–P6) | P1 concluído na branch `redesign/observatory-p1-credenciais` (aguarda commit/PR); P2–P6 pendentes |
+| Propagação (P1–P6) | P1 concluído e na `main` (#28); P2 concluído na branch `redesign/observatory-p2-consultas` (aguarda commit/PR); P3–P6 pendentes |
 
 Atualize esta tabela e a coluna "Etapa/estado" da matriz ao fechar cada tarefa.
 
@@ -38,19 +38,19 @@ Papel de captura = conta do `seed_dev` usada com `?dev_como=` (ver
 | S1 | Shell (`contas/base.html` + sidebar) | todas autenticadas | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema | `shell.js` (tema, menu) | Lab concluído; checkpoint aceito em 2026-10-05 |
 | S2 | Shell mínimo de credencial provisória (`senha.html` com `provisoria`) | `definir_senha` | conta com senha provisória | `critica.provisoria` | `envio.js` | P1 concluído |
 | S3 | Home (`contas/home.html`) | `home` | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema, sem papel | — | Lab concluído; checkpoint aceito em 2026-10-05 |
-| S4 | Consulta do catálogo (`catalogo/consulta.html`) | `catalogo:consulta` | REQ | requisitante | HTMX: filtros, ordenação, paginação, OOB, histórico | Lab concluído; checkpoint aceito em 2026-10-05 |
+| S4 | Consulta do catálogo (`catalogo/consulta.html`) | `catalogo:consulta` | REQ | requisitante | HTMX: filtros, ordenação, paginação, OOB, histórico | Lab concluído; checkpoint aceito em 2026-10-05; no P2, vazio cabe a 390px (largura mínima só em `.table[tabindex]`) |
 | S5 | Parciais compartilhados (`interface/_paginacao`, `_th_ordenavel`, `_mensagens`, `_consulta_falha`) | várias | — | via S4 | HTMX | Lab concluído; compatibilidade herdada conferida (afeta S6, S10, S11, S20) |
-| S6 | Consulta de fornecedores | `fornecedores:consulta` | FA | funcionario-almoxarifado | HTMX igual a S4 | P2 |
+| S6 | Consulta de fornecedores | `fornecedores:consulta` | FA | funcionario-almoxarifado | HTMX igual a S4 | P2 concluído |
 | S7 | Login (`contas/login.html`) | `login` | anônimo | anonimo | `login.js` | P1 concluído |
 | S8 | Troca voluntária de senha (`contas/senha.html`) | `definir_senha` | todos | requisitante | `envio.js` | P1 concluído |
 | S9 | Envio de importação do catálogo | `catalogo:importacao_envio` | CA | chefe-almoxarifado | `envio.js` | P3 |
 | S10 | Prévia de importação do catálogo (+ confirmar/cancelar) | `catalogo:importacao_previa` | CA | chefe-almoxarifado | `envio.js` | P3 |
-| S11 | Histórico de importações do catálogo | `catalogo:historico` | CA | chefe-almoxarifado | `linha-clicavel.js` | P2 |
-| S12 | Execução de importação do catálogo | `catalogo:execucao_detalhe` | CA | chefe-almoxarifado | — | P2 |
+| S11 | Histórico de importações do catálogo | `catalogo:historico` | CA | chefe-almoxarifado | `linha-clicavel.js` | P2 concluído |
+| S12 | Execução de importação do catálogo | `catalogo:execucao_detalhe` | CA | chefe-almoxarifado | — | P2 concluído |
 | S13 | Envio de importação de fornecedores | `fornecedores:importacao_envio` | CA | chefe-almoxarifado | `envio.js` | P3 |
 | S14 | Prévia de importação de fornecedores | `fornecedores:importacao_previa` | CA | chefe-almoxarifado | `envio.js` | P3 |
-| S15 | Histórico de importações de fornecedores | `fornecedores:historico` | CA | chefe-almoxarifado | `linha-clicavel.js` | P2 |
-| S16 | Execução de importação de fornecedores | `fornecedores:execucao_detalhe` | CA | chefe-almoxarifado | — | P2 |
+| S15 | Histórico de importações de fornecedores | `fornecedores:historico` | CA | chefe-almoxarifado | `linha-clicavel.js` | P2 concluído |
+| S16 | Execução de importação de fornecedores | `fornecedores:execucao_detalhe` | CA | chefe-almoxarifado | — | P2 concluído |
 | S17 | Entradas | `estoque:entradas` | FA, AUD | funcionario-almoxarifado, auditor | `linha-clicavel.js` | P4 |
 | S18 | Registrar entrada (composição, resumo, recusa) | `estoque:entrada_nova` (+ `entrada_confirmar`) | FA | funcionario-almoxarifado | HTMX `#entrada-composicao`, `estoque.js` | P4 |
 | S19 | Detalhe da entrada | `estoque:entrada_detalhe` | FA, AUD (estorno: CA) | funcionario-almoxarifado, chefe-almoxarifado | — | P4 |
@@ -297,6 +297,7 @@ plano restante. **Nenhum lote de propagação começa sem aceite visual explíci
 | 2026-10-05 | Aceite | Dono do produto aceitou o checkpoint e pediu a propagação; laboratório integrado à `main` (#27). P1 iniciado em branch própria |
 | 2026-10-05 | P1 (em andamento) | Login/senha recompostos; review funcional sem P0–P2 (3 rodadas); gate visual: rodada 1 (29/40 login, 26/40 senha) e rodada 2 (31/40, 29/40) com correções aprovadas pelo dono do produto (foco/ARIA de erro, shell provisório sem Menu ≤860px, textos, mostrar senha, política na Nova senha, dicas, username oculto, Caps Lock, divergência no cliente). Decisões: e-mail do almoxarifado mantido; contrastes do upstream (rótulos/rodapé da sidebar, borda de campo) mantidos por fidelidade; fechamento por conferência sem 3ª rodada. Pendente: testes e review da 3ª leva, recaptura (falhou com erro do Node na última tentativa), DESIGN.md/sidecar (`.field-check`, `.field-hint-atencao`, `.card-form`, `.side-provisoria`), revert dos arquivos reformatados por engano (usuário). Limitação: "Senha definida." pode ficar pendente se o destino for tela de organização ainda não recomposta (P5) |
 | 2026-10-06 | P1 concluído | 3ª leva (política de senha na Nova senha, dicas de Senha atual e do login vindas do form, username oculto, Caps Lock, divergência barrada no cliente) implementada; testes 3060 passed, 3 skipped; `code-reviewer` sem findings; recaptura de 18 cenários conferida (o `capturar.mjs` passou a provocar o erro de `/senha/` com senhas iguais, já que a divergência não recarrega mais a página). Gate visual fechado por conferência, sem 3ª rodada de `critique` (decisão do dono do produto). `DESIGN.md`/sidecar atualizados pelo `impeccable-documenter` e conferidos contra o CSS. Pendências fora do P1: "Senha definida." pode ficar pendente se o destino for tela de organização legada (some em P5); logout/sessão expirada sem mensagem no login (toca a spec 002); arquivos reformatados por engano a reverter antes do commit |
+| 2026-10-06 | P2 concluído | S6, S11, S12, S15, S16 recompostos nos blocos `heading`/`sub`/`tools`/`page` (tabelas e pager em `.card`, trilha na `.sub`, ações de página em `.tools` como `.btn` secundário). **Scroll interno de 60vh resolvido para o P2**: nenhuma tela recomposta usa `table-sticky-header` (a regra fica só para P3–P5). Execução: tiles do resumo primeiro (`.tiles-metricas`, `.tile-warning`, `.tile-aside`, atalhos "ver exceções"/"ver alterações"), selo Com/Sem rejeições no h1, `dl.kv`, um card por seção; Alterações com "N campos em M" e código/descrição ou nome atual agrupados por `{% ifchanged %}`; Exceções com Motivo e detalhe na mesma célula; até 640px S16 junta anterior → novo. Históricos: link da linha em acento e corte do nome do arquivo 32 (≤860px) / 42 (S11) / 56 (S15). S4 (aprovado pelo dono do produto): vazio cabe a 390px. Revisão funcional: 4 rodadas, sem P0–P2 abertos (P3 de região duplicada corrigido pelo coordenador). Gate visual: rodada 1 (S6 27/40, S11 20/32, S12 25/40, S15 20/32, S16 25/40) e rodada 2 (29/40, 22/32, 28/40, 21/32, 28/40), correções escolhidas pelo dono do produto nas duas; fechado por conferência (testes, 81 capturas, 14 checks de interação) sem 3ª rodada. Capturas: `capturar.mjs` passou à porta 8010, ganhou os cenários do P2 (as antigas `*-herdada` de fornecedores e histórico do catálogo viraram cenários do lote) e checks de fornecedores/histórico. Dado local: 2ª importação de fornecedores simulada no banco de desenvolvimento (descartável) para a captura de S16 com alterações e exceções |
 
 ## Retomada encerrada — checkpoint de 2026-10-05
 
@@ -342,3 +343,10 @@ Pendências já decididas para registrar no checkpoint: scroll interno de 60vh d
 inexistentes (decisão do dono do produto); prompts dos agentes ainda descrevem a fundação antiga
 (P6); referências a Atkinson em `DESIGN.md`, `specs/005-*`, `.serena/memories` e
 `.claude/agents/frontend-implementer.md` (L10/P6).
+
+## Pendências registradas no P2 (fora do lote ou adiadas pelo dono do produto)
+
+- Contraste e alvo de toque (critique rodada 1, não escolhidos): `.tile .d` e `.empty-state-description` em `text-subtle` (4,19:1; "fora da soma ·" no tile de atenção 3,80:1), cabeçalho ordenável no toque 40px, `summary` do nome de arquivo 20px, link da trilha 17px de altura.
+- Alterações cadastrais de fornecedores: a ordenação da view (`_bloqueado_primeiro, fornecedor__codif, campo`) separa Situação de Motivo/Tipo do mesmo fornecedor; agrupar por fornecedor exige mudança de view (fora da camada de apresentação; possivelmente decisão da spec 004).
+- Catálogo → Alterações cadastrais rola na horizontal a 390px (aceito); Exceções com código muito longo (ex.: `CODIGO-DEV-INVALIDO`) rolam ~17px.
+- Observações menores sem ação: células mono 2–3px acima da linha de base (sistema, afeta S4); "Detalhamento" com `\n` inicial no valor novo; nota de Divergências exibida também com zero; nomes fantasia mascarados ("********") exibidos como dado; dica do Código (CODIF) em 2 linhas a 1440; nos históricos sem nome cortado o recuo de alinhamento desloca o nome em relação ao cabeçalho; documento "123" passa na validação do form (backend).

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-06T11:16:45.929953+00:00",
+  "generatedAt": "2026-10-06T18:21:34.388427+00:00",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -650,12 +650,20 @@
       "css": ".ds-tile{display:block;margin:0;padding:12px 14px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-family-base);line-height:var(--line-height-base);color:var(--color-text)}.ds-tile dt{color:var(--color-text-muted);font-size:.82rem}.ds-tile dd{margin:0;font-family:var(--font-family-mono);font-size:var(--font-size-metric);font-weight:650;line-height:var(--line-height-tight);font-variant-numeric:tabular-nums;overflow-wrap:break-word}"
     },
     {
+      "name": "Resumo de métricas",
+      "kind": "card",
+      "refersTo": "tile-warning",
+      "description": "Faixa de tiles de altura igual; atenção com fundo de aviso e losango só quando o total é maior que zero, atalho textual na nota e borda tracejada para valor fora da soma.",
+      "html": "<dl class=\"ds-tiles\"><div class=\"ds-tile\"><dt class=\"ds-k\">Recebidos</dt><dd class=\"ds-v\">1.240</dd></div><div class=\"ds-tile ds-tile-warning\"><dt class=\"ds-k\">Rejeitados</dt><dd class=\"ds-v\">12</dd><dd class=\"ds-d\"><a href=\"#excecoes\">ver exceções</a></dd></div><div class=\"ds-tile ds-tile-aside\"><dt class=\"ds-k\">Ausentes do arquivo</dt><dd class=\"ds-v\">8</dd><dd class=\"ds-d\">fora da soma</dd></div></dl>",
+      "css": ".ds-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;align-items:stretch;margin:0;font-family:var(--font-family-base);line-height:var(--line-height-base);color:var(--color-text)}.ds-tile{padding:12px 14px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md)}.ds-tile dd{margin:0}.ds-k{color:var(--color-text-muted);font-size:.82rem}.ds-v{font-size:var(--font-size-metric);font-weight:650;line-height:var(--line-height-tight);font-variant-numeric:tabular-nums}.ds-d{color:var(--color-text-subtle);font-size:.8rem}.ds-d a{position:relative;white-space:nowrap;color:var(--color-primary)}.ds-d a:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px;border-radius:var(--radius-focus)}.ds-tile-warning{background:var(--color-warning-surface);border-color:var(--color-warning)}.ds-tile-warning .ds-k{color:var(--color-text);font-weight:600}.ds-tile-warning .ds-k::before{content:\"\";display:inline-block;width:7px;height:7px;margin-right:6px;vertical-align:.08em;background:var(--color-warning);border-radius:1px;transform:rotate(45deg)}.ds-tile-aside{border-style:dashed}@media (pointer:coarse),(max-width:860px){.ds-d a::after{content:\"\";position:absolute;top:50%;left:-8px;right:-8px;height:44px;transform:translateY(-50%)}}"
+    },
+    {
       "name": "Tabela compacta",
       "kind": "custom",
       "refersTo": "table",
-      "description": "Dados tabulares conservados, com alinhamento numérico.",
-      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th>Código (CADPRO)</th><th>Descrição</th><th class=\"ds-num\">Saldo</th></tr></thead><tbody><tr><td class=\"ds-code\">001.002.003</td><td>Material de escritório</td><td class=\"ds-num\">25</td></tr></tbody></table></div>",
-      "css": ".ds-table-wrap{overflow-x:auto;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md)}.ds-table{width:100%;border-collapse:collapse;font-family:var(--font-family-base);font-size:var(--font-size-body);line-height:var(--line-height-base);color:var(--color-text);font-variant-numeric:tabular-nums}.ds-table th,.ds-table td{padding:var(--table-cell-pad-y) var(--table-cell-pad-x);border-bottom:1px solid var(--color-border);text-align:left;vertical-align:top}.ds-table th{color:var(--color-text-muted);font-size:var(--font-size-table-header);font-weight:600;white-space:nowrap}.ds-table tbody tr:last-child td{border-bottom:0}.ds-table .ds-num{text-align:right;white-space:nowrap}.ds-code{font-family:var(--font-family-mono);font-size:var(--font-size-code);white-space:nowrap}@media(hover:hover){.ds-table tbody tr:hover{background:var(--color-surface-subtle)}}"
+      "description": "Dados tabulares conservados, com alinhamento numérico; linha secundária atenuada sob o código e wrapper rolável como região nomeada e focável.",
+      "html": "<div class=\"ds-table-wrap\" role=\"region\" aria-label=\"Tabela de alterações cadastrais\" tabindex=\"0\"><table class=\"ds-table\"><thead><tr><th>Código (CADPRO)</th><th>Descrição</th><th class=\"ds-num\">Saldo</th></tr></thead><tbody><tr><td><span class=\"ds-code\">001.002.003</span><span class=\"ds-cell-secondary\">Material de escritório</span></td><td>Caneta esferográfica azul</td><td class=\"ds-num\">25</td></tr><tr><td><span class=\"ds-code ds-visually-hidden\">001.002.003</span></td><td>Unidade</td><td class=\"ds-num\">3</td></tr></tbody></table></div>",
+      "css": ".ds-table-wrap{overflow-x:auto;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md)}.ds-table{width:100%;border-collapse:collapse;font-family:var(--font-family-base);font-size:var(--font-size-body);line-height:var(--line-height-base);color:var(--color-text);font-variant-numeric:tabular-nums}.ds-table th,.ds-table td{padding:var(--table-cell-pad-y) var(--table-cell-pad-x);border-bottom:1px solid var(--color-border);text-align:left;vertical-align:top}.ds-table th{color:var(--color-text-muted);font-size:var(--font-size-table-header);font-weight:600;white-space:nowrap}.ds-table tbody tr:last-child td{border-bottom:0}.ds-table .ds-num{text-align:right;white-space:nowrap}.ds-code{font-family:var(--font-family-mono);font-size:var(--font-size-code);white-space:nowrap}@media(hover:hover){.ds-table tbody tr:hover{background:var(--color-surface-subtle)}}.ds-table-wrap:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-cell-secondary{display:block;margin-top:var(--space-1);color:var(--color-text-muted);font-size:var(--font-size-meta);white-space:pre-line}.ds-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}"
     },
     {
       "name": "Badge sem marcador",
@@ -668,7 +676,7 @@
   ],
   "narrative": {
     "northStar": "Interface de operador — django-observatory",
-    "overview": "Uma ferramenta de operador com coluna de trabalho ampla, sidebar discreta e dados compactos. A\nfundação construída segue a apresentação do django-observatory 0.1.0, commit\n`6edda16667c8a8601670f76e3286f86bed16e37d`: fonte do sistema, superfícies neutras, borda fina,\naccent azul e ausência de elevação decorativa. A prioridade é localizar a tarefa e ler material,\nsaldo e identidade com pouco atrito, conforme o propósito operacional de `PRODUCT.md`.\n\nEsta é a documentação do código construído, em modo Operate e caminho code-led, após a direção\nfixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o\nlaboratório recomposto, e as telas de credencial (entrada e senha) foram recompostas no lote P1;\nas demais telas já herdam os tokens, mas sua composição continua em transição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.\nA marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.",
+    "overview": "Uma ferramenta de operador com coluna de trabalho ampla, sidebar discreta e dados compactos. A\nfundação construída segue a apresentação do django-observatory 0.1.0, commit\n`6edda16667c8a8601670f76e3286f86bed16e37d`: fonte do sistema, superfícies neutras, borda fina,\naccent azul e ausência de elevação decorativa. A prioridade é localizar a tarefa e ler material,\nsaldo e identidade com pouco atrito, conforme o propósito operacional de `PRODUCT.md`.\n\nEsta é a documentação do código construído, em modo Operate e caminho code-led, após a direção\nfixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o\nlaboratório recomposto; as telas de credencial (entrada e senha) foram recompostas no lote P1 e\na consulta de fornecedores, os históricos e os resultados de execução das importações de catálogo\ne fornecedores, no lote P2. As demais telas já herdam os tokens, mas sua composição continua em\ntransição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.\nA marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.",
     "keyCharacteristics": [
       "Coluna ampla, sidebar compacta e hierarquia por estrutura, peso e espaço.",
       "Claro e escuro equivalentes, com um accent azul e estados com texto e forma.",
@@ -714,6 +722,11 @@
       {
         "name": "The Available-Versus-Planned Rule",
         "body": "Disponível tem destino real; planejado permanece texto,\ncom selo explícito e sem link ou cursor de clique. Na Home, Em preparação usa uma célula por\nfunção: título e selo na primeira linha, descrição abaixo. Não simular disponibilidade por forma.",
+        "section": "components"
+      },
+      {
+        "name": "The One Reading Rule",
+        "body": "Conteúdo alternado por largura usa `display: none` na versão que não\nvale, nunca duas cópias visíveis ao leitor de tela; repetição visual suprimida continua no DOM\ncomo texto oculto, não some da leitura.",
         "section": "components"
       }
     ],

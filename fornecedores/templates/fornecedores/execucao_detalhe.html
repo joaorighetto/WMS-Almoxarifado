@@ -7,228 +7,233 @@
 <link rel="stylesheet" href="{% static 'fornecedores/css/fornecedores.css' %}">
 {% endblock %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container">
-    <a href="{% url 'fornecedores:historico' %}" class="back-link">
-      <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
-           fill="none" aria-hidden="true">
-        <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Histórico de importações de fornecedores</span>
-    </a>
+{% comment %}
+Composição do redesign (`docs/redesign-observatory/contrato.md` §4 e §12), no molde de
+`catalogo/execucao_detalhe.html`: o cabeçalho (`.top`), o `<main id="main">` e as mensagens vêm de
+`contas/base.html`; esta página preenche `heading`, `sub` (trilha com o link de volta ao histórico),
+`tools` e `page`. Ordem: resumo em `.grid.tiles` logo após o cabeçalho (atalhos textuais no `.d`
+quando > 0: "Rejeitados" → `#excecoes`, "Passam a bloqueado" → `#alteracoes`), as notas do resumo
+(a de bloqueio só quando há fornecedor passando a bloqueado), a Execução em `dl.kv` dentro de um
+card; Alterações cadastrais e Exceções são um card cada (tabela, paginação e vazio dentro). As
+tabelas rolam com a página (sem `table-sticky-header`) e, quando largas, na horizontal dentro do
+card. Os `.table-wrapper` das seções são regiões nomeadas e focáveis (`role="region"`,
+`aria-label` "Tabela de …" — nome próprio, para não repetir o marco da `<section>`, `tabindex="0"`): o Chrome os trata como parada de Tab quando rolam. Em
+Alterações, linhas consecutivas do mesmo fornecedor mostram código e nome só na primeira
+(`{% ifchanged %}`; as seguintes mantêm o CODIF em `visually-hidden`); até 640px anterior e novo
+dividem uma célula. Exceções une Motivo e Detalhe numa célula (detalhe como linha secundária).
 
-    {% include "interface/_mensagens.html" %}
+Exceções sem `table-row-error` nas linhas: o card já é a lista de rejeitados (título, contagem e
+motivo em texto), então o fundo de perigo em TODAS as linhas é ênfase universal que se
+anula; a atenção fica no tile "Rejeitados".
+{% endcomment %}
+{% block heading %}Resultado da importação de fornecedores #{{ execucao.pk }} {% if execucao.total_rejeitados %}<span class="badge badge-warning">Com rejeições</span>{% else %}<span class="badge badge-success">Sem rejeições</span>{% endif %}{% endblock %}
+{% block sub %}<nav aria-label="Trilha de navegação"><a href="{% url 'fornecedores:historico' %}">Histórico de importações de fornecedores</a> <span aria-hidden="true">/</span> Execução #{{ execucao.pk }}</nav>{% endblock %}
+{% block tools %}<a href="{% url 'fornecedores:importacao_envio' %}" class="btn btn-secondary">Nova importação</a>{% endblock %}
 
-    <header class="page-header">
-      <div>
-        <h1 class="page-header-title">
-          Resultado da importação de fornecedores #{{ execucao.pk }}
-          <span class="badge badge-success page-header-badge">Concluída</span>
-        </h1>
-      </div>
-      <div class="page-header-actions">
-        <a href="{% url 'fornecedores:importacao_envio' %}" class="btn btn-primary">Nova importação</a>
-      </div>
-    </header>
-
-    <section class="page-section">
-      <h2 class="section-marker">
-        <span class="section-marker-label">Execução</span>
-      </h2>
-      <dl class="meta-grid">
-        <div>
-          <dt>Executada por</dt>
-          <dd>{{ execucao.executada_por.matricula }}</dd>
-        </div>
-        <div>
-          <dt>Concluída em</dt>
-          <dd>{{ execucao.concluida_em }}</dd>
-        </div>
-        <div>
-          <dt>Arquivo</dt>
-          <dd>{{ execucao.nome_arquivo }} ({{ execucao.tamanho_arquivo|filesizeformat }})</dd>
-        </div>
-        <div>
-          <dt>SHA-256 do arquivo</dt>
-          <dd class="data-hash">{{ execucao.sha256_arquivo }}</dd>
-        </div>
-      </dl>
-    </section>
-
-    <section class="page-section">
-      <h2 class="section-marker">
-        <span class="section-marker-label">Resumo</span>
-      </h2>
-      <dl class="summary">
-        <div class="summary-item">
-          <dt>Recebidos</dt>
-          <dd>{{ execucao.total_recebidos|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item">
-          <dt>Inseridos</dt>
-          <dd>{{ execucao.total_inseridos|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item">
-          <dt>Atualizados</dt>
-          <dd>
-            {{ execucao.total_atualizados|separador_milhar }}
-            <span class="summary-detail">({{ execucao.total_atualizados_com_alteracao|separador_milhar }} com alteração)</span>
-          </dd>
-        </div>
-        <div class="summary-item{% if execucao.total_rejeitados %} emphasis-warning{% endif %}">
-          <dt>Rejeitados</dt>
-          <dd>{{ execucao.total_rejeitados|separador_milhar }}</dd>
-        </div>
-        {% comment %}
-        Situação de bloqueio em destaque (P1 do gate visual, 2026-09-26) —
-        mesmo grupo da prévia, sem "Chegam bloqueados": o detalhe de uma
-        execução já confirmada não tem como recalcular, com fidelidade
-        histórica, quantos fornecedores INSERIDOS nela chegaram bloqueados
-        (`Fornecedor.bloqueado` é o estado ATUAL, que uma reimportação
-        posterior pode já ter mudado — ver `fornecedores/views.py`,
-        `ExecucaoDetalheView`).
-        {% endcomment %}
-        <div class="summary-item summary-item-detached{% if total_passam_a_bloqueado %} fornecedores-situacao-destaque{% else %} fornecedores-situacao-neutra{% endif %}">
-          <dt>Passam a bloqueado</dt>
-          <dd>{{ total_passam_a_bloqueado|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item{% if not total_voltam_a_liberado %} fornecedores-situacao-neutra{% endif %}">
-          <dt>Voltam a liberado</dt>
-          <dd>{{ total_voltam_a_liberado|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item summary-item-detached">
-          <dt>Ausentes do arquivo</dt>
-          <dd>{{ execucao.total_ausentes_no_arquivo|separador_milhar }}</dd>
-        </div>
-      </dl>
-      <p class="text-note fornecedores-nota">
-        "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
-        Rejeitados: são fornecedores já cadastrados no WMS que não vieram neste CSV. Esta
-        importação <strong>não alterou nem removeu</strong> esses fornecedores — eles
-        permanecem como estavam.
-      </p>
-      <p class="text-note fornecedores-nota">
-        Um fornecedor bloqueado não pode ser emitente de uma entrada de materiais.
-        Confira, em "Alterações cadastrais" abaixo, quais fornecedores mudaram de
-        situação nesta execução.
-      </p>
-    </section>
-
+{% block page %}
+<section aria-labelledby="resumo-titulo">
+  <h2 id="resumo-titulo" class="visually-hidden">Resumo</h2>
+  <dl class="grid tiles tiles-metricas">
+    <div class="tile">
+      <dt class="k">Recebidos</dt>
+      <dd class="v">{{ execucao.total_recebidos|separador_milhar }}</dd>
+    </div>
+    <div class="tile">
+      <dt class="k">Inseridos</dt>
+      <dd class="v">{{ execucao.total_inseridos|separador_milhar }}</dd>
+    </div>
+    <div class="tile">
+      <dt class="k">Atualizados</dt>
+      <dd class="v">{{ execucao.total_atualizados|separador_milhar }}</dd>
+      <dd class="d">{{ execucao.total_atualizados_com_alteracao|separador_milhar }} com alteração</dd>
+    </div>
+    <div class="tile{% if execucao.total_rejeitados %} tile-warning{% endif %}">
+      <dt class="k">Rejeitados</dt>
+      <dd class="v">{{ execucao.total_rejeitados|separador_milhar }}</dd>
+      {% if execucao.total_rejeitados %}<dd class="d"><a href="#excecoes">ver exceções</a></dd>{% endif %}
+    </div>
     {% comment %}
-    Alterações cadastrais (US4, T030) — no molde da seção equivalente de
-    `catalogo/execucao_detalhe.html` (mesma posição: depois do Resumo, antes
-    das Exceções). `alteracoes_pagina` já vem achatada em uma linha por
-    campo alterado (`fornecedores/views.py`, `_linha_alteracao`) — o total
-    do rótulo usa `alteracoes_pagina.paginator.count` (linhas/campos), não
-    `execucao.total_atualizados_com_alteracao` (fornecedores com pelo menos
-    um campo alterado): um mesmo fornecedor com 2 campos alterados soma 1 no
-    segundo número e 2 no primeiro. `data-secao="alteracoes"` fica no
-    `<section>` incondicionalmente — `tests/test_fornecedores_historico.py`
-    exige o marcador mesmo sem nenhuma alteração.
-
-    Revisão do code-reviewer (P3): a coluna de nome vem de
-    `alteracao.fornecedor.nome` — o nome ATUAL do fornecedor, não o nome
-    vigente na época desta execução (uma execução posterior pode ter
-    alterado o nome de novo). "Nome atual" deixa isso explícito para quem
-    audita; `codif` continua a identificação estável da linha. Na prévia
-    (`importacao_previa.html`) o nome vem do próprio arquivo sendo
-    confirmado — é sempre o valor corrente naquele momento, por isso o
-    rótulo lá continua "Nome".
+    Situação de bloqueio em destaque (P1 do gate visual, 2026-09-26) —
+    mesmo grupo da prévia, sem "Chegam bloqueados": o detalhe de uma
+    execução já confirmada não tem como recalcular, com fidelidade
+    histórica, quantos fornecedores INSERIDOS nela chegaram bloqueados
+    (`Fornecedor.bloqueado` é o estado ATUAL, que uma reimportação
+    posterior pode já ter mudado — ver `fornecedores/views.py`,
+    `ExecucaoDetalheView`). Total > 0 em "Passam a bloqueado": `.tile-warning`
+    (fundo e borda de atenção + marcador ◆ + rótulo em negrito); total zerado
+    nos dois itens: `fornecedores-situacao-neutra` (valor atenuado, peso normal). Os dois tiles de
+    bloqueio e "Ausentes do arquivo" não entram na soma Recebidos = Inseridos + Atualizados +
+    Rejeitados: `tile-aside` (borda tracejada) + nota "fora da soma".
     {% endcomment %}
-    <section class="page-section" id="alteracoes" data-secao="alteracoes">
-      <h2 class="section-marker{% if alteracoes_pagina.object_list %} section-marker-attached{% endif %}">
-        <span class="section-marker-label">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</span>
-      </h2>
-      {% if alteracoes_pagina.object_list %}
-      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">Código (CODIF)</th>
-              <th scope="col">Nome atual</th>
-              <th scope="col">Campo</th>
-              <th scope="col">Valor anterior</th>
-              <th scope="col">Valor novo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for alteracao in alteracoes_pagina %}
-            <tr>
-              <td class="table-cell-code">{{ alteracao.codif }}</td>
-              <td>{{ alteracao.nome }}</td>
-              <td>{{ alteracao.campo_label }}</td>
-              <td>
-                {% if alteracao.valor_anterior_legivel %}{{ alteracao.valor_anterior_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
-              </td>
-              <td>
-                {% comment %}
-                Destaque proporcional da mudança de situação (P1 do gate
-                visual, 2026-09-26): nunca marca a linha inteira (a borda
-                lateral de 3px é exclusiva de `table-row-error`, nas
-                Exceções) — só o valor novo desta célula ganha o mesmo selo
-                da consulta quando o fornecedor passa a bloqueado.
-                {% endcomment %}
-                {% if alteracao.campo == "bloqueado" %}
-                {% if alteracao.valor_novo == "B" %}
-                <span class="badge badge-warning">Bloqueado</span>
-                {% else %}
-                {{ alteracao.valor_novo_legivel }}
-                {% endif %}
-                {% elif alteracao.valor_novo_legivel %}{{ alteracao.valor_novo_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% include "interface/_paginacao.html" with pagina=alteracoes_pagina parametro="pagina_alteracoes" rotulo="Paginação de alterações cadastrais" rotulo_item="alteração cadastral" rotulo_item_plural="alterações cadastrais" ancora="alteracoes" %}
-      {% else %}
-      <div class="empty-state">
-        <p class="empty-state-title">Nenhuma alteração cadastral nesta execução.</p>
-        <p class="empty-state-description">Os dados cadastrais do arquivo coincidiram com os já registrados no WMS.</p>
-      </div>
-      {% endif %}
-    </section>
+    <div class="tile tile-aside{% if total_passam_a_bloqueado %} tile-warning{% else %} fornecedores-situacao-neutra{% endif %}">
+      <dt class="k">Passam a bloqueado</dt>
+      <dd class="v">{{ total_passam_a_bloqueado|separador_milhar }}</dd>
+      <dd class="d">fora da soma</dd>
+      {% if total_passam_a_bloqueado %}<dd class="d"><a href="#alteracoes">ver alterações</a></dd>{% endif %}
+    </div>
+    <div class="tile tile-aside{% if not total_voltam_a_liberado %} fornecedores-situacao-neutra{% endif %}">
+      <dt class="k">Voltam a liberado</dt>
+      <dd class="v">{{ total_voltam_a_liberado|separador_milhar }}</dd>
+      <dd class="d">fora da soma</dd>
+    </div>
+    <div class="tile tile-aside">
+      <dt class="k">Ausentes do arquivo</dt>
+      <dd class="v">{{ execucao.total_ausentes_no_arquivo|separador_milhar }}</dd>
+      <dd class="d">fora da soma</dd>
+    </div>
+  </dl>
+  <p class="text-note">
+    "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
+    Rejeitados: são fornecedores já cadastrados no WMS que não vieram neste CSV. Esta
+    importação <strong>não alterou nem removeu</strong> esses fornecedores — eles
+    permanecem como estavam.
+  </p>
+  {% if total_passam_a_bloqueado %}
+  <p class="text-note">
+    Um fornecedor bloqueado não pode ser emitente de uma entrada de materiais.
+    Confira, em "Alterações cadastrais" abaixo, quais fornecedores mudaram de
+    situação nesta execução.
+  </p>
+  {% endif %}
+</section>
 
-    <section class="page-section" id="excecoes">
-      <h2 class="section-marker{% if excecoes_pagina.object_list %} section-marker-attached{% endif %}">
-        <span class="section-marker-label">Exceções ({{ execucao.total_rejeitados }})</span>
-      </h2>
-      {% if excecoes_pagina.object_list %}
-      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">Linha</th>
-              <th scope="col">Código (CODIF)</th>
-              <th scope="col">Motivo</th>
-              <th scope="col">Detalhe</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for excecao in excecoes_pagina %}
-            <tr class="table-row-error">
-              <td>{{ excecao.linha }}</td>
-              <td class="table-cell-code">
-                {% if excecao.codif %}{{ excecao.codif }}{% else %}<span class="text-muted">—</span>{% endif %}
-              </td>
-              <td>{{ excecao.get_motivo_display }}</td>
-              <td>{{ excecao.detalhe|default:""|linebreaksbr }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% include "interface/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" rotulo_item="exceção" rotulo_item_plural="exceções" ancora="excecoes" %}
-      {% else %}
-      <div class="empty-state">
-        <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
-        <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
-      </div>
-      {% endif %}
-    </section>
+<section class="card" aria-labelledby="execucao-titulo">
+  <h2 id="execucao-titulo">Execução</h2>
+  <dl class="kv">
+    <dt>Executada por</dt>
+    <dd>{{ execucao.executada_por.matricula }}</dd>
+    <dt>Concluída em</dt>
+    <dd>{{ execucao.concluida_em }}</dd>
+    <dt>Arquivo</dt>
+    <dd>{{ execucao.nome_arquivo }} ({{ execucao.tamanho_arquivo|filesizeformat }})</dd>
+    <dt>SHA-256 do arquivo</dt>
+    <dd class="data-hash">{{ execucao.sha256_arquivo }}</dd>
+  </dl>
+</section>
+
+{% comment %}
+Alterações cadastrais (US4, T030) — no molde da seção equivalente de
+`catalogo/execucao_detalhe.html` (mesma posição: depois do Resumo, antes
+das Exceções). `alteracoes_pagina` já vem achatada em uma linha por
+campo alterado (`fornecedores/views.py`, `_linha_alteracao`) — o título
+diz as duas contagens, "N campos em M fornecedores": N é
+`alteracoes_pagina.paginator.count` (linhas/campos) e M é
+`execucao.total_atualizados_com_alteracao` (fornecedores com pelo menos
+um campo alterado); um mesmo fornecedor com 2 campos alterados soma 1 em M
+e 2 em N. Sem alterações, o título fica "(0)". `data-secao="alteracoes"` fica no
+`<section>` incondicionalmente — `tests/test_fornecedores_historico.py`
+exige o marcador mesmo sem nenhuma alteração.
+
+Revisão do code-reviewer (P3): o nome (linha secundária sob o CODIF) vem de
+`alteracao.fornecedor.nome` — o nome ATUAL do fornecedor, não o nome
+vigente na época desta execução (uma execução posterior pode ter
+alterado o nome de novo). "Nome atual" deixa isso explícito para quem
+audita; `codif` continua a identificação estável da linha. Na prévia
+(`importacao_previa.html`) o nome vem do próprio arquivo sendo
+confirmado — é sempre o valor corrente naquele momento, por isso o
+rótulo lá continua "Nome".
+{% endcomment %}
+<section class="card execucao-secao" id="alteracoes" data-secao="alteracoes" aria-labelledby="alteracoes-titulo">
+  {% with campos=alteracoes_pagina.paginator.count fornecedores=execucao.total_atualizados_com_alteracao %}
+  <h2 id="alteracoes-titulo">Alterações cadastrais{% if campos %} — {{ campos|separador_milhar }} campo{{ campos|pluralize }} em {{ fornecedores|separador_milhar }} fornecedor{{ fornecedores|pluralize:"es" }}{% else %} (0){% endif %}</h2>
+  {% endwith %}
+  {% if alteracoes_pagina.object_list %}
+  <div class="table-wrapper" role="region" aria-label="Tabela de alterações cadastrais" tabindex="0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col" class="th-wrap">Código (CODIF) / Nome atual</th>
+          <th scope="col">Campo</th>
+          <th scope="col" class="so-desktop">Valor anterior</th>
+          <th scope="col"><span class="so-desktop">Valor novo</span><span class="so-movel">Valor anterior <span aria-hidden="true">→</span><span class="visually-hidden">e</span> novo</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alteracao in alteracoes_pagina %}
+        <tr>
+          <td class="fornecedores-codigo-cell">
+            {% ifchanged alteracao.codif %}
+            <span class="table-cell-code">{{ alteracao.codif }}</span>
+            <span class="cell-secondary">{{ alteracao.nome }}</span>
+            {% else %}
+            <span class="table-cell-code visually-hidden">{{ alteracao.codif }}</span>
+            {% endifchanged %}
+          </td>
+          <td>{{ alteracao.campo_label }}</td>
+          <td class="so-desktop">
+            {% if alteracao.valor_anterior_legivel %}{{ alteracao.valor_anterior_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
+          </td>
+          <td>
+            {% comment %}
+            No celular (≤640px) "Valor anterior" e "Valor novo" dividem esta célula (a coluna anterior
+            some, `.so-desktop`); o valor anterior aparece aqui numa cópia que só existe nessa largura
+            (`.so-movel`, `display: none` no desktop, fora da árvore de acessibilidade), com os rótulos
+            em `visually-hidden` e a seta decorativa (`aria-hidden`) — nada é lido duas vezes.
+            {% endcomment %}
+            <div class="so-movel valor-anterior-compacto"><span class="visually-hidden">Valor anterior: </span>{% if alteracao.valor_anterior_legivel %}{{ alteracao.valor_anterior_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}</div>
+            <span class="so-movel"><span aria-hidden="true">→ </span><span class="visually-hidden">Valor novo: </span></span>
+            {% comment %}
+            Destaque proporcional da mudança de situação (P1 do gate
+            visual, 2026-09-26): nunca marca a linha inteira — só o valor
+            novo desta célula ganha o mesmo selo da consulta quando o
+            fornecedor passa a bloqueado.
+            {% endcomment %}
+            {% if alteracao.campo == "bloqueado" %}
+            {% if alteracao.valor_novo == "B" %}
+            <span class="badge badge-warning">Bloqueado</span>
+            {% else %}
+            {{ alteracao.valor_novo_legivel }}
+            {% endif %}
+            {% elif alteracao.valor_novo_legivel %}{{ alteracao.valor_novo_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-</main>
+  {% include "interface/_paginacao.html" with pagina=alteracoes_pagina parametro="pagina_alteracoes" rotulo="Paginação de alterações cadastrais" rotulo_item="alteração cadastral" rotulo_item_plural="alterações cadastrais" ancora="alteracoes" %}
+  {% else %}
+  <div class="empty">
+    <p class="empty-state-title">Nenhuma alteração cadastral nesta execução.</p>
+    <p class="empty-state-description">Os dados cadastrais do arquivo coincidiram com os já registrados no WMS.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card execucao-secao" id="excecoes" aria-labelledby="excecoes-titulo">
+  <h2 id="excecoes-titulo">Exceções ({{ execucao.total_rejeitados }})</h2>
+  {% if excecoes_pagina.object_list %}
+  <div class="table-wrapper" role="region" aria-label="Tabela de exceções" tabindex="0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Linha</th>
+          <th scope="col">Código (CODIF)</th>
+          <th scope="col">Motivo / detalhe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for excecao in excecoes_pagina %}
+        <tr>
+          <td>{{ excecao.linha }}</td>
+          <td class="table-cell-code">
+            {% if excecao.codif %}{{ excecao.codif }}{% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {{ excecao.get_motivo_display }}
+            {% if excecao.detalhe %}<span class="cell-secondary">{{ excecao.detalhe|linebreaksbr }}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "interface/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" rotulo_item="exceção" rotulo_item_plural="exceções" ancora="excecoes" %}
+  {% else %}
+  <div class="empty">
+    <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
+    <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
+  </div>
+  {% endif %}
+</section>
 {% endblock %}

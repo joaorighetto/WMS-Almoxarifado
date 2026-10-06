@@ -75,290 +75,281 @@ alcançar também esse caso (mesmo padrão de `catalogo/consulta.html`).
 {% endcomment %}
 {% block body_attrs %} hx-on::error="document.getElementById('resultados-erro-rede').hidden = false; const secao = document.getElementById('resultados-consulta')?.closest('section'); if (secao?.dataset.paginacaoPendente === '1') { secao.dataset.paginacaoPendente = ''; document.getElementById('resultados-erro-rede').scrollIntoView(); }"{% endblock %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container">
-    {% include "interface/_mensagens.html" %}
+{% comment %}
+Cabeçalho (`.top`), `<main id="main">` e mensagens vêm de `contas/base.html`; esta página
+preenche `heading`, `sub` e `page` (contrato do redesign, `docs/redesign-observatory/contrato.md`
+§12), no molde da consulta do catálogo. A tabela e a paginação ficam dentro de um único `.card`
+(`#resultados-consulta`).
+{% endcomment %}
+{% block heading %}Consulta de fornecedores{% endblock %}
+{% block sub %}Cadastro de origem do SCPI, trazido pela importação. Localize um fornecedor pelo código, por palavras do nome (ou nome fantasia) ou pelo documento.{% endblock %}
 
-    <header class="page-header">
-      <div>
-        <h1 class="page-header-title">Consulta de fornecedores</h1>
-        <p class="page-header-description">
-          Cadastro de origem do SCPI, trazido pela importação. Localize um fornecedor pelo
-          código, por palavras do nome (ou nome fantasia) ou pelo documento.
-        </p>
-      </div>
-    </header>
+{% block page %}
+  {% comment %}
+  `hx-on` cobre falha HTTP sem arquivo JS próprio (mesmo molde de
+  `catalogo/consulta.html`, ver o comentário lá): `htmx:response:error`
+  (4xx/5xx) disparado pelo formulário ou por um link de paginação (dentro
+  de `#resultados-consulta`) sobe por bubbling até aqui. `ctx.swap =
+  'none'`/`ctx.push = false`/`ctx.text = ''` neutralizam a troca do alvo,
+  a entrada no histórico e o título/OOB de uma página de erro.
+  {% endcomment %}
+  {% comment %}
+  Rolagem e foco depois da PAGINAÇÃO via HTMX (revisão do gate visual, Fase C,
+  achado P1: no celular a página 2 começava ~3.700px acima da área visível, com
+  o alerta de falha e o indicador de carregamento fora da tela). Só os links de
+  página (`interface/_paginacao.html`, `a.pagination-link[hx-get]`) acionam isto:
+  `hx-on::before:request` guarda a origem em `dataset.paginacaoPendente` ('1' só
+  para esses links — não para o envio do formulário, que já está perto dos
+  resultados e desorientaria se rolasse, nem para os cabeçalhos de ordenação,
+  que mantêm a própria devolução de foco por `#ordenar-*`); `hx-on::after:swap`
+  lê e limpa a flag. `event.target` em `htmx:before:request` ainda é o link
+  original (nada foi trocado); em `htmx:after:swap` o HTMX redireciona o evento
+  para o alvo quando o link foi destruído pela troca, e ele borbulha até esta
+  `<section>` do mesmo jeito.
 
-    {% comment %}
-    `hx-on` cobre falha HTTP sem arquivo JS próprio (mesmo molde de
-    `catalogo/consulta.html`, ver o comentário lá): `htmx:response:error`
-    (4xx/5xx) disparado pelo formulário ou por um link de paginação (dentro
-    de `#resultados-consulta`) sobe por bubbling até aqui. `ctx.swap =
-    'none'`/`ctx.push = false`/`ctx.text = ''` neutralizam a troca do alvo,
-    a entrada no histórico e o título/OOB de uma página de erro.
-    {% endcomment %}
-    {% comment %}
-    Rolagem e foco depois da PAGINAÇÃO via HTMX (revisão do gate visual, Fase C,
-    achado P1: no celular a página 2 começava ~3.700px acima da área visível, com
-    o alerta de falha e o indicador de carregamento fora da tela). Só os links de
-    página (`interface/_paginacao.html`, `a.pagination-link[hx-get]`) acionam isto:
-    `hx-on::before:request` guarda a origem em `dataset.paginacaoPendente` ('1' só
-    para esses links — não para o envio do formulário, que já está perto dos
-    resultados e desorientaria se rolasse, nem para os cabeçalhos de ordenação,
-    que mantêm a própria devolução de foco por `#ordenar-*`); `hx-on::after:swap`
-    lê e limpa a flag. `event.target` em `htmx:before:request` ainda é o link
-    original (nada foi trocado); em `htmx:after:swap` o HTMX redireciona o evento
-    para o alvo quando o link foi destruído pela troca, e ele borbulha até esta
-    `<section>` do mesmo jeito.
-
-    - Sucesso: a rolagem até o topo de `#resultados-consulta` é do próprio HTMX
-      (`hx-swap="innerHTML show:top"` nos links de página, respeita o
-      `scroll-padding-top` da barra sticky); aqui só o FOCO vai à tabela de resultados
-      (`<table tabindex="-1">`, `preventScroll`, já à vista) — não ao resumo "Página
-      X de Y", que fica DEPOIS da tabela e rolaria a tela de volta ao fim da
-      página (medido: 3.800px acima da área visível). Roda depois da
-      restauração de foco por `id` do HTMX (que devolve o foco ao link de
-      paginação, agora o `<span>` da página atual), então quem prevalece é a tabela.
-    - Falha (`hx-on::response:error` acima neutraliza o swap; o HTMX não executa
-      `show` com `swap: none`): rola até o alerta que ficou visível, que está fora
-      da região trocada e, no celular, fora da viewport. Erro de rede não passa por
-      `after:swap` — ver o `hx-on::error` do `<body>`, que faz o mesmo.
-    Nenhum `behavior: "smooth"` (nem aqui, nem no `show:top`): `scroll-behavior` não é
-    redefinido em `base.css`, o padrão já é instantâneo — nada a desligar sob
-    `prefers-reduced-motion`.
-    {% endcomment %}
-    <section
-      class="page-section"
-      hx-on::before:request="document.getElementById('resultados-erro-rede').hidden = true; document.getElementById('resultados-erro-servidor').hidden = true; this.dataset.paginacaoPendente = event.target.closest('a.pagination-link[hx-get]') ? '1' : ''; this.querySelectorAll('.field-has-error').forEach(function (campo) { campo.classList.remove('field-has-error'); campo.removeAttribute('data-estado'); campo.querySelector('[aria-invalid]')?.removeAttribute('aria-invalid'); let erro = campo.querySelector('.field-error'); if (erro) { let dica = document.createElement('p'); dica.className = 'field-hint'; dica.textContent = campo.dataset.dica; erro.replaceWith(dica); } })"
-      hx-on::response:error="ctx.swap = 'none'; ctx.push = false; ctx.text = ''; document.getElementById('resultados-erro-servidor').hidden = false"
-      hx-on::after:swap="if (this.dataset.paginacaoPendente === '1') { this.dataset.paginacaoPendente = ''; let erroVisivel = [document.getElementById('resultados-erro-rede'), document.getElementById('resultados-erro-servidor')].find(function (alerta) { return !alerta.hidden; }); if (erroVisivel) { erroVisivel.scrollIntoView(); } else { document.querySelector('#resultados-consulta table')?.focus({ preventScroll: true }); } }"
+  - Sucesso: a rolagem até o topo de `#resultados-consulta` é do próprio HTMX
+    (`hx-swap="innerHTML show:top"` nos links de página); aqui só o FOCO vai à tabela de resultados
+    (`<table tabindex="-1">`, `preventScroll`, já à vista) — não ao resumo "Página
+    X de Y", que fica DEPOIS da tabela e rolaria a tela de volta ao fim da
+    página (medido: 3.800px acima da área visível). Roda depois da
+    restauração de foco por `id` do HTMX (que devolve o foco ao link de
+    paginação, agora o `<span>` da página atual), então quem prevalece é a tabela.
+  - Falha (`hx-on::response:error` acima neutraliza o swap; o HTMX não executa
+    `show` com `swap: none`): rola até o alerta que ficou visível, que está fora
+    da região trocada e, no celular, fora da viewport. Erro de rede não passa por
+    `after:swap` — ver o `hx-on::error` do `<body>`, que faz o mesmo.
+  Nenhum `behavior: "smooth"` (nem aqui, nem no `show:top`): `scroll-behavior` não é
+  redefinido em `base.css`, o padrão já é instantâneo — nada a desligar sob
+  `prefers-reduced-motion`.
+  {% endcomment %}
+  <section
+    hx-on::before:request="document.getElementById('resultados-erro-rede').hidden = true; document.getElementById('resultados-erro-servidor').hidden = true; this.dataset.paginacaoPendente = event.target.closest('a.pagination-link[hx-get]') ? '1' : ''; this.querySelectorAll('.field-has-error').forEach(function (campo) { campo.classList.remove('field-has-error'); campo.removeAttribute('data-estado'); campo.querySelector('[aria-invalid]')?.removeAttribute('aria-invalid'); let erro = campo.querySelector('.field-error'); if (erro) { let dica = document.createElement('p'); dica.className = 'field-hint'; dica.textContent = campo.dataset.dica; erro.replaceWith(dica); } })"
+    hx-on::response:error="ctx.swap = 'none'; ctx.push = false; ctx.text = ''; document.getElementById('resultados-erro-servidor').hidden = false"
+    hx-on::after:swap="if (this.dataset.paginacaoPendente === '1') { this.dataset.paginacaoPendente = ''; let erroVisivel = [document.getElementById('resultados-erro-rede'), document.getElementById('resultados-erro-servidor')].find(function (alerta) { return !alerta.hidden; }); if (erroVisivel) { erroVisivel.scrollIntoView(); } else { document.querySelector('#resultados-consulta table')?.focus({ preventScroll: true }); } }"
+  >
+    <form
+      method="get"
+      class="filter-bar"
+      hx-get="{% url 'fornecedores:consulta' %}"
+      hx-target="#resultados-consulta"
+      hx-push-url="true"
+      hx-indicator="#resultados-indicador"
     >
-      <form
-        method="get"
-        class="filter-bar"
-        hx-get="{% url 'fornecedores:consulta' %}"
-        hx-target="#resultados-consulta"
-        hx-push-url="true"
-        hx-indicator="#resultados-indicador"
+      {% comment %}
+      `campo_codigo` (template partial, Django 6) é reaproveitado pelo
+      partial `resultados_consulta` abaixo, que emite uma segunda cópia
+      marcada `oob=True` sempre que `veio_de_htmx` — mesmo padrão de
+      `campo_codigo` em `catalogo/consulta.html` (ver o comentário lá; o handler
+      `hx-on::before:request` da `<section>` remove o `<p class="field-error">`
+      no início de cada requisição e restaura a dica a partir de `data-dica`):
+      `codigo`/`documento` inválidos chegam com `HX-Reswap: none`
+      (`fornecedores/views.py`), então o campo é marcado à parte, sem
+      substituir a tabela de resultados anterior.
+      {% endcomment %}
+      {% partialdef campo_codigo inline %}
+      {% with dica="Só os dígitos, sem completar com zeros." %}
+      <div
+        id="campo-codigo"
+        {% if oob %}hx-swap-oob="true"{% endif %}
+        class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}"
+        data-dica="{{ dica }}"
+        {% if codigo_invalido %}data-estado="codigo-invalido"{% endif %}
       >
-        {% comment %}
-        `campo_codigo` (template partial, Django 6) é reaproveitado pelo
-        partial `resultados_consulta` abaixo, que emite uma segunda cópia
-        marcada `oob=True` sempre que `veio_de_htmx` — mesmo padrão de
-        `campo_codigo` em `catalogo/consulta.html` (ver o comentário lá; o handler
-        `hx-on::before:request` da `<section>` remove o `<p class="field-error">`
-        no início de cada requisição e restaura a dica a partir de `data-dica`):
-        `codigo`/`documento` inválidos chegam com `HX-Reswap: none`
-        (`fornecedores/views.py`), então o campo é marcado à parte, sem
-        substituir a tabela de resultados anterior.
-        {% endcomment %}
-        {% partialdef campo_codigo inline %}
-        {% with dica="Só os dígitos, sem completar com zeros." %}
-        <div
-          id="campo-codigo"
-          {% if oob %}hx-swap-oob="true"{% endif %}
-          class="field filter-bar-field{% if form.codigo.errors %} field-has-error{% endif %}"
-          data-dica="{{ dica }}"
-          {% if codigo_invalido %}data-estado="codigo-invalido"{% endif %}
-        >
-          <label for="{{ form.codigo.id_for_label }}">Código (CODIF)</label>
-          {{ form.codigo }}
-          {% if form.codigo.errors %}
-          <p class="field-error" id="{{ form.codigo.auto_id }}_error">{{ form.codigo.errors.0 }}</p>
-          {% else %}
-          <p class="field-hint">{{ dica }}</p>
-          {% endif %}
-        </div>
-        {% endwith %}
-        {% endpartialdef %}
-        <div class="field filter-bar-field">
-          <label for="{{ form.nome.id_for_label }}">Nome</label>
-          {{ form.nome }}
-          <p class="field-hint">Palavras do nome ou do nome fantasia, em qualquer ordem.</p>
-        </div>
-        {% partialdef campo_documento inline %}
-        {% with dica="CNPJ ou CPF completo, com ou sem pontuação." %}
-        <div
-          id="campo-documento"
-          {% if oob %}hx-swap-oob="true"{% endif %}
-          class="field filter-bar-field{% if form.documento.errors %} field-has-error{% endif %}"
-          data-dica="{{ dica }}"
-          {% if documento_invalido %}data-estado="documento-invalido"{% endif %}
-        >
-          <label for="{{ form.documento.id_for_label }}">Documento</label>
-          {{ form.documento }}
-          {% if form.documento.errors %}
-          <p class="field-error" id="{{ form.documento.auto_id }}_error">{{ form.documento.errors.0 }}</p>
-          {% else %}
-          <p class="field-hint">{{ dica }}</p>
-          {% endif %}
-        </div>
-        {% endwith %}
-        {% endpartialdef %}
-        {% comment %}
-        Ordem vigente (mesma convenção da consulta do catálogo): campo
-        oculto, não um filtro visível — carrega a ordenação escolhida no
-        cabeçalho da tabela para que uma nova busca a preserve. Como a
-        ordenação daqui é sempre navegação de página inteira (ver
-        comentário do topo), este valor nunca fica desatualizado: qualquer
-        mudança de `ordem` já vem de um recarregamento completo da página,
-        que já renderiza este campo com o valor novo — sem cópia OOB.
-        {% endcomment %}
-        <input type="hidden" name="ordem" value="{{ ordem }}">
-        <div class="filter-bar-actions">
-          <button type="submit" class="btn btn-primary">Buscar</button>
-          <a href="{% url 'fornecedores:consulta' %}" class="btn btn-secondary">Limpar</a>
-        </div>
-      </form>
-
-      <div class="status-line">
-        <p id="resultados-indicador" class="htmx-indicator loading-indicator" role="status">
-          <span class="loading-indicator-spinner" aria-hidden="true"></span>
-          Carregando resultados…
-        </p>
-      </div>
-
-      {% include "interface/_consulta_falha.html" %}
-
-      <div id="resultados-consulta">
-        {% comment %}
-        Partial de resultados (template partials, Django 6).
-        `ConsultaFornecedoresView` renderiza este mesmo partial sozinho,
-        como `"fornecedores/consulta.html#resultados_consulta"`, quando a
-        requisição traz `HX-Request`; aqui, `inline`, ele é incluído dentro
-        deste mesmo contêiner na renderização normal da página inteira.
-
-        Cópia OOB de `campo_codigo`/`campo_documento` (mesmo padrão de
-        `resultados_consulta` em `catalogo/consulta.html`): só quando
-        `veio_de_htmx`, para sincronizar os dois campos do `<form>` (fora
-        desta região) com o resultado da requisição — nunca ao renderizar a
-        página inteira, onde os campos já saem corretos da primeira vez.
-
-        Código/documento inválidos via HTMX chegam com `HX-Reswap: none`
-        (`fornecedores/views.py`): o conteúdo abaixo deste ponto nem chega a
-        ser trocado nesse caso — só a cópia OOB dos campos importa. Sem
-        HTMX (Fase C, achado P3): o erro aparece só no campo, e
-        `data-estado="codigo-invalido"`/`"documento-invalido"` fica no
-        wrapper do campo (`campo-codigo`/`campo-documento`), com o
-        `<p class="field-error" id="<auto_id>_error">` que o
-        `aria-describedby` do widget referencia; esta região mostra um estado
-        neutro ("Nenhuma consulta feita."), sem repetir a mensagem. O
-        `<p class="field-error">` some no início de cada requisição HTMX
-        (`hx-on::before:request` da `<section>`), sem apagar o valor digitado.
-        {% endcomment %}
-        {% partialdef resultados_consulta inline %}
-        {% if veio_de_htmx %}
-        {% with oob=True %}
-        {% partial campo_codigo %}
-        {% partial campo_documento %}
-        {% endwith %}
-        {% endif %}
-        {% if codigo_invalido %}
-        {% if not veio_de_htmx %}
-        <div class="empty-state">
-          <p class="empty-state-title">Nenhuma consulta feita.</p>
-          <p class="empty-state-description">Corrija o campo Código (CODIF) acima e busque de novo.</p>
-        </div>
-        {% endif %}
-        {% elif documento_invalido %}
-        {% if not veio_de_htmx %}
-        <div class="empty-state">
-          <p class="empty-state-title">Nenhuma consulta feita.</p>
-          <p class="empty-state-description">Corrija o campo Documento acima e busque de novo.</p>
-        </div>
-        {% endif %}
-        {% elif pagina.object_list %}
-        <div class="table-wrapper table-sticky-header">
-          <table class="table" tabindex="-1">
-            <thead>
-              <tr>
-                {% include "interface/_th_ordenavel.html" with coluna="codigo" rotulo="Código" rotulo_acao="código" %}
-                {% include "interface/_th_ordenavel.html" with coluna="nome" rotulo="Nome" rotulo_acao="nome" %}
-                <th scope="col">Situação</th>
-                {% include "interface/_th_ordenavel.html" with coluna="documento" rotulo="Documento" rotulo_acao="documento" %}
-                <th scope="col">Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for fornecedor in pagina %}
-              <tr>
-                <td class="table-cell-code">{{ fornecedor.codif }}</td>
-                <td>
-                  {{ fornecedor.nome }}
-                  {% if fornecedor.nome_fantasia %}<span class="fornecedores-nome-fantasia">{{ fornecedor.nome_fantasia }}</span>{% endif %}
-                </td>
-                <td>
-                  {% comment %}
-                  Selo só para "Bloqueado" (P2 do gate visual, 2026-09-26):
-                  "Liberado" é a situação de ~99,8% do cadastro — um selo em
-                  toda linha vira ruído e esvazia o selo de exceção
-                  (DESIGN.md → The No Color-Only State Rule; ênfase
-                  universal cancela a própria ênfase). "Liberado" fica texto
-                  simples; só "Bloqueado" (a exceção, com consequência real
-                  — INV-SUPPLIER-005) ganha o selo `badge-warning`, mesma
-                  família já usada na seção de alterações cadastrais.
-                  {% endcomment %}
-                  {% if fornecedor.bloqueado %}
-                  <span class="badge badge-warning">Bloqueado</span>
-                  <div class="fornecedores-situacao-detalhe">
-                    {% if fornecedor.motivo_bloqueio %}<span>{{ fornecedor.motivo_bloqueio }}</span>{% endif %}
-                    {% if fornecedor.tipo_bloqueio %}<span class="text-muted">{{ fornecedor.tipo_bloqueio }}</span>{% endif %}
-                  </div>
-                  {% else %}
-                  Liberado
-                  {% endif %}
-                </td>
-                <td class="table-cell-code">{% if fornecedor.documento %}{{ fornecedor.documento }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-                <td class="table-cell-code">{% if fornecedor.tipo %}{{ fornecedor.tipo }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% include "interface/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de fornecedores" rotulo_item="fornecedor" rotulo_item_plural="fornecedores" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+        <label for="{{ form.codigo.id_for_label }}">Código (CODIF)</label>
+        {{ form.codigo }}
+        {% if form.codigo.errors %}
+        <p class="field-error" id="{{ form.codigo.auto_id }}_error">{{ form.codigo.errors.0 }}</p>
         {% else %}
-        <div class="table-wrapper">
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Código</th>
-                <th scope="col">Nome</th>
-                <th scope="col">Situação</th>
-                <th scope="col">Documento</th>
-                <th scope="col">Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="table-empty-row" data-estado="vazio">
-                <td colspan="5">
-                  <p class="empty-state-title">Nenhum fornecedor encontrado.</p>
-                  {% if form.cleaned_data.documento and not form.cleaned_data.codigo and not form.cleaned_data.nome %}
-                  {% comment %}
-                  Estado vazio nomeando o filtro (P1 do gate visual, 2026-09-26): a
-                  busca por documento é sempre EXATA (decisão do dono do produto,
-                  `ConsultaFornecedoresView`) — sem isto, um usuário que digitasse só
-                  a raiz do CNPJ concluiria que o fornecedor não existe, em vez de
-                  que faltam dígitos. Só quando o documento é o único filtro: com
-                  código ou nome junto, o fornecedor pode existir e ter sido excluído
-                  pelo outro filtro.
-                  {% endcomment %}
-                  <p class="empty-state-description">
-                    Nenhum fornecedor com esse documento. A busca por documento exige o
-                    CNPJ ou CPF completo — confira se não faltou nenhum dígito.
-                  </p>
-                  {% else %}
-                  <p class="empty-state-description">Ajuste os filtros e tente novamente.</p>
-                  {% endif %}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p class="field-hint">{{ dica }}</p>
         {% endif %}
-        {% endpartialdef %}
       </div>
-    </section>
-  </div>
-</main>
+      {% endwith %}
+      {% endpartialdef %}
+      <div class="field filter-bar-field">
+        <label for="{{ form.nome.id_for_label }}">Nome</label>
+        {{ form.nome }}
+        <p class="field-hint">Palavras do nome ou do nome fantasia, em qualquer ordem.</p>
+      </div>
+      {% partialdef campo_documento inline %}
+      {% with dica="CNPJ ou CPF completo, com ou sem pontuação." %}
+      <div
+        id="campo-documento"
+        {% if oob %}hx-swap-oob="true"{% endif %}
+        class="field filter-bar-field{% if form.documento.errors %} field-has-error{% endif %}"
+        data-dica="{{ dica }}"
+        {% if documento_invalido %}data-estado="documento-invalido"{% endif %}
+      >
+        <label for="{{ form.documento.id_for_label }}">Documento</label>
+        {{ form.documento }}
+        {% if form.documento.errors %}
+        <p class="field-error" id="{{ form.documento.auto_id }}_error">{{ form.documento.errors.0 }}</p>
+        {% else %}
+        <p class="field-hint">{{ dica }}</p>
+        {% endif %}
+      </div>
+      {% endwith %}
+      {% endpartialdef %}
+      {% comment %}
+      Ordem vigente (mesma convenção da consulta do catálogo): campo
+      oculto, não um filtro visível — carrega a ordenação escolhida no
+      cabeçalho da tabela para que uma nova busca a preserve. Como a
+      ordenação daqui é sempre navegação de página inteira (ver
+      comentário do topo), este valor nunca fica desatualizado: qualquer
+      mudança de `ordem` já vem de um recarregamento completo da página,
+      que já renderiza este campo com o valor novo — sem cópia OOB.
+      {% endcomment %}
+      <input type="hidden" name="ordem" value="{{ ordem }}">
+      <div class="filter-bar-actions">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        <a href="{% url 'fornecedores:consulta' %}" class="btn btn-secondary">Limpar</a>
+      </div>
+    </form>
+
+    <div class="status-line">
+      <p id="resultados-indicador" class="htmx-indicator loading-indicator" role="status">
+        <span class="loading-indicator-spinner" aria-hidden="true"></span>
+        Carregando resultados…
+      </p>
+    </div>
+
+    {% include "interface/_consulta_falha.html" %}
+
+    <div id="resultados-consulta" class="card">
+      {% comment %}
+      Partial de resultados (template partials, Django 6).
+      `ConsultaFornecedoresView` renderiza este mesmo partial sozinho,
+      como `"fornecedores/consulta.html#resultados_consulta"`, quando a
+      requisição traz `HX-Request`; aqui, `inline`, ele é incluído dentro
+      deste mesmo contêiner na renderização normal da página inteira.
+
+      Cópia OOB de `campo_codigo`/`campo_documento` (mesmo padrão de
+      `resultados_consulta` em `catalogo/consulta.html`): só quando
+      `veio_de_htmx`, para sincronizar os dois campos do `<form>` (fora
+      desta região) com o resultado da requisição — nunca ao renderizar a
+      página inteira, onde os campos já saem corretos da primeira vez.
+
+      Código/documento inválidos via HTMX chegam com `HX-Reswap: none`
+      (`fornecedores/views.py`): o conteúdo abaixo deste ponto nem chega a
+      ser trocado nesse caso — só a cópia OOB dos campos importa. Sem
+      HTMX (Fase C, achado P3): o erro aparece só no campo, e
+      `data-estado="codigo-invalido"`/`"documento-invalido"` fica no
+      wrapper do campo (`campo-codigo`/`campo-documento`), com o
+      `<p class="field-error" id="<auto_id>_error">` que o
+      `aria-describedby` do widget referencia; esta região mostra um estado
+      neutro ("Nenhuma consulta feita."), sem repetir a mensagem. O
+      `<p class="field-error">` some no início de cada requisição HTMX
+      (`hx-on::before:request` da `<section>`), sem apagar o valor digitado.
+      {% endcomment %}
+      {% partialdef resultados_consulta inline %}
+      {% if veio_de_htmx %}
+      {% with oob=True %}
+      {% partial campo_codigo %}
+      {% partial campo_documento %}
+      {% endwith %}
+      {% endif %}
+      {% if codigo_invalido %}
+      {% if not veio_de_htmx %}
+      <div class="empty-state">
+        <p class="empty-state-title">Nenhuma consulta feita.</p>
+        <p class="empty-state-description">Corrija o campo Código (CODIF) acima e busque de novo.</p>
+      </div>
+      {% endif %}
+      {% elif documento_invalido %}
+      {% if not veio_de_htmx %}
+      <div class="empty-state">
+        <p class="empty-state-title">Nenhuma consulta feita.</p>
+        <p class="empty-state-description">Corrija o campo Documento acima e busque de novo.</p>
+      </div>
+      {% endif %}
+      {% elif pagina.object_list %}
+      <div class="table-wrapper">
+        <table class="table" tabindex="-1">
+          <thead>
+            <tr>
+              {% include "interface/_th_ordenavel.html" with coluna="codigo" rotulo="Código" rotulo_acao="código" %}
+              {% include "interface/_th_ordenavel.html" with coluna="nome" rotulo="Nome" rotulo_acao="nome" %}
+              <th scope="col">Situação</th>
+              {% include "interface/_th_ordenavel.html" with coluna="documento" rotulo="Documento" rotulo_acao="documento" %}
+              <th scope="col">Tipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fornecedor in pagina %}
+            <tr>
+              <td class="table-cell-code">{{ fornecedor.codif }}</td>
+              <td class="fornecedores-nome-cell">
+                {{ fornecedor.nome }}
+                {% if fornecedor.nome_fantasia %}<span class="fornecedores-nome-fantasia">{{ fornecedor.nome_fantasia }}</span>{% endif %}
+              </td>
+              <td>
+                {% comment %}
+                Selo só para "Bloqueado" (P2 do gate visual, 2026-09-26):
+                "Liberado" é a situação de ~99,8% do cadastro — um selo em
+                toda linha vira ruído e esvazia o selo de exceção
+                (DESIGN.md → The No Color-Only State Rule; ênfase
+                universal cancela a própria ênfase). "Liberado" fica texto
+                simples; só "Bloqueado" (a exceção, com consequência real
+                — INV-SUPPLIER-005) ganha o selo `badge-warning`, mesma
+                família já usada na seção de alterações cadastrais.
+                {% endcomment %}
+                {% if fornecedor.bloqueado %}
+                <span class="badge badge-warning">Bloqueado</span>
+                <div class="fornecedores-situacao-detalhe">
+                  {% if fornecedor.motivo_bloqueio %}<span>{{ fornecedor.motivo_bloqueio }}</span>{% endif %}
+                  {% if fornecedor.tipo_bloqueio %}<span class="text-muted">{{ fornecedor.tipo_bloqueio }}</span>{% endif %}
+                </div>
+                {% else %}
+                Liberado
+                {% endif %}
+              </td>
+              <td class="table-cell-code">{% if fornecedor.documento %}{{ fornecedor.documento }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+              <td class="table-cell-code">{% if fornecedor.tipo %}{{ fornecedor.tipo }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "interface/_paginacao.html" with pagina=pagina parametro="pagina" rotulo="Paginação de fornecedores" rotulo_item="fornecedor" rotulo_item_plural="fornecedores" ordem_texto=ordem|rotulo_ordenacao:ordenacao_rotulos htmx_alvo="#resultados-consulta" htmx_indicador="#resultados-indicador" %}
+      {% else %}
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Nome</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Documento</th>
+              <th scope="col">Tipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-empty-row" data-estado="vazio">
+              <td colspan="5">
+                <p class="empty-state-title">Nenhum fornecedor encontrado.</p>
+                {% if form.cleaned_data.documento and not form.cleaned_data.codigo and not form.cleaned_data.nome %}
+                {% comment %}
+                Estado vazio nomeando o filtro (P1 do gate visual, 2026-09-26): a
+                busca por documento é sempre EXATA (decisão do dono do produto,
+                `ConsultaFornecedoresView`) — sem isto, um usuário que digitasse só
+                a raiz do CNPJ concluiria que o fornecedor não existe, em vez de
+                que faltam dígitos. Só quando o documento é o único filtro: com
+                código ou nome junto, o fornecedor pode existir e ter sido excluído
+                pelo outro filtro.
+                {% endcomment %}
+                <p class="empty-state-description">
+                  Nenhum fornecedor com esse documento. A busca por documento exige o
+                  CNPJ ou CPF completo — confira se não faltou nenhum dígito.
+                </p>
+                {% else %}
+                <p class="empty-state-description">Ajuste os filtros e tente novamente.</p>
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      {% endpartialdef %}
+    </div>
+  </section>
 {% endblock %}

@@ -141,6 +141,11 @@ components:
     textColor: "{colors.text}"
     rounded: "{rounded.md}"
     padding: "12px 14px"
+  tile-warning:
+    backgroundColor: "{colors.warning-surface}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
+    padding: "12px 14px"
   badge-neutral:
     backgroundColor: "{colors.neutral-surface}"
     textColor: "{colors.text}"
@@ -189,8 +194,10 @@ saldo e identidade com pouco atrito, conforme o propósito operacional de `PRODU
 
 Esta é a documentação do código construído, em modo Operate e caminho code-led, após a direção
 fixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o
-laboratório recomposto, e as telas de credencial (entrada e senha) foram recompostas no lote P1;
-as demais telas já herdam os tokens, mas sua composição continua em transição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.
+laboratório recomposto; as telas de credencial (entrada e senha) foram recompostas no lote P1 e
+a consulta de fornecedores, os históricos e os resultados de execução das importações de catálogo
+e fornecedores, no lote P2. As demais telas já herdam os tokens, mas sua composição continua em
+transição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.
 A marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.
 
 **Key Characteristics:**
@@ -299,7 +306,9 @@ apenas a região atualizada. O cabeçalho agrupa título/descrição e ferrament
 gap 12px e margem inferior 16px.
 
 A grade de painéis usa gap 14px. Painéis têm padding 14px 16px; tiles, 12px 14px. A grade de tiles
-usa mínimo de 150px e alinha cada tile pelo topo, sem esticar vizinhos para igualar alturas.
+usa mínimo de 150px e alinha cada tile pelo topo, sem esticar vizinhos para igualar alturas. Só a
+faixa de métricas (`.tiles.tiles-metricas`, totais de uma execução) estica os tiles da linha para a
+mesma altura; os tiles de identidade da Home continuam alinhados pelo topo.
 A grade de duas colunas usa mínimo de 380px e passa a uma coluna até 860px. Na Home, a largura
 390px comporta Matrícula e Setor lado a lado; Papéis ocupa a linha inteira até 640px. Esses
 são dados de identidade, sem clique e sem contadores inventados.
@@ -330,6 +339,19 @@ estrutura tabular e rolam lateralmente dentro do painel; nunca viram cards por r
 catálogo usa mínimo de 46rem para tabela, 14rem para Descrição no desktop (10rem–12rem no
 celular), 16rem para Classificação com nome e código inline e 14rem–24rem para Detalhamento.
 Números e identificadores não quebram; descrição pode quebrar sem perder o texto.
+A consulta de fornecedores segue o mesmo molde: Código (CODIF) e Documento em mono com base de
+200px e 260px acima de 640px, Nome com base de 320px, tabela com mínimo de 44rem e coluna Nome
+de 14rem (10rem–12rem no celular). A largura mínima vale só para a tabela de resultados (a que tem
+`tabindex="-1"`, alvo do foco após a busca); a tabela do estado vazio cabe no card, e na consulta
+do catálogo até 640px o seu `thead` fica só para leitor de tela, para a mensagem ocupar o card.
+
+**Composição das telas recompostas.** A página preenche os blocos `heading`, `sub`, `tools` e
+`page` do shell. Em tela interna, `sub` traz a trilha "Seção / item" com link para a seção; em
+tela de seção, a descrição. A ação de página fica em `tools` como botão secundário. Tabelas,
+paginação e vazio ficam dentro de um card. O resultado de uma execução segue a ordem: faixa de
+tiles do resumo logo após o cabeçalho, notas do resumo (`text-note`), card de metadados com
+`dl.kv` e um card por seção de resultado. Nas tabelas de seção, preenchimento horizontal menor
+e cabeçalhos que quebram linha até 640px são ajustes do CSS de feature para caber no card.
 
 **The Shared Foundation Rule.** Papéis, primitivas e estados são únicos entre desktop, tablet e
 celular. Composição e densidade variam; tokens e linguagem visual não se bifurcam por dispositivo.
@@ -339,6 +361,11 @@ foco e indicadores de ordenação continuam descobríveis no toque e por teclado
 adicional; linhas de tabela o aplicam somente sob `hover: hover`.
 
 ### Transição de composição
+
+Os lotes P1 (credenciais) e P2 (consultas e históricos de importação) estão concluídos; P3–P6
+estão pendentes. `.summary`, `.meta-grid`, `.section-marker`, `.back-link`, `.page*` e
+`table-sticky-header` seguem em `components.css` só como compatibilidade das telas ainda não
+recompostas (as prévias de importação, por exemplo); nenhuma tela recomposta os usa.
 
 O shell mínimo da credencial provisória usa a mesma sidebar, com marca sem link e conta, sem
 grupos de navegação; o formulário de senha usa o cabeçalho de página e o card de formulário.
@@ -365,9 +392,11 @@ conteúdo fora da área visível e não é elevação de painel.
 **The Flat-By-Default Rule.** Não adicionar sombra em card, tile, botão ou hover. A pista lateral
 de scroll informa continuidade do conteúdo, sem instaurar uma linguagem de cartões elevados.
 
-O cabeçalho sticky com scrollport de 60vh e linha de sombra inset pertence a tabelas herdadas;
-não é padrão do laboratório nem regra a generalizar. A propagação deve decidir sua composição,
-conforme a pendência existente, em vez de legitimar a dupla rolagem como nova fundação.
+O cabeçalho sticky com scrollport de 60vh e linha de sombra inset (`table-sticky-header`)
+pertence a tabelas herdadas. A pendência foi resolvida no P2 sem ele: históricos e resultados de
+execução rolam com a página, sem segundo scrollport vertical, e a tabela larga rola só na
+horizontal dentro do card. A regra continua em `components.css` apenas para os consumidores
+legados (P3–P5); não é padrão de tela recomposta nem regra a generalizar.
 
 ## Shapes
 
@@ -440,6 +469,18 @@ Painéis agrupam conteúdo relacionado com título em corpo e peso 650, borda le
 superfície. Tile destaca dado com rótulo acima, valor e nota opcional. Só tile com destino real
 é link; os três tiles de identidade da Home são leitura. Altura acompanha o conteúdo.
 Tarefas da Home usam card por grupo, com link e descrição na mesma célula por tarefa.
+No título de página, um badge pode acompanhar o h1 como selo de estado do objeto (resultado
+"Com rejeições"/"Sem rejeições"), com 8px de afastamento e alinhado ao meio.
+
+O resumo de métricas usa tiles de leitura com rótulo, valor e nota. Tile de atenção
+(`tile-warning`) segue a gramática do alerta de aviso: fundo e borda de `warning`, losango de 7px
+antes do rótulo e rótulo em peso 600, com texto em `text`; aplica-se só quando o total é maior
+que zero. Valor que não entra na soma dos demais (`tile-aside`) tem borda tracejada e nota "fora
+da soma" em texto. A nota do tile pode trazer um atalho textual para a seção correspondente
+("ver exceções"), só quando o total é maior que zero: link real numa linha própria, sem tornar o
+tile inteiro clicável, com faixa de toque de 44px por pseudo-elemento no toque ou até 860px. A
+nota do tile permanece em `text-subtle` (0.8rem), como é hoje.
+
 Formulário isolado usa o card com medida de formulário (máximo 420px): a coluna de trabalho não
 tem teto, então é o card que limita a própria largura, alinhado à esquerda; na entrada anônima o
 mesmo card se centraliza.
@@ -464,6 +505,21 @@ em uma linha e peso 600, sem caixa-alta. Link real oferece ordenação, `aria-so
 direção; no toque as outras colunas mostram indicador de ordenabilidade. A consulta também
 anuncia a ordem por texto fora da região HTMX trocada. Conteúdo longo usa details/summary
 com texto integral disponível, sem hover; nome e código de Classificação ficam inline.
+
+Célula pode trazer uma linha secundária (`cell-secondary`) sob o dado principal: descrição ou
+nome atual sob o código, detalhe sob o motivo, em `text-muted`, tamanho de meta, inteira e com as
+quebras do dado preservadas. Linhas consecutivas do mesmo código mostram código e linha
+secundária só na primeira; nas seguintes o código fica em `visually-hidden`. Cabeçalho pode
+quebrar linha por `th-wrap`. Wrapper rolável de seção é região nomeada e focável
+(`role="region"`, `aria-label` "Tabela de …", `tabindex="0"`). Nos históricos, o link da linha
+(`#N`) usa a cor de acento, via CSS de feature. O nome de arquivo longo é cortado no meio em duas
+versões alternadas por largura (estreita até 860px, larga acima), cada uma com `<details>` que
+revela o nome inteiro. Até 640px uma tabela pode juntar duas colunas numa célula alternando
+`so-desktop` e `so-movel`, com rótulos em `visually-hidden` e seta decorativa `aria-hidden`.
+
+**The One Reading Rule.** Conteúdo alternado por largura usa `display: none` na versão que não
+vale, nunca duas cópias visíveis ao leitor de tela; repetição visual suprimida continua no DOM
+como texto oculto, não some da leitura.
 
 Paginação dentro do painel: resumo à esquerda e botões à direita; atual usa fundo selecionado,
 borda de foco e peso 600. Até 640px o resumo e números têm suas linhas, com Anterior/Próxima
