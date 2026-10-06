@@ -75,8 +75,8 @@ ocultar coluna (nível 5) ou a espremer o selo de estado em três linhas.
 `seed_dev`, como "seed_dev_03_restauracao_carga_inicial_valida.csv",
 quebravam em várias linhas e inflavam a linha para 144–152px; a correção da
 Fase B, 24ch fixos, empurrou a tabela para 1259px numa área de 1118px a
-1440px). O nome vai numa linha só, cortado NO MEIO por `truncar_meio:20`
-(`interface_extras.py`: começo + "…" + final com a extensão): o template
+1440px). O nome vai numa linha só, cortado NO MEIO por `truncar_meio` (na Fase C, 20 caracteres;
+limites atuais no parágrafo seguinte) (`interface_extras.py`: começo + "…" + final com a extensão): o template
 compara `nome_arquivo` com o resultado — quando cabe, texto simples; quando
 não, um `<details>` nativo (DESIGN.md → Table: "conteúdo longo truncado só
 com forma previsível de ver o todo") com o nome cortado no `<summary>` e o
@@ -89,8 +89,8 @@ mantém os cabeçalhos numa linha (th de 35px, antes 53px com "Executada por" �
 hoje "Executor" — em duas linhas) e `.table-dense-x` (`static/css/components.css`) aperta o padding
 horizontal (`--table-cell-pad-x` 12px → 8px; o tracking dos cabeçalhos fica
 no 0.04em do DESIGN.md), com o rótulo curto "Executor" e o corte
-`truncar_meio:20`: a tabela passa de 1259px para 1106px numa área de 1118px —
-as dez colunas cabem sem rolagem, linha de 42px. Redesign P2: o orçamento do corte subiu de 20 para 32 caracteres até 860px (`truncar_meio:32`)
+então de 20 caracteres (histórico, Fase C): a tabela passava de 1259px para 1106px numa área de 1118px —
+as dez colunas cabiam sem rolagem, linha de 42px. Redesign P2 (limites vigentes): o orçamento do corte subiu de 20 para 32 caracteres até 860px (`truncar_meio:32`)
 e para 42 acima disso (56 no histórico de fornecedores, de 9 colunas), para preservar o trecho que
 distingue um arquivo do outro; a 1440px a tabela segue sem rolagem. As duas versões do nome ficam
 no DOM e uma é `display: none` por media query (components.css). Dentro do `.card` (com o shell novo,

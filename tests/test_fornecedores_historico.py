@@ -221,7 +221,7 @@ _LIMITE_NOME_ARQUIVO = 32  # versão estreita (até 860px)
 _LIMITE_NOME_LARGO = 56  # versão larga: 9 colunas, cabe mais do nome
 
 
-def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
+def test_nome_de_arquivo_no_limite_de_32_caracteres_fica_como_texto_simples(
     client, chefe_almoxarifado, criar_usuario
 ):
     nome = "a" * 28 + ".csv"  # 32 caracteres exatos — não passa do limite.
@@ -237,7 +237,7 @@ def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
     assert "<details" not in conteudo
 
 
-def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_dom(
+def test_nome_de_arquivo_com_33_caracteres_fica_em_details_com_nome_completo_no_dom(
     client, chefe_almoxarifado, criar_usuario
 ):
     from interface.templatetags.interface_extras import truncar_meio

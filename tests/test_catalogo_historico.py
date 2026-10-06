@@ -280,7 +280,7 @@ _LIMITE_NOME_ARQUIVO = 32  # versão estreita (até 860px)
 _LIMITE_NOME_LARGO = 42  # versão larga: 10 colunas, medido para caber a 1440px
 
 
-def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
+def test_nome_de_arquivo_no_limite_de_32_caracteres_fica_como_texto_simples(
     client, chefe_almoxarifado, criar_usuario
 ):
     nome = "a" * 28 + ".csv"  # 32 caracteres exatos — não passa do limite.
@@ -296,7 +296,7 @@ def test_nome_de_arquivo_no_limite_de_20_caracteres_fica_como_texto_simples(
     assert "<details" not in conteudo
 
 
-def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_dom(
+def test_nome_de_arquivo_com_33_caracteres_fica_em_details_com_nome_completo_no_dom(
     client, chefe_almoxarifado, criar_usuario
 ):
     from interface.templatetags.interface_extras import truncar_meio
@@ -317,7 +317,7 @@ def test_nome_de_arquivo_com_21_caracteres_fica_em_details_com_nome_completo_no_
     assert f'<div class="table-cell-filename-completo">{nome}</div>' in conteudo
     bloco_details = re.search(r"<details\b[^>]*>", conteudo).group()
     assert " open" not in bloco_details
-    # O `<summary>` traz o corte NO MEIO com exatamente o limite (fixa o "20"
+    # O `<summary>` traz o corte NO MEIO com exatamente o limite (fixa o "32"
     # do template; o algoritmo em si é `test_catalogo_templatetags.py`).
     resumo = re.search(r'<summary class="table-cell-filename-nome">(.*?)</summary>', conteudo)
     assert resumo is not None
