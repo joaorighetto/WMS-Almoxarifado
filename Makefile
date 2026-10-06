@@ -50,7 +50,10 @@ DJANGO := $(UV_RUN) python manage.py
 # vindo do .env, do shell ou da linha de comando do make vence o pyproject.toml
 # e a suíte roda com as settings de outro ambiente.
 TEST_SETTINGS_MODULE ?= config.settings.test
-PYTEST_ARGS ?=
+# -n auto (pytest-xdist) roda a suíte em paralelo, um banco de testes por
+# worker. Passar PYTEST_ARGS substitui o padrão: para um subconjunto pequeno,
+# criar um banco por núcleo não compensa e o processo único é mais rápido.
+PYTEST_ARGS ?= -n auto
 
 # Diretórios/artefatos locais que podem ser removidos sem medo
 EPHEMERAL_DIRS ?= \
