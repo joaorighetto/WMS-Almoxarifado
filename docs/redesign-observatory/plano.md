@@ -35,10 +35,10 @@ Papel de captura = conta do `seed_dev` usada com `?dev_como=` (ver
 
 | # | Superfície (template) | Rota | Quem usa | Captura como | HTMX/JS | Etapa/estado |
 |---|---|---|---|---|---|---|
-| S1 | Shell (`contas/base.html` + sidebar) | todas autenticadas | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema | `shell.js` (tema, menu) | Lab concluído; aguarda aceite |
+| S1 | Shell (`contas/base.html` + sidebar) | todas autenticadas | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema | `shell.js` (tema, menu) | Lab concluído; checkpoint aceito em 2026-10-05 |
 | S2 | Shell mínimo de credencial provisória (`senha.html` com `provisoria`) | `definir_senha` | conta com senha provisória | `critica.provisoria` | `envio.js` | P1 concluído |
-| S3 | Home (`contas/home.html`) | `home` | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema, sem papel | — | Lab concluído; aguarda aceite |
-| S4 | Consulta do catálogo (`catalogo/consulta.html`) | `catalogo:consulta` | REQ | requisitante | HTMX: filtros, ordenação, paginação, OOB, histórico | Lab concluído; aguarda aceite |
+| S3 | Home (`contas/home.html`) | `home` | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema, sem papel | — | Lab concluído; checkpoint aceito em 2026-10-05 |
+| S4 | Consulta do catálogo (`catalogo/consulta.html`) | `catalogo:consulta` | REQ | requisitante | HTMX: filtros, ordenação, paginação, OOB, histórico | Lab concluído; checkpoint aceito em 2026-10-05 |
 | S5 | Parciais compartilhados (`interface/_paginacao`, `_th_ordenavel`, `_mensagens`, `_consulta_falha`) | várias | — | via S4 | HTMX | Lab concluído; compatibilidade herdada conferida (afeta S6, S10, S11, S20) |
 | S6 | Consulta de fornecedores | `fornecedores:consulta` | FA | funcionario-almoxarifado | HTMX igual a S4 | P2 |
 | S7 | Login (`contas/login.html`) | `login` | anônimo | anonimo | `login.js` | P1 concluído |
