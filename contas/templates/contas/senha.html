@@ -1,11 +1,15 @@
 {% extends "contas/base.html" %}
 {% load static %}
 
-{% block title %}{% if provisoria %}Definir senha{% else %}Trocar senha{% endif %} — WMS-Almoxarifado{% endblock %}
+{% block title %}{% if form.errors %}Erro: {% endif %}{% if provisoria %}Definir senha{% else %}Trocar senha{% endif %} — WMS-Almoxarifado{% endblock %}
 
 {% comment %}
 `/senha/` nos dois estados da credencial. Contrato de contexto: `provisoria` e `form`
 (`DefinirSenhaForm` com credencial provisória, `TrocarSenhaForm` com a definitiva).
+
+Composição (contrato do redesign, `docs/redesign-observatory/contrato.md`): `<main id="main">`, cabeçalho
+`.top` e mensagens do Django vêm de `contas/base.html`; aqui só `heading`, `sub` e `page`. O formulário
+fica num `.card.card-form` (a coluna de trabalho não tem teto; o card limita a própria largura).
 
 Credencial provisória (definição obrigatória, FR-032 a FR-034): sem navegação nem atalhos, só o
 logout — o shell mínimo vem de `contas/base.html` + `_navegacao.html` (`navegacao.provisoria`):
@@ -16,79 +20,96 @@ campo da senha atual, com "Cancelar" de volta à Home.
 
 A senha nunca volta preenchida e nunca é ecoada: o Django já não repopula campos de senha.
 
-Acessibilidade dos campos: o Django liga cada widget por `aria-describedby` a `<auto_id>_helptext`
-(quando o campo tem `help_text`, sempre) e a `<auto_id>_error` (quando tem erro) — os dois elementos
-precisam existir com esses ids (DESIGN.md → Inputs / Fields). Por isso a dica é renderizada mesmo
-quando há erro, e todos os erros do campo ficam dentro de um só elemento com o id do erro.
-{% endcomment %}
+Acessibilidade dos campos: o Django liga cada widget por `aria-describedby` a `<auto_id>_error`
+(quando o campo tem erro) e depois a `<auto_id>_helptext` (quando o campo tem `help_text`); a ordem
+é a de `contas.forms.CampoDeCredencial`. Cada id referenciado precisa existir com e sem erro: o
+`_error` só existe com erro (um só elemento com todos os erros do campo) e o `_helptext` só nos
+campos com `help_text` (a Senha atual, com o caminho de quem a esqueceu, e a Nova senha, com as regras;
+a Confirmação não tem). A dica é texto simples (sem `|safe`) e é renderizada também quando há erro.
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'contas/css/organizacao.css' %}">
-{% endblock %}
+Gerenciador de senhas: o `<input type="text" autocomplete="username" value="<matrícula>" readonly
+hidden>` no começo do formulário dá ao navegador a conta a que a senha nova pertence. Não tem `name`
+(nunca é enviado), é `hidden` (não recebe foco nem é anunciado) e a matrícula vem de
+`user.get_username`.
+
+Divergência no navegador: `static/js/confirmacao-senha.js` (`data-confirmacao-senha` e
+`data-mensagem-divergencia` no formulário). Antes do envio, se a Nova senha e a Confirmação diferem,
+cancela o envio e mostra no bloco da Confirmação o mesmo erro do servidor (`id_new_password2_error`,
+texto `form.error_messages.password_mismatch`, `aria-invalid`, foco na Confirmação). O servidor
+continua validando: sem o script a divergência volta como erro do mesmo campo. Os erros da política
+de senha são sempre do servidor e caem na Nova senha.
+
+Aviso de Caps Lock: `static/js/caps-lock.js` (`data-caps-lock` no bloco de cada campo de senha e o
+`<p data-caps-lock-aviso>` dentro dele); ver `contas/login.html`.
+
+Foco inicial: `autofocus` server-side em um único campo (`CampoDeCredencial`); nada por script.
+
+"Mostrar senhas": a caixa `[data-mostrar-senha]` (abaixo da Confirmação) alterna o `type` de todos os
+campos de senha do formulário via `static/js/mostrar-senha.js`; sem JavaScript ela não aparece
+(`html:not(.js)`, components.css). O campo em modo texto não é repopulado: o Django não devolve
+valor de senha.
+
+Contratos de `static/js/envio.js`: `data-processing-form`/`-label` no formulário e
+`data-processing-submit`/`-submit-label` no botão (estado "Definindo…"/"Trocando…"; sem JavaScript o
+formulário envia normalmente).
+{% endcomment %}
 
 {% block extra_js %}
 <script src="{% static 'js/envio.js' %}" defer></script>
+<script src="{% static 'js/mostrar-senha.js' %}" defer></script>
+<script src="{% static 'js/confirmacao-senha.js' %}" defer></script>
+<script src="{% static 'js/caps-lock.js' %}" defer></script>
 {% endblock %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container page-container-narrow">
-    <header class="page-header">
-      <div>
-        {% if provisoria %}
-        <h1 class="page-header-title">Defina a sua senha</h1>
-        <p class="page-header-description">
-          Você entrou com uma senha provisória. Escolha uma senha só sua para continuar: até lá,
-          as demais telas ficam indisponíveis e só é possível sair.
-        </p>
-        {% else %}
-        <h1 class="page-header-title">Trocar a senha</h1>
-        <p class="page-header-description">
-          Informe a senha atual e escolha a nova. As outras sessões abertas da sua conta são encerradas.
-        </p>
-        {% endif %}
-      </div>
-    </header>
+{% block heading %}{% if provisoria %}Defina a sua senha{% else %}Trocar a senha{% endif %}{% endblock %}
 
-    {% if form.non_field_errors %}
-    <div class="alert alert-danger" role="alert">
-      {% for erro in form.non_field_errors %}<p>{{ erro }}</p>{% endfor %}
+{% block sub %}{% if provisoria %}Você entrou com uma senha provisória. Escolha uma senha só sua para continuar: até lá, as demais telas ficam indisponíveis e só é possível sair.{% else %}Informe a senha atual e escolha a nova. As outras sessões abertas da sua conta são encerradas.{% endif %}{% endblock %}
+
+{% block page %}
+<div class="card card-form">
+  {% if form.non_field_errors %}
+  <div class="error-box" role="alert">
+    {% for erro in form.non_field_errors %}<p>{{ erro }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" data-processing-form data-processing-label="{% if provisoria %}Definindo…{% else %}Trocando…{% endif %}" data-confirmacao-senha data-mensagem-divergencia="{{ form.error_messages.password_mismatch }}">
+    {% csrf_token %}
+    <input type="text" autocomplete="username" value="{{ user.get_username }}" readonly hidden>
+
+    {% if not provisoria %}
+    <div class="field{% if form.old_password.errors %} field-has-error{% endif %}" data-caps-lock>
+      <label for="{{ form.old_password.id_for_label }}">Senha atual</label>
+      {{ form.old_password }}
+      {% if form.old_password.errors %}<div class="field-error" id="{{ form.old_password.auto_id }}_error">{% for erro in form.old_password.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
+      {% if form.old_password.help_text %}<p class="field-hint" id="{{ form.old_password.auto_id }}_helptext">{{ form.old_password.help_text }}</p>{% endif %}
+      <p class="field-hint-atencao" aria-live="polite" data-caps-lock-aviso data-mensagem="Caps Lock está ativado."></p>
     </div>
     {% endif %}
 
-    <form method="post" class="form-frame" data-processing-form data-processing-label="{% if provisoria %}Definindo…{% else %}Trocando…{% endif %}">
-      {% csrf_token %}
+    <div class="field{% if form.new_password1.errors %} field-has-error{% endif %}" data-caps-lock>
+      <label for="{{ form.new_password1.id_for_label }}">Nova senha</label>
+      {{ form.new_password1 }}
+      {% if form.new_password1.errors %}<div class="field-error" id="{{ form.new_password1.auto_id }}_error">{% for erro in form.new_password1.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
+      {% if form.new_password1.help_text %}<p class="field-hint" id="{{ form.new_password1.auto_id }}_helptext">{{ form.new_password1.help_text }}</p>{% endif %}
+      <p class="field-hint-atencao" aria-live="polite" data-caps-lock-aviso data-mensagem="Caps Lock está ativado."></p>
+    </div>
 
-      {% if not provisoria %}
-      <div class="field{% if form.old_password.errors %} field-has-error{% endif %}">
-        <label for="{{ form.old_password.id_for_label }}">Senha atual</label>
-        {{ form.old_password }}
-        {% if form.old_password.errors %}<div class="field-error" id="{{ form.old_password.auto_id }}_error">{% for erro in form.old_password.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
-        {% if form.old_password.help_text %}<p class="field-hint" id="{{ form.old_password.auto_id }}_helptext">{{ form.old_password.help_text }}</p>{% endif %}
-      </div>
-      {% endif %}
+    <div class="field{% if form.new_password2.errors %} field-has-error{% endif %}" data-caps-lock>
+      <label for="{{ form.new_password2.id_for_label }}">Confirme a nova senha</label>
+      {{ form.new_password2 }}
+      {% if form.new_password2.errors %}<div class="field-error" id="{{ form.new_password2.auto_id }}_error">{% for erro in form.new_password2.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
+      {% if form.new_password2.help_text %}<p class="field-hint" id="{{ form.new_password2.auto_id }}_helptext">{{ form.new_password2.help_text }}</p>{% endif %}
+      <p class="field-hint-atencao" aria-live="polite" data-caps-lock-aviso data-mensagem="Caps Lock está ativado."></p>
+      <label class="field-check field-check-js"><input type="checkbox" data-mostrar-senha> Mostrar senhas</label>
+    </div>
 
-      <div class="field{% if form.new_password1.errors %} field-has-error{% endif %}">
-        <label for="{{ form.new_password1.id_for_label }}">Nova senha</label>
-        {{ form.new_password1 }}
-        {% if form.new_password1.errors %}<div class="field-error" id="{{ form.new_password1.auto_id }}_error">{% for erro in form.new_password1.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
-        <div class="field-hint" id="{{ form.new_password1.auto_id }}_helptext">{{ form.new_password1.help_text|safe }}</div>
-      </div>
-
-      <div class="field{% if form.new_password2.errors %} field-has-error{% endif %}">
-        <label for="{{ form.new_password2.id_for_label }}">Confirme a nova senha</label>
-        {{ form.new_password2 }}
-        {% if form.new_password2.errors %}<div class="field-error" id="{{ form.new_password2.auto_id }}_error">{% for erro in form.new_password2.errors %}<p>{{ erro }}</p>{% endfor %}</div>{% endif %}
-        {% if form.new_password2.help_text %}<p class="field-hint" id="{{ form.new_password2.auto_id }}_helptext">{{ form.new_password2.help_text }}</p>{% endif %}
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" data-processing-submit>
-          <span data-processing-submit-label>{% if provisoria %}Definir senha{% else %}Trocar senha{% endif %}</span>
-        </button>
-        {% if not provisoria %}<a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>{% endif %}
-      </div>
-    </form>
-  </div>
-</main>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" data-processing-submit>
+        <span data-processing-submit-label>{% if provisoria %}Definir senha{% else %}Trocar senha{% endif %}</span>
+      </button>
+      {% if not provisoria %}<a href="{% url 'home' %}" class="btn">Cancelar</a>{% endif %}
+    </div>
+  </form>
+</div>
 {% endblock %}

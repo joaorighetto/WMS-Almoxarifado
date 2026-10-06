@@ -10,7 +10,8 @@ e `provisoria`. A sidebar só espelha o que a rota permite — quem decide é a 
 (Constitution V e VI). Capacidades planejadas não entram aqui; ficam na Home.
 
 Credencial provisória: marca sem link, sem Início nem grupos, só o rodapé da conta (Senha como
-página atual, Sair, tema).
+página atual, Sair, tema). Até 860px não há botão "Menu" (não há navegação a abrir): o rodapé da
+conta fica sempre visível, em fluxo logo abaixo da barra com a marca (`.side-provisoria`).
 
 Até 860px a sidebar vira barra estática com botão "Menu" (`button[aria-controls]` +
 `aria-expanded`, manipulado por `static/js/shell.js`). O botão só aparece com `html.js`: sem
@@ -19,7 +20,7 @@ JavaScript a navegação fica aberta, em fluxo.
 Logout continua exclusivamente POST + CSRF (Constitution IX): exatamente um formulário de saída
 por página, funcional sem JavaScript.
 {% endcomment %}
-<aside class="side">
+<aside class="side{% if navegacao.provisoria %} side-provisoria{% endif %}">
   <div class="side-bar">
     {% if navegacao.provisoria %}
     <span class="brand">
@@ -28,7 +29,9 @@ por página, funcional sem JavaScript.
     <a class="brand" href="{% url 'home' %}">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M8 21v-8h8v8"/><path d="M8 17h8"/></svg>Almoxarifado SAEP</a>
     {% endif %}
+    {% if not navegacao.provisoria %}
     <button type="button" class="btn side-toggle" data-menu-toggle aria-expanded="false" aria-controls="menu-lateral">Menu</button>
+    {% endif %}
   </div>
 
   <div class="side-panel" id="menu-lateral">

@@ -301,6 +301,7 @@ class SenhaView(LoginRequiredMixin, FormView):
                 definir_propria_senha(
                     self.request, self.request.user, form.cleaned_data["new_password1"]
                 )
+                messages.success(self.request, "Senha definida. Use-a nos próximos acessos.")
             else:
                 trocar_propria_senha(
                     self.request,

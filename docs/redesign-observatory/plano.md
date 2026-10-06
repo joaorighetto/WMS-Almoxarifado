@@ -21,8 +21,8 @@ apresentação é portada; Django Admin técnico fora.
 |---|---|
 | Estudo da referência e contrato | concluído (2026-10-05) |
 | Laboratório (L1–L10) | concluído tecnicamente em 2026-10-05; evidências da retomada abaixo |
-| Checkpoint humano | entregue — aguardando aceite visual explícito; **parar aqui** |
-| Propagação (P1–P6) | aguardando aceite |
+| Checkpoint humano | aceito pelo dono do produto em 2026-10-05 (laboratório integrado à `main` pelo PR #27) |
+| Propagação (P1–P6) | P1 concluído na branch `redesign/observatory-p1-credenciais` (aguarda commit/PR); P2–P6 pendentes |
 
 Atualize esta tabela e a coluna "Etapa/estado" da matriz ao fechar cada tarefa.
 
@@ -35,14 +35,14 @@ Papel de captura = conta do `seed_dev` usada com `?dev_como=` (ver
 
 | # | Superfície (template) | Rota | Quem usa | Captura como | HTMX/JS | Etapa/estado |
 |---|---|---|---|---|---|---|
-| S1 | Shell (`contas/base.html` + sidebar) | todas autenticadas | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema | `shell.js` (tema, menu) | Lab concluído; aguarda aceite |
-| S2 | Shell mínimo de credencial provisória (`senha.html` com `provisoria`) | `definir_senha` | conta com senha provisória | `critica.provisoria` | `envio.js` | Lab: compatibilidade do shell conferida; recomposição de credenciais em P1 |
-| S3 | Home (`contas/home.html`) | `home` | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema, sem papel | — | Lab concluído; aguarda aceite |
-| S4 | Consulta do catálogo (`catalogo/consulta.html`) | `catalogo:consulta` | REQ | requisitante | HTMX: filtros, ordenação, paginação, OOB, histórico | Lab concluído; aguarda aceite |
+| S1 | Shell (`contas/base.html` + sidebar) | todas autenticadas | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema | `shell.js` (tema, menu) | Lab concluído; checkpoint aceito em 2026-10-05 |
+| S2 | Shell mínimo de credencial provisória (`senha.html` com `provisoria`) | `definir_senha` | conta com senha provisória | `critica.provisoria` | `envio.js` | P1 concluído |
+| S3 | Home (`contas/home.html`) | `home` | todos | requisitante, auditor, chefe-almoxarifado, administrador-sistema, sem papel | — | Lab concluído; checkpoint aceito em 2026-10-05 |
+| S4 | Consulta do catálogo (`catalogo/consulta.html`) | `catalogo:consulta` | REQ | requisitante | HTMX: filtros, ordenação, paginação, OOB, histórico | Lab concluído; checkpoint aceito em 2026-10-05 |
 | S5 | Parciais compartilhados (`interface/_paginacao`, `_th_ordenavel`, `_mensagens`, `_consulta_falha`) | várias | — | via S4 | HTMX | Lab concluído; compatibilidade herdada conferida (afeta S6, S10, S11, S20) |
 | S6 | Consulta de fornecedores | `fornecedores:consulta` | FA | funcionario-almoxarifado | HTMX igual a S4 | P2 |
-| S7 | Login (`contas/login.html`) | `login` | anônimo | anonimo | `login.js` | P1 |
-| S8 | Troca voluntária de senha (`contas/senha.html`) | `definir_senha` | todos | requisitante | `envio.js` | P1 |
+| S7 | Login (`contas/login.html`) | `login` | anônimo | anonimo | `login.js` | P1 concluído |
+| S8 | Troca voluntária de senha (`contas/senha.html`) | `definir_senha` | todos | requisitante | `envio.js` | P1 concluído |
 | S9 | Envio de importação do catálogo | `catalogo:importacao_envio` | CA | chefe-almoxarifado | `envio.js` | P3 |
 | S10 | Prévia de importação do catálogo (+ confirmar/cancelar) | `catalogo:importacao_previa` | CA | chefe-almoxarifado | `envio.js` | P3 |
 | S11 | Histórico de importações do catálogo | `catalogo:historico` | CA | chefe-almoxarifado | `linha-clicavel.js` | P2 |
@@ -294,6 +294,9 @@ plano restante. **Nenhum lote de propagação começa sem aceite visual explíci
 | 2026-10-05 | L9 — retomada, rodada 1 | R1/R2 e V1–V6 conferidos no código; `make verify`: 2969 passed, 3 skipped; 44 cenários recapturados em Chrome via CDP. Revisão funcional L9 independente sem findings relevantes. Finish verdict: V1/V2/V4/V5/V6 resolvidos; V3 parcial no tablet; disposição **fix**. Coluna única de "Em preparação" aceita no gate e registrada no contrato §12 |
 | 2026-10-05 | L9 — rodada 2 | `catalogo.css`: Classificação com mínimo de 16rem; sete consultas afetadas recapturadas. Finish verdict: V3 resolvido, demais itens mantidos, sem regressão; disposição **ship**, limitada a V1–V6. Verificação final: 2969 passed, 3 skipped em 111,53s. Dez checks do navegador passaram, incluindo HTMX/histórico, tema, menu e sem JS. Relatório: `reviews-laboratorio.md`; logs e JSON em `.impeccable/review/` |
 | 2026-10-05 | L10 / checkpoint | DESIGN.md e sidecar schemaVersion 2 reescritos pelo `impeccable_documenter`; coordenador conferiu tokens, componentes, CSS de feature e templates, 37 cores, 44 refs e 10 snippets. Detector final: 9 consultivos, nenhum determinístico; limitações de leitura de templates Django registradas. Checkpoint em `checkpoint.md`, com capturas, navegação, comparação, diferenças, limites, arquivos e P1–P6. Aguarda aceite; propagação não iniciada |
+| 2026-10-05 | Aceite | Dono do produto aceitou o checkpoint e pediu a propagação; laboratório integrado à `main` (#27). P1 iniciado em branch própria |
+| 2026-10-05 | P1 (em andamento) | Login/senha recompostos; review funcional sem P0–P2 (3 rodadas); gate visual: rodada 1 (29/40 login, 26/40 senha) e rodada 2 (31/40, 29/40) com correções aprovadas pelo dono do produto (foco/ARIA de erro, shell provisório sem Menu ≤860px, textos, mostrar senha, política na Nova senha, dicas, username oculto, Caps Lock, divergência no cliente). Decisões: e-mail do almoxarifado mantido; contrastes do upstream (rótulos/rodapé da sidebar, borda de campo) mantidos por fidelidade; fechamento por conferência sem 3ª rodada. Pendente: testes e review da 3ª leva, recaptura (falhou com erro do Node na última tentativa), DESIGN.md/sidecar (`.field-check`, `.field-hint-atencao`, `.card-form`, `.side-provisoria`), revert dos arquivos reformatados por engano (usuário). Limitação: "Senha definida." pode ficar pendente se o destino for tela de organização ainda não recomposta (P5) |
+| 2026-10-06 | P1 concluído | 3ª leva (política de senha na Nova senha, dicas de Senha atual e do login vindas do form, username oculto, Caps Lock, divergência barrada no cliente) implementada; testes 3060 passed, 3 skipped; `code-reviewer` sem findings; recaptura de 18 cenários conferida (o `capturar.mjs` passou a provocar o erro de `/senha/` com senhas iguais, já que a divergência não recarrega mais a página). Gate visual fechado por conferência, sem 3ª rodada de `critique` (decisão do dono do produto). `DESIGN.md`/sidecar atualizados pelo `impeccable-documenter` e conferidos contra o CSS. Pendências fora do P1: "Senha definida." pode ficar pendente se o destino for tela de organização legada (some em P5); logout/sessão expirada sem mensagem no login (toca a spec 002); arquivos reformatados por engano a reverter antes do commit |
 
 ## Retomada encerrada — checkpoint de 2026-10-05
 

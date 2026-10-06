@@ -16,10 +16,8 @@
     submitLabel.textContent = "Entrar";
   };
 
-  const firstInvalidField = form.querySelector('[aria-invalid="true"]');
-  if (firstInvalidField) {
-    firstInvalidField.focus();
-  }
+  /* O foco inicial é decidido pelo servidor (`autofocus` em um único campo, ver
+     `contas/forms.py`): nenhum foco por script aqui. */
 
   form.addEventListener("submit", (event) => {
     if (form.dataset.submitting === "true") {

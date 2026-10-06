@@ -68,6 +68,7 @@ from tests.contas_helpers import (
     hrefs,
     membro,
     membro_provisorio,
+    mensagens,
     operacao,
     recusa_de,
     rota,
@@ -488,6 +489,26 @@ def test_definicao_recusa_confirmacao_diferente(client, comum):
     assert resposta.status_code == 200
     assert User.objects.get(pk=comum.pk).senha_provisoria_em is not None
     assert not _eventos_de_senha_definida(comum).exists()
+
+
+def test_definicao_valida_avisa_que_a_senha_foi_definida_e_a_home_mostra_o_aviso(client, comum):
+    _login(client, comum.matricula, comum.senha_provisoria_clara)
+
+    resposta = _definir(client)
+
+    assert _caminho(resposta) == reverse("home")
+    assert mensagens(resposta) == ["Senha definida. Use-a nos próximos acessos."]
+    home = client.get(reverse("home"))
+    assert "Senha definida. Use-a nos próximos acessos." in home.content.decode()
+
+
+def test_definicao_recusada_nao_avisa_que_a_senha_foi_definida(client, comum):
+    _login(client, comum.matricula, comum.senha_provisoria_clara)
+
+    resposta = _definir(client, "qwertyuiop")
+
+    assert resposta.status_code == 200
+    assert "Senha definida. Use-a nos próximos acessos." not in mensagens(resposta)
 
 
 def test_definicao_valida_troca_a_senha_e_limpa_a_marca_de_provisoria(client, comum):
@@ -1080,3 +1101,117 @@ def test_a_troca_nao_depende_de_papel(setor):
 
         assert _trocar(cliente, SENHA_TESTE).status_code == 302
         assert User.objects.get(pk=usuario.pk).check_password(SENHA_NOVA_VALIDA)
+
+
+# ===========================================================================
+# Onde cai o erro da política de senha: na Nova senha, não na Confirmação
+# ===========================================================================
+
+SENHAS_FORA_DA_POLITICA_SEM_MATRICULA = [
+    pytest.param("Ab1-xyz", id="curta"),
+    pytest.param("qwertyuiop", id="comum"),
+    pytest.param("48291736052", id="so-numeros"),
+]
+
+
+@pytest.mark.parametrize("nova", SENHAS_FORA_DA_POLITICA_SEM_MATRICULA)
+def test_definicao_fora_da_politica_acusa_a_nova_senha_e_nao_a_confirmacao(client, comum, nova):
+    _login(client, comum.matricula, comum.senha_provisoria_clara)
+
+    erros = _definir(client, nova).context["form"].errors
+
+    assert set(erros) == {CAMPOS_SENHA["nova"]}
+
+
+@pytest.mark.parametrize("nova", SENHAS_FORA_DA_POLITICA_SEM_MATRICULA)
+def test_troca_fora_da_politica_acusa_a_nova_senha_e_nao_a_confirmacao(definitivo, nova):
+    resposta = _trocar(definitivo.sessao, SENHA_TESTE, nova)
+
+    assert set(resposta.context["form"].errors) == {CAMPOS_SENHA["nova"]}
+
+
+def test_definicao_com_confirmacao_diferente_acusa_so_a_confirmacao(client, comum):
+    _login(client, comum.matricula, comum.senha_provisoria_clara)
+
+    erros = _definir(client, SENHA_NOVA_VALIDA, confirmacao=SENHA_NOVA_VALIDA + "x").context[
+        "form"
+    ].errors
+
+    assert set(erros) == {CAMPOS_SENHA["confirmacao"]}
+    assert "não correspondem" in str(erros[CAMPOS_SENHA["confirmacao"]])
+
+
+def test_troca_com_confirmacao_diferente_acusa_so_a_confirmacao(definitivo):
+    resposta = _trocar(definitivo.sessao, SENHA_TESTE, SENHA_NOVA_VALIDA, SENHA_NOVA_VALIDA + "x")
+
+    assert set(resposta.context["form"].errors) == {CAMPOS_SENHA["confirmacao"]}
+
+
+def test_senha_fraca_e_confirmacao_diferente_acusam_cada_erro_no_seu_campo(client, comum):
+    _login(client, comum.matricula, comum.senha_provisoria_clara)
+
+    erros = _definir(client, "qwertyuiop", confirmacao="outra-coisa").context["form"].errors
+
+    assert set(erros) == {CAMPOS_SENHA["nova"], CAMPOS_SENHA["confirmacao"]}
+    assert "não correspondem" in str(erros[CAMPOS_SENHA["confirmacao"]])
+
+
+def test_definicao_com_a_propria_provisoria_acusa_a_nova_senha(client, comum):
+    _login(client, comum.matricula, comum.senha_provisoria_clara)
+
+    erros = _definir(client, comum.senha_provisoria_clara).context["form"].errors
+
+    assert set(erros) == {CAMPOS_SENHA["nova"]}
+    assert "diferente da senha provisória" in str(erros[CAMPOS_SENHA["nova"]])
+
+
+# ===========================================================================
+# Textos de dica montados a partir das regras vigentes
+# ===========================================================================
+
+
+def test_dica_da_senha_do_login_cita_a_validade_vigente_da_provisoria():
+    from contas.forms import WMSAuthenticationForm
+
+    dica = WMSAuthenticationForm().fields["password"].help_text
+
+    assert dica == (
+        "No primeiro acesso, use a senha provisória que você recebeu. "
+        f"Ela vale {VALIDADE_SENHA_PROVISORIA.days} dias a partir da emissão; "
+        "ao entrar, você define uma senha sua."
+    )
+    assert WMSAuthenticationForm().fields["username"].help_text == ""
+
+
+def test_dica_da_senha_do_login_segue_a_constante_de_validade(monkeypatch):
+    from contas import forms as formularios
+
+    monkeypatch.setattr(formularios, "VALIDADE_SENHA_PROVISORIA", timedelta(days=3))
+
+    assert "Ela vale 3 dias" in formularios.ajuda_primeiro_acesso()
+
+
+def test_dica_da_nova_senha_cita_o_minimo_efetivo_do_validador(settings):
+    from contas.forms import DefinirSenhaForm
+
+    assert DefinirSenhaForm(None).fields["new_password1"].help_text == (
+        "Use pelo menos 8 caracteres, sem ser só números. "
+        "Evite sua matrícula, seu nome e senhas comuns."
+    )
+
+    settings.AUTH_PASSWORD_VALIDATORS = [
+        {
+            "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+            "OPTIONS": {"min_length": 12},
+        }
+    ]
+    # O `setting_changed` do Django limpa o cache dos validadores ao trocar a configuração.
+    assert "pelo menos 12 caracteres" in DefinirSenhaForm(None).fields["new_password1"].help_text
+
+
+def test_senha_atual_da_troca_tem_a_dica_de_quem_a_esqueceu(definitivo):
+    form = definitivo.sessao.get(rota("definir_senha")).context["form"]
+
+    assert form.fields["old_password"].help_text == (
+        "Esqueceu a senha atual? Saia e peça ao administrador do sistema uma senha provisória."
+    )
