@@ -1,0 +1,22 @@
+{% comment %}
+Dados de registro de uma `Entrada` (`entrada`), em `dl.kv`: o mesmo bloco do detalhe e da tela de
+estorno (o usuário decide o estorno sem abrir outra aba para conferir a NF e o emitente). O código
+do emitente e a matrícula são identificadores opacos (The Mono-Is-Data Rule): mono, sem formatação.
+A data segue o formato da lista (`d/m/Y H:i`). `.estoque-kv` fixa a coluna de rótulos, igual à do card Estorno do detalhe.
+A identidade do emitente é o fragmento `_emitente_identidade.html`.
+Sem `<h2>`: o título do card é de quem inclui.
+{% endcomment %}
+<dl class="kv estoque-kv">
+  <dt>Motivo</dt>
+  <dd>{{ entrada.get_motivo_display }}</dd>
+  <dt>Tipo de documento</dt>
+  <dd>{{ entrada.get_tipo_documento_display }}</dd>
+  <dt>Número do documento</dt>
+  <dd>{{ entrada.numero_documento }}</dd>
+  <dt>Emitente</dt>
+  <dd>{% include "estoque/_emitente_identidade.html" with emitente=entrada.emitente %}</dd>
+  <dt>Registrada por</dt>
+  <dd><span class="table-cell-code">{{ entrada.registrada_por.matricula }}</span></dd>
+  <dt>Registrada em</dt>
+  <dd>{{ entrada.registrada_em|date:"d/m/Y H:i" }}</dd>
+</dl>

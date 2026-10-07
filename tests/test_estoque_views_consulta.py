@@ -11,7 +11,7 @@ composição em si é `tests/test_estoque_views_entrada.py`).
 TDD: escrito antes de `estoque/views.py` existir.
 
 Seção acrescentada pelo `test-engineer` (alinhamento de UX, Fase B):
-"Ação 'Registrar entrada' no Page Header" (`PERM-STOCK-ENTRY-CREATE`,
+"Ação 'Registrar entrada' no cabeçalho da página" (`.tools`; `PERM-STOCK-ENTRY-CREATE`,
 `pode_registrar_entrada`) e "Linha clicável" (`data-linha-clicavel`/
 `data-linha-link`, `static/js/linha-clicavel.js`).
 """
@@ -22,6 +22,8 @@ from decimal import Decimal
 
 import pytest
 from django.urls import reverse
+
+from tests.html_helpers import analisar, hrefs_de
 
 pytestmark = pytest.mark.django_db
 
@@ -175,7 +177,7 @@ def test_detalhe_de_pk_inexistente_e_404_para_autorizado(client, funcionario_alm
 
 
 # ---------------------------------------------------------------------------
-# Ação "Registrar entrada" no Page Header — `PERM-STOCK-ENTRY-CREATE`
+# Ação "Registrar entrada" no `.tools` do cabeçalho — `PERM-STOCK-ENTRY-CREATE`
 # (`EntradasView.pode_registrar_entrada`, `estoque/views.py`). O auditor está
 # no recorte de `PERM-STOCK-HISTORY-VIEW` (FR-021, vê a lista) mas não tem
 # `PERM-STOCK-ENTRY-CREATE` — a ação não pode aparecer para ele. A
@@ -189,10 +191,9 @@ def test_detalhe_de_pk_inexistente_e_404_para_autorizado(client, funcionario_alm
 # ---------------------------------------------------------------------------
 
 
-def _bloco_page_header(conteudo):
-    match = re.search(r'<header class="page-header">.*?</header>', conteudo, re.S)
-    assert match is not None, "page header não encontrado"
-    return match.group()
+def _ferramentas_da_pagina(conteudo):
+    """O bloco `.tools` do cabeçalho do shell (`contas/base.html`), onde vive a ação de página."""
+    return analisar(conteudo).unico("main").unico(classe="tools")
 
 
 def test_funcionario_almoxarifado_ve_acao_registrar_entrada(client, funcionario_almoxarifado):
@@ -200,9 +201,10 @@ def test_funcionario_almoxarifado_ve_acao_registrar_entrada(client, funcionario_
 
     resposta = client.get(reverse("estoque:entradas"))
 
-    bloco = _bloco_page_header(resposta.content.decode())
-    assert f'href="{reverse("estoque:entrada_nova")}"' in bloco
-    assert "Registrar entrada" in bloco
+    ferramentas = _ferramentas_da_pagina(resposta.content)
+    (acao,) = ferramentas.buscar("a")
+    assert acao.get("href") == reverse("estoque:entrada_nova")
+    assert acao.texto == "Registrar entrada"
 
 
 def test_chefe_almoxarifado_ve_acao_registrar_entrada(client, chefe_almoxarifado):
@@ -212,8 +214,8 @@ def test_chefe_almoxarifado_ve_acao_registrar_entrada(client, chefe_almoxarifado
 
     resposta = client.get(reverse("estoque:entradas"))
 
-    bloco = _bloco_page_header(resposta.content.decode())
-    assert f'href="{reverse("estoque:entrada_nova")}"' in bloco
+    ferramentas = _ferramentas_da_pagina(resposta.content)
+    assert hrefs_de(ferramentas) == {reverse("estoque:entrada_nova")}
 
 
 def test_auditor_nao_ve_acao_registrar_entrada(client, auditor):
@@ -221,9 +223,11 @@ def test_auditor_nao_ve_acao_registrar_entrada(client, auditor):
 
     resposta = client.get(reverse("estoque:entradas"))
 
-    bloco = _bloco_page_header(resposta.content.decode())
-    assert reverse("estoque:entrada_nova") not in bloco
-    assert "Registrar entrada" not in bloco
+    # Nem o texto nem o link em lugar nenhum da página (não só no `.tools`).
+    conteudo = resposta.content.decode()
+    assert "Registrar entrada" not in conteudo
+    assert reverse("estoque:entrada_nova") not in hrefs_de(analisar(conteudo))
+    assert _ferramentas_da_pagina(conteudo).buscar("a") == []
 
 
 def test_acao_escondida_nao_dispensa_o_403_real_da_rota(client, auditor):

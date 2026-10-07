@@ -207,8 +207,9 @@ Esta é a documentação do código construído, em modo Operate e caminho code-
 fixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o
 laboratório recomposto; as telas de credencial (entrada e senha) foram recompostas no lote P1 e
 a consulta de fornecedores, os históricos e os resultados de execução das importações de catálogo
-e fornecedores, no lote P2; o envio e a prévia dessas duas importações, no lote P3. As demais
-telas já herdam os tokens, mas sua composição continua em transição. A referência é de
+e fornecedores, no lote P2; o envio e a prévia dessas duas importações, no lote P3; a consulta,
+o registro, o detalhe e o estorno de entradas de estoque, no lote P4. As demais telas (organização)
+já herdam os tokens, mas sua composição continua em transição. A referência é de
 apresentação: não fornece funcionalidades nem regras de domínio.
 A marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.
 
@@ -374,6 +375,19 @@ futuro ("Serão inseridos"). A seção de Exceções não pinta as linhas com `t
 fim da página. O envio de arquivo é formulário isolado em card de formulário, com o histórico em
 `tools` e, havendo prévia pendente, aviso informativo acima do card com o link para continuá-la.
 
+A composição de uma operação (registro de entrada) é um formulário com um card por seção. A ação
+de fim do formulário que ainda não grava ("Revisar") fica em `.form-actions`, primária, com uma
+nota ao lado dizendo que nada é gravado; não gruda no rodapé. Só a barra de confirmação gruda.
+Quando a revisão chega por troca HTMX, o h1 não muda: o fragmento abre com um título de seção
+que leva o selo `badge-info` "Não gravada" e recebe o foco, seguido do aviso informativo
+(`role="status"`) e dos cards, no tom da prévia de importação.
+
+O detalhe de um objeto com situação leva o selo no h1, a trilha em `sub` e, só para quem pode
+executá-lo, o convite destrutivo em `tools`. Uma operação que o servidor recusaria vira tela de
+estado, não de ação: selo `badge-warning` "Bloqueado" no h1, `.error-box` com `role="alert"`
+nomeando a causa (os CADPRO afetados) antes do conteúdo e no lugar do aviso de consequência, sem
+barra de confirmação, só o link de volta em `.form-actions`.
+
 Regras de CSS de feature por `id` de seção são escopadas pela classe da tela
 (`:is(.execucao-secao, .previa-secao)#alteracoes`): prévia e execução reusam os mesmos ids, e um
 seletor só por `id` atingiria também a consulta e o histórico da feature.
@@ -387,11 +401,13 @@ adicional; linhas de tabela o aplicam somente sob `hover: hover`.
 
 ### Transição de composição
 
-Os lotes P1 (credenciais), P2 (consultas e históricos de importação) e P3 (envio e prévia das
-importações) estão recompostos; P4–P6 estão pendentes. `.summary`, `.meta-grid`, `.section-marker`,
-`.back-link`, `.page*`, `.form-frame` e `table-sticky-header` seguem em `components.css` só como
-compatibilidade das telas ainda não recompostas (organização e estoque); nenhuma tela recomposta
-os usa.
+Os lotes P1 (credenciais), P2 (consultas e históricos de importação), P3 (envio e prévia das
+importações) e P4 (entradas de estoque) estão recompostos; P5 (organização) e P6 estão pendentes.
+`.page*`, `.page-header*`, `.section-marker*`, `.back-link`, `.page-section`, `.meta-grid`,
+`.form-frame`, `.alert-danger`, `.table-wrapper-marker-attached`, a barra de confirmação base e
+`table-sticky-header` seguem em `components.css` só como compatibilidade da organização, a única
+área ainda não recomposta; nenhuma tela recomposta os usa. `.summary` e `.field-label` ficaram sem
+consumidor depois do P4. `table-row-error` segue em uso só no estoque, na linha de exceção.
 
 O shell mínimo da credencial provisória usa a mesma sidebar, com marca sem link e conta, sem
 grupos de navegação; o formulário de senha usa o cabeçalho de página e o card de formulário.
@@ -422,7 +438,8 @@ O cabeçalho sticky com scrollport de 60vh e linha de sombra inset (`table-stick
 pertence a tabelas herdadas. A pendência foi resolvida no P2 sem ele: históricos e resultados de
 execução rolam com a página, sem segundo scrollport vertical, e a tabela larga rola só na
 horizontal dentro do card. A regra continua em `components.css` apenas para os consumidores
-legados (P4–P5, organização e estoque); não é padrão de tela recomposta nem regra a generalizar.
+legados da organização (P5); o estoque deixou de usá-la no P4. Não é padrão de tela recomposta nem
+regra a generalizar.
 
 ## Shapes
 
@@ -440,14 +457,21 @@ Controles discretos, com superfície e borda de 1px. O primário preenche ação
 com peso 600; hover usa `primary-hover`. O secundário usa `surface`, hover em `surface-subtle`.
 Selecionado usa `selected` com borda `series-1`. Destrutivo mantém fundo/borda de perigo e texto
 branco, concentrado na confirmação; o convite usa secundário com borda de perigo. A variante
-já usada pelas features não altera regras de domínio ou quais operações exigem confirmação.
+já usada pelas features não altera regras de domínio ou quais operações exigem confirmação. Na
+fundação recomposta, o estorno de entrada é o consumidor: o convite fica em `tools`, só para quem
+pode executar, e na barra de confirmação o destrutivo ocupa o lugar do primário e recita a
+consequência; operação destrutiva não usa o primário azul. Um `<summary>` com a forma do
+secundário (disclosure que abre uma busca) mostra o estado aberto por fundo `selected`, borda
+`series-1` e peso 600, além do estado nativo do `<details>`.
 
 Desabilitado usa `surface-subtle`, borda normal e texto `text-muted`, cursor de impedimento;
 o rótulo de processamento continua legível. Em processamento (`envio.js`, por data-attribute) o
 botão desabilita, o formulário ganha `aria-busy` e o rótulo vira um verbo por extenso ("Enviando…",
 "Confirmando…"); a largura do botão fica fixada para o vizinho não se deslocar, os demais botões da
 mesma barra de confirmação desabilitam juntos e tudo volta no `pageshow`. Formulários com a mesma
-action compartilham o bloqueio de duplo envio. Todos os controles interativos têm foco visível
+action compartilham o bloqueio de duplo envio. `estoque.js` cumpre o mesmo contrato por delegação
+em `document`, cobrindo o formulário de confirmação inserido por troca HTMX; o link da barra
+ocupado recebe `aria-disabled` e não navega. Todos os controles interativos têm foco visível
 em `focus`: outline 2px, offset 2px e raio de foco. As ações de formulário quebram e empilham
 até 480px, mantendo primária antes de Cancelar. Botão oculto pelo atributo hidden permanece oculto.
 
@@ -480,6 +504,12 @@ escreve no aviso a mensagem do atributo `data-mensagem`, nunca texto do script. 
 confirmação cancela, na captura, o envio divergente e renderiza o mesmo erro de campo do servidor,
 com o texto vindo do formulário.
 
+Depois de uma troca HTMX num formulário, o foco vai, nesta ordem, ao campo com `autofocus`, ao
+primeiro `aria-invalid`, ao alerta geral (`.error-box` com `role="alert"`) ou ao título da revisão;
+um campo dentro de wrapper rolável é revelado também na horizontal, junto do seu erro. Campo dentro
+de célula de tabela leva o erro num bloco próprio de medida fixa sob o campo, que identifica o
+material pelo CADPRO (só visual); a linha só ganha `table-row-error` quando o erro é da linha.
+
 ### Navigation
 
 Um shell declarado na base; navegação recebe destinos calculados no servidor e marca o atual
@@ -502,8 +532,10 @@ superfície. Tile destaca dado com rótulo acima, valor e nota opcional. Só til
 é link; os três tiles de identidade da Home são leitura. Altura acompanha o conteúdo.
 Tarefas da Home usam card por grupo, com link e descrição na mesma célula por tarefa.
 No título de página, um badge pode acompanhar o h1 como selo de estado do objeto (resultado
-"Com rejeições"/"Sem rejeições") ou da prévia ("Não gravada", em `badge-info`), com 8px de
-afastamento e alinhado ao meio.
+"Com rejeições"/"Sem rejeições"; entrada "Registrada" em `badge-success` ou "Estornada" em
+`badge-neutral`, estado final legítimo e não erro), da prévia ("Não gravada", em `badge-info`) ou
+de impedimento ("Bloqueado", em `badge-warning`), com 8px de afastamento e alinhado ao meio. A
+lista de entradas repete o mesmo selo de situação por linha.
 
 O resumo de métricas usa tiles de leitura com rótulo, valor e nota. Tile de atenção
 (`tile-warning`) segue a gramática do alerta de aviso: fundo e borda de `warning`, losango de 7px
@@ -521,6 +553,12 @@ grupo de fora da soma, o tile em atenção engrossa o tracejado para 2px, porque
 apagava o tracejado de 1px. É composição de feature (`fornecedores.css`), não primitiva: os tiles
 compartilhados não mudam e, com um único valor fora da soma (catálogo), `tile-aside` basta.
 
+Cards consecutivos de pares rótulo/valor (`dl.kv`) na mesma página podem fixar a coluna de
+rótulos pelo CSS de feature (no estoque, 12rem; 8.5rem até 480px) para os valores se alinharem de
+um card a outro. A identidade composta de uma entidade (no estoque, o emitente: nome · código ·
+documento) é um único fragmento, reusado na revisão, no registro e na escolha: identificadores em
+mono, separadores visuais `aria-hidden` e rótulos "código"/"documento" em `visually-hidden`.
+
 Formulário isolado usa o card com medida de formulário (máximo 420px): a coluna de trabalho não
 tem teto, então é o card que limita a própria largura, alinhado à esquerda; na entrada anônima o
 mesmo card se centraliza.
@@ -536,7 +574,9 @@ o estado. Badge plain não tem marcador e serve a papel ou Planejado. Lista de b
 com gap 4px. Mensagem usa padding 8px 12px, raio de controle e margem inferior 12px, com
 fundo/borda da família. Sucesso, atenção e informação incluem marcador; erro explicita o motivo.
 Erro usa role alert; mensagens de estado usam role status. Nenhum texto de erro fica vermelho
-como única pista.
+como única pista. O aviso de consequência de uma operação irreversível é `alert-warning` estático,
+sem `role`, acima do conteúdo. Mensagem de largura total pode limitar a medida do texto (75ch no
+estoque) sem estreitar a caixa.
 
 ### Tables / Pagination
 
@@ -552,10 +592,18 @@ quebras do dado preservadas. Linhas consecutivas do mesmo código mostram códig
 secundária só na primeira; nas seguintes o código fica em `visually-hidden`. Cabeçalho pode
 quebrar linha por `th-wrap`. Wrapper rolável de seção é região nomeada e focável
 (`role="region"`, `aria-label` "Tabela de …", `tabindex="0"`). Nos históricos, o link da linha
-(`#N`) usa a cor de acento, via CSS de feature. O nome de arquivo longo é cortado no meio em duas
+(`#N`) usa a cor de acento, via CSS de feature; a consulta de entradas segue o mesmo molde. O nome de arquivo longo é cortado no meio em duas
 versões alternadas por largura (estreita até 860px, larga acima), cada uma com `<details>` que
 revela o nome inteiro. Até 640px uma tabela pode juntar duas colunas numa célula alternando
 `so-desktop` e `so-movel`, com rótulos em `visually-hidden` e seta decorativa `aria-hidden`.
+
+Em tabela com um controle por linha (escolher, adicionar, remover), a coluna Ação vem primeiro,
+para o controle ficar visível no celular sem rolagem lateral, e as células centralizam
+verticalmente com ele. Quando a ação não cabe (fornecedor bloqueado, material já incluído), um
+único selo ocupa o lugar do botão e o motivo fica em texto na linha. Tabelas de movimento de saldo
+repetem a mesma ordem na revisão e no estorno (Código, Descrição, Saldo atual, Quantidade, Saldo
+resultante, Unidade), lidas como a conta que são. `table-row-error` marca só a linha de exceção,
+sempre com o motivo em texto na própria célula.
 
 **The One Reading Rule.** Conteúdo alternado por largura usa `display: none` na versão que não
 vale, nunca duas cópias visíveis ao leitor de tela; repetição visual suprimida continua no DOM
@@ -571,16 +619,21 @@ com título e descrição, sem desenhar métrica fictícia. Spinner local tem 12
 
 Único par de ações de uma página que confirma uma operação: último elemento do conteúdo, sticky no
 rodapé da viewport (nunca `fixed`), primário antes do secundário, fundo `surface` e padding 12px
-16px. A base, com borda superior e colada ao rodapé, segue em organização e estoque. A variante de
-card, recomposta nas prévias de importação, usa a gramática do painel: borda de 1px em volta, raio
-`md`, sem sombra, flutuando 12px acima do rodapé; um pseudo-elemento pinta esse vão com
-`background`, para o conteúdo rolado não aparecer por baixo. Fica dentro da coluna de trabalho,
+16px. A base, com borda superior e colada ao rodapé, segue só na organização. A variante de card,
+usada nas prévias de importação, na revisão da entrada e no estorno, usa a gramática do painel:
+borda de 1px em volta, raio `md`, sem sombra, flutuando 12px acima do rodapé; um pseudo-elemento
+pinta esse vão com `background` a partir de 1px abaixo da borda inferior e 1px além de cada
+lateral, para o conteúdo rolado não aparecer por baixo nem cortar a borda da barra. Fica dentro da coluna de trabalho,
 nunca sobre a sidebar. No desktop a barra não quebra: o primário encolhe e quebra o rótulo longo,
 alinhado à esquerda, e o Cancelar mantém a largura. Até 480px a barra empilha, os botões ocupam a
 largura com texto centralizado e uma linha de resumo curta (`text-muted`, meta, itens separados por
 "·") aparece acima deles; os totais do rótulo saem só da vista (fonte 0, inline, sem virar
 fronteira de palavra). A folga de rolagem acompanha a barra: 7rem, ou 11rem até 480px (base: 5rem
 e 10rem).
+
+Quando a confirmação entra por troca HTMX no ponto em que estava o gatilho (Revisar → Confirmar),
+o envio do formulário de confirmação é ignorado por 500 ms após a inserção, sem desabilitar o
+botão, para o segundo toque do mesmo gesto não gravar sem leitura.
 
 **The Consequence Label Rule.** O primário da confirmação recita a consequência (o que será
 gravado e o que fica de fora) e esse texto inteiro é o nome acessível do botão. O resumo curto do
@@ -589,10 +642,10 @@ celular é só visual (`aria-hidden`), nunca uma segunda fonte do nome.
 ### Padrões existentes em transição
 
 Resumos de totais, pares rótulo/valor, hashes, opções com motivo de bloqueio, a barra de confirmação
-base e histórico por link continuam primitivos compartilhados. Estoque e organização conservam
-composição própria (ações agrupadas, segredo copiável, efeitos por pessoa, checklist e impedimentos),
-consumindo tokens da fundação. São contratos de uso a preservar ao recompor P1–P6, sem copiar
-os comentários antigos como direção estética.
+base e histórico por link continuam primitivos compartilhados. A organização conserva composição
+própria (ações agrupadas, segredo copiável, efeitos por pessoa, checklist e impedimentos),
+consumindo tokens da fundação. São contratos de uso a preservar ao recompor P5, sem copiar os
+comentários antigos como direção estética.
 
 ## Do's and Don'ts
 

@@ -21,13 +21,15 @@ O parsing é estrutural (`tests/html_helpers.py`), nunca regex de atributo. As t
 recompostas (propagação P1 a P5) trazem o próprio `<main>` sem `id`: o alvo do skip link nelas é
 resolvido por fallback em JavaScript (`static/js/shell.js`), que um teste de servidor não
 exercita. Só as telas recompostas (Home, consulta do catálogo, `/senha/`, as cinco do lote P2:
-consulta de fornecedores e histórico/execução de importação de catálogo e fornecedores, e as
-quatro do lote P3: envio e prévia de importação de catálogo e de fornecedores) têm `id="main"`
-verificado aqui; o markup do login e de `/senha/` está em
+consulta de fornecedores e histórico/execução de importação de catálogo e fornecedores, as
+quatro do lote P3: envio e prévia de importação de catálogo e de fornecedores, e as quatro do lote
+P4: consulta de entradas, composição da entrada, detalhe da entrada e estorno da entrada) têm
+`id="main"` verificado aqui; o markup do login e de `/senha/` está em
 `tests/test_contas_credenciais_markup.py`.
 """
 
 import uuid
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
@@ -35,7 +37,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django.utils import timezone
 
-from catalogo.models import ExecucaoImportacao
+from catalogo.leitura_scpi import normalizar_para_busca
+from catalogo.models import ExecucaoImportacao, Material
 from contas.models import Papel
 from fornecedores.models import ExecucaoImportacaoFornecedores
 from tests.contas_helpers import PAPEIS_CHEFE_ALMOXARIFADO, membro_provisorio, rota
@@ -131,6 +134,47 @@ def _ficha_do_proprio_usuario(client, usuario, csv_fixture):
     return client.get(rota("usuario", usuario.pk))
 
 
+def _entrada_registrada_por(autor):
+    """Uma entrada de um item pela camada de domínio (sem passar pelo fluxo HTTP de composição)."""
+    from estoque.entradas import EntradaInformada, ItemInformado, registrar_entrada
+    from estoque.models import MotivoEntrada, TipoDocumentoEntrada
+
+    descricao = "Material do shell"
+    material = Material.objects.create(
+        cadpro="010.020.031",
+        descricao=descricao,
+        descricao_busca=normalizar_para_busca(descricao),
+        unidade="UN",
+        detalhamento="",
+        grupo="",
+        subgrupo="",
+        nome_grupo="",
+        nome_subgrupo="",
+        saldo=Decimal("0.000"),
+        saldo_inicial=Decimal("0.000"),
+        execucao_origem=_criar_execucao(autor),
+    )
+    dados = EntradaInformada(
+        chave_confirmacao=uuid.uuid4(),
+        motivo=MotivoEntrada.DOACAO_RECEBIDA,
+        tipo_documento=TipoDocumentoEntrada.NOTA_FISCAL,
+        numero_documento="NF-SHELL-1",
+        emitente_id=None,
+        itens=(ItemInformado(material_id=material.pk, quantidade=Decimal("5.000")),),
+    )
+    return registrar_entrada(dados, autor)
+
+
+def _entrada_detalhe(client, usuario, csv_fixture):
+    entrada = _entrada_registrada_por(usuario)
+    return client.get(reverse("estoque:entrada_detalhe", args=[entrada.pk]))
+
+
+def _entrada_estorno(client, usuario, csv_fixture):
+    entrada = _entrada_registrada_por(usuario)
+    return client.get(reverse("estoque:entrada_estorno", args=[entrada.pk]))
+
+
 TELAS = [
     ("home", "requisitante", True, _get("home")),
     ("catalogo-consulta", "requisitante", True, _get("catalogo:consulta")),
@@ -143,8 +187,12 @@ TELAS = [
     ("fornecedores-historico", "chefe_almoxarifado", True, _get("fornecedores:historico")),
     ("fornecedores-execucao", "chefe_almoxarifado", True, _execucao_fornecedores),
     ("fornecedores-consulta", "funcionario_almoxarifado", True, _get("fornecedores:consulta")),
-    ("entradas", "funcionario_almoxarifado", False, _get("estoque:entradas")),
-    ("entrada-nova", "funcionario_almoxarifado", False, _get("estoque:entrada_nova")),
+    ("entradas", "funcionario_almoxarifado", True, _get("estoque:entradas")),
+    ("entrada-nova", "funcionario_almoxarifado", True, _get("estoque:entrada_nova")),
+    ("entrada-detalhe", "funcionario_almoxarifado", True, _entrada_detalhe),
+    ("entrada-detalhe-auditor", "auditor", True, _entrada_detalhe),
+    ("entrada-detalhe-chefe", "chefe_almoxarifado", True, _entrada_detalhe),
+    ("entrada-estorno", "chefe_almoxarifado", True, _entrada_estorno),
     ("usuarios", "admin_sistema", False, _get("usuarios")),
     ("usuario-ficha", "admin_sistema", False, _ficha_do_proprio_usuario),
     ("senha", "requisitante", True, _get("definir_senha")),

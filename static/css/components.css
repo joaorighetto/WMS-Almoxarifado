@@ -912,13 +912,15 @@ html:has(.confirmation-bar) {
 }
 
 /* O vão sob a barra flutuante é pintado com o fundo da página: o conteúdo que rola não aparece numa
-   faixa de 12px entre a barra e o rodapé da viewport. */
+   faixa de 12px entre a barra e o rodapé da viewport. O `::after` é posicionado a partir da padding box:
+   começa 1px abaixo (depois da borda inferior, senão cobre a borda e as curvas de baixo) e se estende 1px
+   para cada lado (senão a borda lateral do conteúdo rolado aparece no vão). */
 .confirmation-bar-card::after {
   content: "";
   position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  top: calc(100% + 1px);
+  left: -1px;
+  right: -1px;
   height: var(--space-3);
   background-color: var(--color-background);
 }
