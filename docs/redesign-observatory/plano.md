@@ -22,7 +22,7 @@ apresentação é portada; Django Admin técnico fora.
 | Estudo da referência e contrato | concluído (2026-10-05) |
 | Laboratório (L1–L10) | concluído tecnicamente em 2026-10-05; evidências da retomada abaixo |
 | Checkpoint humano | aceito pelo dono do produto em 2026-10-05 (laboratório integrado à `main` pelo PR #27) |
-| Propagação (P1–P6) | P1 concluído e na `main` (#28); P2 concluído e na `main` (#30); P3 concluído na branch `redesign/observatory-p3-importacoes` (aguarda commit/PR); P4–P6 pendentes |
+| Propagação (P1–P6) | P1 concluído e na `main` (#28); P2 concluído e na `main` (#30); P3 concluído e na `main` (#31); P4–P6 pendentes |
 
 Atualize esta tabela e a coluna "Etapa/estado" da matriz ao fechar cada tarefa.
 
