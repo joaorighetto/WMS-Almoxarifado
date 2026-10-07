@@ -1,0 +1,10 @@
+{% comment %}
+Identidade do emitente (`emitente`: um `Fornecedor` ou vazio) — um único fragmento, usado na revisão da
+entrada, no card Registro (detalhe e estorno) e no card Emitente da composição: nome · código · documento
+(CNPJ/CPF, quando houver). Código e documento são identificadores opacos (INV-CATALOG-001, The
+Mono-Is-Data Rule): mono, exatamente como guardados, sem reformatar. Os separadores são só visuais
+(`aria-hidden`, coladas ao item anterior para a quebra de linha vir depois delas); os rótulos "código" e "documento" ficam em `visually-hidden` para a leitura de tela.
+Sem emitente: "Sem emitente". Na consulta de entradas só o nome é mostrado (linha secundária da
+Referência), de propósito.
+{% endcomment %}
+{% if emitente %}<span class="estoque-emitente-nome">{{ emitente.nome }}</span><span class="estoque-emitente-sep" aria-hidden="true">&nbsp;·</span> <span class="visually-hidden">, código </span><span class="table-cell-code">{{ emitente.codif }}</span>{% if emitente.documento %}<span class="estoque-emitente-sep" aria-hidden="true">&nbsp;·</span> <span class="visually-hidden">, documento </span><span class="table-cell-code">{{ emitente.documento }}</span>{% endif %}{% else %}Sem emitente{% endif %}

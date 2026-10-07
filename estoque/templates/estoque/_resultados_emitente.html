@@ -2,16 +2,20 @@
 {% comment %}
 Resultados da busca de emitente (`entrada_nova.html`, dois pontos de inclusão:
 emitente já escolhido, dentro do `<details>` de troca, e emitente ainda não
-escolhido, direto no formulário). Coluna de ação primeiro (achado do gate
-visual, P2 — "Escolher"/"Indisponível" visíveis a 390px sem scroll lateral,
-antes de código/nome/documento/situação).
+escolhido, direto no card "Emitente"). Coluna de ação primeiro (achado do gate
+visual, P2 — "Escolher"/"Bloqueado" visíveis a 390px sem scroll lateral,
+antes de código/nome/documento/situação). Emitente bloqueado nunca tem botão
+Escolher (INV-SUPPLIER-005): no lugar dele, um único selo "Bloqueado" (forma e texto, nunca só a cor) e,
+na Situação, o motivo do bloqueio em texto.
+O wrapper é região nomeada e focável (`role="region"`, `aria-label`, `tabindex="0"`); o aviso
+"N resultados — refine" fica fora dele, para não rolar junto com a tabela.
 {% endcomment %}
 {% if resultados_emitente %}
-<div class="table-wrapper">
-  <table class="table">
+<div class="table-wrapper" role="region" aria-label="Tabela de resultados da busca de emitente" tabindex="0">
+  <table class="table estoque-tabela-controles">
     <thead>
       <tr>
-        <th scope="col"></th>
+        <th scope="col">Ação</th>
         <th scope="col">Código</th>
         <th scope="col">Nome</th>
         <th scope="col">Documento</th>
@@ -23,18 +27,17 @@ antes de código/nome/documento/situação).
       <tr>
         <td>
           {% if fornecedor.bloqueado %}
-          <span class="badge badge-neutral">Indisponível</span>
+          <span class="badge badge-warning">Bloqueado</span>
           {% else %}
           <button type="submit" name="escolher_emitente" value="{{ fornecedor.pk }}" class="btn btn-secondary" aria-label="Escolher {{ fornecedor.nome }}">Escolher</button>
           {% endif %}
         </td>
         <td class="table-cell-code">{{ fornecedor.codif }}</td>
-        <td>{{ fornecedor.nome }}</td>
+        <td class="estoque-nome-cell">{{ fornecedor.nome }}</td>
         <td>{{ fornecedor.documento|default:"—" }}</td>
         <td>
           {% if fornecedor.bloqueado %}
-          <span class="badge badge-warning">Bloqueado</span>
-          {% if fornecedor.motivo_bloqueio %}<span class="estoque-motivo-bloqueio">{{ fornecedor.motivo_bloqueio }}</span>{% endif %}
+          <span class="estoque-motivo-bloqueio">{% if fornecedor.motivo_bloqueio %}{{ fornecedor.motivo_bloqueio }}{% else %}Bloqueado{% endif %}</span>
           {% else %}
           Liberado
           {% endif %}
@@ -50,8 +53,8 @@ antes de código/nome/documento/situação).
       {% endfor %}
     </tbody>
   </table>
-  {% if resultados_emitente.excedeu %}
-  <p class="estoque-refinar">{{ resultados_emitente.total|separador_milhar }} resultados — refine a busca para ver todos.</p>
-  {% endif %}
 </div>
+{% if resultados_emitente.excedeu %}
+<p class="estoque-refinar">{{ resultados_emitente.total|separador_milhar }} resultados — refine a busca para ver todos.</p>
+{% endif %}
 {% endif %}

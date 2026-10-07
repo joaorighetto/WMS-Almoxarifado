@@ -8,143 +8,144 @@
 {% endblock %}
 
 {% comment %}
-Contrato de contexto: ver docstring de `estoque/views.py` (`EntradaEstornoView`).
-Retorno contextual para o detalhe (`.back-link`). Envio comum (sem HTMX): o
-redirect de sucesso/aviso precisa carregar o detalhe inteiro.
+Contrato de contexto: ver docstring de `estoque/views.py` (`EntradaEstornoView`). Envio comum (sem
+HTMX): o redirect de sucesso/aviso precisa carregar o detalhe inteiro.
 
-Correção do gate visual (P1, "Reconhecer em vez de lembrar"): a tela mostra o
-mesmo bloco de identificação do detalhe (motivo, tipo e número do documento,
-emitente, registrada por/em) — o usuário decide o estorno sem precisar abrir
-outra aba para conferir a NF/emitente. Com `algum_bloqueado`, a ação
-destrutiva nem aparece: só o alerta e "Voltar" (achado "Prevenção de erros" —
-um estado que o servidor já recusaria não pode ficar oferecido como botão
-ativo na interface).
+Composição do redesign (`docs/redesign-observatory/contrato.md` §4 e §12; diferença 8, destrutivo e
+desabilitado): o cabeçalho (`.top`), o `<main id="main">` e as mensagens vêm de `contas/base.html`;
+esta página preenche `heading`, `sub` (trilha "Consulta de entradas / Entrada #N / Estorno"), `tools`
+(vazio: a ação fica na barra de confirmação, no fim) e `page`.
+
+Ordem: aviso de consequência (`.alert-warning`, sem `role`: é texto estático, não mudança de estado)
+acima de tudo — estorno total, irreversível, o que sai do saldo e que a entrada continua registrada e
+marcada como estornada; card "Registro" (o mesmo bloco do detalhe, "Reconhecer em vez de lembrar": o
+usuário decide sem abrir outra aba para conferir NF e emitente); card "Itens". As colunas da tabela
+seguem a ordem da revisão da entrada (Código, Descrição, Saldo atual, Quantidade a estornar, Saldo
+resultante, Unidade): o dado de movimento lê da esquerda para a direita como a conta que ele é (saldo
+atual, menos a quantidade, igual ao saldo resultante). `table-row-error` só nas linhas bloqueadas, a
+exceção real, e sempre com "Ficaria negativo." em texto.
+
+Com `algum_bloqueado` a página é de consulta, não de ação: o h1 leva o selo "Bloqueado" (`badge-warning`,
+o mesmo padrão do selo "Não gravada"), a ação destrutiva nem aparece (um estado que o servidor já
+recusaria não fica oferecido como botão ativo) e o aviso de irreversibilidade sai: não há o que
+desfazer, e ele competiria com o erro. O erro (`.error-box role="alert"`) ocupa a posição do aviso, antes
+do Registro, e diz quantos itens ficariam negativos e quais (CADPRO, a partir de `linhas`), que nada foi
+estornado e o caminho: o produto ainda não tem ajuste de saldo, então o estorno só é possível quando o
+saldo do material cobrir a quantidade recebida. Sem `.confirmation-bar` (não há operação a confirmar):
+só o link secundário "Voltar à entrada #N" numa fila de ações no fim, não sticky. A recusa de um POST
+é mostrada aqui, junto da causa; a view só emite `messages.error` quando o saldo mudou entre a recusa e
+a renderização (sem `algum_bloqueado`). Sem bloqueio: o formulário (POST, `data-processing-*`,
+"Estornando…") leva a Justificativa num card de formulário, sem título próprio (o rótulo do campo é o
+título do bloco), e, dentro dele, a barra de confirmação: o primário é o destrutivo (`.btn-danger`) com o
+rótulo da consequência ("Estornar entrada #N: X itens", nome acessível inteiro; até 480px os totais
+saem só da vista e o resumo curto `aria-hidden` os mostra) e depois "Cancelar" (link secundário de volta
+ao detalhe). Nunca o primário azul: estornar não é a ação afirmativa da página. O erro da Justificativa
+(texto no lugar da dica "Obrigatória.", nunca as duas) vem do servidor: o widget do Django já liga o campo ao `<auto_id>_error` por `aria-invalid`/
+`aria-describedby`. Os avisos têm a medida do texto limitada (`.estoque-aviso`).
 {% endcomment %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container">
-    <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="back-link">
-      <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
-           fill="none" aria-hidden="true">
-        <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Entrada #{{ entrada.pk }}</span>
-    </a>
+{% block heading %}Estornar entrada #{{ entrada.pk }}{% if algum_bloqueado %} <span class="badge badge-warning">Bloqueado</span>{% endif %}{% endblock %}
+{% block sub %}<nav aria-label="Trilha de navegação"><a href="{% url 'estoque:entradas' %}">Consulta de entradas</a> <span aria-hidden="true">/</span> <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}">Entrada #{{ entrada.pk }}</a> <span aria-hidden="true">/</span> Estorno</nav>{% endblock %}
+{% block tools %}{% endblock %}
 
-    {% include "interface/_mensagens.html" %}
+{% block page %}
+{% if algum_bloqueado %}
+{% regroup linhas|dictsort:"bloqueado" by bloqueado as grupos_saldo %}
+<div class="error-box estoque-aviso" role="alert">
+  {% for grupo in grupos_saldo %}{% if grupo.grouper %}
+  <p>
+    {% if request.method == "POST" %}O estorno foi bloqueado{% else %}Não é possível estornar esta entrada{% endif %}:
+    {% if grupo.list|length == linhas|length %}{% if linhas|length == 1 %}o item ficaria{% else %}os {{ linhas|length }} itens ficariam{% endif %}{% else %}{{ grupo.list|length }} dos {{ linhas|length }} itens fica{{ grupo.list|length|pluralize:"ria,riam" }}{% endif %}
+    com saldo negativo ({% for linha in grupo.list %}<span class="table-cell-code">{{ linha.item.material.cadpro }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}).
+    {% if request.method == "POST" %}Nada foi estornado.{% endif %}
+  </p>
+  {% endif %}{% endfor %}
+  <p>O estorno só é possível quando o saldo do material cobrir a quantidade recebida.</p>
+</div>
+{% else %}
+<div class="alert alert-warning estoque-aviso">
+  <p>
+    <strong>O estorno é total e não pode ser desfeito:</strong>
+    a quantidade recebida de cada item sai do saldo do material (veja Saldo resultante).
+    A entrada continua registrada, marcada como estornada.
+  </p>
+</div>
+{% endif %}
 
-    <header class="page-header">
-      <div>
-        <h1 class="page-header-title">Estornar entrada #{{ entrada.pk }}</h1>
-        <p class="page-header-description estoque-estorno-descricao">
-          O estorno é total e não pode ser desfeito: todos os itens voltam ao
-          saldo anterior e a entrada continua registrada, marcada como
-          estornada.
-        </p>
-      </div>
-    </header>
+<section class="card" aria-labelledby="registro-titulo">
+  <h2 id="registro-titulo">Registro</h2>
+  {% include "estoque/_registro_entrada.html" %}
+</section>
 
-    <section class="page-section">
-      <h2 class="section-marker">
-        <span class="section-marker-label">Registro</span>
-      </h2>
-      <dl class="meta-grid estoque-dados-grid">
-        <div><dt>Motivo</dt><dd>{{ entrada.get_motivo_display }}</dd></div>
-        <div><dt>Tipo de documento</dt><dd>{{ entrada.get_tipo_documento_display }}</dd></div>
-        <div><dt>Número do documento</dt><dd>{{ entrada.numero_documento }}</dd></div>
-        <div>
-          <dt>Emitente</dt>
-          <dd>
-            {% if entrada.emitente %}
-            {{ entrada.emitente.nome }} — código <span class="table-cell-code">{{ entrada.emitente.codif }}</span>
-            {% else %}
-            Sem emitente
-            {% endif %}
-          </dd>
-        </div>
-        <div><dt>Registrada por</dt><dd class="table-cell-code">{{ entrada.registrada_por.matricula }}</dd></div>
-        <div><dt>Registrada em</dt><dd>{{ entrada.registrada_em }}</dd></div>
-      </dl>
-    </section>
-
-    {% if algum_bloqueado %}
-    <div class="alert alert-danger" role="alert">
-      <p>O estorno foi bloqueado: algum item abaixo ficaria com saldo negativo. Corrija o saldo do material antes de tentar novamente.</p>
-    </div>
-    {% endif %}
-
-    <section class="page-section">
-      <h2 class="section-marker{% if linhas %} section-marker-attached{% endif %}">
-        <span class="section-marker-label">Itens{% if linhas %} ({{ linhas|length }}){% endif %}</span>
-      </h2>
-      {% comment %}
-      Ordem de colunas (achado do gate visual, "no celular, saldo atual/
-      resultante visíveis sem depender de scroll lateral"): Saldo atual e
-      Saldo resultante decidem se a linha está bloqueada, e vêm logo após o
-      Código — a Descrição, mais larga e sem função na decisão, fica por
-      último (mesmo princípio de DESIGN.md → Layout → Tabelas: "o dado que
-      decide o fluxo vem cedo").
-      {% endcomment %}
-      <div class="table-wrapper{% if linhas %} table-wrapper-marker-attached{% endif %}">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">Código</th>
-              <th scope="col" class="table-cell-numeric">Saldo atual</th>
-              <th scope="col" class="table-cell-numeric">Saldo resultante</th>
-              <th scope="col" class="table-cell-numeric">Quantidade a estornar</th>
-              <th scope="col">Unidade</th>
-              <th scope="col">Descrição</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for linha in linhas %}
-            <tr{% if linha.bloqueado %} class="table-row-error"{% endif %}>
-              <td class="table-cell-code">{{ linha.item.material.cadpro }}</td>
-              <td class="table-cell-numeric">{{ linha.saldo_atual|quantidade }}</td>
-              <td class="table-cell-numeric">
-                {{ linha.saldo_resultante|quantidade }}
-                {% if linha.bloqueado %}<p class="estoque-estorno-motivo">Ficaria negativo.</p>{% endif %}
-              </td>
-              <td class="table-cell-numeric">{{ linha.item.quantidade|quantidade }}</td>
-              <td>{{ linha.item.material.unidade }}</td>
-              <td>{{ linha.item.material.descricao }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    {% if algum_bloqueado %}
-    <div class="confirmation-bar estoque-confirmacao-sticky">
-      <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="btn btn-secondary">Voltar</a>
-    </div>
-    {% else %}
-    <form method="post" action="{% url 'estoque:entrada_estorno' pk=entrada.pk %}" data-processing-form data-processing-label="Estornando…">
-      {% csrf_token %}
-      <div class="field estoque-justificativa{% if form.justificativa.errors %} field-has-error{% endif %}">
-        <label for="{{ form.justificativa.id_for_label }}">Justificativa</label>
-        {{ form.justificativa }}
-        {% if form.justificativa.errors %}
-        <p class="field-error" id="{{ form.justificativa.auto_id }}_error">{{ form.justificativa.errors.0 }}</p>
-        {% else %}
-        <p class="field-hint">Obrigatória: explique o motivo do estorno.</p>
-        {% endif %}
-      </div>
-
-      <div class="confirmation-bar estoque-confirmacao-sticky">
-        <button type="submit" class="btn btn-danger" data-processing-submit>
-          <span data-processing-submit-label>Estornar entrada: {{ linhas|length }} ite{{ linhas|length|pluralize:"m,ns" }}</span>
-        </button>
-        <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="btn btn-secondary">Cancelar</a>
-      </div>
-    </form>
-    {% endif %}
+<section class="card" aria-labelledby="itens-titulo">
+  <h2 id="itens-titulo">Itens{% if linhas %} ({{ linhas|length }}){% endif %}</h2>
+  {% if linhas %}
+  <div class="table-wrapper" role="region" aria-label="Tabela de itens a estornar" tabindex="0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Código</th>
+          <th scope="col">Descrição</th>
+          <th scope="col" class="table-cell-numeric th-wrap">Saldo atual</th>
+          <th scope="col" class="table-cell-numeric th-wrap">Quantidade a estornar</th>
+          <th scope="col" class="table-cell-numeric th-wrap">Saldo resultante</th>
+          <th scope="col">Unidade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for linha in linhas %}
+        <tr{% if linha.bloqueado %} class="table-row-error"{% endif %}>
+          <td class="table-cell-code">{{ linha.item.material.cadpro }}</td>
+          <td class="estoque-descricao-cell">{{ linha.item.material.descricao }}</td>
+          <td class="table-cell-numeric">{{ linha.saldo_atual|quantidade }}</td>
+          <td class="table-cell-numeric">{{ linha.item.quantidade|quantidade }}</td>
+          <td class="table-cell-numeric">
+            {{ linha.saldo_resultante|quantidade }}
+            {% if linha.bloqueado %}<p class="estoque-estorno-motivo">Ficaria negativo.</p>{% endif %}
+          </td>
+          <td>{{ linha.item.material.unidade }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-</main>
+  {% else %}
+  <div class="empty" data-estado="vazio">
+    <p class="empty-state-title">Nenhum item nesta entrada.</p>
+  </div>
+  {% endif %}
+</section>
+
+{% if algum_bloqueado %}
+<div class="form-actions">
+  <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="btn btn-secondary">Voltar à entrada #{{ entrada.pk }}</a>
+</div>
+{% else %}
+<form method="post" action="{% url 'estoque:entrada_estorno' pk=entrada.pk %}" data-processing-form data-processing-label="Estornando…">
+  {% csrf_token %}
+  <section class="card card-form estoque-justificativa">
+    <div class="field{% if form.justificativa.errors %} field-has-error{% endif %}">
+      <label for="{{ form.justificativa.id_for_label }}">Justificativa do estorno</label>
+      {{ form.justificativa }}
+      {% if form.justificativa.errors %}
+      <p class="field-error" id="{{ form.justificativa.auto_id }}_error">{{ form.justificativa.errors.0 }}</p>
+      {% else %}
+      <p class="field-hint">Obrigatória.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="confirmation-bar confirmation-bar-card estoque-barra-estorno">
+    <p class="confirmation-bar-resumo" aria-hidden="true">Entrada #{{ entrada.pk }} · {{ linhas|length }}&nbsp;ite{{ linhas|length|pluralize:"m,ns" }}</p>
+    <button type="submit" class="btn btn-danger" data-processing-submit>
+      <span data-processing-submit-label
+        >Estornar entrada #{{ entrada.pk }}<small class="confirmation-bar-totais">: {{ linhas|length }} ite{{ linhas|length|pluralize:"m,ns" }}</small></span
+      >
+    </button>
+    <a href="{% url 'estoque:entrada_detalhe' pk=entrada.pk %}" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}

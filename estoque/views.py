@@ -257,7 +257,7 @@ class _ComposicaoEntradaBase(ExigePapelMixin, View):
         # marca o atributo HTML nativo `autofocus` no widget da linha
         # recém-criada — funciona sem JS numa renderização de página
         # inteira; `estoque/static/estoque/js/estoque.js` reforça o mesmo
-        # foco depois de uma troca HTMX (`htmx:afterSettle`), que nem
+        # foco depois de uma troca HTMX (`htmx:after:settle`), que nem
         # sempre reaciona `autofocus` num nó inserido via `innerHTML`.
         if foco_posicao is not None:
             for linha in linhas_itens:
@@ -674,11 +674,7 @@ class EntradaEstornoView(ExigePapelMixin, View):
             form.add_error("justificativa", "Informe a justificativa do estorno.")
             return self._renderizar(request, entrada, form)
         except EstornoBloqueadoPorSaldo:
-            messages.error(
-                request,
-                "O estorno foi bloqueado: algum item ficaria com saldo negativo.",
-            )
-            return self._renderizar(request, entrada, form)
+            return self._renderizar(request, entrada, form, recusado_por_saldo=True)
         except Exception:
             logger.exception(
                 "Falha inesperada ao estornar a entrada (entrada_id=%s).", entrada.pk
@@ -693,7 +689,7 @@ class EntradaEstornoView(ExigePapelMixin, View):
         messages.success(request, "Entrada estornada.")
         return redirect("estoque:entrada_detalhe", pk=entrada.pk)
 
-    def _renderizar(self, request, entrada, form):
+    def _renderizar(self, request, entrada, form, *, recusado_por_saldo=False):
         linhas = []
         algum_bloqueado = False
         for item in entrada.itens.select_related("material"):
@@ -708,6 +704,15 @@ class EntradaEstornoView(ExigePapelMixin, View):
                     "saldo_resultante": saldo_resultante,
                     "bloqueado": bloqueado,
                 }
+            )
+        if recusado_por_saldo and not algum_bloqueado:
+            # A recusa por saldo normalmente aparece no template, junto da causa
+            # (`algum_bloqueado`, com os CADPRO). Se o saldo mudou entre a recusa
+            # (sob lock) e esta leitura, o template não teria o que mostrar: a
+            # mensagem genérica garante que a recusa nunca fique silenciosa.
+            messages.error(
+                request,
+                "O estorno foi bloqueado: algum item ficaria com saldo negativo.",
             )
         contexto = {
             "entrada": entrada,

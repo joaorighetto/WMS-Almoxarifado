@@ -88,7 +88,8 @@
         `innerHTML`, onde `autofocus` nem sempre é reprocessado);
      2. primeiro campo inválido (`aria-invalid="true"`, atributo automático
         do Django 4.1+ quando o campo tem erro) ou, sem campo específico, o
-        alerta geral (`erros_gerais`);
+        alerta geral (`erros_gerais`, `.error-box[role="alert"]`); a revisão
+        (`#resumo-heading`) recebe o foco no lugar do botão "Revisar";
      3. depois de escolher um emitente, a busca de material (próximo passo
         natural da composição);
      4. depois de remover um item, a linha que ocupou a posição removida, ou
@@ -98,6 +99,63 @@
      necessário porque, depois do swap, não há mais como perguntar ao
      servidor "qual ação foi esta". Sem JS, nenhum destes casos quebra
      nada: o formulário funciona normalmente, só sem o foco automático. */
+  /* Campo da tabela de Materiais à vista depois de focado (achado do gate visual, 2ª rodada): num
+     `.table-wrapper` rolável (até ~860px a quantidade e o erro ficam além da borda direita), o
+     `focus()` nem sempre rola o wrapper na horizontal (acontece com o erro na 2ª linha, com a 1ª
+     sem rolagem) e o campo e o texto do erro ficavam fora da área visível. Rola a página até a
+     célula e, depois, o wrapper o mínimo para caber o campo e o bloco de erro da linha (o campo vem
+     primeiro se os dois não couberem). Só apresentação: não muda foco nem valor. */
+  const revelarCampo = (campo) => {
+    const celula = campo.closest("td") || campo;
+    celula.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const wrapper = campo.closest(".table-wrapper");
+    if (!wrapper) {
+      return;
+    }
+    const caixa = wrapper.getBoundingClientRect();
+    const erro = celula.querySelector(".estoque-erro-linha");
+    const retangulos = [campo, erro].filter(Boolean).map((no) => no.getBoundingClientRect());
+    const esquerda = Math.min(...retangulos.map((r) => r.left));
+    const direita = Math.max(...retangulos.map((r) => r.right));
+    if (direita > caixa.right) {
+      /* Não passa do ponto em que o campo começa a sair pela esquerda. */
+      const campoEsquerda = campo.getBoundingClientRect().left;
+      wrapper.scrollLeft += Math.min(direita - caixa.right, campoEsquerda - caixa.left);
+    } else if (esquerda < caixa.left) {
+      wrapper.scrollLeft -= caixa.left - esquerda;
+    }
+  };
+
+  /* Confirmar logo depois do Revisar (achado do gate visual, 2ª rodada): a revisão troca o botão
+     "Revisar" pelo "Confirmar entrada" no mesmo ponto da tela (viewports baixas: o primário da barra
+     gruda no rodapé exatamente onde estava "Revisar"), e um segundo toque ou clique, ainda do gesto
+     de Revisar, gravaria sem que a revisão fosse lida. Por `JANELA_LEITURA_MS` depois que a revisão
+     entra no DOM, o envio do formulário de confirmação é ignorado (o botão NÃO fica `disabled`: sem
+     JS, ou depois da janela, é um envio comum, com o estado "Confirmando…" de sempre). Observa o
+     alvo da troca em vez de um evento do HTMX: o `#resumo-heading` aparece no mesmo instante da
+     inserção, sem janela entre a troca e o início da proteção. */
+  const JANELA_LEITURA_MS = 500;
+
+  const protegerConfirmacaoRecemExibida = (alvo) => {
+    const form = alvo.querySelector("form[data-processing-form]");
+    if (!form || form.dataset.aguardandoLeitura) {
+      return;
+    }
+    form.dataset.aguardandoLeitura = "true";
+    window.setTimeout(() => {
+      delete form.dataset.aguardandoLeitura;
+    }, JANELA_LEITURA_MS);
+  };
+
+  const alvoComposicao = document.getElementById("entrada-composicao");
+  if (alvoComposicao && typeof MutationObserver === "function") {
+    new MutationObserver(() => {
+      if (alvoComposicao.querySelector("#resumo-heading")) {
+        protegerConfirmacaoRecemExibida(alvoComposicao);
+      }
+    }).observe(alvoComposicao, { childList: true });
+  }
+
   let ultimaAcaoAcionada = null;
 
   document.body.addEventListener("submit", (evento) => {
@@ -107,17 +165,21 @@
       : null;
   });
 
-  document.body.addEventListener("htmx:afterSettle", (evento) => {
-    const alvo = evento.detail && evento.detail.target;
+  /* Evento do HTMX 4 (`htmx:after:settle`; o `htmx:afterSettle` do 2.x não existe mais e esta
+     rotina nunca chegou a rodar). A composição é a única tela com troca HTMX aqui: o alvo é sempre
+     `#entrada-composicao`. */
+  document.body.addEventListener("htmx:after:settle", (evento) => {
+    const alvo = document.getElementById("entrada-composicao");
     const acao = ultimaAcaoAcionada;
     ultimaAcaoAcionada = null;
-    if (!alvo) {
+    if (!alvo || !(evento.target instanceof Node) || !alvo.contains(evento.target)) {
       return;
     }
 
     const campoComFoco = alvo.querySelector("[autofocus]");
     if (campoComFoco) {
       campoComFoco.focus();
+      revelarCampo(campoComFoco);
       return;
     }
 
@@ -126,13 +188,22 @@
     );
     if (campoInvalido) {
       campoInvalido.focus();
+      revelarCampo(campoInvalido);
       return;
     }
 
-    const alertaGeral = alvo.querySelector(".alert-danger");
+    const alertaGeral = alvo.querySelector('.error-box[role="alert"]');
     if (alertaGeral) {
       alertaGeral.setAttribute("tabindex", "-1");
       alertaGeral.focus();
+      return;
+    }
+
+    /* "Revisar" troca o formulário inteiro pela revisão: o botão acionado deixa de existir e o foco
+       cairia no <body>. O título da revisão (`tabindex="-1"` no template) o recebe. */
+    const tituloRevisao = alvo.querySelector("#resumo-heading");
+    if (tituloRevisao) {
+      tituloRevisao.focus();
       return;
     }
 
@@ -173,14 +244,49 @@
      interferir na leitura de `FormData` pelo htmx.
 
      Delegado em `document.body` (achado do gate visual, 2ª rodada): o
-     formulário de confirmação do RESUMO (`#resumo`, `estoque/templates/
+     formulário de confirmação da REVISÃO (`#resumo`, `estoque/templates/
      estoque/entrada_nova.html`) só existe depois de um swap HTMX de
      "Revisar" — um listener preso ao load (`querySelectorAll` direto,
      versão anterior) nunca o alcançava, e o botão nunca ganhava o estado
      "Confirmando…". Delegação em `document.body` é idempotente por
      natureza: um único listener cobre qualquer `[data-processing-form]`,
-     presente no load ou inserido depois por um swap. */
-  const rotuloOriginalPorFormulario = new WeakMap();
+     presente no load ou inserido depois por um swap.
+
+     Paridade com `envio.js` (barra de confirmação, `.confirmation-bar`): enquanto o envio está
+     ocupado, a largura do botão fica fixada (o rótulo "Confirmando…"/"Estornando…" é mais curto e o
+     botão encolheria, arrastando o vizinho) e os demais controles da MESMA barra — "Voltar e corrigir"
+     (botão de outro formulário) e "Cancelar" (link) — ficam desabilitados: cancelar no meio do envio
+     não desfaz o que o servidor acabou de receber. Tudo volta no `pageshow`. O rótulo original é
+     guardado como HTML (`innerHTML`): ele carrega os totais num `<small>` que o celular oculta só
+     visualmente, e o reset precisa devolvê-los intactos. A marcação é a que o servidor renderizou,
+     nunca texto do usuário. */
+  const estadoPorFormulario = new WeakMap();
+
+  const controlesDaBarra = (form) => {
+    const barra = form.closest(".confirmation-bar") || form.querySelector(".confirmation-bar");
+    return barra ? Array.from(barra.querySelectorAll("button, a.btn")) : [];
+  };
+
+  const ocuparControle = (controle) => {
+    if (controle.matches("a")) {
+      controle.setAttribute("aria-disabled", "true");
+      controle.setAttribute("tabindex", "-1");
+    } else {
+      controle.disabled = true;
+    }
+  };
+
+  const liberarControle = (controle) => {
+    if (controle.matches("a")) {
+      controle.removeAttribute("aria-disabled");
+      controle.removeAttribute("tabindex");
+    } else {
+      controle.disabled = false;
+    }
+  };
+
+  const estaOcupado = (controle) =>
+    controle.matches("a") ? controle.getAttribute("aria-disabled") === "true" : controle.disabled;
 
   document.body.addEventListener("submit", (evento) => {
     const form = evento.target;
@@ -193,13 +299,33 @@
       return;
     }
 
-    if (!rotuloOriginalPorFormulario.has(form)) {
-      rotuloOriginalPorFormulario.set(form, submitLabel.textContent);
+    if (form.getAttribute("aria-busy") === "true" || form.dataset.aguardandoLeitura) {
+      evento.preventDefault();
+      return;
     }
 
+    /* Só os controles que estavam livres: o reset não reabilita o que já nasceu desabilitado. */
+    const ocupadosPelaBarra = controlesDaBarra(form).filter(
+      (controle) => controle !== submitButton && !estaOcupado(controle)
+    );
+    estadoPorFormulario.set(form, {
+      rotuloOriginal: submitLabel.innerHTML,
+      ocupadosPelaBarra,
+    });
+
     form.setAttribute("aria-busy", "true");
+    submitButton.style.minWidth = `${submitButton.offsetWidth}px`;
     submitButton.disabled = true;
     submitLabel.textContent = form.dataset.processingLabel || "Processando…";
+    ocupadosPelaBarra.forEach(ocuparControle);
+  });
+
+  /* Um link desabilitado (`aria-disabled`) não navega: o `aria-disabled` sozinho não impede o clique. */
+  document.body.addEventListener("click", (evento) => {
+    const link = evento.target instanceof Element ? evento.target.closest('a.btn[aria-disabled="true"]') : null;
+    if (link) {
+      evento.preventDefault();
+    }
   });
 
   /* Restaura os controles ao voltar pelo histórico quando a página vem do
@@ -211,13 +337,17 @@
     document.querySelectorAll("[data-processing-form]").forEach((form) => {
       const submitButton = form.querySelector("[data-processing-submit]");
       const submitLabel = form.querySelector("[data-processing-submit-label]");
-      const rotuloOriginal = rotuloOriginalPorFormulario.get(form);
+      const estado = estadoPorFormulario.get(form);
       form.removeAttribute("aria-busy");
       if (submitButton) {
         submitButton.disabled = false;
+        submitButton.style.minWidth = "";
       }
-      if (submitLabel && rotuloOriginal !== undefined) {
-        submitLabel.textContent = rotuloOriginal;
+      if (submitLabel && estado) {
+        submitLabel.innerHTML = estado.rotuloOriginal;
+      }
+      if (estado) {
+        estado.ocupadosPelaBarra.forEach(liberarControle);
       }
     });
   });

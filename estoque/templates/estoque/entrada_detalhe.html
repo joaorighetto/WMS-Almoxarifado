@@ -9,116 +9,75 @@
 
 {% comment %}
 Contrato de contexto: ver docstring de `estoque/views.py` (`EntradaDetalheView`).
-Retorno contextual para a lista (`.back-link`, DESIGN.md → Components → Navigation:
-usado sempre que o destino de origem não é a Home).
+
+Composição do redesign (`docs/redesign-observatory/contrato.md` §4 e §12), no molde de
+`fornecedores/execucao_detalhe.html`: o cabeçalho (`.top`), o `<main id="main">` e as mensagens vêm
+de `contas/base.html`; esta página preenche `heading` (com o selo de situação — "Estornada" é estado final legítimo, neutro, não erro —, que permanece legível
+depois que a mensagem de sucesso some), `sub` (trilha com o link de volta à consulta), `tools` e
+`page`. "Estornar entrada" é ação de página: vai em `tools`, só com `pode_estornar` (exibição; a rota
+`entrada_estorno` revalida o papel), como convite destrutivo (`.btn-secondary-danger`) — o preenchido
+de perigo fica na confirmação do estorno. O auditor só consulta: nenhuma ação.
+
+Ordem: numa entrada estornada, o estorno é o fato mais recente e relevante — o card "Estorno" vem
+antes de "Registro"; os Itens fecham a página. Cada seção é um card; a tabela de itens é região
+nomeada e focável (`role="region"`, `aria-label` "Tabela de …", `tabindex="0"`), sem
+`table-sticky-header`.
 {% endcomment %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container">
-    <a href="{% url 'estoque:entradas' %}" class="back-link">
-      <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
-           fill="none" aria-hidden="true">
-        <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Entradas</span>
-    </a>
+{% block heading %}Entrada #{{ entrada.pk }} {% if entrada.estornada %}<span class="badge badge-neutral">Estornada</span>{% else %}<span class="badge badge-success">Registrada</span>{% endif %}{% endblock %}
+{% block sub %}<nav aria-label="Trilha de navegação"><a href="{% url 'estoque:entradas' %}">Consulta de entradas</a> <span aria-hidden="true">/</span> Entrada #{{ entrada.pk }}</nav>{% endblock %}
+{% block tools %}{% if pode_estornar %}<a href="{% url 'estoque:entrada_estorno' pk=entrada.pk %}" class="btn btn-secondary btn-secondary-danger">Estornar entrada</a>{% endif %}{% endblock %}
 
-    {% include "interface/_mensagens.html" %}
+{% block page %}
+{% if estorno %}
+<section class="card" aria-labelledby="estorno-titulo">
+  <h2 id="estorno-titulo">Estorno</h2>
+  <dl class="kv estoque-kv">
+    <dt>Estornada por</dt>
+    <dd><span class="table-cell-code">{{ estorno.estornada_por.matricula }}</span></dd>
+    <dt>Estornada em</dt>
+    <dd>{{ estorno.estornada_em|date:"d/m/Y H:i" }}</dd>
+    <dt>Justificativa</dt>
+    <dd>{{ estorno.justificativa }}</dd>
+  </dl>
+  <p class="estoque-nota-card">As quantidades desta entrada saíram do saldo dos materiais.</p>
+</section>
+{% endif %}
 
-    <header class="page-header">
-      <div>
-        <h1 class="page-header-title">
-          Entrada #{{ entrada.pk }}
-          {% if entrada.estornada %}
-          <span class="badge badge-danger page-header-badge">Estornada</span>
-          {% else %}
-          <span class="badge badge-success page-header-badge">Registrada</span>
-          {% endif %}
-        </h1>
-      </div>
-      {% if pode_estornar %}
-      <div class="page-header-actions">
-        <a href="{% url 'estoque:entrada_estorno' pk=entrada.pk %}" class="btn btn-secondary estoque-btn-estornar">Estornar entrada</a>
-      </div>
-      {% endif %}
-    </header>
+<section class="card" aria-labelledby="registro-titulo">
+  <h2 id="registro-titulo">Registro</h2>
+  {% include "estoque/_registro_entrada.html" %}
+</section>
 
-    <section class="page-section">
-      <h2 class="section-marker">
-        <span class="section-marker-label">Registro</span>
-      </h2>
-      <dl class="meta-grid estoque-dados-grid">
-        <div><dt>Motivo</dt><dd>{{ entrada.get_motivo_display }}</dd></div>
-        <div><dt>Tipo de documento</dt><dd>{{ entrada.get_tipo_documento_display }}</dd></div>
-        <div><dt>Número do documento</dt><dd>{{ entrada.numero_documento }}</dd></div>
-        <div>
-          <dt>Emitente</dt>
-          <dd>
-            {% if entrada.emitente %}
-            {{ entrada.emitente.nome }} — código <span class="table-cell-code">{{ entrada.emitente.codif }}</span>
-            {% else %}
-            Sem emitente
-            {% endif %}
-          </dd>
-        </div>
-        <div><dt>Registrada por</dt><dd class="table-cell-code">{{ entrada.registrada_por.matricula }}</dd></div>
-        <div><dt>Registrada em</dt><dd>{{ entrada.registrada_em }}</dd></div>
-      </dl>
-    </section>
-
-    {% if estorno %}
-    {% comment %}
-    Achado do gate visual (minor observation): numa entrada estornada, o
-    estorno é o fato mais recente e relevante — vem antes dos Itens, não
-    depois.
-    {% endcomment %}
-    <section class="page-section">
-      <h2 class="section-marker">
-        <span class="section-marker-label">Estorno</span>
-      </h2>
-      <dl class="meta-grid estoque-dados-grid">
-        <div><dt>Estornada por</dt><dd class="table-cell-code">{{ estorno.estornada_por.matricula }}</dd></div>
-        <div><dt>Estornada em</dt><dd>{{ estorno.estornada_em }}</dd></div>
-        <div><dt>Justificativa</dt><dd>{{ estorno.justificativa }}</dd></div>
-      </dl>
-    </section>
-    {% endif %}
-
-    <section class="page-section">
-      <h2 class="section-marker{% if itens %} section-marker-attached{% endif %}">
-        <span class="section-marker-label">Itens{% if itens %} ({{ itens|length }}){% endif %}</span>
-      </h2>
-      <div class="table-wrapper{% if itens %} table-wrapper-marker-attached{% endif %}">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">Código</th>
-              <th scope="col">Descrição</th>
-              <th scope="col" class="table-cell-numeric">Quantidade recebida</th>
-              <th scope="col">Unidade</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in itens %}
-            <tr>
-              <td class="table-cell-code">{{ item.material.cadpro }}</td>
-              <td>{{ item.material.descricao }}</td>
-              <td class="table-cell-numeric">{{ item.quantidade|quantidade }}</td>
-              <td>{{ item.material.unidade }}</td>
-            </tr>
-            {% empty %}
-            <tr class="table-empty-row" data-estado="vazio">
-              <td colspan="4">
-                <p class="empty-state-title">Nenhum item nesta entrada.</p>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </section>
+<section class="card" aria-labelledby="itens-titulo">
+  <h2 id="itens-titulo">Itens{% if itens %} ({{ itens|length }}){% endif %}</h2>
+  {% if itens %}
+  <div class="table-wrapper" role="region" aria-label="Tabela de itens da entrada" tabindex="0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Código</th>
+          <th scope="col">Descrição</th>
+          <th scope="col" class="table-cell-numeric th-wrap">Quantidade recebida</th>
+          <th scope="col">Unidade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in itens %}
+        <tr>
+          <td class="table-cell-code">{{ item.material.cadpro }}</td>
+          <td class="estoque-descricao-cell">{{ item.material.descricao }}</td>
+          <td class="table-cell-numeric">{{ item.quantidade|quantidade }}</td>
+          <td>{{ item.material.unidade }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-</main>
+  {% else %}
+  <div class="empty" data-estado="vazio">
+    <p class="empty-state-title">Nenhum item nesta entrada.</p>
+  </div>
+  {% endif %}
+</section>
 {% endblock %}
