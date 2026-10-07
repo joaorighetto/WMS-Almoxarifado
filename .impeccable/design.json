@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-06T18:21:34.388427+00:00",
+  "generatedAt": "2026-10-06T19:45:53.562357+00:00",
   "title": "Design System: WMS-Almoxarifado",
   "extensions": {
     "colorMeta": {
@@ -672,11 +672,19 @@
       "description": "Papel de conta ou função planejada: texto sem simular link.",
       "html": "<span class=\"ds-badge-plain\">Planejado</span>",
       "css": ".ds-badge-plain{display:inline-flex;align-items:center;padding:1px 8px;background:var(--color-neutral-surface);border-radius:var(--radius-badge);color:var(--color-text);font-family:var(--font-family-base);font-size:var(--font-size-badge);font-weight:600;line-height:var(--line-height-base);white-space:nowrap}"
+    },
+    {
+      "name": "Barra de confirmação",
+      "kind": "custom",
+      "refersTo": "confirmation-bar-card",
+      "description": "Único par de ações da prévia, sticky no rodapé na gramática do card, sem sombra; o primário recita a consequência e é o nome acessível, e até 480px a barra empilha com um resumo curto só visual.",
+      "html": "<div class=\"ds-confirm\"><p class=\"ds-confirm-resumo\" aria-hidden=\"true\">1.180&nbsp;inseridos · 48&nbsp;atualizados · 12&nbsp;rejeitados</p><form><button type=\"button\" class=\"ds-confirm-btn ds-confirm-primary\">Confirmar importação<small class=\"ds-confirm-totais\">: 1.180 inseridos, 48 atualizados (12 rejeitados ficam de fora)</small></button></form><form><button type=\"button\" class=\"ds-confirm-btn\">Cancelar</button></form></div>",
+      "css": ".ds-confirm{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-family-base);font-size:var(--font-size-body);line-height:var(--line-height-base);color:var(--color-text)}.ds-confirm form{min-width:0;margin:0}.ds-confirm form:last-child{flex:none}.ds-confirm-btn{display:inline-flex;align-items:center;max-width:100%;min-height:var(--control-height);padding:var(--control-pad-y) var(--control-pad-x);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);font:inherit;text-align:left;cursor:pointer}.ds-confirm-btn:hover:not(:disabled){background:var(--color-surface-subtle)}.ds-confirm-primary{background:var(--color-primary);border-color:var(--color-primary);color:var(--color-surface);font-weight:600}.ds-confirm-primary:hover:not(:disabled){background:var(--color-primary-hover);border-color:var(--color-primary-hover)}.ds-confirm-btn:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px;border-radius:var(--radius-focus)}.ds-confirm-totais{font-size:inherit}.ds-confirm-resumo{display:none;margin:0;color:var(--color-text-muted);font-size:var(--font-size-meta);line-height:var(--line-height-tight)}@media (max-width:480px){.ds-confirm{flex-direction:column;align-items:stretch}.ds-confirm form:last-child{flex:auto}.ds-confirm-btn{width:100%;justify-content:center;text-align:center}.ds-confirm-resumo{display:block}.ds-confirm-totais{font-size:0;line-height:0;white-space:nowrap}}"
     }
   ],
   "narrative": {
     "northStar": "Interface de operador — django-observatory",
-    "overview": "Uma ferramenta de operador com coluna de trabalho ampla, sidebar discreta e dados compactos. A\nfundação construída segue a apresentação do django-observatory 0.1.0, commit\n`6edda16667c8a8601670f76e3286f86bed16e37d`: fonte do sistema, superfícies neutras, borda fina,\naccent azul e ausência de elevação decorativa. A prioridade é localizar a tarefa e ler material,\nsaldo e identidade com pouco atrito, conforme o propósito operacional de `PRODUCT.md`.\n\nEsta é a documentação do código construído, em modo Operate e caminho code-led, após a direção\nfixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o\nlaboratório recomposto; as telas de credencial (entrada e senha) foram recompostas no lote P1 e\na consulta de fornecedores, os históricos e os resultados de execução das importações de catálogo\ne fornecedores, no lote P2. As demais telas já herdam os tokens, mas sua composição continua em\ntransição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.\nA marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.",
+    "overview": "Uma ferramenta de operador com coluna de trabalho ampla, sidebar discreta e dados compactos. A\nfundação construída segue a apresentação do django-observatory 0.1.0, commit\n`6edda16667c8a8601670f76e3286f86bed16e37d`: fonte do sistema, superfícies neutras, borda fina,\naccent azul e ausência de elevação decorativa. A prioridade é localizar a tarefa e ler material,\nsaldo e identidade com pouco atrito, conforme o propósito operacional de `PRODUCT.md`.\n\nEsta é a documentação do código construído, em modo Operate e caminho code-led, após a direção\nfixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o\nlaboratório recomposto; as telas de credencial (entrada e senha) foram recompostas no lote P1 e\na consulta de fornecedores, os históricos e os resultados de execução das importações de catálogo\ne fornecedores, no lote P2; o envio e a prévia dessas duas importações, no lote P3. As demais\ntelas já herdam os tokens, mas sua composição continua em transição. A referência é de\napresentação: não fornece funcionalidades nem regras de domínio.\nA marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.",
     "keyCharacteristics": [
       "Coluna ampla, sidebar compacta e hierarquia por estrutura, peso e espaço.",
       "Claro e escuro equivalentes, com um accent azul e estados com texto e forma.",
@@ -727,6 +735,11 @@
       {
         "name": "The One Reading Rule",
         "body": "Conteúdo alternado por largura usa `display: none` na versão que não\nvale, nunca duas cópias visíveis ao leitor de tela; repetição visual suprimida continua no DOM\ncomo texto oculto, não some da leitura.",
+        "section": "components"
+      },
+      {
+        "name": "The Consequence Label Rule",
+        "body": "O primário da confirmação recita a consequência (o que será\ngravado e o que fica de fora) e esse texto inteiro é o nome acessível do botão. O resumo curto do\ncelular é só visual (`aria-hidden`), nunca uma segunda fonte do nome.",
         "section": "components"
       }
     ],

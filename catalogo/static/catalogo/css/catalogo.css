@@ -186,10 +186,12 @@
   }
 }
 
-/* Resultado de uma execução (`.execucao-secao`, só no detalhe — a prévia reusa os ids; contrato §12): as seções Divergências, Alterações
-   cadastrais e Exceções são cards. A tabela rola na horizontal dentro do card (nunca vira cards)
+/* Resultado de uma execução (`.execucao-secao`, detalhe) e prévia da importação (`.previa-secao`; contrato §12): as seções
+   Divergências, Alterações cadastrais e Exceções são cards. As regras por `id` são escopadas por essas
+   duas classes porque a prévia e o detalhe reusam os mesmos ids e nenhuma outra tela do catálogo (consulta,
+   histórico) deve ser afetada. A tabela rola na horizontal dentro do card (nunca vira cards)
    e não é esmagada: o Detalhe/Valor quebra linha, o código e os números ficam `nowrap`. */
-.execucao-secao#alteracoes .table {
+:is(.execucao-secao, .previa-secao)#alteracoes .table {
   min-width: 34rem;
 }
 
@@ -204,11 +206,11 @@
 /* Divergências: quatro colunas curtas, sem largura mínima. No celular o preenchimento horizontal
    das células encolhe e os cabeçalhos quebram linha, para a "Diferença" caber sem rolar. */
 @media (max-width: 640px) {
-  .execucao-secao#divergencias .table {
+  :is(.execucao-secao, .previa-secao)#divergencias .table {
     --table-cell-pad-x: var(--space-2);
   }
 
-  .execucao-secao#divergencias .table thead th {
+  :is(.execucao-secao, .previa-secao)#divergencias .table thead th {
     white-space: normal;
   }
 }

@@ -164,6 +164,12 @@ components:
     typography: "{typography.badge}"
     rounded: "{rounded.badge}"
     padding: "1px 8px"
+  badge-info:
+    backgroundColor: "{colors.selected}"
+    textColor: "{colors.text}"
+    typography: "{typography.badge}"
+    rounded: "{rounded.badge}"
+    padding: "1px 8px"
   table:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
@@ -178,6 +184,11 @@ components:
     textColor: "{colors.text}"
     rounded: "{rounded.sm}"
     padding: "8px 12px"
+  confirmation-bar-card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
+    padding: "12px 16px"
 ---
 
 # Design System: WMS-Almoxarifado
@@ -196,8 +207,9 @@ Esta é a documentação do código construído, em modo Operate e caminho code-
 fixada pelo usuário (seed `5138d9c5`). Shell compartilhado, Home e consulta do catálogo formam o
 laboratório recomposto; as telas de credencial (entrada e senha) foram recompostas no lote P1 e
 a consulta de fornecedores, os históricos e os resultados de execução das importações de catálogo
-e fornecedores, no lote P2. As demais telas já herdam os tokens, mas sua composição continua em
-transição. A referência é de apresentação: não fornece funcionalidades nem regras de domínio.
+e fornecedores, no lote P2; o envio e a prévia dessas duas importações, no lote P3. As demais
+telas já herdam os tokens, mas sua composição continua em transição. A referência é de
+apresentação: não fornece funcionalidades nem regras de domínio.
 A marca textual e o SVG próprio do WMS não constituem identidade institucional aprovada do SAEP.
 
 **Key Characteristics:**
@@ -353,6 +365,19 @@ tiles do resumo logo após o cabeçalho, notas do resumo (`text-note`), card de 
 `dl.kv` e um card por seção de resultado. Nas tabelas de seção, preenchimento horizontal menor
 e cabeçalhos que quebram linha até 640px são ajustes do CSS de feature para caber no card.
 
+A prévia de uma importação é a execução antes de gravar e repete a mesma composição (tiles do
+resumo primeiro, notas, um card por seção), no tom de "ainda não gravado": selo `badge-info` "Não
+gravada" no h1, trilha "Importar … / Prévia" em `sub`, `tools` vazio, aviso informativo
+(`role="status"`) com o arquivo e "nada foi gravado ainda" acima do resumo e rótulos de tile no
+futuro ("Serão inseridos"). A seção de Exceções não pinta as linhas com `table-row-error`: o card já
+é a lista de rejeitados e a atenção fica no tile. O único par de ações é a barra de confirmação, no
+fim da página. O envio de arquivo é formulário isolado em card de formulário, com o histórico em
+`tools` e, havendo prévia pendente, aviso informativo acima do card com o link para continuá-la.
+
+Regras de CSS de feature por `id` de seção são escopadas pela classe da tela
+(`:is(.execucao-secao, .previa-secao)#alteracoes`): prévia e execução reusam os mesmos ids, e um
+seletor só por `id` atingiria também a consulta e o histórico da feature.
+
 **The Shared Foundation Rule.** Papéis, primitivas e estados são únicos entre desktop, tablet e
 celular. Composição e densidade variam; tokens e linguagem visual não se bifurcam por dispositivo.
 
@@ -362,10 +387,11 @@ adicional; linhas de tabela o aplicam somente sob `hover: hover`.
 
 ### Transição de composição
 
-Os lotes P1 (credenciais) e P2 (consultas e históricos de importação) estão concluídos; P3–P6
-estão pendentes. `.summary`, `.meta-grid`, `.section-marker`, `.back-link`, `.page*` e
-`table-sticky-header` seguem em `components.css` só como compatibilidade das telas ainda não
-recompostas (as prévias de importação, por exemplo); nenhuma tela recomposta os usa.
+Os lotes P1 (credenciais), P2 (consultas e históricos de importação) e P3 (envio e prévia das
+importações) estão recompostos; P4–P6 estão pendentes. `.summary`, `.meta-grid`, `.section-marker`,
+`.back-link`, `.page*`, `.form-frame` e `table-sticky-header` seguem em `components.css` só como
+compatibilidade das telas ainda não recompostas (organização e estoque); nenhuma tela recomposta
+os usa.
 
 O shell mínimo da credencial provisória usa a mesma sidebar, com marca sem link e conta, sem
 grupos de navegação; o formulário de senha usa o cabeçalho de página e o card de formulário.
@@ -396,7 +422,7 @@ O cabeçalho sticky com scrollport de 60vh e linha de sombra inset (`table-stick
 pertence a tabelas herdadas. A pendência foi resolvida no P2 sem ele: históricos e resultados de
 execução rolam com a página, sem segundo scrollport vertical, e a tabela larga rola só na
 horizontal dentro do card. A regra continua em `components.css` apenas para os consumidores
-legados (P3–P5); não é padrão de tela recomposta nem regra a generalizar.
+legados (P4–P5, organização e estoque); não é padrão de tela recomposta nem regra a generalizar.
 
 ## Shapes
 
@@ -417,7 +443,11 @@ branco, concentrado na confirmação; o convite usa secundário com borda de per
 já usada pelas features não altera regras de domínio ou quais operações exigem confirmação.
 
 Desabilitado usa `surface-subtle`, borda normal e texto `text-muted`, cursor de impedimento;
-o rótulo de processamento continua legível. Todos os controles interativos têm foco visível
+o rótulo de processamento continua legível. Em processamento (`envio.js`, por data-attribute) o
+botão desabilita, o formulário ganha `aria-busy` e o rótulo vira um verbo por extenso ("Enviando…",
+"Confirmando…"); a largura do botão fica fixada para o vizinho não se deslocar, os demais botões da
+mesma barra de confirmação desabilitam juntos e tudo volta no `pageshow`. Formulários com a mesma
+action compartilham o bloqueio de duplo envio. Todos os controles interativos têm foco visível
 em `focus`: outline 2px, offset 2px e raio de foco. As ações de formulário quebram e empilham
 até 480px, mantendo primária antes de Cancelar. Botão oculto pelo atributo hidden permanece oculto.
 
@@ -427,7 +457,9 @@ Mesma borda, superfície e curva do botão, largura total e altura mínima de co
 campo, dica e erro formam coluna com gap 3px. Campo em erro ganha borda de perigo, mensagem
 com triângulo de 7px e texto normal; `aria-invalid` e referências a dica/erro permanecem no HTML.
 Campo de identificador usa mono. Textarea permite resize vertical. Envio de arquivo mantém
-input acessível e label com aparência de botão, sem exigir JS para abrir o seletor.
+input acessível e label com aparência de botão, sem exigir JS para abrir o seletor; o texto ao lado
+nasce "Nenhum arquivo selecionado." e o script o troca por nome e tamanho. O erro do campo tem id
+`<auto_id>_error`, referenciado pelo widget em `aria-describedby`.
 
 Dica é parágrafo de apoio com id `<auto_id>_helptext`, renderizada só quando o campo tem dica e
 também com erro. Nos formulários de credencial o widget referencia erro, dica e mensagens gerais
@@ -470,7 +502,8 @@ superfície. Tile destaca dado com rótulo acima, valor e nota opcional. Só til
 é link; os três tiles de identidade da Home são leitura. Altura acompanha o conteúdo.
 Tarefas da Home usam card por grupo, com link e descrição na mesma célula por tarefa.
 No título de página, um badge pode acompanhar o h1 como selo de estado do objeto (resultado
-"Com rejeições"/"Sem rejeições"), com 8px de afastamento e alinhado ao meio.
+"Com rejeições"/"Sem rejeições") ou da prévia ("Não gravada", em `badge-info`), com 8px de
+afastamento e alinhado ao meio.
 
 O resumo de métricas usa tiles de leitura com rótulo, valor e nota. Tile de atenção
 (`tile-warning`) segue a gramática do alerta de aviso: fundo e borda de `warning`, losango de 7px
@@ -480,6 +513,13 @@ da soma" em texto. A nota do tile pode trazer um atalho textual para a seção c
 ("ver exceções"), só quando o total é maior que zero: link real numa linha própria, sem tornar o
 tile inteiro clicável, com faixa de toque de 44px por pseudo-elemento no toque ou até 860px. A
 nota do tile permanece em `text-subtle` (0.8rem), como é hoje.
+
+Na prévia de fornecedores, com quatro valores fora da soma, o CSS da feature agrupa o resumo em
+dois grupos nomeados ("Composição da carga" e "Fora da soma"; `role="group"` com `aria-labelledby`
+no rótulo visível, em `text-muted`, meta, peso 600), quatro colunas no desktop e duas até 640px. No
+grupo de fora da soma, o tile em atenção engrossa o tracejado para 2px, porque a borda de `warning`
+apagava o tracejado de 1px. É composição de feature (`fornecedores.css`), não primitiva: os tiles
+compartilhados não mudam e, com um único valor fora da soma (catálogo), `tile-aside` basta.
 
 Formulário isolado usa o card com medida de formulário (máximo 420px): a coluna de trabalho não
 tem teto, então é o card que limita a própria largura, alinhado à esquerda; na entrada anônima o
@@ -527,10 +567,29 @@ lado a lado abaixo. Reticência é texto, não controle. O vazio preserva orient
 com título e descrição, sem desenhar métrica fictícia. Spinner local tem 12px, giro linear de
 0.6s; sob prefers-reduced-motion fica parado. Não há motion decorativo nem polling portado.
 
+### Barra de confirmação
+
+Único par de ações de uma página que confirma uma operação: último elemento do conteúdo, sticky no
+rodapé da viewport (nunca `fixed`), primário antes do secundário, fundo `surface` e padding 12px
+16px. A base, com borda superior e colada ao rodapé, segue em organização e estoque. A variante de
+card, recomposta nas prévias de importação, usa a gramática do painel: borda de 1px em volta, raio
+`md`, sem sombra, flutuando 12px acima do rodapé; um pseudo-elemento pinta esse vão com
+`background`, para o conteúdo rolado não aparecer por baixo. Fica dentro da coluna de trabalho,
+nunca sobre a sidebar. No desktop a barra não quebra: o primário encolhe e quebra o rótulo longo,
+alinhado à esquerda, e o Cancelar mantém a largura. Até 480px a barra empilha, os botões ocupam a
+largura com texto centralizado e uma linha de resumo curta (`text-muted`, meta, itens separados por
+"·") aparece acima deles; os totais do rótulo saem só da vista (fonte 0, inline, sem virar
+fronteira de palavra). A folga de rolagem acompanha a barra: 7rem, ou 11rem até 480px (base: 5rem
+e 10rem).
+
+**The Consequence Label Rule.** O primário da confirmação recita a consequência (o que será
+gravado e o que fica de fora) e esse texto inteiro é o nome acessível do botão. O resumo curto do
+celular é só visual (`aria-hidden`), nunca uma segunda fonte do nome.
+
 ### Padrões existentes em transição
 
-Resumos de totais, pares rótulo/valor, hashes, opções com motivo de bloqueio, barras de confirmação
-sticky e histórico por link continuam primitivos compartilhados. Estoque e organização conservam
+Resumos de totais, pares rótulo/valor, hashes, opções com motivo de bloqueio, a barra de confirmação
+base e histórico por link continuam primitivos compartilhados. Estoque e organização conservam
 composição própria (ações agrupadas, segredo copiável, efeitos por pessoa, checklist e impedimentos),
 consumindo tokens da fundação. São contratos de uso a preservar ao recompor P1–P6, sem copiar
 os comentários antigos como direção estética.

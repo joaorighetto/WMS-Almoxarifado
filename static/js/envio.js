@@ -13,6 +13,10 @@
  * cancelamento, na prévia). Tudo funciona sem este script: sem JS, os formulários
  * continuam submetendo normalmente.
  *
+ * Barra de confirmação (`.confirmation-bar`, prévia): enquanto o formulário de confirmar está
+ * ocupado, os demais botões da mesma barra (o Cancelar) também ficam desabilitados — cancelar no
+ * meio da confirmação apagaria o pedido que o servidor acabou de receber. Voltam no `pageshow`.
+ *
  * Consumidores: catalogo/templates/catalogo/importacao_envio.html,
  * catalogo/templates/catalogo/importacao_previa.html,
  * fornecedores/templates/fornecedores/importacao_envio.html,
@@ -21,11 +25,10 @@
 (() => {
   "use strict";
 
-  /* Formulários da mesma página que enviam para a mesma action (a prévia tem dois
-     pares confirmar/cancelar: a barra fixa e a seção do fim) compartilham o bloqueio
-     de duplo envio — confirmar num e depois no outro enviaria dois POSTs. O servidor
-     já recusa a segunda confirmação pelo token único; isto só evita que o usuário
-     perca a mensagem de sucesso da primeira. */
+  /* Formulários da mesma página que enviam para a mesma action compartilham o bloqueio de duplo
+     envio — hoje a prévia tem um só par confirmar/cancelar (a barra), mas o mecanismo vale para
+     mais de um formulário. O servidor já recusa a segunda confirmação pelo token único; isto só
+     evita que o usuário perca a mensagem de sucesso da primeira. */
   const ocupantesPorAction = new Map();
 
   const inicializarProcessamento = (form) => {
@@ -36,20 +39,42 @@
     }
 
     const rotuloOcupado = form.dataset.processingLabel || "Processando…";
-    const rotuloOriginal = submitLabel.textContent;
+    /* `innerHTML`, não `textContent`: o rótulo pode ter marcação interna (a prévia envolve os totais
+       num `<small>` que o celular oculta só visualmente) e o reset precisa devolvê-la intacta. A
+       marcação é a que o servidor renderizou, nunca texto do usuário. */
+    const rotuloOriginal = submitLabel.innerHTML;
+    const barra = form.closest(".confirmation-bar");
+    let desabilitadosPelaBarra = [];
 
     const resetar = () => {
       form.dataset.submitting = "false";
       form.removeAttribute("aria-busy");
       submitButton.disabled = false;
-      submitLabel.textContent = rotuloOriginal;
+      submitButton.style.minWidth = "";
+      submitLabel.innerHTML = rotuloOriginal;
+      desabilitadosPelaBarra.forEach((botao) => {
+        botao.disabled = false;
+      });
+      desabilitadosPelaBarra = [];
     };
 
     const ocupar = () => {
       form.dataset.submitting = "true";
       form.setAttribute("aria-busy", "true");
+      /* Fixa a largura atual antes de trocar o rótulo: "Confirmando…" é curto e o botão encolheria,
+         arrastando o que vem ao lado (o Cancelar) no desktop. Sai no reset. */
+      submitButton.style.minWidth = `${submitButton.offsetWidth}px`;
       submitButton.disabled = true;
       submitLabel.textContent = rotuloOcupado;
+      if (barra) {
+        /* Só os botões que estavam habilitados: o reset não reabilita o que já nasceu desabilitado. */
+        desabilitadosPelaBarra = Array.from(barra.querySelectorAll("button")).filter(
+          (botao) => !form.contains(botao) && !botao.disabled,
+        );
+        desabilitadosPelaBarra.forEach((botao) => {
+          botao.disabled = true;
+        });
+      }
     };
 
     const chave = form.action;

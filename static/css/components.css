@@ -898,6 +898,99 @@ html:has(.confirmation-bar) {
   }
 }
 
+/* Variante na gramática do card (redesign; confirmação das importações): superfície, borda de 1px e
+   raio do `.card`, flutuando `--space-3` acima do rodapé da viewport, sem sombra (The Flat-By-Default
+   Rule). Fica dentro da coluna `.main`, então nunca passa sobre a sidebar. O rótulo do primário pode
+   ser longo (totais da carga): o botão quebra linha e encolhe ao lado do Cancelar, que mantém a
+   largura; até 480px a barra empilha e os botões ocupam a largura toda. As telas ainda não
+   recompostas (organização, estoque) seguem com a barra base, acima. */
+.confirmation-bar-card {
+  flex-wrap: nowrap;
+  bottom: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* O vão sob a barra flutuante é pintado com o fundo da página: o conteúdo que rola não aparece numa
+   faixa de 12px entre a barra e o rodapé da viewport. */
+.confirmation-bar-card::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: var(--space-3);
+  background-color: var(--color-background);
+}
+
+.confirmation-bar-card > form {
+  min-width: 0;
+  margin: 0;
+}
+
+.confirmation-bar-card > form:last-child {
+  flex: none;
+}
+
+.confirmation-bar-card .btn {
+  max-width: 100%;
+  text-align: left;
+}
+
+/* Linha de resumo acima dos botões: só no celular (até 480px). No desktop os totais já estão no
+   rótulo do primário. É uma versão curta dos totais (itens separados por "·"), não a mesma string do
+   botão, e `aria-hidden`: o nome acessível do botão continua o rótulo longo inteiro. */
+.confirmation-bar-resumo {
+  display: none;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-tight);
+}
+
+.confirmation-bar-totais {
+  font-size: inherit;
+}
+
+@media (max-width: 480px) {
+  .confirmation-bar-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .confirmation-bar-card > form:last-child {
+    flex: auto;
+  }
+
+  .confirmation-bar-card .btn {
+    text-align: center;
+  }
+
+  .confirmation-bar-card .confirmation-bar-resumo {
+    display: block;
+  }
+
+  /* Os totais do rótulo saem só da vista e continuam no texto do botão, para o leitor de tela e para o
+     estado "Confirmando…" (que troca o rótulo inteiro). Fica inline com fonte de tamanho 0: sem
+     largura nem altura, sem `position`/`display: block` — qualquer um destes vira fronteira de
+     palavra e o nome acessível ganharia um espaço antes dos dois-pontos. */
+  .confirmation-bar-card .confirmation-bar-totais {
+    font-size: 0;
+    line-height: 0;
+    white-space: nowrap;
+  }
+}
+
+html:has(.confirmation-bar-card) {
+  scroll-padding-bottom: 7rem;
+}
+
+@media (max-width: 480px) {
+  html:has(.confirmation-bar-card) {
+    scroll-padding-bottom: 11rem;
+  }
+}
+
 /* =====================================================================
  * 6. Tabela
  * Estrutura: .table-wrapper (rolagem horizontal, nunca vira card) > table.table.

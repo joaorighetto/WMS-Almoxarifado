@@ -20,9 +20,10 @@ O que este arquivo protege, em ordem de consequência:
 O parsing é estrutural (`tests/html_helpers.py`), nunca regex de atributo. As telas ainda não
 recompostas (propagação P1 a P5) trazem o próprio `<main>` sem `id`: o alvo do skip link nelas é
 resolvido por fallback em JavaScript (`static/js/shell.js`), que um teste de servidor não
-exercita. Só as telas recompostas (Home, consulta do catálogo, `/senha/` e as cinco do lote P2:
-consulta de fornecedores e histórico/execução de importação de catálogo e fornecedores) têm
-`id="main"` verificado aqui; o markup do login e de `/senha/` está em
+exercita. Só as telas recompostas (Home, consulta do catálogo, `/senha/`, as cinco do lote P2:
+consulta de fornecedores e histórico/execução de importação de catálogo e fornecedores, e as
+quatro do lote P3: envio e prévia de importação de catálogo e de fornecedores) têm `id="main"`
+verificado aqui; o markup do login e de `/senha/` está em
 `tests/test_contas_credenciais_markup.py`.
 """
 
@@ -115,6 +116,17 @@ def _previa(client, usuario, csv_fixture):
     return client.get(reverse("catalogo:importacao_previa"))
 
 
+def _previa_fornecedores(client, usuario, csv_fixture):
+    conteudo = (
+        "﻿CODIF;NOME;NOM_FANT;INSMF;CODTIP;BLOQ_OPCAO;MSG_BLOQ;TIPO_BLOQ;\r\n"
+        "900001;FORNECEDOR SHELL;;;01;S;;;\r\n"
+    ).encode()
+    arquivo = SimpleUploadedFile("arquivo.csv", conteudo, content_type="text/csv")
+    envio = client.post(reverse("fornecedores:importacao_envio"), {"arquivo": arquivo})
+    assert envio.status_code == 302, "pré-condição: envio válido deveria redirecionar à prévia"
+    return client.get(reverse("fornecedores:importacao_previa"))
+
+
 def _ficha_do_proprio_usuario(client, usuario, csv_fixture):
     return client.get(rota("usuario", usuario.pk))
 
@@ -122,10 +134,12 @@ def _ficha_do_proprio_usuario(client, usuario, csv_fixture):
 TELAS = [
     ("home", "requisitante", True, _get("home")),
     ("catalogo-consulta", "requisitante", True, _get("catalogo:consulta")),
-    ("catalogo-envio", "chefe_almoxarifado", False, _get("catalogo:importacao_envio")),
-    ("catalogo-previa", "chefe_almoxarifado", False, _previa),
+    ("catalogo-envio", "chefe_almoxarifado", True, _get("catalogo:importacao_envio")),
+    ("catalogo-previa", "chefe_almoxarifado", True, _previa),
     ("catalogo-historico", "chefe_almoxarifado", True, _get("catalogo:historico")),
     ("catalogo-execucao", "chefe_almoxarifado", True, _execucao),
+    ("fornecedores-envio", "chefe_almoxarifado", True, _get("fornecedores:importacao_envio")),
+    ("fornecedores-previa", "chefe_almoxarifado", True, _previa_fornecedores),
     ("fornecedores-historico", "chefe_almoxarifado", True, _get("fornecedores:historico")),
     ("fornecedores-execucao", "chefe_almoxarifado", True, _execucao_fornecedores),
     ("fornecedores-consulta", "funcionario_almoxarifado", True, _get("fornecedores:consulta")),
