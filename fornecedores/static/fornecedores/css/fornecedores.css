@@ -132,10 +132,11 @@
   }
 }
 
-/* Resultado de uma execução (`.execucao-secao`, só no detalhe — a prévia reusa os ids; contrato §12):
-   Alterações cadastrais e Exceções são cards; a tabela rola na horizontal dentro do card (nunca vira
+/* Resultado de uma execução (`.execucao-secao`, detalhe) e prévia da importação (`.previa-secao`; contrato §12):
+   Alterações cadastrais e Exceções são cards, e as regras por `id` são escopadas por essas duas classes
+   (a prévia e o detalhe reusam os ids; a consulta e o histórico não são afetados); a tabela rola na horizontal dentro do card (nunca vira
    cards) sem ser esmagada. */
-.execucao-secao#alteracoes .table {
+:is(.execucao-secao, .previa-secao)#alteracoes .table {
   min-width: 30rem;
 }
 
@@ -154,22 +155,64 @@
    restantes cabem no card e o valor novo aparece inteiro. Nomes e valores só quebram no meio de uma
    palavra que não cabe sozinha na coluna (`break-word`). */
 @media (max-width: 640px) {
-  .execucao-secao#alteracoes .table {
+  :is(.execucao-secao, .previa-secao)#alteracoes .table {
     min-width: 0;
     --table-cell-pad-x: 6px;
   }
 
-  .execucao-secao#alteracoes .fornecedores-codigo-cell {
+  :is(.execucao-secao, .previa-secao)#alteracoes .fornecedores-codigo-cell {
     min-width: 0;
   }
 
-  .execucao-secao#alteracoes .table thead th {
+  :is(.execucao-secao, .previa-secao)#alteracoes .table thead th {
     white-space: normal;
   }
 
-  .execucao-secao#alteracoes td {
+  :is(.execucao-secao, .previa-secao)#alteracoes td {
     overflow-wrap: break-word;
   }
+}
+
+/* Resumo da prévia em dois grupos (Composição da carga / Fora da soma): cada grupo é um `role="group"`
+   nomeado pelo rótulo visível, com o próprio `dl.tiles`. 4 colunas no desktop (os dois grupos alinham
+   na mesma grade, sem tile órfão) e 2 por linha no celular, como os demais resumos. Os `.tile*`
+   compartilhados (components.css) não mudam; aqui só a grade e o rótulo do grupo. */
+.tiles-grupo {
+  margin-bottom: var(--space-4);
+}
+
+.tiles-grupo-rotulo {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-semibold);
+}
+
+.tiles-grupo .tiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .tiles-grupo .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Larguras médias: um rótulo que quebra em duas linhas ("Chegam bloqueados" com o marcador) empurraria
+   o valor para baixo; duas linhas de altura mínima mantêm os valores alinhados na linha. */
+@media (min-width: 641px) and (max-width: 950px) {
+  .tiles-grupo .tile .k {
+    min-height: calc(2 * var(--line-height-base) * 0.82rem);
+  }
+}
+
+/* Fora da soma com atenção: o amarelo de `.tile-warning` apagava o tracejado de `.tile-aside`. Aqui a
+   borda tracejada fica mais grossa, e o rótulo do grupo ("Fora da soma") separa os dois conjuntos. */
+.tiles-grupo-fora .tile-aside.tile-warning {
+  border-style: dashed;
+  border-width: 2px;
+  padding: 11px 13px;
 }
 
 /* Tile do resumo com total zerado (Passam a bloqueado, Voltam a liberado): valor atenuado e peso

@@ -1,5 +1,9 @@
 // Evidência local do laboratório. Node >=22 e Chrome instalado; sem dependências npm.
 // Uso: node docs/redesign-observatory/capturar.mjs [http://127.0.0.1:8010] [--interacoes | --capturas] [--alvos=a,b]
+// Importações (P3): o roteiro só envia arquivos, vê a prévia e, no máximo, cancela. NUNCA confirma — confirmar
+// grava dados. Como salvaguarda, toda página intercepta por CDP (`Fetch.enable` + `Fetch.failRequest`) as
+// requisições a `*/importacao/confirmar/*`, inclusive a navegação de um formulário — `Network.setBlockedURLs`
+// NÃO barra essa navegação no Chrome headless (incidente do P3: duas importações gravadas no banco local).
 import { spawn } from 'node:child_process';
 import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -12,6 +16,11 @@ const onlyInteractions = process.argv.includes('--interacoes');
 const onlyCaptures = process.argv.includes('--capturas');
 const selectedNames = process.argv.find(arg => arg.startsWith('--alvos='))?.slice(8).split(',');
 const profile = await mkdtemp(join(tmpdir(), 'wms-capturas-'));
+const insumos = await mkdtemp(join(tmpdir(), 'wms-insumos-'));
+const URLS_BLOQUEADAS = (process.env.CAPTURAR_BLOQUEAR || '*/importacao/confirmar/*').split(',');
+const bloquear = async page => {
+  await page.call('Fetch.enable', { patterns: URLS_BLOQUEADAS.map(urlPattern => ({ urlPattern, requestStage: 'Request' })) });
+};
 const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
   '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
   '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
@@ -31,6 +40,12 @@ class CDP {
     });
     this.ws.addEventListener('message', event => {
       const message = JSON.parse(event.data);
+      // Barreira contra gravar dado: toda requisição interceptada (só as de URLS_BLOQUEADAS) falha.
+      if (message.method === 'Fetch.requestPaused') {
+        this.bloqueadas = (this.bloqueadas || 0) + 1;
+        this.ws.send(JSON.stringify({ id: ++this.id, method: 'Fetch.failRequest', params: { requestId: message.params.requestId, errorReason: 'BlockedByClient' } }));
+        return;
+      }
       const pending = this.pending.get(message.id);
       if (!pending) return;
       this.pending.delete(message.id);
@@ -56,6 +71,63 @@ class CDP {
   close() { this.ws.close(); }
 }
 
+const esperarNovaPagina = async (page, nome) => {
+  for (let attempt = 0; attempt < 150; attempt++) {
+    if (await page.evaluate("!window.__antesDoEnvio && document.readyState === 'complete' && !!document.querySelector('main')").catch(() => false)) return;
+    if (attempt === 149) throw Error(`Envio não concluiu: ${nome}`);
+    await delay(100);
+  }
+};
+const escolherArquivo = async (page, arquivo) => {
+  await page.call('DOM.enable');
+  const { root } = await page.call('DOM.getDocument', { depth: 0 });
+  const { nodeId } = await page.call('DOM.querySelector', { nodeId: root.nodeId, selector: 'input[type=file]' });
+  if (!nodeId) throw Error('Campo de arquivo não encontrado');
+  await page.call('DOM.setFileInputFiles', { nodeId, files: [arquivo] });
+  await page.evaluate("document.querySelector('input[type=file]').dispatchEvent(new Event('change', { bubbles: true })); void 0");
+};
+// Estado de processamento sem envio: o listener de `envio.js` (registrado antes) ocupa o formulário, e
+// este, registrado depois, cancela o submit. Na confirmação a action passa a ser a própria prévia (GET
+// apenas) e a URL de confirmação é interceptada e falha — três barreiras contra gravar dado.
+const provocarProcessamento = async (page, seletor) => {
+  const ok = await page.evaluate(`(() => {
+    const f = document.querySelector(${JSON.stringify(seletor)});
+    if (!f) return false;
+    f.setAttribute('data-captura-processando', '');
+    if (f.action.includes('/importacao/confirmar/')) f.setAttribute('action', location.pathname);
+    f.addEventListener('submit', e => e.preventDefault());
+    f.requestSubmit();
+    return f.getAttribute('aria-busy') === 'true' && !!f.querySelector('[data-processing-submit]').disabled;
+  })()`);
+  if (!ok) throw Error(`Estado de processamento não provocado: ${seletor}`);
+};
+// Prévia rica de fornecedores contra o banco local (seed_dev + revisão do P2): a partir do export real,
+// 3 liberados passam a bloqueado, 1 bloqueado volta a liberado, 1 código novo chega bloqueado e um par
+// de código duplicado é recusado. Escrito só no diretório temporário.
+async function gerarFornecedoresRico() {
+  let texto;
+  try { texto = (await readFile('docs/CSVs/fornecedores.csv', 'utf8')).replace(/^\uFEFF/, ''); }
+  catch { return null; }
+  const registros = texto.split('\r\n');
+  const cabecalho = registros[0].split(';');
+  const iCodif = cabecalho.indexOf('CODIF');
+  const iBloq = cabecalho.indexOf('BLOQ_OPCAO');
+  let liberadosTrocados = 0, bloqueadosTrocados = 0;
+  const corpo = registros.slice(1).filter(Boolean).map(linha => {
+    const campos = linha.split(';');
+    if (campos.length !== cabecalho.length) return linha;
+    if (campos[iBloq] === 'S' && liberadosTrocados < 3) { campos[iBloq] = 'B'; liberadosTrocados++; }
+    else if (campos[iBloq] === 'B' && bloqueadosTrocados < 1) { campos[iBloq] = 'S'; bloqueadosTrocados++; }
+    return campos.join(';');
+  });
+  const modelo = corpo.find(linha => linha.split(';').length === cabecalho.length).split(';');
+  const novo = (codif, bloq) => { const c = [...modelo]; c[iCodif] = codif; c[iBloq] = bloq; return c.join(';'); };
+  corpo.push(novo('999901', 'B'), novo('999902', 'S'), novo('999902', 'S'));
+  const destino = join(insumos, 'fornecedores-previa-rica.csv');
+  await writeFile(destino, '\uFEFF' + [registros[0], ...corpo, ''].join('\r\n'));
+  return destino;
+}
+
 try {
   let port;
   for (let attempt = 0; attempt < 100; attempt++) {
@@ -69,7 +141,7 @@ try {
   // Matriz versionada: `.impeccable/review/` é ignorada pelo git e guarda só a saída.
   // `acao`: expressão que envia um formulário depois do carregamento (estados de erro de validação);
   // a captura espera a nova página. Os envios usados aqui são inválidos e não alteram dado.
-  const capture = (name, role, size, theme, url, touch = false, acao = null) => ({ name, role, size, theme, touch, url, acao });
+  const capture = (name, role, size, theme, url, touch = false, acao = null, extra = {}) => ({ name, role, size, theme, touch, url, acao, ...extra });
   const enviar = (form, campos) => `(() => { const f = document.querySelector(${JSON.stringify(form)}); ${
     Object.entries(campos).map(([nome, valor]) => `f.elements[${JSON.stringify(nome)}].value = ${JSON.stringify(valor)};`).join(' ')
   } f.noValidate = true; f.requestSubmit(); })()`;
@@ -88,7 +160,6 @@ try {
     capture('menu-820-toque', 'chefe-almoxarifado', '820x1180', 'light', '/', true),
     capture('menu-390-claro', 'chefe-almoxarifado', '390x844', 'light', '/', true),
     capture('menu-390-escuro', 'chefe-almoxarifado', '390x844', 'dark', '/', true),
-    capture('envio-catalogo-1440-escuro-herdada', 'chefe-almoxarifado', '1440x900', 'dark', '/catalogo/importacao/'),
     capture('home-requisitante-1440', 'requisitante', '1440x900', 'light', '/'),
     capture('home-requisitante-390', 'requisitante', '390x844', 'light', '/', true),
     capture('catalogo-1440-claro', 'requisitante', '1440x900', 'light', busca),
@@ -149,6 +220,46 @@ try {
       captures.push(capture(`${nome}-${cenario}`, papel, size, variante === 'escuro' ? 'dark' : 'light', url, touch));
     }
   }
+  // P3 — importações. `upload`: arquivo enviado pelo formulário de envio (DOM.setFileInputFiles) antes da
+  // captura; `enviar: false` só escolhe o arquivo. `depois`: URL aberta depois do envio (prévia pendente).
+  // `processando`: seletor do formulário cujo estado de processamento (`envio.js`) é provocado sem envio
+  // (o submit é cancelado; na confirmação a action também é trocada e a URL está bloqueada).
+  // Insumos: fixtures sintéticas de `tests/fixtures/` e, para a prévia rica de fornecedores, uma derivação
+  // local de `docs/CSVs/fornecedores.csv` (fora do Git; gerada num diretório temporário, nunca versionada).
+  const fx = nome => join(process.cwd(), 'tests/fixtures', nome);
+  const fornecedoresRico = await gerarFornecedoresRico();
+  const csv = {
+    catalogoRico: fx('catalogo/carga_inicial_casos_spec.csv'),
+    catalogoLimpo: fx('catalogo/linhas_vazias.csv'),
+    catalogoInvalido: fx('catalogo/codificacao_invalida.csv'),
+    fornecedoresLimpo: fx('fornecedores/nomes_iguais_codigos_distintos.csv'),
+    fornecedoresInvalido: fx('fornecedores/byte_invalido.csv'),
+  };
+  const confirmar = 'form[action$="/importacao/confirmar/"]';
+  const p3 = [
+    ['envio-catalogo', '/catalogo/importacao/', {}, ['1440-claro', '1440-escuro', '820-toque', '390-claro', '390-escuro']],
+    ['envio-catalogo-erro', '/catalogo/importacao/', { upload: csv.catalogoInvalido }, ['1440-claro', '390-escuro']],
+    ['envio-catalogo-processando', '/catalogo/importacao/', { upload: csv.catalogoLimpo, enviar: false, processando: 'form[data-processing-form]' }, ['1440-claro']],
+    ['envio-catalogo-pendente', '/catalogo/importacao/', { upload: csv.catalogoLimpo, depois: '/catalogo/importacao/' }, ['1440-claro', '390-claro']],
+    ['previa-catalogo', '/catalogo/importacao/', { upload: csv.catalogoRico }, ['1440-claro', '1440-escuro', '1280', '820-toque', '390-claro', '390-escuro']],
+    ['previa-catalogo-limpa', '/catalogo/importacao/', { upload: csv.catalogoLimpo }, ['1440-claro', '390-escuro']],
+    ['previa-catalogo-processando', '/catalogo/importacao/', { upload: csv.catalogoRico, processando: confirmar }, ['1440-claro', '390-claro']],
+    ['envio-fornecedores', '/fornecedores/importacao/', {}, ['1440-claro', '1440-escuro', '390-claro']],
+    ['envio-fornecedores-erro', '/fornecedores/importacao/', { upload: csv.fornecedoresInvalido }, ['1440-claro']],
+    ['previa-fornecedores-limpa', '/fornecedores/importacao/', { upload: csv.fornecedoresLimpo }, ['1440-claro', '390-escuro']],
+    ['previa-fornecedores-processando', '/fornecedores/importacao/', { upload: csv.fornecedoresLimpo, processando: confirmar }, ['390-claro']],
+  ];
+  if (fornecedoresRico) {
+    p3.push(['previa-fornecedores', '/fornecedores/importacao/', { upload: fornecedoresRico }, ['1440-claro', '1440-escuro', '1280', '820-toque', '390-claro', '390-escuro']]);
+  } else console.warn('docs/CSVs/fornecedores.csv ausente: cenários previa-fornecedores-* (prévia rica) omitidos.');
+  for (const [nome, url, extra, cenarios] of p3) {
+    for (const cenario of cenarios) {
+      const [largura, variante] = cenario.split('-');
+      const size = { 1440: '1440x900', 1280: '1280x800', 820: '820x1180', 390: '390x844' }[largura];
+      const touch = ['820', '390'].includes(largura);
+      captures.push(capture(`${nome}-${cenario}`, ca, size, variante === 'escuro' ? 'dark' : 'light', url, touch, null, extra));
+    }
+  }
   for (const [prefix, role, url] of [
     ['entradas-auditor', 'auditor', '/estoque/entradas/'],
     ['usuarios-admin', 'administrador-sistema', '/organizacao/usuarios/'],
@@ -169,6 +280,7 @@ try {
     try {
       await page.call('Page.enable');
       await page.call('Runtime.enable');
+      await bloquear(page);
       await page.call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: capture.touch });
       await page.call('Emulation.setTouchEmulationEnabled', { enabled: capture.touch, maxTouchPoints: capture.touch ? 5 : 1 });
       await page.call('Emulation.setEmulatedMedia', { features: [
@@ -193,6 +305,18 @@ try {
           await delay(100);
         }
       }
+      if (capture.upload) {
+        await escolherArquivo(page, capture.upload);
+        if (capture.enviar !== false) {
+          await page.evaluate("window.__antesDoEnvio = true; document.querySelector('input[type=file]').form.requestSubmit(); void 0");
+          await esperarNovaPagina(page, capture.name);
+        }
+      }
+      if (capture.depois) {
+        await page.evaluate(`window.__antesDoEnvio = true; location.href = ${JSON.stringify(capture.depois)}; void 0`);
+        await esperarNovaPagina(page, capture.name);
+      }
+      if (capture.processando) await provocarProcessamento(page, capture.processando);
       await page.evaluate('document.fonts.ready');
       if (capture.name.startsWith('menu-')) await page.evaluate("document.querySelector('[data-menu-toggle]').click()");
       await delay(150);
@@ -255,6 +379,7 @@ try {
   };
   try {
     await page.call('Page.enable');
+    await bloquear(page);
     await page.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
     await page.call('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
     await page.call('Page.navigate', { url: `${origin}/catalogo/?dev_como=requisitante` });
@@ -301,6 +426,43 @@ try {
     await page.evaluate("document.querySelector('[data-linha-clicavel] td:nth-child(3)').click()");
     await waitFor("document.readyState==='complete' && /importacoes\\/\\d+\\/$/.test(location.pathname)");
     await check('Histórico: clique na linha abre a execução', "/importacoes\\/\\d+\\/$/.test(location.pathname) && document.querySelectorAll('.side').length===1");
+    // P3 — importações: envio, prévia, processamento, prévia pendente e cancelamento. Nada é confirmado.
+    const ir = async (url, condicao) => {
+      await page.call('Page.navigate', { url: `${origin}${url}` });
+      await waitFor(`document.readyState==='complete' && !location.search.includes('dev_como') && ${condicao}`);
+    };
+    const enviarArquivo = async arquivo => {
+      await escolherArquivo(page, arquivo);
+      await page.evaluate("window.__antesDoEnvio = true; document.querySelector('input[type=file]').form.requestSubmit(); void 0");
+      await esperarNovaPagina(page, 'interações P3');
+    };
+    const previaOk = `/\\/importacao\\/previa\\/$/.test(location.pathname) && document.querySelector('h1')?.textContent.includes('Não gravada')
+      && document.querySelectorAll('${confirmar}').length===1 && document.querySelectorAll('form[action$="/importacao/cancelar/"]').length===1
+      && !!document.querySelector('${confirmar} input[name=token]') && !!document.querySelector('${confirmar} input[name=impressao_digital]')
+      && document.querySelectorAll('main').length===1 && document.querySelectorAll('.side').length===1`;
+    await ir('/catalogo/importacao/?dev_como=chefe-almoxarifado', "!!document.querySelector('input[type=file]')");
+    await escolherArquivo(page, csv.catalogoRico);
+    await check('Importação: arquivo escolhido aparece no envio', "document.querySelector('[data-file-upload-meta]').textContent.startsWith('carga_inicial_casos_spec.csv — ')");
+    await page.evaluate("window.__antesDoEnvio = true; document.querySelector('input[type=file]').form.requestSubmit(); void 0");
+    await esperarNovaPagina(page, 'interações P3');
+    await check('Importação: envio abre a prévia não gravada com um único par confirmar/cancelar', previaOk);
+    await provocarProcessamento(page, confirmar);
+    await check('Importação: confirmação em processamento com rótulo legível e Cancelar desabilitado, sem envio', "(() => { const f = document.querySelector('[data-captura-processando]'); return f.querySelector('[data-processing-submit-label]').textContent==='Confirmando…' && f.querySelector('[data-processing-submit]').disabled && f.getAttribute('aria-busy')==='true' && document.querySelector('.confirmation-bar form[action$=\"/importacao/cancelar/\"] button').disabled && /\\/previa\\/$/.test(location.pathname); })()");
+    await ir('/catalogo/importacao/', "!!document.querySelector('input[type=file]')");
+    await check('Importação: prévia pendente anunciada no envio', "!!document.querySelector('[role=status] a[href$=\"/catalogo/importacao/previa/\"]')");
+    await ir('/catalogo/importacao/previa/', "!!document.querySelector('form[action$=\"/importacao/cancelar/\"]')");
+    await page.evaluate("window.__antesDoEnvio = true; document.querySelector('form[action$=\"/importacao/cancelar/\"]').requestSubmit(); void 0");
+    await esperarNovaPagina(page, 'interações P3');
+    await check('Importação: cancelar volta ao envio e descarta a prévia', "location.pathname==='/catalogo/importacao/' && !document.querySelector('[role=status] a[href$=\"/importacao/previa/\"]')");
+    await enviarArquivo(csv.catalogoInvalido);
+    await check('Importação: arquivo recusado com erro associado ao campo', "(() => { const i = document.querySelector('input[type=file]'); const ids = (i.getAttribute('aria-describedby') || '').split(' ').filter(Boolean); return location.pathname==='/catalogo/importacao/' && ids.length>0 && ids.every(id => document.getElementById(id)?.textContent.trim()); })()");
+    await ir('/fornecedores/importacao/', "!!document.querySelector('input[type=file]')");
+    await enviarArquivo(csv.fornecedoresLimpo);
+    await check('Importação de fornecedores: prévia com a nota de bloqueio', `${previaOk} && document.querySelector('main').textContent.includes('não pode ser emitente de uma entrada')`);
+    await page.evaluate("window.__antesDoEnvio = true; document.querySelector('form[action$=\"/importacao/cancelar/\"]').requestSubmit(); void 0");
+    await esperarNovaPagina(page, 'interações P3');
+    await check('Importação de fornecedores: cancelar volta ao envio', "location.pathname==='/fornecedores/importacao/' && !document.querySelector('[role=status] a[href$=\"/importacao/previa/\"]')");
+    await ir('/catalogo/importacoes/', "!!document.querySelector('[data-linha-clicavel]')");
     await page.call('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     await page.call('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await page.evaluate("document.querySelector('[data-menu-toggle]').click()");
@@ -321,4 +483,5 @@ try {
   chrome.kill();
   await delay(200);
   await rm(profile, { recursive: true, force: true });
+  await rm(insumos, { recursive: true, force: true });
 }

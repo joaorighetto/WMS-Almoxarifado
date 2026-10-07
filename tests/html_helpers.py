@@ -41,6 +41,8 @@ class No:
         self.pai = pai
         self.filhos = []
         self._dados = []
+        # Texto e elementos filhos intercalados na ordem do documento (para `texto_corrido`).
+        self._conteudo = []
 
     def get(self, nome, padrao=None):
         return self.attrs.get(nome, padrao)
@@ -54,6 +56,29 @@ class No:
         pedacos = list(self._dados)
         pedacos.extend(filho.texto for filho in self.filhos)
         return " ".join(" ".join(pedacos).split())
+
+    def _texto_cru(self):
+        return "".join(
+            item if isinstance(item, str) else item._texto_cru() for item in self._conteudo
+        )
+
+    @property
+    def texto_cru(self):
+        """O `textContent` sem nenhuma normalização (nem `\\xa0` vira espaço, nem `\\n` some).
+
+        `texto` e `texto_corrido` usam `str.split()`, que trata o espaço não separável como
+        espaço comum; use este quando a diferença for o que se quer verificar.
+        """
+        return self._texto_cru()
+
+    @property
+    def texto_corrido(self):
+        """O `textContent` do elemento, na ordem do documento, espaços colapsados.
+
+        Diferente de `texto` (texto próprio primeiro, depois o dos filhos, separados por espaço):
+        aqui `Confirmar<small>: 9</small>` vira "Confirmar: 9", como o navegador o lê.
+        """
+        return " ".join(self._texto_cru().split())
 
     def descendentes(self):
         """Todos os elementos abaixo deste, em ordem de documento (pré-ordem)."""
@@ -110,12 +135,14 @@ class _Construtor(HTMLParser):
     def handle_starttag(self, tag, attrs):
         no = No(tag, attrs, self._pilha[-1])
         self._pilha[-1].filhos.append(no)
+        self._pilha[-1]._conteudo.append(no)
         if tag not in _VOID:
             self._pilha.append(no)
 
     def handle_startendtag(self, tag, attrs):
         no = No(tag, attrs, self._pilha[-1])
         self._pilha[-1].filhos.append(no)
+        self._pilha[-1]._conteudo.append(no)
 
     def handle_endtag(self, tag):
         # Fecha até o último elemento aberto de mesma tag; um fechamento sem abertura é ignorado.
@@ -126,6 +153,7 @@ class _Construtor(HTMLParser):
 
     def handle_data(self, dados):
         self._pilha[-1]._dados.append(dados)
+        self._pilha[-1]._conteudo.append(dados)
 
 
 def analisar(conteudo):

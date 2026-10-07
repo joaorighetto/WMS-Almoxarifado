@@ -7,237 +7,271 @@
 <link rel="stylesheet" href="{% static 'fornecedores/css/fornecedores.css' %}">
 {% endblock %}
 
-{% block content %}
-<main class="page">
-  <div class="page-container">
-    <a href="{% url 'fornecedores:importacao_envio' %}" class="back-link">
-      <svg class="back-link-arrow" width="14" height="14" viewBox="0 0 16 16"
-           fill="none" aria-hidden="true">
-        <path d="M14 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.75"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Envio</span>
-    </a>
+{% comment %}
+Composição do redesign (`docs/redesign-observatory/contrato.md` §4 e §12), no molde de
+`fornecedores/execucao_detalhe.html` (a execução é a prévia depois de confirmada): o cabeçalho
+(`.top`), o `<main id="main">` e as mensagens vêm de `contas/base.html`; esta página preenche
+`heading` (com o selo "Não gravada", o tom de "ainda não gravado" — o selo Com/Sem rejeições é da
+execução), `sub` (trilha com o link de volta ao envio, que substitui o antigo "Envio"), `tools`
+(vazio: a ação primária fica na barra de confirmação, no fim) e `page`.
 
-    {% include "interface/_mensagens.html" %}
+Ordem: aviso de prévia (`.alert-info`, `role="status"`, com o arquivo e "nada foi gravado ainda"),
+resumo em dois grupos de `.grid.tiles` (rótulos no futuro; `.tiles-grupo` + `.tiles-grupo-rotulo`,
+`fornecedores.css`): "Composição da carga" (Recebidos, Serão inseridos, Serão atualizados, Rejeitados)
+e "Fora da soma" (Passam a bloqueado, Voltam a liberado, Chegam bloqueados, Ausentes do arquivo). Cada
+grupo é um `role="group"` nomeado pelo rótulo visível (`aria-labelledby`) com o próprio `dl` — o `dl`
+não aceita nome, o `div` do grupo sim —, 4 colunas no desktop e 2 por linha no celular. "Fora da soma"
+vira o rótulo do grupo (e não uma nota `.d` repetida em cada tile) e os tiles seguem `.tile-aside`
+(borda tracejada), então a distinção dentro × fora da soma vive no agrupamento e na borda, mesmo
+quando o tile é `.tile-warning`. "Rejeitados" > 0 e "Passam a bloqueado" > 0 em `.tile-warning` com os
+atalhos "ver exceções" → `#excecoes` e "ver alterações" → `#alteracoes`. Em seguida as duas notas do
+resumo, Alterações cadastrais e Exceções
+(um card cada, com tabela, paginação e vazio dentro). Os `.table-wrapper` são regiões nomeadas e
+focáveis (`role="region"`, `aria-label` "Tabela de …", `tabindex="0"`), sem `table-sticky-header`: a
+tabela rola com a página e, quando larga, na horizontal dentro do card. Os `id` e `data-secao` das
+seções (`#alteracoes`, `#excecoes`) e os parâmetros e âncoras da paginação (`pagina_alteracoes`,
+`pagina_excecoes`) são os de sempre.
 
-    <header class="page-header">
-      <div>
-        <h1 class="page-header-title">Prévia da importação de fornecedores</h1>
-        <p class="page-header-description">
-          Arquivo <strong>{{ pedido.nome_arquivo }}</strong> ({{ pedido.tamanho|filesizeformat }})
-        </p>
+Situação de bloqueio em destaque (P1 do gate visual, 2026-09-26): o chefe do almoxarifado precisa ver,
+antes de confirmar, quantos fornecedores mudam de situação (INV-SUPPLIER-005: bloqueado não pode ser
+emitente de entrada). Os três tiles ficam fora da soma Recebidos = Inseridos + Atualizados + Rejeitados
+(grupo "Fora da soma", `tile-aside`, borda tracejada). Total > 0 em "Passam a bloqueado" e "Chegam
+bloqueados": `.tile-warning` (fundo e borda de atenção, marcador ◆, rótulo em negrito); zerados:
+`fornecedores-situacao-neutra` (valor atenuado). "Voltam a liberado" nunca é de atenção: desbloquear
+não tem risco. A nota do bloqueio aparece SEMPRE na prévia (na execução, só com bloqueio) e distingue
+os dois casos: quem JÁ é cadastrado e muda de situação está em Alterações cadastrais; quem chega
+bloqueado é fornecedor NOVO e não aparece em nenhuma tabela da prévia. "Chegam
+bloqueados" só existe aqui, na prévia: vem de `plano.insercoes` (fornecedores NOVOS), que o detalhe de
+uma execução já confirmada não tem como recalcular com fidelidade histórica (ver
+`fornecedores/views.py`, `_totais_bloqueio_do_plano`); como são inserções, não aparecem em Alterações e
+o tile não tem atalho.
+
+Alterações cadastrais: `alteracoes_pagina` já vem achatada em uma linha por campo alterado
+(`fornecedores/views.py`, `_linha_alteracao`) — o título diz as duas contagens, "N campos em M
+fornecedores": N é `alteracoes_pagina.paginator.count` (linhas/campos) e M é
+`plano.total_atualizados_com_alteracao` (fornecedores com pelo menos um campo alterado); sem
+alterações o título fica "(0)". `data-secao="alteracoes"` fica no `<section>` incondicionalmente —
+`tests/test_fornecedores_reimportacao.py` exige o marcador mesmo sem nenhuma alteração. Linhas
+consecutivas do mesmo fornecedor mostram código e nome só na primeira (`{% ifchanged %}`; as seguintes
+mantêm o CODIF em `visually-hidden`); até 640px anterior e novo dividem uma célula. A coluna do nome
+é "Nome", não "Nome atual" como na execução: na prévia o nome vem do próprio arquivo sendo confirmado
+(`atualizacao.lido.nome`), não do cadastro. Só o valor novo da mudança de situação ganha o selo
+"Bloqueado" (nunca a linha inteira). Campos da prévia: `codif`, `nome`, `campo_label`,
+`valor_*_legivel` (não `get_*_display`).
+
+Exceções une Motivo e Detalhe numa célula (detalhe como linha secundária) e, como na execução, não usa
+`table-row-error`: o card já é a lista de rejeitados, e a atenção fica no tile "Rejeitados". As seções
+são `.previa-secao` (classe de feature, `fornecedores.css`) e não `.execucao-secao`: as regras de
+largura por `id` valem para as duas telas que reusam os ids, sem tocar a consulta e o histórico.
+
+Barra de confirmação: ÚNICO par de ações da página e último elemento do bloco `page`; grudada ao
+rodapé da viewport durante a rolagem (`position: sticky`, `.confirmation-bar` com o modificador
+`.confirmation-bar-card`, `static/css/components.css`) e assentada no fim quando o usuário chega lá.
+Ordem: Confirmar (primário; formulário com `token`, `impressao_digital`, CSRF e
+`data-processing-*`, rótulo "Confirmando…") e depois Cancelar (secundário, formulário próprio). O
+rótulo do Confirmar é longo e quebra linha no desktop estreito. Até 480px o rótulo visível é só
+"Confirmar importação" e uma linha de resumo (`.confirmation-bar-resumo`, `aria-hidden`) mostra os
+totais acima dos botões — uma versão CURTA e telegráfica (itens separados por "·", sem "ficam de
+fora" nem "passam a"; cabe em até 2 linhas a 390px), não a mesma string do botão; os totais dentro do
+botão (`.confirmation-bar-totais`) ficam só visualmente
+ocultos (`components.css`), então o `textContent` do `[data-processing-submit-label]` e o
+nome acessível do botão continuam o rótulo longo inteiro. Contratos de `static/js/envio.js` preservados;
+com a confirmação ocupada, o `envio.js` também desabilita o Cancelar da barra.
+{% endcomment %}
+{% block heading %}Prévia da importação de fornecedores <span class="badge badge-info">Não gravada</span>{% endblock %}
+{% block sub %}<nav aria-label="Trilha de navegação"><a href="{% url 'fornecedores:importacao_envio' %}">Importar fornecedores</a> <span aria-hidden="true">/</span> Prévia</nav>{% endblock %}
+{% block tools %}{% endblock %}
+
+{% block page %}
+<div class="alert alert-info" role="status">
+  <p>
+    Prévia do arquivo <strong>{{ pedido.nome_arquivo }}</strong> ({{ pedido.tamanho|filesizeformat }}):
+    nada foi gravado ainda. Confira os totais, as mudanças de situação e as exceções abaixo antes de confirmar.
+  </p>
+</div>
+
+<section aria-labelledby="resumo-titulo">
+  <h2 id="resumo-titulo" class="visually-hidden">Resumo</h2>
+  <div class="tiles-grupo" role="group" aria-labelledby="grupo-soma-titulo">
+    <p id="grupo-soma-titulo" class="tiles-grupo-rotulo">Composição da carga</p>
+    <dl class="grid tiles tiles-metricas">
+      <div class="tile">
+        <dt class="k">Recebidos</dt>
+        <dd class="v">{{ plano.total_recebidos|separador_milhar }}</dd>
       </div>
-    </header>
-
-    <div class="alert alert-info" role="status">
-      <p>
-        Esta é só uma prévia: nada foi gravado ainda. Confira os totais e as exceções
-        abaixo antes de confirmar.
-      </p>
-    </div>
-
-    <section class="page-section">
-      <h2 class="section-marker">
-        <span class="section-marker-label">Resumo</span>
-      </h2>
-      <dl class="summary">
-        <div class="summary-item">
-          <dt>Recebidos</dt>
-          <dd>{{ plano.total_recebidos|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item">
-          <dt>Serão inseridos</dt>
-          <dd>{{ plano.total_inseridos|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item">
-          <dt>Serão atualizados</dt>
-          <dd>
-            {{ plano.total_atualizados|separador_milhar }}
-            <span class="summary-detail">({{ plano.total_atualizados_com_alteracao|separador_milhar }} com alteração)</span>
-          </dd>
-        </div>
-        <div class="summary-item{% if plano.total_rejeitados %} emphasis-warning{% endif %}">
-          <dt>Rejeitados</dt>
-          <dd>{{ plano.total_rejeitados|separador_milhar }}</dd>
-        </div>
-        {% comment %}
-        Situação de bloqueio em destaque (P1 do gate visual, 2026-09-26):
-        antes só aparecia como mais uma linha da tabela de alterações — o
-        chefe do almoxarifado não via, antes de confirmar, quantos
-        fornecedores mudam de situação (INV-SUPPLIER-005: bloqueado não pode
-        ser emitente de entrada). Grupo próprio, separado da soma Recebidos =
-        Inseridos + Atualizados + Rejeitados (não entra nela). "Chegam
-        bloqueados" só existe aqui, na prévia: vem de `plano.insercoes`
-        (fornecedores NOVOS), que o detalhe de uma execução já confirmada não
-        tem como recalcular com fidelidade histórica (ver
-        `fornecedores/views.py`, `_totais_bloqueio_do_plano`).
-        {% endcomment %}
-        <div class="summary-item summary-item-detached{% if total_passam_a_bloqueado %} fornecedores-situacao-destaque{% else %} fornecedores-situacao-neutra{% endif %}">
-          <dt>Passam a bloqueado</dt>
-          <dd>{{ total_passam_a_bloqueado|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item{% if not total_voltam_a_liberado %} fornecedores-situacao-neutra{% endif %}">
-          <dt>Voltam a liberado</dt>
-          <dd>{{ total_voltam_a_liberado|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item{% if total_chegam_bloqueados %} fornecedores-situacao-destaque{% else %} fornecedores-situacao-neutra{% endif %}">
-          <dt>Chegam bloqueados</dt>
-          <dd>{{ total_chegam_bloqueados|separador_milhar }}</dd>
-        </div>
-        <div class="summary-item summary-item-detached">
-          <dt>Ausentes do arquivo</dt>
-          <dd>{{ plano.total_ausentes_no_arquivo|separador_milhar }}</dd>
-        </div>
-      </dl>
-      <p class="text-note fornecedores-nota">
-        "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
-        Rejeitados: são fornecedores já cadastrados no WMS que não vieram neste CSV. Esta
-        importação <strong>não altera nem remove</strong> esses fornecedores — eles
-        permanecem como estão.
-      </p>
-      <p class="text-note fornecedores-nota">
-        Um fornecedor bloqueado não pode ser emitente de uma entrada de materiais.
-        Confira, em "Alterações cadastrais" abaixo, quais fornecedores mudam de
-        situação nesta carga antes de confirmar.
-      </p>
-    </section>
-
-    {% comment %}
-    Alterações cadastrais (US4, T030) — no molde da seção equivalente de
-    `catalogo/execucao_detalhe.html` (mesma posição relativa: depois do
-    Resumo, antes das Exceções). `alteracoes_pagina` já vem achatada em uma
-    linha por campo alterado (`fornecedores/views.py`, `_linha_alteracao`)
-    — o total do rótulo usa `alteracoes_pagina.paginator.count`
-    (linhas/campos), não `plano.total_atualizados_com_alteracao`
-    (fornecedores com pelo menos um campo alterado). `data-secao=
-    "alteracoes"` fica no `<section>` incondicionalmente —
-    `tests/test_fornecedores_reimportacao.py` exige o marcador mesmo sem
-    nenhuma alteração.
-    {% endcomment %}
-    <section class="page-section" id="alteracoes" data-secao="alteracoes">
-      <h2 class="section-marker{% if alteracoes_pagina.object_list %} section-marker-attached{% endif %}">
-        <span class="section-marker-label">Alterações cadastrais ({{ alteracoes_pagina.paginator.count }})</span>
-      </h2>
-      {% if alteracoes_pagina.object_list %}
-      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">Código (CODIF)</th>
-              <th scope="col">Nome</th>
-              <th scope="col">Campo</th>
-              <th scope="col">Valor anterior</th>
-              <th scope="col">Valor novo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for alteracao in alteracoes_pagina %}
-            <tr>
-              <td class="table-cell-code">{{ alteracao.codif }}</td>
-              <td>{{ alteracao.nome }}</td>
-              <td>{{ alteracao.campo_label }}</td>
-              <td>
-                {% if alteracao.valor_anterior_legivel %}{{ alteracao.valor_anterior_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
-              </td>
-              <td>
-                {% comment %}
-                Destaque proporcional da mudança de situação (P1 do gate
-                visual, 2026-09-26): nunca marca a linha inteira (a borda
-                lateral de 3px é exclusiva de `table-row-error`, nas
-                Exceções) — só o valor novo desta célula ganha o mesmo selo
-                da consulta quando o fornecedor passa a bloqueado.
-                {% endcomment %}
-                {% if alteracao.campo == "bloqueado" %}
-                {% if alteracao.valor_novo == "B" %}
-                <span class="badge badge-warning">Bloqueado</span>
-                {% else %}
-                {{ alteracao.valor_novo_legivel }}
-                {% endif %}
-                {% elif alteracao.valor_novo_legivel %}{{ alteracao.valor_novo_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="tile">
+        <dt class="k">Serão inseridos</dt>
+        <dd class="v">{{ plano.total_inseridos|separador_milhar }}</dd>
       </div>
-      {% include "interface/_paginacao.html" with pagina=alteracoes_pagina parametro="pagina_alteracoes" rotulo="Paginação de alterações cadastrais" rotulo_item="alteração cadastral" rotulo_item_plural="alterações cadastrais" ancora="alteracoes" %}
-      {% else %}
-      <div class="empty-state">
-        <p class="empty-state-title">Nenhuma alteração cadastral nesta importação.</p>
-        <p class="empty-state-description">Os dados cadastrais do arquivo coincidiram com os já registrados no WMS.</p>
+      <div class="tile">
+        <dt class="k">Serão atualizados</dt>
+        <dd class="v">{{ plano.total_atualizados|separador_milhar }}</dd>
+        <dd class="d">{{ plano.total_atualizados_com_alteracao|separador_milhar }} com alteração</dd>
       </div>
-      {% endif %}
-    </section>
-
-    <section class="page-section" id="excecoes">
-      <h2 class="section-marker{% if excecoes_pagina.object_list %} section-marker-attached{% endif %}">
-        <span class="section-marker-label">Exceções ({{ plano.total_rejeitados }})</span>
-      </h2>
-      {% if excecoes_pagina.object_list %}
-      <div class="table-wrapper table-sticky-header table-wrapper-marker-attached">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">Linha</th>
-              <th scope="col">Código (CODIF)</th>
-              <th scope="col">Motivo</th>
-              <th scope="col">Detalhe</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for excecao in excecoes_pagina %}
-            <tr class="table-row-error">
-              <td>{{ excecao.linha }}</td>
-              <td class="table-cell-code">
-                {% if excecao.codif %}{{ excecao.codif }}{% else %}<span class="text-muted">—</span>{% endif %}
-              </td>
-              <td>{{ excecao.motivo_label }}</td>
-              <td>{{ excecao.detalhe|default:""|linebreaksbr }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="tile{% if plano.total_rejeitados %} tile-warning{% endif %}">
+        <dt class="k">Rejeitados</dt>
+        <dd class="v">{{ plano.total_rejeitados|separador_milhar }}</dd>
+        {% if plano.total_rejeitados %}<dd class="d"><a href="#excecoes">ver exceções</a></dd>{% endif %}
       </div>
-      {% include "interface/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" rotulo_item="exceção" rotulo_item_plural="exceções" ancora="excecoes" %}
-      {% else %}
-      <div class="empty-state">
-        <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
-        <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
-      </div>
-      {% endif %}
-    </section>
-
-    {% comment %}
-    Barra de confirmação (mesma decisão da 001, gate visual P1): ÚNICO par de
-    botões da página — grudada ao rodapé da viewport durante a rolagem
-    (`position: sticky`, `.confirmation-bar`, `static/css/components.css`) e
-    assentada no fim quando o usuário chega lá, por ser o último elemento de
-    `.page-container`.
-    {% endcomment %}
-    <div class="confirmation-bar">
-      <form
-        method="post"
-        action="{% url 'fornecedores:importacao_confirmar' %}"
-        data-processing-form
-        data-processing-label="Confirmando…"
-      >
-        {% csrf_token %}
-        <input type="hidden" name="token" value="{{ token }}">
-        <input type="hidden" name="impressao_digital" value="{{ impressao_digital }}">
-        <button type="submit" class="btn btn-primary" data-processing-submit>
-          <span data-processing-submit-label
-            >Confirmar importação: {{ plano.total_inseridos|separador_milhar }} inserido{{ plano.total_inseridos|pluralize }}, {{ plano.total_atualizados|separador_milhar }} atualizado{{ plano.total_atualizados|pluralize }}{% if plano.total_rejeitados %} ({{ plano.total_rejeitados|separador_milhar }} rejeitado{{ plano.total_rejeitados|pluralize }} fic{{ plano.total_rejeitados|pluralize:"a,am" }} de fora){% endif %}{% if total_passam_a_bloqueado %}, {{ total_passam_a_bloqueado|separador_milhar }} pass{{ total_passam_a_bloqueado|pluralize:"a,am" }} a bloqueado{% endif %}{% if total_voltam_a_liberado %}, {{ total_voltam_a_liberado|separador_milhar }} volt{{ total_voltam_a_liberado|pluralize:"a,am" }} a liberado{% endif %}{% if total_chegam_bloqueados %}, {{ total_chegam_bloqueados|separador_milhar }} cheg{{ total_chegam_bloqueados|pluralize:"a,am" }} bloqueado{{ total_chegam_bloqueados|pluralize }}{% endif %}</span
-          >
-        </button>
-      </form>
-      <form method="post" action="{% url 'fornecedores:importacao_cancelar' %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-secondary">Cancelar</button>
-      </form>
-    </div>
+    </dl>
   </div>
-</main>
+  <div class="tiles-grupo tiles-grupo-fora" role="group" aria-labelledby="grupo-fora-titulo">
+    <p id="grupo-fora-titulo" class="tiles-grupo-rotulo">Fora da soma</p>
+    <dl class="grid tiles tiles-metricas">
+      <div class="tile tile-aside{% if total_passam_a_bloqueado %} tile-warning{% else %} fornecedores-situacao-neutra{% endif %}">
+        <dt class="k">Passam a bloqueado</dt>
+        <dd class="v">{{ total_passam_a_bloqueado|separador_milhar }}</dd>
+        {% if total_passam_a_bloqueado %}<dd class="d"><a href="#alteracoes">ver alterações</a></dd>{% endif %}
+      </div>
+      <div class="tile tile-aside{% if not total_voltam_a_liberado %} fornecedores-situacao-neutra{% endif %}">
+        <dt class="k">Voltam a liberado</dt>
+        <dd class="v">{{ total_voltam_a_liberado|separador_milhar }}</dd>
+      </div>
+      {% comment %}"Chegam bloqueados" só existe na prévia (ver o comentário de composição no topo).{% endcomment %}
+      <div class="tile tile-aside{% if total_chegam_bloqueados %} tile-warning{% else %} fornecedores-situacao-neutra{% endif %}">
+        <dt class="k">Chegam bloqueados</dt>
+        <dd class="v">{{ total_chegam_bloqueados|separador_milhar }}</dd>
+      </div>
+      <div class="tile tile-aside">
+        <dt class="k">Ausentes do arquivo</dt>
+        <dd class="v">{{ plano.total_ausentes_no_arquivo|separador_milhar }}</dd>
+      </div>
+    </dl>
+  </div>
+  <p class="text-note">
+    "Ausentes do arquivo" não entra na soma Recebidos = Inseridos + Atualizados +
+    Rejeitados: são fornecedores já cadastrados no WMS que não vieram neste CSV. Esta
+    importação <strong>não altera nem remove</strong> esses fornecedores — eles
+    permanecem como estão.
+  </p>
+  <p class="text-note">
+    Um fornecedor bloqueado não pode ser emitente de uma entrada de materiais.
+    Os fornecedores já cadastrados que mudam de situação nesta carga estão em
+    "Alterações cadastrais", abaixo. Os que chegam bloqueados são fornecedores novos
+    deste arquivo e não aparecem nas tabelas desta prévia.
+  </p>
+</section>
+
+<section class="card previa-secao" id="alteracoes" data-secao="alteracoes" aria-labelledby="alteracoes-titulo">
+  {% with campos=alteracoes_pagina.paginator.count fornecedores=plano.total_atualizados_com_alteracao %}
+  <h2 id="alteracoes-titulo">Alterações cadastrais{% if campos %} — {{ campos|separador_milhar }} campo{{ campos|pluralize }} em {{ fornecedores|separador_milhar }} fornecedor{{ fornecedores|pluralize:"es" }}{% else %} (0){% endif %}</h2>
+  {% endwith %}
+  {% if alteracoes_pagina.object_list %}
+  <div class="table-wrapper" role="region" aria-label="Tabela de alterações cadastrais" tabindex="0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col" class="th-wrap">Código (CODIF) / Nome</th>
+          <th scope="col">Campo</th>
+          <th scope="col" class="so-desktop">Valor anterior</th>
+          <th scope="col"><span class="so-desktop">Valor novo</span><span class="so-movel">Valor anterior <span aria-hidden="true">→</span><span class="visually-hidden">e</span> novo</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alteracao in alteracoes_pagina %}
+        <tr>
+          <td class="fornecedores-codigo-cell">
+            {% ifchanged alteracao.codif %}
+            <span class="table-cell-code">{{ alteracao.codif }}</span>
+            <span class="cell-secondary">{{ alteracao.nome }}</span>
+            {% else %}
+            <span class="table-cell-code visually-hidden">{{ alteracao.codif }}</span>
+            {% endifchanged %}
+          </td>
+          <td>{{ alteracao.campo_label }}</td>
+          <td class="so-desktop">
+            {% if alteracao.valor_anterior_legivel %}{{ alteracao.valor_anterior_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
+          </td>
+          <td>
+            {% comment %}
+            No celular (≤640px) "Valor anterior" e "Valor novo" dividem esta célula (a coluna anterior
+            some, `.so-desktop`); o valor anterior aparece aqui numa cópia que só existe nessa largura
+            (`.so-movel`, `display: none` no desktop, fora da árvore de acessibilidade), com os rótulos
+            em `visually-hidden` e a seta decorativa (`aria-hidden`) — nada é lido duas vezes.
+            {% endcomment %}
+            <div class="so-movel valor-anterior-compacto"><span class="visually-hidden">Valor anterior: </span>{% if alteracao.valor_anterior_legivel %}{{ alteracao.valor_anterior_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}</div>
+            <span class="so-movel"><span aria-hidden="true">→ </span><span class="visually-hidden">Valor novo: </span></span>
+            {% if alteracao.campo == "bloqueado" %}
+            {% if alteracao.valor_novo == "B" %}
+            <span class="badge badge-warning">Bloqueado</span>
+            {% else %}
+            {{ alteracao.valor_novo_legivel }}
+            {% endif %}
+            {% elif alteracao.valor_novo_legivel %}{{ alteracao.valor_novo_legivel|linebreaksbr }}{% else %}<span class="text-muted">(vazio)</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "interface/_paginacao.html" with pagina=alteracoes_pagina parametro="pagina_alteracoes" rotulo="Paginação de alterações cadastrais" rotulo_item="alteração cadastral" rotulo_item_plural="alterações cadastrais" ancora="alteracoes" %}
+  {% else %}
+  <div class="empty">
+    <p class="empty-state-title">Nenhuma alteração cadastral nesta importação.</p>
+    <p class="empty-state-description">Os dados cadastrais do arquivo coincidiram com os já registrados no WMS.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card previa-secao" id="excecoes" aria-labelledby="excecoes-titulo">
+  <h2 id="excecoes-titulo">Exceções ({{ plano.total_rejeitados }})</h2>
+  {% if excecoes_pagina.object_list %}
+  <div class="table-wrapper" role="region" aria-label="Tabela de exceções" tabindex="0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Linha</th>
+          <th scope="col">Código (CODIF)</th>
+          <th scope="col">Motivo / detalhe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for excecao in excecoes_pagina %}
+        <tr>
+          <td>{{ excecao.linha }}</td>
+          <td class="table-cell-code">
+            {% if excecao.codif %}{{ excecao.codif }}{% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {{ excecao.motivo_label }}
+            {% if excecao.detalhe %}<span class="cell-secondary">{{ excecao.detalhe|linebreaksbr }}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "interface/_paginacao.html" with pagina=excecoes_pagina parametro="pagina_excecoes" rotulo="Paginação de exceções" rotulo_item="exceção" rotulo_item_plural="exceções" ancora="excecoes" %}
+  {% else %}
+  <div class="empty">
+    <p class="empty-state-title">Nenhuma exceção nesta importação.</p>
+    <p class="empty-state-description">Todos os registros do arquivo foram aceitos.</p>
+  </div>
+  {% endif %}
+</section>
+
+<div class="confirmation-bar confirmation-bar-card">
+  <p class="confirmation-bar-resumo" aria-hidden="true">{{ plano.total_inseridos|separador_milhar }}&nbsp;inserido{{ plano.total_inseridos|pluralize }} · {{ plano.total_atualizados|separador_milhar }}&nbsp;atualizado{{ plano.total_atualizados|pluralize }}{% if plano.total_rejeitados %} · {{ plano.total_rejeitados|separador_milhar }}&nbsp;rejeitado{{ plano.total_rejeitados|pluralize }}{% endif %}{% if total_passam_a_bloqueado %} · {{ total_passam_a_bloqueado|separador_milhar }}&nbsp;a&nbsp;bloquear{% endif %}{% if total_voltam_a_liberado %} · {{ total_voltam_a_liberado|separador_milhar }}&nbsp;a&nbsp;liberar{% endif %}{% if total_chegam_bloqueados %} · {{ total_chegam_bloqueados|separador_milhar }}&nbsp;cheg{{ total_chegam_bloqueados|pluralize:"a,am" }}&nbsp;bloqueado{{ total_chegam_bloqueados|pluralize }}{% endif %}</p>
+  <form
+    method="post"
+    action="{% url 'fornecedores:importacao_confirmar' %}"
+    data-processing-form
+    data-processing-label="Confirmando…"
+  >
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token }}">
+    <input type="hidden" name="impressao_digital" value="{{ impressao_digital }}">
+    <button type="submit" class="btn btn-primary" data-processing-submit>
+      <span data-processing-submit-label
+        >Confirmar importação<small class="confirmation-bar-totais">: {{ plano.total_inseridos|separador_milhar }} inserido{{ plano.total_inseridos|pluralize }}, {{ plano.total_atualizados|separador_milhar }} atualizado{{ plano.total_atualizados|pluralize }}{% if plano.total_rejeitados %} ({{ plano.total_rejeitados|separador_milhar }} rejeitado{{ plano.total_rejeitados|pluralize }} fic{{ plano.total_rejeitados|pluralize:"a,am" }} de fora){% endif %}{% if total_passam_a_bloqueado %}, {{ total_passam_a_bloqueado|separador_milhar }} pass{{ total_passam_a_bloqueado|pluralize:"a,am" }} a bloqueado{% endif %}{% if total_voltam_a_liberado %}, {{ total_voltam_a_liberado|separador_milhar }} volt{{ total_voltam_a_liberado|pluralize:"a,am" }} a liberado{% endif %}{% if total_chegam_bloqueados %}, {{ total_chegam_bloqueados|separador_milhar }} cheg{{ total_chegam_bloqueados|pluralize:"a,am" }} bloqueado{{ total_chegam_bloqueados|pluralize }}{% endif %}</small></span
+      >
+    </button>
+  </form>
+  <form method="post" action="{% url 'fornecedores:importacao_cancelar' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary">Cancelar</button>
+  </form>
+</div>
 {% endblock %}
 
 {% block extra_js %}

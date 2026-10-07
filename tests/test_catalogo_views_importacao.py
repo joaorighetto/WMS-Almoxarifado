@@ -171,15 +171,16 @@ def test_previa_exibe_totais_excecoes_e_aviso_de_que_nada_foi_gravado(
 
     assert resposta.status_code == 200
     conteudo_html = resposta.content.decode("utf-8")
-    # Escopado ao par <dt>/<dd> do resumo (`importacao_previa.html`) — os
-    # totais soltos (22/13) coincidem por acidente com linhas físicas
-    # exibidas na própria tabela de exceções abaixo.
-    assert re.search(
-        rf"<dt>Recebidos</dt>\s*<dd>\s*{plano.total_recebidos}\s*</dd>", conteudo_html
-    ), f"total_recebidos ({plano.total_recebidos}) não encontrado no resumo"
-    assert re.search(
-        rf"<dt>Rejeitados</dt>\s*<dd>\s*{plano.total_rejeitados}\s*</dd>", conteudo_html
-    ), f"total_rejeitados ({plano.total_rejeitados}) não encontrado no resumo"
+    # Escopado ao tile do resumo (rótulo `dt.k` + valor `dd.v`, `importacao_previa.html`) — os
+    # totais soltos (22/13) coincidem por acidente com linhas físicas exibidas na própria
+    # tabela de exceções abaixo.
+    resumo = totais_do_resumo(analisar(resposta.content))
+    assert resumo["Recebidos"] == str(plano.total_recebidos), (
+        f"total_recebidos ({plano.total_recebidos}) não encontrado no resumo"
+    )
+    assert resumo["Rejeitados"] == str(plano.total_rejeitados), (
+        f"total_rejeitados ({plano.total_rejeitados}) não encontrado no resumo"
+    )
     assert "nada foi gravado" in conteudo_html.lower(), (
         "contracts/rotas-e-autorizacao.md exige o aviso de que nada foi gravado ainda"
     )
@@ -857,9 +858,8 @@ def test_rotulo_do_botao_de_confirmar_sem_rejeitados_nao_menciona_fora_e_usa_sin
 
 
 # ---------------------------------------------------------------------------
-# Ação secundária "Histórico de importações" no Page Header do envio
-# (test-engineer, alinhamento de UX, Fase B) — mesmo padrão já usado em
-# `fornecedores/importacao_envio.html`.
+# Ação secundária "Histórico de importações" nas ferramentas (`.tools`) do
+# cabeçalho do envio — mesmo padrão de `fornecedores/importacao_envio.html`.
 # ---------------------------------------------------------------------------
 
 
@@ -869,10 +869,8 @@ def test_envio_tem_acao_secundaria_para_o_historico_de_importacoes(chefe_almoxar
     resposta = client_autenticado.get(reverse("catalogo:importacao_envio"))
 
     assert resposta.status_code == 200
-    conteudo_html = resposta.content.decode("utf-8")
-    bloco_acoes = re.search(
-        r'<div class="page-header-actions">.*?</div>', conteudo_html, re.S
-    )
-    assert bloco_acoes is not None, "page-header-actions não encontrado"
-    assert f'href="{reverse("catalogo:historico")}"' in bloco_acoes.group()
-    assert "Histórico de importações" in bloco_acoes.group()
+    ferramentas = analisar(resposta.content).unico("main").unico(classe="tools")
+    (link,) = ferramentas.buscar("a")
+    assert link.get("href") == reverse("catalogo:historico")
+    assert link.texto == "Histórico de importações"
+    assert link.tem_classe("btn-secondary")
